@@ -33,6 +33,7 @@ function guessRoleFromPitchNum(moraes, pitchN) {
 function determineRoleTokyo(sd) {
   if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
   if (sd.sep == null) return 'particle';
+  if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
   if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
   return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
 }

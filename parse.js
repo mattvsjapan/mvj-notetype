@@ -25,7 +25,7 @@ function detachGhostParticle(text) {
 }
 
 function furiganaToReading(word) {
-  return word.replace(/([^\[\]]*\[|])/g, '');
+  return word.split(' ').map(part => part.replace(/([^\[\]]*\[|])/g, '')).join('');
 }
 
 function filterKana(reading) {
@@ -68,6 +68,36 @@ function splitAccent(raw) {
     return { role: m[1], levels: m[2], keihan: true };
   }
   return { role: null, pitch: null };
+}
+
+const SEPARATORS = [';', '|', ',', '、', '+', '「', '」'];
+
+function mergeFragments(sections) {
+  const result = [];
+  let pending = [];
+  for (const raw of sections) {
+    if (SEPARATORS.includes(raw)) {
+      result.push(...pending);
+      pending = [];
+      result.push(raw);
+      continue;
+    }
+    const { sep } = splitSection(raw);
+    if (sep == null) {
+      pending.push(raw);
+    } else {
+      if (pending.length) {
+        const merged = [...pending, raw.replace(/:.*$/, '')].join(' ');
+        const accent = raw.replace(/^[^:]*:/, '');
+        result.push(merged + ':' + accent);
+        pending = [];
+      } else {
+        result.push(raw);
+      }
+    }
+  }
+  result.push(...pending);
+  return result;
 }
 
 function splitMultiplePitchNotations(sequences) {

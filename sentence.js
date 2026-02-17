@@ -1,20 +1,24 @@
-function wordToRuby(word) {
-  word = word.replaceAll(DEVOICED_PREFIX, '');
+function wordToRubyFragment(fragment) {
   const re = /([^\[\]]+)\[([^\]]+)\]/g;
   let result = '';
   let lastIndex = 0;
   let match;
-  while ((match = re.exec(word)) !== null) {
+  while ((match = re.exec(fragment)) !== null) {
     if (match.index > lastIndex) {
-      result += word.slice(lastIndex, match.index);
+      result += fragment.slice(lastIndex, match.index);
     }
     result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
     lastIndex = re.lastIndex;
   }
-  if (lastIndex < word.length) {
-    result += word.slice(lastIndex);
+  if (lastIndex < fragment.length) {
+    result += fragment.slice(lastIndex);
   }
   return result;
+}
+
+function wordToRuby(word) {
+  word = word.replaceAll(DEVOICED_PREFIX, '');
+  return word.split(' ').map(wordToRubyFragment).join('');
 }
 
 function makeColoredSentence(sequence) {
