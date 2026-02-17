@@ -34,17 +34,17 @@ function filterKana(reading) {
 }
 
 function kanaToMoraes(kana) {
-  return kana.match(/\*?\/?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  return kana.match(/(?:\*\/?|\/\*?)?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
 }
 
 function splitToMoras(reading) {
   const kana = filterKana(reading);
   const raw = kanaToMoraes(kana);
   return raw.map(m => {
-    const devoiced = m.startsWith(DEVOICED_PREFIX);
-    if (devoiced) m = m.slice(1);
-    const literal = m.startsWith(LITERAL_PREFIX);
-    if (literal) m = m.slice(1);
+    let devoiced = false, literal = false;
+    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
+    if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
+    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
     return { text: m, devoiced, literal };
   });
 }
