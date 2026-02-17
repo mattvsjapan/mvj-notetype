@@ -419,7 +419,7 @@ rt {
 /* Japanese definition — pure CSS toggle */
 
 .jp-def-section {
-    text-align: center;
+    text-align: left;
 }
 
 .jp-def-input {
