@@ -1,5 +1,6 @@
 const GHOST_PARTICLE = '+';
 const DEVOICED_PREFIX = '*';
+const LITERAL_PREFIX = '\\';
 const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
@@ -29,21 +30,22 @@ function furiganaToReading(word) {
 }
 
 function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+]/g, '');
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\]/g, '');
 }
 
 function kanaToMoraes(kana) {
-  return kana.match(/\*?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  return kana.match(/\*?\\?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
 }
 
 function splitToMoras(reading) {
   const kana = filterKana(reading);
   const raw = kanaToMoraes(kana);
   return raw.map(m => {
-    if (m.startsWith(DEVOICED_PREFIX)) {
-      return { text: m.slice(1), devoiced: true };
-    }
-    return { text: m, devoiced: false };
+    const devoiced = m.startsWith(DEVOICED_PREFIX);
+    if (devoiced) m = m.slice(1);
+    const literal = m.startsWith(LITERAL_PREFIX);
+    if (literal) m = m.slice(1);
+    return { text: m, devoiced, literal };
   });
 }
 

@@ -51,7 +51,17 @@ function determinePitchTokyo(sd) {
 }
 
 function adjustKana(text) {
-  if (config.convert_reading === 'katakana') return literalPronunciation(text);
+  if (config.convert_reading === 'katakana') {
+    const literals = [];
+    text = text.replace(/\\(.)/g, (_, ch) => {
+      literals.push(ch);
+      return '\uE000';
+    });
+    text = literalPronunciation(text);
+    let i = 0;
+    text = text.replace(/\uE000/g, () => '\\' + toKatakana(literals[i++]));
+    return text;
+  }
   if (config.convert_reading === 'hiragana') return toHiragana(text);
   return text;
 }
@@ -87,13 +97,13 @@ class Section {
 
   get isParticle() { return !!this._d.accent.is_particle; }
 
-  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, ''); }
+  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, ''); }
 
   get moraes() {
     const m = this._d.moraes;
-    if ((this.role === 'particle' || this.isParticle) && m.length === 1) {
-      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced }];
-      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced }];
+    if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
+      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false }];
+      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false }];
     }
     return m;
   }

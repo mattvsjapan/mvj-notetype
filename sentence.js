@@ -18,6 +18,7 @@ function wordToRubyFragment(fragment) {
 
 function wordToRuby(word) {
   word = word.replaceAll(DEVOICED_PREFIX, '');
+  word = word.replaceAll(LITERAL_PREFIX, '');
   return word.split(' ').map(wordToRubyFragment).join('');
 }
 
