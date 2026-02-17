@@ -1,33 +1,169 @@
-/* Pitch accent colors */
-.atamadaka, .atamadaka line, .atamadaka circle, .atamadaka text { fill: #E60000; stroke: #E60000; color: #E60000; }
-.heiban, .heiban line, .heiban circle, .heiban text { fill: #005CE6; stroke: #005CE6; color: #005CE6; }
-.nakadaka, .nakadaka line, .nakadaka circle, .nakadaka text { fill: #E68A00; stroke: #E68A00; color: #E68A00; }
-.kifuku, .kifuku line, .kifuku circle, .kifuku text { fill: #AC00E6; stroke: #AC00E6; color: #AC00E6; }
-.odaka, .odaka line, .odaka circle, .odaka text { fill: #00802B; stroke: #00802B; color: #00802B; }
-.keihan_heiban, .keihan_heiban line, .keihan_heiban circle, .keihan_heiban text { fill: #3bb2ed; stroke: #3bb2ed; color: #3bb2ed; }
-.keihan_low_heiban, .keihan_low_heiban line, .keihan_low_heiban circle, .keihan_low_heiban text { fill: #096999; stroke: #096999; color: #096999; }
-.keihan_atamadaka, .keihan_atamadaka line, .keihan_atamadaka circle, .keihan_atamadaka text { fill: #f76d94; stroke: #f76d94; color: #f76d94; }
-.keihan_nakadaka, .keihan_nakadaka line, .keihan_nakadaka circle, .keihan_nakadaka text { fill: #a89c0f; stroke: #a89c0f; color: #a89c0f; }
-.keihan_low_nakadaka, .keihan_low_nakadaka line, .keihan_low_nakadaka circle, .keihan_low_nakadaka text { fill: #876333; stroke: #876333; color: #876333; }
-.keihan_odaka, .keihan_odaka line, .keihan_odaka circle, .keihan_odaka text,
-.keihan_low_odaka, .keihan_low_odaka line, .keihan_low_odaka circle, .keihan_low_odaka text { fill: #658065; stroke: #658065; color: #658065; }
-.connector, .connector line, .connector circle, .connector text,
-.particle, .particle line, .particle circle, .particle text,
-.setsubigo, .setsubigo line, .setsubigo circle, .setsubigo text { fill: gray; stroke: gray; color: gray; }
-.black, .black line, .black circle, .black text { fill: #4f4b4b; stroke: #4f4b4b; color: #4f4b4b; }
+/* ── Pitch accent colors ── */
 
-/* Text stroke:none */
-.atamadaka text, .heiban text, .nakadaka text, .kifuku text, .odaka text,
-.keihan_heiban text, .keihan_low_heiban text, .keihan_atamadaka text,
-.keihan_nakadaka text, .keihan_low_nakadaka text, .keihan_odaka text,
-.keihan_low_odaka text, .particle text, .setsubigo text, .black text,
-.connector text { stroke: none; }
+/* Tokyo */
 
-/* Particle circle */
+.atamadaka,
+.atamadaka line,
+.atamadaka circle,
+.atamadaka text {
+  fill: #E60000;
+  stroke: #E60000;
+  color: #E60000;
+}
+
+.heiban,
+.heiban line,
+.heiban circle,
+.heiban text {
+  fill: #005CE6;
+  stroke: #005CE6;
+  color: #005CE6;
+}
+
+.nakadaka,
+.nakadaka line,
+.nakadaka circle,
+.nakadaka text {
+  fill: #E68A00;
+  stroke: #E68A00;
+  color: #E68A00;
+}
+
+.kifuku,
+.kifuku line,
+.kifuku circle,
+.kifuku text {
+  fill: #AC00E6;
+  stroke: #AC00E6;
+  color: #AC00E6;
+}
+
+.odaka,
+.odaka line,
+.odaka circle,
+.odaka text {
+  fill: #00802B;
+  stroke: #00802B;
+  color: #00802B;
+}
+
+/* Keihan */
+
+.keihan_heiban,
+.keihan_heiban line,
+.keihan_heiban circle,
+.keihan_heiban text {
+  fill: #3bb2ed;
+  stroke: #3bb2ed;
+  color: #3bb2ed;
+}
+
+.keihan_low_heiban,
+.keihan_low_heiban line,
+.keihan_low_heiban circle,
+.keihan_low_heiban text {
+  fill: #096999;
+  stroke: #096999;
+  color: #096999;
+}
+
+.keihan_atamadaka,
+.keihan_atamadaka line,
+.keihan_atamadaka circle,
+.keihan_atamadaka text {
+  fill: #f76d94;
+  stroke: #f76d94;
+  color: #f76d94;
+}
+
+.keihan_nakadaka,
+.keihan_nakadaka line,
+.keihan_nakadaka circle,
+.keihan_nakadaka text {
+  fill: #a89c0f;
+  stroke: #a89c0f;
+  color: #a89c0f;
+}
+
+.keihan_low_nakadaka,
+.keihan_low_nakadaka line,
+.keihan_low_nakadaka circle,
+.keihan_low_nakadaka text {
+  fill: #876333;
+  stroke: #876333;
+  color: #876333;
+}
+
+.keihan_odaka,
+.keihan_odaka line,
+.keihan_odaka circle,
+.keihan_odaka text,
+.keihan_low_odaka,
+.keihan_low_odaka line,
+.keihan_low_odaka circle,
+.keihan_low_odaka text {
+  fill: #658065;
+  stroke: #658065;
+  color: #658065;
+}
+
+/* Utility roles */
+
+.connector,
+.connector line,
+.connector circle,
+.connector text,
+.particle,
+.particle line,
+.particle circle,
+.particle text,
+.setsubigo,
+.setsubigo line,
+.setsubigo circle,
+.setsubigo text {
+  fill: gray;
+  stroke: gray;
+  color: gray;
+}
+
+.black,
+.black line,
+.black circle,
+.black text {
+  fill: #4f4b4b;
+  stroke: #4f4b4b;
+  color: #4f4b4b;
+}
+
+/* Text should not have a stroke */
+
+.atamadaka text,
+.heiban text,
+.nakadaka text,
+.kifuku text,
+.odaka text,
+.keihan_heiban text,
+.keihan_low_heiban text,
+.keihan_atamadaka text,
+.keihan_nakadaka text,
+.keihan_low_nakadaka text,
+.keihan_odaka text,
+.keihan_low_odaka text,
+.particle text,
+.setsubigo text,
+.black text,
+.connector text {
+  stroke: none;
+}
+
+/* Particle circles are hollow */
 .particle circle { fill: none; }
 
-/* Devoiced */
-circle.devoiced, rect.devoiced { fill: none !important; }
+/* Devoiced markers are hollow */
+circle.devoiced,
+rect.devoiced {
+  fill: none !important;
+}
 
-/* Hidden */
+/* Hidden elements */
 span.empty { display: none; }
