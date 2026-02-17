@@ -39,6 +39,7 @@
 <div id="raw-definition" style="display:none">{{Definition}}</div>
 
 <script>
+(function() {
 // ── config.js ──
 const config = {
   no_text: false, size_unit: 25, font_size: 24, text_dx: -12,
@@ -632,9 +633,12 @@ const ACCENT_COLORS = {
   odaka:      { color: '#51cf66', glow: 'rgba(81, 207, 102, 0.12)' },
 };
 
-// ── Render ──
-(function() {
-  var wordRaw = document.getElementById('raw-word').textContent.trim();
+// ── Render (deferred for Anki front→back transitions) ──
+function _renderBack() {
+  var wordRaw = document.getElementById('raw-word');
+  if (!wordRaw) return setTimeout(_renderBack, 10);
+
+  wordRaw = wordRaw.textContent.trim();
   var sentRaw = document.getElementById('raw-sentence').textContent.trim();
   var defHtml = document.getElementById('raw-definition').innerHTML;
 
@@ -710,5 +714,7 @@ const ACCENT_COLORS = {
   } else {
     jpDefSection.style.display = 'none';
   }
+}
+_renderBack();
 })();
 </script>
