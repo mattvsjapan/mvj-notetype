@@ -701,6 +701,10 @@ function _renderBack() {
   if (sentRaw) {
     var sentSeqs = makeSequences(sentRaw);
     if (sentSeqs.length > 0) {
+      var hasAccent = sentSeqs[0].some(function(s) {
+        return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+      });
+      if (!hasAccent) sentEl.classList.add('no-accent');
       sentEl.innerHTML = makeColoredSentence(sentSeqs[0]);
     }
   }

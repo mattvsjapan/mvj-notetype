@@ -376,7 +376,6 @@ rt {
     font-size: 0.58em;
     font-weight: 400;
     color: inherit;
-    opacity: 0.7;
 }
 
 /* Sentence */
@@ -386,9 +385,13 @@ rt {
     font-size: 21px;
     font-weight: 400;
     line-height: 1.85;
-    color: var(--text-2);
+    color: var(--text-1);
     text-align: justify;
     margin: 0;
+}
+
+.sentence.no-accent .particle {
+    color: inherit;
 }
 
 .sentence mark {
