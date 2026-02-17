@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pitch Accent Graph</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 24px;
+}
+h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 16px; color: #fff; }
+textarea {
+  width: 100%;
+  min-height: 160px;
+  background: #16213e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  resize: vertical;
+}
+textarea:focus { outline: none; border-color: #5a7; }
+#output {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.graph-row {
+  background: #FFFAF0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: inline-block;
+}
+.examples { margin-top: 8px; margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.examples button {
+  background: #16213e;
+  color: #aaa;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.examples button:hover { border-color: #5a7; color: #fff; }
+details { margin-top: 16px; color: #999; font-size: 13px; }
+summary { cursor: pointer; margin-bottom: 8px; }
+details table { border-collapse: collapse; margin-top: 4px; }
+details td, details th { padding: 3px 12px 3px 0; text-align: left; }
+
+/* SVG pitch accent colors */
+.atamadaka, .atamadaka line, .atamadaka circle, .atamadaka text { fill: #E60000; stroke: #E60000; }
+.heiban, .heiban line, .heiban circle, .heiban text { fill: #005CE6; stroke: #005CE6; }
+.nakadaka, .nakadaka line, .nakadaka circle, .nakadaka text { fill: #E68A00; stroke: #E68A00; }
+.kifuku, .kifuku line, .kifuku circle, .kifuku text { fill: #AC00E6; stroke: #AC00E6; }
+.odaka, .odaka line, .odaka circle, .odaka text { fill: #00802B; stroke: #00802B; }
+.keihan_heiban, .keihan_heiban line, .keihan_heiban circle, .keihan_heiban text { fill: #3bb2ed; stroke: #3bb2ed; }
+.keihan_low_heiban, .keihan_low_heiban line, .keihan_low_heiban circle, .keihan_low_heiban text { fill: #096999; stroke: #096999; }
+.keihan_atamadaka, .keihan_atamadaka line, .keihan_atamadaka circle, .keihan_atamadaka text { fill: #f76d94; stroke: #f76d94; }
+.keihan_nakadaka, .keihan_nakadaka line, .keihan_nakadaka circle, .keihan_nakadaka text { fill: #a89c0f; stroke: #a89c0f; }
+.keihan_low_nakadaka, .keihan_low_nakadaka line, .keihan_low_nakadaka circle, .keihan_low_nakadaka text { fill: #876333; stroke: #876333; }
+.keihan_odaka, .keihan_odaka line, .keihan_odaka circle, .keihan_odaka text,
+.keihan_low_odaka, .keihan_low_odaka line, .keihan_low_odaka circle, .keihan_low_odaka text { fill: #658065; stroke: #658065; }
+.connector line, .connector circle, .connector text,
+.particle line, .particle circle, .particle text,
+.setsubigo line, .setsubigo circle, .setsubigo text { fill: gray; stroke: gray; }
+.particle circle { fill: none; }
+.black line, .black circle, .black text { fill: #4f4b4b; stroke: #4f4b4b; }
+.atamadaka text, .heiban text, .nakadaka text, .kifuku text, .odaka text,
+.keihan_heiban text, .keihan_low_heiban text, .keihan_atamadaka text,
+.keihan_nakadaka text, .keihan_low_nakadaka text, .keihan_odaka text,
+.keihan_low_odaka text, .particle text, .setsubigo text, .black text,
+.connector text { stroke: none; }
+circle.devoiced, rect.devoiced { fill: none !important; }
+</style>
+</head>
+<body>
+<h1>Pitch Accent Graph</h1>
+<div class="examples">
+  <button onclick="setExample('basic')">Basic</button>
+  <button onclick="setExample('particles')">Particles</button>
+  <button onclick="setExample('connected')">Connected</button>
+  <button onclick="setExample('devoiced')">Devoiced</button>
+  <button onclick="setExample('ghost')">Ghost particle</button>
+</div>
+<textarea id="input" spellcheck="false" placeholder="Enter pitch accent notation...">がっこう;0
+おおもの;2
+にほんご;0 の じしょ;1
+ひとり;2-</textarea>
+<div id="output"></div>
+
+<details>
+<summary>Syntax Reference</summary>
+<table>
+<tr><th>Syntax</th><th>Meaning</th></tr>
+<tr><td><code>word;0</code></td><td>Heiban (flat)</td></tr>
+<tr><td><code>word;1</code></td><td>Atamadaka (accent on 1st mora)</td></tr>
+<tr><td><code>word;2</code></td><td>Nakadaka (accent on 2nd mora)</td></tr>
+<tr><td><code>word;N</code></td><td>Accent on Nth mora (odaka if N = mora count)</td></tr>
+<tr><td><code>大物[おおもの];2</code></td><td>Kanji with furigana</td></tr>
+<tr><td><code>word; particle</code></td><td>Space-separated = solid connector</td></tr>
+<tr><td><code>word;1 ; word;0</code></td><td>Tape connector (dotted line)</td></tr>
+<tr><td><code>word;1 | word;0</code></td><td>Break (no connector)</td></tr>
+<tr><td><code>word;1 , word;0</code></td><td>Comma break</td></tr>
+<tr><td><code>word;1-</code></td><td>Ghost/trailing particle</td></tr>
+<tr><td><code>ぐらい;pa</code></td><td>Particle with atamadaka</td></tr>
+<tr><td><code>dきdみ</code></td><td>Devoiced mora (prefix d)</td></tr>
+<tr><td><code>word;k2</code></td><td>Kifuku accent</td></tr>
+<tr><td><code>A;hlll</code></td><td>Keihan notation</td></tr>
+</table>
+</details>
+
+<script>
+// ─── Config ───
+const config = {
+  no_text: false, size_unit: 25, font_size: 24, text_dx: -12,
+  x_step: 50, circle_radius: 5.25, devoiced_circle_width: 1.5,
+  devoiced_circle_radius: 17, devoiced_stroke_disarray: "2 3",
+  devoiced_rectangle_padding: 5, stroke_width: 2.5, graph_height: 40,
+  graph_visible_height: 100, graph_horizontal_padding: 6,
+  graph_font: 'Noto Sans, Noto Sans CJK JP, sans-serif',
+  convert_reading: 'katakana', stroke_dasharray: '4',
+};
+
+// ─── Constants ───
+const GHOST_PARTICLE = '-';
+const DEVOICED_PREFIX = 'd';
+const SENT_HIDDEN = ['|', GHOST_PARTICLE];
+const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
+
+// ─── Kana tables ───
+const _hiragana = [
+  'が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど',
+  'ば','び','ぶ','べ','ぼ','ぱ','ぴ','ぷ','ぺ','ぽ','あ','い','う','え','お',
+  'か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と',
+  'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も',
+  'や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','ぁ','ぃ','ぅ','ぇ','ぉ',
+  'ゃ','ゅ','ょ','っ',
+];
+const _katakana = [
+  'ガ','ギ','グ','ゲ','ゴ','ザ','ジ','ズ','ゼ','ゾ','ダ','ヂ','ヅ','デ','ド',
+  'バ','ビ','ブ','ベ','ボ','パ','ピ','プ','ペ','ポ','ア','イ','ウ','エ','オ',
+  'カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','タ','チ','ツ','テ','ト',
+  'ナ','ニ','ヌ','ネ','ノ','ハ','ヒ','フ','ヘ','ホ','マ','ミ','ム','メ','モ',
+  'ヤ','ユ','ヨ','ラ','リ','ル','レ','ロ','ワ','ヲ','ン','ァ','ィ','ゥ','ェ','ォ',
+  'ャ','ュ','ョ','ッ',
+];
+const k2h = {}, h2k = {};
+_katakana.forEach((k, i) => { k2h[k] = _hiragana[i]; h2k[_hiragana[i]] = k; });
+
+function toHiragana(s) { return [...s].map(c => k2h[c] || c).join(''); }
+function toKatakana(s) { return [...s].map(c => h2k[c] || c).join(''); }
+
+// ─── Equivalent sounds ───
+const EQ_SOUNDS_HIRA = {
+  'ぢ':'じ','づ':'ず','を':'お','れい':'れー','めい':'めー','べい':'べー',
+  'けい':'けー','ぐう':'ぐー','ごう':'ごー','ずう':'ずー','づう':'ずー',
+  'づー':'ずー','ぞう':'ぞー','どう':'どー','どお':'どー','ぶう':'ぶー',
+  'ぼう':'ぼー','ぷう':'ぷー','ぽう':'ぽー','うう':'うー','おう':'おー',
+  'おお':'おー','くう':'くー','こう':'こー','すう':'すー','そう':'そー',
+  'つう':'つー','とう':'とー','とお':'とー','こお':'こー','ぬう':'ぬー',
+  'のう':'のー','ふう':'ふー','ほう':'ほー','ほお':'ほー','むう':'むー',
+  'もう':'もー','よう':'よー','るう':'るー','ろう':'ろー','ぅう':'ぅー',
+  'ぉう':'ぉー','ょう':'ょー','ゆう':'ゆー','いい':'いー','ちい':'ちー',
+  'せい':'せー','じい':'じー','かあ':'かー','ゅう':'ゅー','ぜい':'ぜー',
+  'つづ':'つず','じゃあ':'じゃー',
+};
+const EQUIVALENT_SOUNDS = {...EQ_SOUNDS_HIRA};
+for (const [k, v] of Object.entries(EQ_SOUNDS_HIRA)) {
+  EQUIVALENT_SOUNDS[toKatakana(k)] = toKatakana(v);
+}
+
+function unifyRepr(reading) {
+  for (const [k, v] of Object.entries(EQUIVALENT_SOUNDS)) {
+    reading = reading.replaceAll(k, v);
+  }
+  return reading;
+}
+function literalPronunciation(text) { return toKatakana(unifyRepr(text)); }
+
+// ─── Split functions ───
+function normalizeForParsing(expr) {
+  expr = expr.replace(/<br>/gi, ' . ');
+  expr = expr.replace(/<[^<>]+>/gi, '');
+  expr = expr.replace(/([。!?！？])/g, ' $1 .');
+  expr = expr.replace(/([「」|、､])/g, ' $1 ');
+  expr = expr.replace(/([^ ]), /g, ' $1 , ');
+  return expr;
+}
+
+function splitToSentences(expr) {
+  return expr.split(/[.\n]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function splitToSections(sentence) {
+  return sentence.split(/[\t\s\u3000]+/).filter(Boolean);
+}
+
+function detachGhostParticle(text) {
+  return text.replace(/-[\s\n.]*$/, ' -');
+}
+
+function furiganaToReading(word) {
+  return word.replace(/([^\[\]]*\[|])/g, '');
+}
+
+function filterKana(reading) {
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FFd\-]/g, '');
+}
+
+function kanaToMoraes(kana) {
+  return kana.match(/d?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+}
+
+function splitToMoras(reading) {
+  const kana = filterKana(reading);
+  const raw = kanaToMoraes(kana);
+  return raw.map(m => {
+    if (m.startsWith(DEVOICED_PREFIX)) {
+      return { text: m.slice(1), devoiced: true };
+    }
+    return { text: m, devoiced: false };
+  });
+}
+
+function splitSection(raw) {
+  const m = raw.match(/^([^；;:]+)([；;:])?(.*)$/);
+  if (m) return { word: m[1], sep: m[2] || null, accent: m[3] || '' };
+  return { word: raw, sep: null, accent: '' };
+}
+
+function splitAccent(raw) {
+  if (!raw && raw !== '') raw = '';
+  let m = raw.match(/^(p)?([a-zA-Z])?(-?\d)?$/);
+  if (m) {
+    return {
+      is_particle: m[1] || null,
+      role: m[2] || m[1] || null,
+      pitch: m[3] || null,
+    };
+  }
+  m = raw.match(/^([a-zA-Z]{1,2})[；;]([hlHL]+)$/);
+  if (m) {
+    return { role: m[1], levels: m[2], keihan: true };
+  }
+  return { role: null, pitch: null };
+}
+
+function splitMultiplePitchNotations(sequences) {
+  const result = [];
+  for (const seq of sequences) {
+    const first = splitSection(seq[0]);
+    if (first.sep) {
+      for (const accent of first.accent.split(',')) {
+        result.push([`${first.word};${accent.trim()}`, ...seq.slice(1)]);
+      }
+    } else {
+      result.push(seq);
+    }
+  }
+  return result;
+}
+
+// ─── Roles ───
+const RoleFromValue = {
+  'h':'heiban','a':'atamadaka','n':'nakadaka','o':'odaka','k':'kifuku',
+  'b':'black','w':'white','s':'setsubigo','e':'empty','p':'particle',
+  'H':'keihan_heiban','A':'keihan_atamadaka','N':'keihan_nakadaka',
+  'L':'keihan_low_heiban','M':'keihan_low_nakadaka','O':'keihan_low_odaka',
+  'K':'keihan_kifuku',
+};
+
+function isEmptyParticle(word) { return /^[|,、]$/.test(word); }
+
+function determineRoleKeihan(rawRole) {
+  const val = String(rawRole || 'H');
+  return RoleFromValue[val.toUpperCase()] || RoleFromValue[val.toLowerCase()] || 'keihan_heiban';
+}
+
+function determineLevelsKeihan(levels, moraes) {
+  const arr = [...String(levels).toLowerCase()];
+  while (arr.length < moraes.length) arr.push(arr[arr.length - 1]);
+  return arr;  // 'h' or 'l' characters
+}
+
+function guessRoleFromPitchNum(moraes, pitchN) {
+  if (pitchN == null) return 'heiban';
+  const n = parseInt(pitchN);
+  if (n === 0) return 'heiban';
+  if (n < 0) return 'particle';
+  if (n === 1) return 'atamadaka';
+  if (n === moraes.length) return 'odaka';
+  if (n < moraes.length) return 'nakadaka';
+  return 'heiban';
+}
+
+function determineRoleTokyo(sd) {
+  if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
+  if (sd.sep == null) return 'particle';
+  if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
+  return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
+}
+
+function determinePitchTokyo(sd) {
+  if (sd.sep && sd.accent.pitch != null) return parseInt(sd.accent.pitch);
+  const role = sd.accent.role;
+  if (role === 'heiban' || role === 'setsubigo') return 0;
+  if (role === 'atamadaka') return 1;
+  if (role === 'nakadaka' || role === 'kifuku') return 2;
+  if (role === 'odaka') return sd.moraes.length;
+  if (role === 'particle') return null;
+  if (role === 'empty') return -1;
+  return 0;
+}
+
+function adjustKana(text) {
+  if (config.convert_reading === 'katakana') return literalPronunciation(text);
+  if (config.convert_reading === 'hiragana') return toHiragana(text);
+  return text;
+}
+
+function prepareMoras(word) {
+  let reading = furiganaToReading(word);
+  reading = adjustKana(reading);
+  return splitToMoras(reading);
+}
+
+// ─── Section ───
+class Section {
+  constructor(rawSection) {
+    this.raw = rawSection;
+    this._d = splitSection(rawSection);
+    this._d.moraes = prepareMoras(this._d.word || '');
+    this._d.accent = splitAccent(this._d.accent || '');
+    this._initAccent();
+  }
+
+  _initAccent() {
+    const a = this._d.accent;
+    if (a.keihan) {
+      a.role = determineRoleKeihan(a.role);
+      a.levels = determineLevelsKeihan(a.levels, this._d.moraes);
+    } else {
+      a.keihan = false;
+      a.role = determineRoleTokyo(this._d);
+      a.pitch = determinePitchTokyo(this._d);
+    }
+  }
+
+  get isTape() { return this.raw === ';'; }
+
+  get isParticle() { return !!this._d.accent.is_particle; }
+
+  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, ''); }
+
+  get moraes() {
+    const m = this._d.moraes;
+    if (this.isParticle && m.length === 1 && m[0].text === 'ハ') {
+      return [{ text: 'ワ', devoiced: false }];
+    }
+    return m;
+  }
+
+  get role() { return this._d.accent.role; }
+
+  get classname() {
+    if (this.isParticle) {
+      return [...new Set(['particle', this.role])].join(' ');
+    }
+    return this.role;
+  }
+
+  get pitch() { return this._d.accent.pitch; }
+  set pitch(v) { this._d.accent.pitch = v; }
+
+  get levels() { return this._d.accent.levels; }
+  set levels(v) { this._d.accent.levels = v; }
+
+  get isKeihan() { return !!this._d.accent.keihan; }
+}
+
+// ─── Level building ───
+const H = 'h', L = 'l';
+
+function buildLevelsTokyo(section, lastLow) {
+  if (section.pitch == null) section.pitch = lastLow ? -1 : -2;
+  if (section.pitch === -1) return section.moraes.map(() => L);
+  if (section.pitch === -2) return section.moraes.map(() => H);
+  if (section.pitch === 1) return [H, ...section.moraes.slice(1).map(() => L)];
+
+  return section.moraes.map((_, i) => {
+    if (i === 0) return lastLow ? L : H;
+    return (i < section.pitch || section.pitch === 0) ? H : L;
+  });
+}
+
+function calcLastWordEndedLow(section, lastLow) {
+  if (section.role === 'empty' && !PITCH_BREAKS.includes(section.word)) return lastLow;
+  if (section.pitch === 1) return true;
+  if (section.pitch === 0 || section.pitch === -2) return false;
+  return section.moraes.length >= section.pitch;
+}
+
+function buildHighLow(sequence) {
+  let lastLow = true;
+  for (const section of sequence) {
+    if (section.isKeihan) {
+      lastLow = section.levels[section.levels.length - 1] === L;
+    } else {
+      section.levels = buildLevelsTokyo(section, lastLow);
+      lastLow = calcLastWordEndedLow(section, lastLow);
+    }
+  }
+  return sequence;
+}
+
+function parseSections(seq) { return seq.map(s => new Section(s)); }
+
+function filterEmptyMoraes(sequence) {
+  return sequence.filter(s =>
+    s.moraes.length || PITCH_BREAKS.includes(s.word) || s.isTape
+  );
+}
+
+// ─── SVG generation ───
+class Line {
+  constructor() { this.x1 = this.y1 = this.x2 = this.y2 = null; this._tape = false; }
+  start(x, y, tape = false) { this.x1 = x; this.y1 = y; this._tape = tape; return this; }
+  end(x, y) { this.x2 = x; this.y2 = y; return this; }
+  get isUnfinished() { return this.x1 != null && this.y1 != null; }
+  get isCompleted() { return this.x2 != null && this.y2 != null; }
+
+  adjustToRadius(r) {
+    const tan = config.graph_height / config.x_step;
+    const denom = Math.sqrt(1 + tan * tan);
+    const sin = tan / denom, cos = 1 / denom;
+    const oy = r * sin, ox = r * cos;
+    if (this.y1 === this.y2) { this.x1 += r; this.x2 -= r; }
+    else if (this.y1 > this.y2) { this.x1 += ox; this.y1 -= oy; this.x2 -= ox; this.y2 += oy; }
+    else { this.x1 += ox; this.y1 += oy; this.x2 -= ox; this.y2 -= oy; }
+    return this;
+  }
+
+  draw() {
+    let s = `<line stroke="black" stroke-width="${config.stroke_width}" x1="${this.x1.toFixed(3)}" y1="${this.y1.toFixed(3)}" x2="${this.x2.toFixed(3)}" y2="${this.y2.toFixed(3)}" />`;
+    if (this._tape) s = s.replace('<line', `<line stroke-dasharray="${config.stroke_dasharray}"`);
+    return s;
+  }
+}
+
+class Path {
+  constructor() { this.lines = []; }
+  get last() { return this.lines[this.lines.length - 1]; }
+  startAt(x, y) { this.lines.push(new Line().start(x, y)); }
+  goTo(x, y) { this.last.end(x, y); }
+  push(x, y) {
+    if (this.lines.length === 0) { this.startAt(x, y); }
+    else if (this.last.isCompleted) { this.startAt(this.last.x2, this.last.y2); this.goTo(x, y); }
+    else { this.goTo(x, y); }
+  }
+  draw() {
+    return this.lines
+      .filter(l => l.isCompleted)
+      .map(l => { l.adjustToRadius(config.circle_radius); return l.draw(); })
+      .join('');
+  }
+}
+
+function shouldConnect(section, prev) {
+  if (prev.isTape) return true;
+  if (section.role === 'empty' || prev.role === 'empty') return false;
+  return true;
+}
+
+function makeCircle(x, y) {
+  return `<circle fill="black" stroke="black" stroke-width="${config.stroke_width}" cx="${x}" cy="${y}" r="${config.circle_radius}"></circle>`;
+}
+
+function makeDevoicedCircle(mora, x, y) {
+  if (mora.text.length === 1) {
+    const cx = x + config.font_size / 2 + config.text_dx;
+    const cy = y + config.text_dx + Math.ceil(config.stroke_width);
+    return `<circle class="devoiced" cx="${cx}" cy="${cy}" stroke-width="${config.devoiced_circle_width}" r="${config.devoiced_circle_radius}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+  }
+  const fs = config.font_size, r = config.devoiced_circle_radius;
+  const ry = y - config.font_size - Math.floor(config.stroke_width);
+  const pad = config.devoiced_rectangle_padding;
+  return `<rect class="devoiced" x="${x - fs - pad}" y="${ry}" width="${fs * 2 + pad * 2}" height="${r * 2}" rx="${r}" stroke-width="${config.devoiced_circle_width}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+}
+
+function makeGroup(elements, cls) { return `<g class="${cls}">${elements.join('')}</g>`; }
+function makeSvg(contents, w, h, vh) {
+  return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
+}
+function makeText(mora, x, y, dx) {
+  const cls = mora.devoiced ? ' class="devoiced"' : '';
+  return `<text${cls} font-size="${config.font_size}px" fill="black" x="${x}" y="${y}" dx="${dx}">${mora.text}</text>`;
+}
+
+function calcSvgWidth(sequence, step) {
+  return sequence.reduce((sum, s) => sum + (s.role !== 'empty' ? s.moraes.length : 0), 0) * step
+    + config.graph_horizontal_padding * 2;
+}
+
+function makeGraph(sequence) {
+  sequence = filterEmptyMoraes(sequence);
+  if (!sequence.length) return null;
+
+  let xPos = config.size_unit + config.graph_horizontal_padding;
+  let yPos = config.size_unit;
+  const heightHigh = config.size_unit;
+  const heightLow = heightHigh + config.graph_height;
+  const xStep = config.x_step;
+  const heightKana = heightLow + xStep;
+
+  const circles = [], paths = [], text = [];
+
+  for (let i = 0; i < sequence.length; i++) {
+    const section = sequence[i];
+    if (section.role === 'empty' || section.isTape) continue;
+
+    const wordCircles = [], textMoraes = [];
+    const path = new Path();
+    const connector = new Line();
+
+    if (i > 0 && shouldConnect(section, sequence[i - 1])) {
+      connector.start(xPos - xStep, yPos, sequence[i - 1].isTape);
+    }
+
+    const moraes = section.moraes;
+    for (let j = 0; j < moraes.length; j++) {
+      const mora = moraes[j];
+      let moraLevel;
+      if (mora.text === 'っ' || mora.text === 'ッ') {
+        moraLevel = (j === 1 && section.levels[j - 1] === L) ? section.levels[j - 1] : section.levels[j];
+      } else {
+        moraLevel = section.levels[j];
+      }
+      yPos = moraLevel === H ? heightHigh : heightLow;
+      wordCircles.push(makeCircle(xPos, yPos));
+      path.push(xPos, yPos);
+
+      if (j === 0 && connector.isUnfinished) {
+        connector.end(xPos, yPos);
+      }
+
+      if (mora.text !== GHOST_PARTICLE) {
+        if (mora.devoiced) {
+          textMoraes.push(makeDevoicedCircle(mora, xPos, heightKana));
+        }
+        textMoraes.push(makeText(mora, xPos, heightKana, config.text_dx * mora.text.length));
+      }
+
+      xPos += xStep;
+    }
+
+    circles.push(makeGroup(wordCircles, section.classname));
+    paths.push(makeGroup([path.draw()], section.classname));
+    text.push(makeGroup(textMoraes, section.classname));
+
+    if (connector.isCompleted) {
+      paths.push(makeGroup([connector.adjustToRadius(config.circle_radius).draw()], 'connector'));
+    }
+  }
+
+  const content = [makeGroup(paths, 'paths'), makeGroup(circles, 'circles')];
+  const svgWidth = calcSvgWidth(sequence, xStep);
+  const svgHeightText = heightKana + config.size_unit;
+  const svgHeightNoText = heightLow + config.size_unit;
+
+  let svgHeight, visibleHeight;
+  if (config.no_text) {
+    svgHeight = svgHeightNoText;
+    visibleHeight = Math.round((svgHeightNoText / svgHeightText) * config.graph_visible_height);
+  } else {
+    svgHeight = svgHeightText;
+    visibleHeight = config.graph_visible_height;
+    content.push(makeGroup(text, 'text'));
+  }
+
+  return makeSvg(content.join(''), svgWidth, svgHeight, visibleHeight);
+}
+
+// ─── Pipeline ───
+function makeSequences(expr) {
+  expr = normalizeForParsing(expr);
+  let sentences = splitToSentences(expr);
+  sentences = sentences.map(detachGhostParticle);
+  let bySection = sentences.map(splitToSections);
+  bySection = splitMultiplePitchNotations(bySection);
+  let sequences = bySection.map(parseSections);
+  sequences = sequences.map(buildHighLow);
+  return sequences;
+}
+
+function makeGraphs(sequences) {
+  return sequences.map(makeGraph).filter(Boolean);
+}
+
+// ─── UI ───
+const inputEl = document.getElementById('input');
+const outputEl = document.getElementById('output');
+
+function update() {
+  const expr = inputEl.value.trim();
+  if (!expr) { outputEl.innerHTML = ''; return; }
+  try {
+    const graphs = makeGraphs(makeSequences(expr));
+    outputEl.innerHTML = graphs.map(g => `<div class="graph-row">${g}</div>`).join('');
+  } catch (e) {
+    outputEl.innerHTML = `<div style="color:#e55">${e.message}</div>`;
+  }
+}
+
+inputEl.addEventListener('input', update);
+update();
+
+const examples = {
+  basic: 'がっこう;0\nにほんご;0\nおおもの;2\nつくった;2\nひとり;1',
+  particles: 'よねん; ぐらい;pa\nよねん; ぐらい;po1\nじぶん; じゃ',
+  connected: '大物[おおもの];2 ; まで;1\nじんせい;1 | まで;1\nじんせい;1 ; まで;a-1',
+  devoiced: '君[dきdみ]; dの 嘘[dうdそ];1 dを',
+  ghost: 'ひとり;1-\nひとり;2-\nひとり;3-',
+};
+
+function setExample(name) {
+  inputEl.value = examples[name] || '';
+  update();
+}
+</script>
+</body>
+</html>
