@@ -9,12 +9,14 @@ try:
     from .kana_conv import to_hiragana, to_katakana
     from .split import *
     from .split import split_accent
+    from .colored_sentence import apply_kanji_colors
 except ImportError:
     from config import config
     from kana_conv import to_hiragana, to_katakana
     from split import *
     from split import split_accent
     from katakana_conversion import literal_pronunciation
+    from colored_sentence import apply_kanji_colors
 
 
 class Role(Enum):
@@ -515,19 +517,6 @@ def make_graph(sequence: List[Section]) -> Optional[str]:
     notation = f'<!-- generated using syntax: "{" ".join(s.raw for s in sequence)}" -->'
 
     return f'{notation}\n{svg}'
-
-
-def apply_kanji_colors(seq_sequences: List[List[Section]]) -> List[str]:
-    def do(sentence: List[Section]):
-        result = []
-        for section in sentence:
-            if section.word in SENT_HIDDEN or section.is_tape:
-                continue
-            result.append(f'<span class="{section.role.name}">{section.word}</span>')
-
-        return ''.join(result)
-
-    return [do(s) for s in seq_sequences]
 
 
 def make_sequences(expr: str) -> List[List[Section]]:
