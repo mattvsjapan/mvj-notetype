@@ -1,0 +1,467 @@
+/* Fonts — add .woff2 files to Anki media folder (prefix _ prevents cleanup) */
+@font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
+@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
+
+:root {
+    /* Surface palette — blue-tinted darks for depth */
+    --bg: #0c0d12;
+    --bg-card: #15161c;
+    --bg-surface: #1e1f27;
+    --bg-surface-hover: #26272f;
+
+    /* Borders */
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.09);
+
+    /* Text — 4-level hierarchy */
+    --text-1: rgba(255, 255, 255, 0.92);
+    --text-2: rgba(255, 255, 255, 0.56);
+    --text-3: rgba(255, 255, 255, 0.30);
+
+    /* Accent — warm copper */
+    --accent: #c8805a;
+    --accent-text: #dba07e;
+    --accent-soft: rgba(200, 128, 90, 0.12);
+    --accent-glow: rgba(200, 128, 90, 0.22);
+
+    /* Fonts */
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', -apple-system, system-ui, sans-serif;
+    --jp: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --jp-kyokasho: 'YuKyokasho', 'YuKyokashotai', 'UD Digi Kyokasho NP-R', var(--jp);
+
+    /* Motion */
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* — Anki wrapper — */
+
+.card {
+    background: var(--bg);
+    padding: 40px 20px;
+}
+
+/* Grain overlay on page background */
+.card::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* — Base — */
+
+.card-inner {
+    background:
+        linear-gradient(
+            165deg,
+            rgba(255, 255, 255, 0.02) 0%,
+            transparent 45%
+        ),
+        var(--bg-card);
+    color: var(--text-1);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 40px 44px;
+    max-width: 580px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 1px 3px rgba(8, 10, 24, 0.40),
+        0 4px 12px rgba(8, 10, 24, 0.28),
+        0 16px 36px rgba(8, 10, 24, 0.16);
+}
+
+/* Grain on card surface */
+.card-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px;
+    opacity: 0.035;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Card contents above grain */
+.card-inner > * {
+    position: relative;
+    z-index: 1;
+}
+
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
+    margin: 28px 0;
+}
+
+/* Pitch graph */
+
+.pitch-graph {
+    text-align: center;
+    margin: -4px 0 20px;
+    line-height: 0;
+}
+
+/* Pitch accent colors — dark theme (SVG) */
+
+.atamadaka circle,
+.atamadaka line { fill: #ff6b6b; stroke: #ff6b6b; }
+.atamadaka text { fill: #ff6b6b; }
+
+.heiban circle,
+.heiban line { fill: #6ea8fe; stroke: #6ea8fe; }
+.heiban text { fill: #6ea8fe; }
+
+.nakadaka circle,
+.nakadaka line { fill: #ffb347; stroke: #ffb347; }
+.nakadaka text { fill: #ffb347; }
+
+.kifuku circle,
+.kifuku line { fill: #c4a0ff; stroke: #c4a0ff; }
+.kifuku text { fill: #c4a0ff; }
+
+.odaka circle,
+.odaka line { fill: #51cf66; stroke: #51cf66; }
+.odaka text { fill: #51cf66; }
+
+.connector line { stroke: rgba(255, 255, 255, 0.25); }
+.particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
+.particle line { stroke: rgba(255, 255, 255, 0.3); }
+.particle text { fill: rgba(255, 255, 255, 0.3); }
+
+/* Text should not have stroke */
+.atamadaka text,
+.heiban text,
+.nakadaka text,
+.kifuku text,
+.odaka text,
+.connector text,
+.particle text { stroke: none; }
+
+/* Pitch accent colors — dark theme (HTML spans) */
+
+.atamadaka { color: #ff6b6b; }
+.heiban { color: #6ea8fe; }
+.nakadaka { color: #ffb347; }
+.kifuku { color: #c4a0ff; }
+.odaka { color: #51cf66; }
+.particle { color: rgba(255, 255, 255, 0.3); }
+
+/* Devoiced markers are hollow */
+circle.devoiced, rect.devoiced { fill: none !important; }
+
+/* Hidden elements */
+span.empty { display: none; }
+
+/* — Replay button (targets Anki's generated .replay-button) — */
+
+.replay-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: transform 180ms var(--spring);
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.replay-button:hover {
+    transform: scale(1.06);
+}
+
+.replay-button:active {
+    transform: scale(0.95);
+    transition-duration: 80ms;
+}
+
+.replay-button svg {
+    display: block;
+}
+
+/* Circle */
+.replay-button svg circle,
+.replay-button .replayCircle {
+    fill: var(--bg-surface);
+    stroke: rgba(255, 255, 255, 0.07);
+    stroke-width: 1.5;
+    transition: stroke 200ms ease, fill 200ms ease;
+}
+
+/* Triangle — shifted 1px right for optical centering */
+.replay-button svg path,
+.replay-button .replayTriangle {
+    fill: var(--text-2);
+    stroke: none;
+    transition: fill 200ms ease;
+}
+
+.replay-button:hover svg circle,
+.replay-button:hover .replayCircle {
+    fill: var(--bg-surface-hover);
+    stroke: var(--accent-glow);
+}
+
+.replay-button:hover svg path,
+.replay-button:hover .replayTriangle {
+    fill: var(--accent);
+}
+
+/* ================================================
+   AUDIO ROW (always visible — front & back)
+   ================================================ */
+
+.audio-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.audio-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 72px;
+}
+
+.audio-item .replay-button svg {
+    width: 52px;
+    height: 52px;
+}
+
+.audio-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    text-transform: uppercase;
+}
+
+/* Front entrance */
+.fi {
+    animation: fadeIn 0.35s var(--spring) both;
+    animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================
+   FRONT — centered audio with extra padding
+   ================================================ */
+
+.front .audio-row {
+    padding: 48px 0;
+}
+
+/* ================================================
+   BACK — compact audio controls + answer section
+   ================================================ */
+
+.back .audio-row {
+    padding: 4px 0 0;
+    gap: 28px;
+}
+
+.back .audio-item {
+    gap: 6px;
+}
+
+.back .audio-item .replay-button svg {
+    width: 40px;
+    height: 40px;
+}
+
+.back .audio-label {
+    font-size: 9px;
+}
+
+.answer {
+    display: flex;
+    flex-direction: column;
+    margin-top: 28px;
+}
+
+/* Target word — Japanese serif for kanji with ruby furigana */
+
+.target-word {
+    font-family: var(--jp-kyokasho);
+    font-size: 64px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-align: center;
+    margin: 18px 0 22px;
+    text-rendering: optimizeLegibility;
+}
+
+/* Ruby (furigana) base styles */
+
+ruby {
+    ruby-align: center;
+}
+
+rt {
+    font-family: var(--jp);
+    font-weight: 400;
+    color: var(--text-2);
+}
+
+.target-word rt {
+    font-size: 0.34em;
+    letter-spacing: 0.06em;
+    transform: translateY(2px);
+    color: inherit;
+    opacity: 0.5;
+}
+
+/* Sentence-level furigana */
+
+.sentence ruby {
+    ruby-align: center;
+}
+
+.sentence rt {
+    font-size: 0.58em;
+    font-weight: 400;
+}
+
+/* Sentence */
+
+.sentence {
+    font-family: var(--jp);
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1.85;
+    color: var(--text-2);
+    text-align: justify;
+    margin: 0;
+}
+
+.sentence mark {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    padding: 2px 5px;
+    margin: 0 -2px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-decoration: none;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+/* Definition */
+
+.def {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.75;
+    color: var(--text-2);
+    margin: 0;
+}
+
+/* Japanese definition — pure CSS toggle */
+
+.jp-def-section {
+    text-align: center;
+}
+
+.jp-def-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.jp-def-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: var(--jp);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+    margin-top: 16px;
+}
+
+.jp-def-toggle:hover {
+    color: var(--text-2);
+    border-color: rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.jp-def-toggle::after {
+    content: ' ›';
+}
+
+.jp-def-input:checked + .jp-def-toggle::after {
+    content: ' ‹';
+}
+
+.jp-def-wrap {
+    text-align: initial;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 350ms var(--ease), opacity 300ms ease;
+}
+
+.jp-def-input:checked ~ .jp-def-wrap {
+    max-height: 200px;
+    opacity: 1;
+}
+
+.jp-def {
+    font-family: var(--jp);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.85;
+    color: var(--text-2);
+    margin: 0;
+    padding-top: 12px;
+}
+
+/* Back entrance animation */
+
+.ri {
+    animation: reveal 0.4s var(--spring) both;
+    animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+@keyframes reveal {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
