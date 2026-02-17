@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anki Card Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- =====================================================
+     ANKI-COMPATIBLE STYLES
+     Copy everything in this style block to Anki's Styling.
+     ===================================================== -->
+<style id="anki-styles">
+:root {
+    --bg: #0e0e0e;
+    --bg-card: #111;
+    --bg-surface: #191919;
+    --border: rgba(255, 255, 255, 0.06);
+    --text-1: #e8e6e3;
+    --text-2: #878580;
+    --text-3: #4a4845;
+    --accent: #c27a52;
+    --accent-soft: rgba(194, 122, 82, 0.12);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', -apple-system, system-ui, sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* — Base — */
+
+.card-inner {
+    background: var(--bg-card);
+    color: var(--text-1);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    padding: 28px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border);
+}
+
+/* — Replay button (targets Anki's generated .replay-button) — */
+
+.replay-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: transform 150ms var(--ease);
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.replay-button:hover {
+    transform: scale(1.08);
+}
+
+.replay-button:active {
+    transform: scale(0.94);
+}
+
+.replay-button svg {
+    display: block;
+}
+
+/* Circle */
+.replay-button svg circle,
+.replay-button .replayCircle {
+    fill: var(--bg-surface);
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 2;
+    transition: stroke 150ms var(--ease), fill 150ms var(--ease);
+}
+
+/* Triangle */
+.replay-button svg path,
+.replay-button .replayTriangle {
+    fill: var(--text-2);
+    stroke: none;
+    transition: fill 150ms var(--ease);
+}
+
+.replay-button:hover svg circle,
+.replay-button:hover .replayCircle {
+    stroke: rgba(194, 122, 82, 0.3);
+}
+
+.replay-button:hover svg path,
+.replay-button:hover .replayTriangle {
+    fill: var(--accent);
+}
+
+/* ================================================
+   FRONT
+   ================================================ */
+
+.front {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 52px 0;
+}
+
+.audio-row {
+    display: flex;
+    align-items: center;
+    gap: 44px;
+}
+
+.audio-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.audio-item .replay-button svg {
+    width: 48px;
+    height: 48px;
+}
+
+.audio-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    text-transform: uppercase;
+}
+
+/* Front entrance */
+.fi {
+    animation: fadeIn 0.3s ease both;
+}
+
+.fi:nth-child(2) {
+    animation-delay: 80ms;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================
+   BACK
+   ================================================ */
+
+.back {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.target-word {
+    font-family: var(--sans);
+    font-size: 44px;
+    font-weight: 600;
+    color: var(--text-1);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0;
+    padding-top: 4px;
+}
+
+/* Image */
+
+.image-wrap {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.image-wrap img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Sentence */
+
+.sentence {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.65;
+    color: var(--text-2);
+    margin: 0;
+}
+
+.sentence mark {
+    background: var(--accent-soft);
+    color: #d08a64;
+    padding: 1px 5px;
+    margin: 0 -1px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+/* Definition row */
+
+.def-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.def {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-3);
+    font-style: italic;
+    margin: 0;
+}
+
+.def-audio {
+    flex-shrink: 0;
+    padding-top: 1px;
+}
+
+.def-audio .replay-button svg {
+    width: 30px;
+    height: 30px;
+}
+
+/* Back entrance animation — fires on template load in Anki */
+
+.ri {
+    animation: reveal 0.4s var(--ease) both;
+}
+
+.ri:nth-child(1) { animation-delay: 0ms; }
+.ri:nth-child(2) { animation-delay: 60ms; }
+.ri:nth-child(3) { animation-delay: 120ms; }
+.ri:nth-child(4) { animation-delay: 160ms; }
+.ri:nth-child(5) { animation-delay: 200ms; }
+
+@keyframes reveal {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<!-- =====================================================
+     PREVIEW-ONLY STYLES (not needed in Anki)
+     ===================================================== -->
+<style>
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #070707;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 80px;
+}
+
+/* Grain */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Preview card frame */
+.preview-frame {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+}
+
+.preview-frame .card-inner {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Inset highlight for depth */
+.preview-frame .card-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Image placeholder (preview only — real cards use <img>) */
+.image-placeholder {
+    width: 100%;
+    height: 200px;
+    background:
+        radial-gradient(ellipse at 25% 65%, rgba(194, 122, 82, 0.06), transparent 55%),
+        radial-gradient(ellipse at 75% 30%, rgba(90, 120, 80, 0.04), transparent 45%),
+        linear-gradient(170deg, #161616 0%, #121210 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-placeholder svg {
+    color: var(--text-3);
+    opacity: 0.45;
+}
+
+/* Flip hint */
+.flip-hint {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #333;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: color 150ms;
+    z-index: 10;
+}
+
+.flip-hint:hover {
+    color: #555;
+}
+
+.flip-hint kbd {
+    font-family: inherit;
+    font-size: 10px;
+    background: #161616;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 2px 7px 1px;
+    color: inherit;
+}
+
+/* Side indicator */
+.side-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+    text-transform: uppercase;
+    position: absolute;
+    top: -22px;
+    left: 2px;
+    opacity: 0.6;
+}
+</style>
+</head>
+<body>
+
+<div class="preview-frame">
+    <span class="side-tag" id="side-tag">front</span>
+
+    <!-- ==================== FRONT ==================== -->
+    <!--
+        Anki Front Template:
+        <div class="front">
+            <div class="audio-row">
+                <div class="audio-item fi">
+                    {{SentenceAudio}}
+                    <span class="audio-label">Sentence</span>
+                </div>
+                <div class="audio-item fi">
+                    {{WordAudio}}
+                    <span class="audio-label">Word</span>
+                </div>
+            </div>
+        </div>
+    -->
+    <div class="card-inner" id="front-card">
+        <div class="front">
+            <div class="audio-row">
+                <div class="audio-item fi">
+                    <button class="replay-button" onclick="event.stopPropagation()">
+                        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
+                    </button>
+                    <span class="audio-label">Sentence</span>
+                </div>
+                <div class="audio-item fi">
+                    <button class="replay-button" onclick="event.stopPropagation()">
+                        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
+                    </button>
+                    <span class="audio-label">Word</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== BACK ==================== -->
+    <!--
+        Anki Back Template:
+        <div class="back">
+            <h1 class="target-word ri">{{Word}}</h1>
+            <div class="image-wrap ri">{{Image}}</div>
+            <p class="sentence ri">{{Sentence}}</p>
+            <div class="divider ri"></div>
+            <div class="def-row ri">
+                <p class="def">{{Definition}}</p>
+                <div class="def-audio">{{DefinitionAudio}}</div>
+            </div>
+        </div>
+    -->
+    <div class="card-inner" id="back-card" style="display: none">
+        <div class="back">
+            <h1 class="target-word ri">ephemeral</h1>
+            <div class="image-wrap ri">
+                <div class="image-placeholder">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="m21 15-5-5L5 21"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="sentence ri">The beauty of cherry blossoms is <mark>ephemeral</mark>, lasting only a few days each spring.</p>
+            <div class="divider ri"></div>
+            <div class="def-row ri">
+                <p class="def">Lasting for a very short time; transitory, fleeting.</p>
+                <div class="def-audio">
+                    <button class="replay-button" onclick="event.stopPropagation()">
+                        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="flip-hint" id="flip-hint">
+    <kbd>space</kbd> show answer
+</div>
+
+<!-- =====================================================
+     PREVIEW-ONLY SCRIPT (not needed in Anki)
+     ===================================================== -->
+<script>
+const frontCard = document.getElementById('front-card');
+const backCard = document.getElementById('back-card');
+const sideTag = document.getElementById('side-tag');
+const flipHint = document.getElementById('flip-hint');
+let showingFront = true;
+
+function restartAnimations(container, selector) {
+    container.querySelectorAll(selector).forEach(el => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = '';
+    });
+}
+
+function flip() {
+    if (showingFront) {
+        frontCard.style.display = 'none';
+        backCard.style.display = '';
+        restartAnimations(backCard, '.ri');
+        sideTag.textContent = 'back';
+        flipHint.innerHTML = '<kbd>space</kbd> flip back';
+    } else {
+        backCard.style.display = 'none';
+        frontCard.style.display = '';
+        restartAnimations(frontCard, '.fi');
+        sideTag.textContent = 'front';
+        flipHint.innerHTML = '<kbd>space</kbd> show answer';
+    }
+    showingFront = !showingFront;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); flip(); }
+});
+
+flipHint.addEventListener('click', flip);
+
+document.querySelector('.preview-frame').addEventListener('click', (e) => {
+    if (e.target.closest('.replay-button')) return;
+    flip();
+});
+</script>
+</body>
+</html>
