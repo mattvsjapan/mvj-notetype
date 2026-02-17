@@ -14,6 +14,11 @@
      Copy everything in this style block to Anki's Styling.
      ===================================================== -->
 <style id="anki-styles">
+/* Fonts — add .woff2 files to Anki media folder (prefix _ prevents cleanup) */
+@font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
+@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
+
 :root {
     /* Surface palette — blue-tinted darks for depth */
     --bg: #0c0d12;
@@ -30,11 +35,16 @@
     --text-2: rgba(255, 255, 255, 0.56);
     --text-3: rgba(255, 255, 255, 0.30);
 
-    /* Accent — warm copper (temperature tension against cool bg) */
+    /* Accent — warm copper */
     --accent: #c8805a;
     --accent-text: #dba07e;
     --accent-soft: rgba(200, 128, 90, 0.12);
     --accent-glow: rgba(200, 128, 90, 0.22);
+
+    /* Target word — purple */
+    --target: #c4a0ff;
+    --target-soft: rgba(196, 160, 255, 0.12);
+    --target-furi: rgba(196, 160, 255, 0.5);
 
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
@@ -81,31 +91,41 @@
     line-height: 0;
 }
 
-/* Accent colors — dark theme */
-.card-inner .atamadaka circle,
-.card-inner .atamadaka line { fill: #ff6b6b; stroke: #ff6b6b; }
-.card-inner .atamadaka text { fill: #ff6b6b; }
+/* Pitch accent colors — dark theme */
 
-.card-inner .heiban circle,
-.card-inner .heiban line { fill: #6ea8fe; stroke: #6ea8fe; }
-.card-inner .heiban text { fill: #6ea8fe; }
+.atamadaka circle,
+.atamadaka line { fill: #ff6b6b; stroke: #ff6b6b; }
+.atamadaka text { fill: #ff6b6b; }
 
-.card-inner .nakadaka circle,
-.card-inner .nakadaka line { fill: #ffb347; stroke: #ffb347; }
-.card-inner .nakadaka text { fill: #ffb347; }
+.heiban circle,
+.heiban line { fill: #6ea8fe; stroke: #6ea8fe; }
+.heiban text { fill: #6ea8fe; }
 
-.card-inner .kifuku circle,
-.card-inner .kifuku line { fill: #c4a0ff; stroke: #c4a0ff; }
-.card-inner .kifuku text { fill: #c4a0ff; }
+.nakadaka circle,
+.nakadaka line { fill: #ffb347; stroke: #ffb347; }
+.nakadaka text { fill: #ffb347; }
 
-.card-inner .odaka circle,
-.card-inner .odaka line { fill: #51cf66; stroke: #51cf66; }
-.card-inner .odaka text { fill: #51cf66; }
+.kifuku circle,
+.kifuku line { fill: #c4a0ff; stroke: #c4a0ff; }
+.kifuku text { fill: #c4a0ff; }
 
-.card-inner .connector line { stroke: rgba(255, 255, 255, 0.25); }
-.card-inner .particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
-.card-inner .particle line { stroke: rgba(255, 255, 255, 0.3); }
-.card-inner .particle text { fill: rgba(255, 255, 255, 0.3); }
+.odaka circle,
+.odaka line { fill: #51cf66; stroke: #51cf66; }
+.odaka text { fill: #51cf66; }
+
+.connector line { stroke: rgba(255, 255, 255, 0.25); }
+.particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
+.particle line { stroke: rgba(255, 255, 255, 0.3); }
+.particle text { fill: rgba(255, 255, 255, 0.3); }
+
+/* Text should not have stroke */
+.atamadaka text,
+.heiban text,
+.nakadaka text,
+.kifuku text,
+.odaka text,
+.connector text,
+.particle text { stroke: none; }
 
 /* — Replay button (targets Anki's generated .replay-button) — */
 
@@ -200,10 +220,7 @@
 /* Front entrance */
 .fi {
     animation: fadeIn 0.35s var(--spring) both;
-}
-
-.fi:nth-child(2) {
-    animation-delay: 70ms;
+    animation-delay: calc(var(--d, 0) * 1ms);
 }
 
 @keyframes fadeIn {
@@ -253,12 +270,12 @@
     font-family: var(--jp-kyokasho);
     font-size: 64px;
     font-weight: 600;
-    color: #c4a0ff;
+    color: var(--target);
     letter-spacing: 0.04em;
     line-height: 1.2;
     text-align: center;
     margin: 18px 0 22px;
-    text-shadow: 0 0 40px rgba(196, 160, 255, 0.12);
+    text-shadow: 0 0 40px var(--target-soft);
     text-rendering: optimizeLegibility;
 }
 
@@ -278,7 +295,7 @@ rt {
     font-size: 0.34em;
     letter-spacing: 0.06em;
     transform: translateY(2px);
-    color: rgba(196, 160, 255, 0.5);
+    color: var(--target-furi);
 }
 
 /* Sentence-level furigana */
@@ -353,10 +370,18 @@ rt {
     margin: 0;
 }
 
-/* Japanese definition reveal */
+/* Japanese definition — pure CSS toggle */
 
 .jp-def-section {
     text-align: center;
+}
+
+.jp-def-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .jp-def-toggle {
@@ -381,6 +406,14 @@ rt {
     background: rgba(255, 255, 255, 0.04);
 }
 
+.jp-def-toggle::after {
+    content: ' ›';
+}
+
+.jp-def-input:checked + .jp-def-toggle::after {
+    content: ' ‹';
+}
+
 .jp-def-wrap {
     text-align: initial;
     max-height: 0;
@@ -389,7 +422,7 @@ rt {
     transition: max-height 350ms var(--ease), opacity 300ms ease;
 }
 
-.jp-def-wrap.open {
+.jp-def-input:checked ~ .jp-def-wrap {
     max-height: 200px;
     opacity: 1;
 }
@@ -404,19 +437,12 @@ rt {
     padding-top: 12px;
 }
 
-/* Back entrance animation — fires on template load in Anki */
+/* Back entrance animation */
 
 .ri {
     animation: reveal 0.4s var(--spring) both;
+    animation-delay: calc(var(--d, 0) * 1ms);
 }
-
-.ri:nth-child(1) { animation-delay: 0ms; }
-.ri:nth-child(2) { animation-delay: 50ms; }
-.ri:nth-child(3) { animation-delay: 95ms; }
-.ri:nth-child(4) { animation-delay: 135ms; }
-.ri:nth-child(5) { animation-delay: 170ms; }
-.ri:nth-child(6) { animation-delay: 200ms; }
-.ri:nth-child(7) { animation-delay: 225ms; }
 
 @keyframes reveal {
     from {
@@ -429,18 +455,6 @@ rt {
     }
 }
 </style>
-
-<!-- =====================================================
-     ANKI-COMPATIBLE SCRIPT
-     Copy this script block to the Back Template in Anki.
-     ===================================================== -->
-<script id="anki-script">
-function toggleJpDef(btn) {
-    var wrap = btn.nextElementSibling;
-    wrap.classList.toggle('open');
-    btn.textContent = wrap.classList.contains('open') ? '日本語 ‹' : '日本語 ›';
-}
-</script>
 
 <!-- =====================================================
      PREVIEW-ONLY STYLES (not needed in Anki)
@@ -648,11 +662,11 @@ body::after {
         Anki Front Template:
         <div class="front">
             <div class="audio-row">
-                <div class="audio-item fi">
+                <div class="audio-item fi" style="--d:0">
                     {{WordAudio}}
                     <span class="audio-label">Word</span>
                 </div>
-                <div class="audio-item fi">
+                <div class="audio-item fi" style="--d:70">
                     {{SentenceAudio}}
                     <span class="audio-label">Sentence</span>
                 </div>
@@ -671,24 +685,33 @@ body::after {
                     {{SentenceAudio}}
                     <span class="audio-label">Sentence</span>
                 </div>
+                {{#DefinitionAudio}}
                 <div class="audio-item">
                     {{DefinitionAudio}}
                     <span class="audio-label">Definition</span>
                 </div>
+                {{/DefinitionAudio}}
             </div>
             <div class="answer">
-                <h1 class="target-word ri">{{WordFurigana}}</h1>
-                <div class="pitch-graph ri">{{PitchGraph}}</div>
-                <div class="image-wrap ri">{{Image}}</div>
-                <p class="sentence ri">{{SentenceFurigana}}</p>
-                <div class="divider ri"></div>
-                <p class="def ri">{{Definition}}</p>
-                <div class="jp-def-section ri">
-                    <button class="jp-def-toggle" onclick="toggleJpDef(this)">日本語 ›</button>
+                <h1 class="target-word ri" style="--d:0">{{WordFurigana}}</h1>
+                {{#PitchGraph}}
+                <div class="pitch-graph ri" style="--d:50">{{PitchGraph}}</div>
+                {{/PitchGraph}}
+                {{#Image}}
+                <div class="image-wrap ri" style="--d:95">{{Image}}</div>
+                {{/Image}}
+                <p class="sentence ri" style="--d:135">{{SentenceFurigana}}</p>
+                <div class="divider ri" style="--d:170"></div>
+                <p class="def ri" style="--d:200">{{Definition}}</p>
+                {{#DefinitionJP}}
+                <div class="jp-def-section ri" style="--d:225">
+                    <input type="checkbox" id="jp-toggle" class="jp-def-input">
+                    <label for="jp-toggle" class="jp-def-toggle">日本語</label>
                     <div class="jp-def-wrap">
                         <p class="jp-def">{{DefinitionJP}}</p>
                     </div>
                 </div>
+                {{/DefinitionJP}}
             </div>
         </div>
     -->
@@ -696,13 +719,13 @@ body::after {
     <div class="card-inner" id="card">
         <!-- Audio row: always visible, word first -->
         <div class="audio-row">
-            <div class="audio-item fi">
+            <div class="audio-item fi" style="--d:0">
                 <button class="replay-button" onclick="event.stopPropagation()">
                     <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M27 20v24l19-12z"/></svg>
                 </button>
                 <span class="audio-label">Word</span>
             </div>
-            <div class="audio-item fi">
+            <div class="audio-item fi" style="--d:70">
                 <button class="replay-button" onclick="event.stopPropagation()">
                     <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M27 20v24l19-12z"/></svg>
                 </button>
@@ -718,16 +741,17 @@ body::after {
 
         <!-- Answer section: hidden on front, revealed on flip -->
         <div class="answer">
-            <h1 class="target-word ri"><ruby>儚<rt>はかな</rt></ruby>い</h1>
-            <div class="pitch-graph ri" id="pitch-graph"></div>
-            <div class="image-wrap ri">
+            <h1 class="target-word ri" style="--d:0"><ruby>儚<rt>はかな</rt></ruby>い</h1>
+            <div class="pitch-graph ri" style="--d:50" id="pitch-graph"></div>
+            <div class="image-wrap ri" style="--d:95">
                 <img src="../Office_Girls_01_475033-476667.jpg" alt="">
             </div>
-            <p class="sentence ri"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<ruby>儚<rt>はかな</rt></ruby>い、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
-            <div class="divider ri"></div>
-            <p class="def ri">Lasting only a brief moment; so short-lived and delicate that it seems as though it could vanish at any time</p>
-            <div class="jp-def-section ri">
-                <button class="jp-def-toggle" onclick="event.stopPropagation(); toggleJpDef(this);">日本語 ›</button>
+            <p class="sentence ri" style="--d:135"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<ruby>儚<rt>はかな</rt></ruby>い、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
+            <div class="divider ri" style="--d:170"></div>
+            <p class="def ri" style="--d:200">Lasting only a brief moment; so short-lived and delicate that it seems as though it could vanish at any time</p>
+            <div class="jp-def-section ri" style="--d:225">
+                <input type="checkbox" id="jp-toggle" class="jp-def-input">
+                <label for="jp-toggle" class="jp-def-toggle">日本語</label>
                 <div class="jp-def-wrap">
                     <p class="jp-def">長く続かず、すぐに消えてしまうさま。もろくてこわれやすく、いつまでも保つことができないさま。人の命や美しさなど、永遠ではないものに対して使われることが多い。</p>
                 </div>
@@ -794,12 +818,8 @@ function flip() {
         sideTag.textContent = 'front';
         flipHint.innerHTML = '<kbd>space</kbd> show answer';
         // Reset JP def on flip back
-        var wrap = card.querySelector('.jp-def-wrap');
-        var btn = card.querySelector('.jp-def-toggle');
-        if (wrap && wrap.classList.contains('open')) {
-            wrap.classList.remove('open');
-            btn.textContent = '日本語 ›';
-        }
+        var checkbox = card.querySelector('.jp-def-input');
+        if (checkbox) checkbox.checked = false;
     }
 }
 
@@ -811,7 +831,7 @@ flipHint.addEventListener('click', flip);
 
 document.querySelector('.preview-frame').addEventListener('click', (e) => {
     if (e.target.closest('.replay-button')) return;
-    if (e.target.closest('.jp-def-toggle')) return;
+    if (e.target.closest('.jp-def-section')) return;
     flip();
 });
 </script>
