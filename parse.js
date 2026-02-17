@@ -58,12 +58,13 @@ function splitSection(raw) {
 
 function splitAccent(raw) {
   if (!raw && raw !== '') raw = '';
-  let m = raw.match(/^(p)?([a-zA-Z])?(-?\d)?$/);
+  let m = raw.match(/^(p)?([a-zA-Z])?(-)?(\d)?(-)?$/);
   if (m) {
     return {
       is_particle: m[1] || null,
       role: m[2] || m[1] || null,
-      pitch: m[3] || null,
+      allLow: !!(m[3] || m[5]),
+      pitch: m[4] || null,
     };
   }
   m = raw.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);

@@ -23,7 +23,7 @@ function guessRoleFromPitchNum(moraes, pitchN) {
   if (pitchN == null) return 'heiban';
   const n = parseInt(pitchN);
   if (n === 0) return 'heiban';
-  if (n < 0) return 'particle';
+
   if (n === 1) return 'atamadaka';
   if (n === moraes.length) return 'odaka';
   if (n < moraes.length) return 'nakadaka';
@@ -39,6 +39,7 @@ function determineRoleTokyo(sd) {
 }
 
 function determinePitchTokyo(sd) {
+  if (sd.accent.allLow) return -1;
   if (sd.sep && sd.accent.pitch != null) return parseInt(sd.accent.pitch);
   const role = sd.accent.role;
   if (role === 'heiban' || role === 'setsubigo') return 0;
