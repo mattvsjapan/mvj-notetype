@@ -14,13 +14,13 @@
      ===================================================== -->
 <style id="anki-styles">
 :root {
-    --bg: #0e0e0e;
-    --bg-card: #111;
-    --bg-surface: #191919;
+    --bg: #0a0a0b;
+    --bg-card: #141416;
+    --bg-surface: #1e1e22;
     --border: rgba(255, 255, 255, 0.06);
-    --text-1: #e8e6e3;
-    --text-2: #878580;
-    --text-3: #4a4845;
+    --text-1: rgba(255, 255, 255, 0.92);
+    --text-2: rgba(255, 255, 255, 0.62);
+    --text-3: rgba(255, 255, 255, 0.36);
     --accent: #c27a52;
     --accent-soft: rgba(194, 122, 82, 0.12);
     --mono: 'JetBrains Mono', monospace;
@@ -37,8 +37,8 @@
     color: var(--text-1);
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
-    padding: 28px;
-    max-width: 420px;
+    padding: 36px;
+    max-width: 540px;
     margin: 0 auto;
 }
 
@@ -110,26 +110,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 44px;
+    gap: 52px;
 }
 
 .audio-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .audio-item .replay-button svg {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
 }
 
 .audio-label {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: var(--text-3);
     text-transform: uppercase;
 }
@@ -153,7 +153,7 @@
    ================================================ */
 
 .front .audio-row {
-    padding: 52px 0;
+    padding: 60px 0;
 }
 
 /* ================================================
@@ -161,25 +161,25 @@
    ================================================ */
 
 .back .audio-row {
-    padding: 8px 0 0;
+    padding: 10px 0 0;
 }
 
 .answer {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    margin-top: 20px;
+    gap: 24px;
+    margin-top: 28px;
 }
 
 /* Target word — Japanese serif for kanji with ruby furigana */
 
 .target-word {
     font-family: var(--jp-kyokasho);
-    font-size: 44px;
+    font-size: 52px;
     font-weight: 600;
     color: var(--text-1);
     letter-spacing: 0.02em;
-    line-height: 1.1;
+    line-height: 1.15;
     margin: 0;
     padding-top: 4px;
 }
@@ -217,13 +217,13 @@ rt {
 
 .image-wrap {
     width: 100%;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
 }
 
 .image-wrap img {
     width: 100%;
-    height: 200px;
+    height: 220px;
     object-fit: cover;
     display: block;
 }
@@ -232,19 +232,19 @@ rt {
 
 .sentence {
     font-family: var(--jp);
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 400;
-    line-height: 1.8;
+    line-height: 1.9;
     color: var(--text-2);
     margin: 0;
 }
 
 .sentence mark {
     background: var(--accent-soft);
-    color: #d08a64;
-    padding: 1px 5px;
-    margin: 0 -1px;
-    border-radius: 3px;
+    color: #d9956e;
+    padding: 2px 6px;
+    margin: 0 -2px;
+    border-radius: 4px;
     font-weight: 500;
     text-decoration: none;
 }
@@ -254,14 +254,14 @@ rt {
 .def-row {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
 }
 
 .def {
     flex: 1;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--text-2);
     font-style: italic;
     margin: 0;
@@ -269,12 +269,12 @@ rt {
 
 .def-audio {
     flex-shrink: 0;
-    padding-top: 1px;
+    padding-top: 2px;
 }
 
 .def-audio .replay-button svg {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
 }
 
 /* Japanese definition reveal */
@@ -283,10 +283,10 @@ rt {
     display: inline-block;
     background: none;
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 10px;
+    border-radius: 5px;
+    padding: 5px 14px;
     font-family: var(--jp);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text-3);
     cursor: pointer;
@@ -307,18 +307,18 @@ rt {
 }
 
 .jp-def-wrap.open {
-    max-height: 120px;
+    max-height: 200px;
     opacity: 1;
 }
 
 .jp-def {
     font-family: var(--jp);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 400;
-    line-height: 1.7;
+    line-height: 1.8;
     color: var(--text-2);
     margin: 0;
-    padding-top: 8px;
+    padding-top: 10px;
 }
 
 /* Back entrance animation — fires on template load in Anki */
@@ -370,7 +370,7 @@ function toggleJpDef(btn) {
 }
 
 body {
-    background: #070707;
+    background: var(--bg);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -391,16 +391,20 @@ body::after {
 
 /* Preview card frame */
 .preview-frame {
-    width: 100%;
-    max-width: 420px;
+    width: 90vw;
+    max-width: 540px;
     position: relative;
 }
 
 .preview-frame .card-inner {
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        0 12px 24px rgba(0, 0, 0, 0.25);
 }
 
 /* Inset highlight for depth */
@@ -409,7 +413,7 @@ body::after {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     pointer-events: none;
     z-index: 1;
 }
@@ -448,11 +452,11 @@ body::after {
 }
 
 .preview-frame .card-inner.flipped .audio-row {
-    padding: 8px 0 0;
+    padding: 10px 0 0;
 }
 
 .preview-frame .card-inner.flipped .answer {
-    max-height: 800px;
+    max-height: 1000px;
     opacity: 1;
 }
 
@@ -559,7 +563,7 @@ body::after {
 
     <div class="card-inner" id="card">
         <!-- Audio row: always visible, word first -->
-        <div class="audio-row" style="padding: 52px 0;">
+        <div class="audio-row" style="padding: 60px 0;">
             <div class="audio-item fi">
                 <button class="replay-button" onclick="event.stopPropagation()">
                     <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
