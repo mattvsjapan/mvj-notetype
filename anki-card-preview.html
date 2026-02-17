@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anki Card Preview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
 
 <!-- =====================================================
      ANKI-COMPATIBLE STYLES
@@ -25,6 +25,8 @@
     --accent-soft: rgba(194, 122, 82, 0.12);
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', -apple-system, system-ui, sans-serif;
+    --jp: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+    --jp-serif: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -101,19 +103,13 @@
 }
 
 /* ================================================
-   FRONT
+   AUDIO ROW (always visible — front & back)
    ================================================ */
-
-.front {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 52px 0;
-}
 
 .audio-row {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 44px;
 }
 
@@ -153,24 +149,68 @@
 }
 
 /* ================================================
-   BACK
+   FRONT — centered audio with extra padding
    ================================================ */
 
-.back {
+.front .audio-row {
+    padding: 52px 0;
+}
+
+/* ================================================
+   BACK — audio at top + answer section
+   ================================================ */
+
+.back .audio-row {
+    padding: 8px 0 0;
+}
+
+.answer {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    margin-top: 20px;
 }
 
+/* Target word — Japanese serif for kanji with ruby furigana */
+
 .target-word {
-    font-family: var(--sans);
+    font-family: var(--jp-serif);
     font-size: 44px;
     font-weight: 600;
     color: var(--text-1);
-    letter-spacing: -0.03em;
-    line-height: 1.05;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
     margin: 0;
     padding-top: 4px;
+}
+
+/* Ruby (furigana) base styles */
+
+ruby {
+    ruby-align: center;
+}
+
+rt {
+    font-family: var(--jp);
+    font-weight: 400;
+    color: var(--text-2);
+}
+
+.target-word rt {
+    font-size: 0.32em;
+    letter-spacing: 0.06em;
+    transform: translateY(2px);
+}
+
+/* Sentence-level furigana */
+
+.sentence ruby {
+    ruby-align: center;
+}
+
+.sentence rt {
+    font-size: 0.6em;
+    font-weight: 400;
 }
 
 /* Image */
@@ -191,9 +231,10 @@
 /* Sentence */
 
 .sentence {
-    font-size: 15px;
+    font-family: var(--jp);
+    font-size: 16px;
     font-weight: 400;
-    line-height: 1.65;
+    line-height: 1.8;
     color: var(--text-2);
     margin: 0;
 }
@@ -236,6 +277,50 @@
     height: 30px;
 }
 
+/* Japanese definition reveal */
+
+.jp-def-toggle {
+    display: inline-block;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: var(--jp);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: color 200ms var(--ease), border-color 200ms var(--ease);
+    margin-top: 4px;
+}
+
+.jp-def-toggle:hover {
+    color: var(--text-2);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.jp-def-wrap {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 350ms var(--ease), opacity 300ms ease;
+}
+
+.jp-def-wrap.open {
+    max-height: 120px;
+    opacity: 1;
+}
+
+.jp-def {
+    font-family: var(--jp);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-3);
+    margin: 0;
+    padding-top: 8px;
+}
+
 /* Back entrance animation — fires on template load in Anki */
 
 .ri {
@@ -247,6 +332,8 @@
 .ri:nth-child(3) { animation-delay: 120ms; }
 .ri:nth-child(4) { animation-delay: 160ms; }
 .ri:nth-child(5) { animation-delay: 200ms; }
+.ri:nth-child(6) { animation-delay: 240ms; }
+.ri:nth-child(7) { animation-delay: 280ms; }
 
 @keyframes reveal {
     from {
@@ -259,6 +346,18 @@
     }
 }
 </style>
+
+<!-- =====================================================
+     ANKI-COMPATIBLE SCRIPT
+     Copy this script block to the Back Template in Anki.
+     ===================================================== -->
+<script id="anki-script">
+function toggleJpDef(btn) {
+    var wrap = btn.nextElementSibling;
+    wrap.classList.toggle('open');
+    btn.textContent = wrap.classList.contains('open') ? '日本語 ‹' : '日本語 ›';
+}
+</script>
 
 <!-- =====================================================
      PREVIEW-ONLY STYLES (not needed in Anki)
@@ -333,6 +432,30 @@ body::after {
     opacity: 0.45;
 }
 
+/* ================================================
+   PREVIEW GROW TRANSITION
+   ================================================ */
+
+.preview-frame .card-inner .audio-row {
+    transition: padding 400ms var(--ease);
+}
+
+.preview-frame .card-inner .answer {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 450ms var(--ease), opacity 350ms ease 50ms;
+}
+
+.preview-frame .card-inner.flipped .audio-row {
+    padding: 8px 0 0;
+}
+
+.preview-frame .card-inner.flipped .answer {
+    max-height: 800px;
+    opacity: 1;
+}
+
 /* Flip hint */
 .flip-hint {
     position: fixed;
@@ -387,75 +510,90 @@ body::after {
 <div class="preview-frame">
     <span class="side-tag" id="side-tag">front</span>
 
-    <!-- ==================== FRONT ==================== -->
     <!--
         Anki Front Template:
         <div class="front">
             <div class="audio-row">
                 <div class="audio-item fi">
-                    {{SentenceAudio}}
-                    <span class="audio-label">Sentence</span>
-                </div>
-                <div class="audio-item fi">
                     {{WordAudio}}
                     <span class="audio-label">Word</span>
                 </div>
+                <div class="audio-item fi">
+                    {{SentenceAudio}}
+                    <span class="audio-label">Sentence</span>
+                </div>
             </div>
         </div>
     -->
-    <div class="card-inner" id="front-card">
-        <div class="front">
-            <div class="audio-row">
-                <div class="audio-item fi">
-                    <button class="replay-button" onclick="event.stopPropagation()">
-                        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
-                    </button>
-                    <span class="audio-label">Sentence</span>
-                </div>
-                <div class="audio-item fi">
-                    <button class="replay-button" onclick="event.stopPropagation()">
-                        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
-                    </button>
-                    <span class="audio-label">Word</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==================== BACK ==================== -->
     <!--
         Anki Back Template:
         <div class="back">
-            <h1 class="target-word ri">{{Word}}</h1>
-            <div class="image-wrap ri">{{Image}}</div>
-            <p class="sentence ri">{{Sentence}}</p>
-            <div class="divider ri"></div>
-            <div class="def-row ri">
-                <p class="def">{{Definition}}</p>
-                <div class="def-audio">{{DefinitionAudio}}</div>
+            <div class="audio-row">
+                <div class="audio-item">
+                    {{WordAudio}}
+                    <span class="audio-label">Word</span>
+                </div>
+                <div class="audio-item">
+                    {{SentenceAudio}}
+                    <span class="audio-label">Sentence</span>
+                </div>
+            </div>
+            <div class="answer">
+                <h1 class="target-word ri">{{WordFurigana}}</h1>
+                <div class="image-wrap ri">{{Image}}</div>
+                <p class="sentence ri">{{SentenceFurigana}}</p>
+                <div class="divider ri"></div>
+                <div class="def-row ri">
+                    <p class="def">{{Definition}}</p>
+                    <div class="def-audio">{{DefinitionAudio}}</div>
+                </div>
+                <div class="ri">
+                    <button class="jp-def-toggle" onclick="toggleJpDef(this)">日本語 ›</button>
+                    <div class="jp-def-wrap">
+                        <p class="jp-def">{{DefinitionJP}}</p>
+                    </div>
+                </div>
             </div>
         </div>
     -->
-    <div class="card-inner" id="back-card" style="display: none">
-        <div class="back">
-            <h1 class="target-word ri">ephemeral</h1>
-            <div class="image-wrap ri">
-                <div class="image-placeholder">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <path d="m21 15-5-5L5 21"/>
-                    </svg>
-                </div>
+
+    <div class="card-inner" id="card">
+        <!-- Audio row: always visible, word first -->
+        <div class="audio-row" style="padding: 52px 0;">
+            <div class="audio-item fi">
+                <button class="replay-button" onclick="event.stopPropagation()">
+                    <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
+                </button>
+                <span class="audio-label">Word</span>
             </div>
-            <p class="sentence ri">The beauty of cherry blossoms is <mark>ephemeral</mark>, lasting only a few days each spring.</p>
+            <div class="audio-item fi">
+                <button class="replay-button" onclick="event.stopPropagation()">
+                    <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
+                </button>
+                <span class="audio-label">Sentence</span>
+            </div>
+        </div>
+
+        <!-- Answer section: hidden on front, revealed on flip -->
+        <div class="answer">
+            <h1 class="target-word ri"><ruby>儚<rt>はかな</rt></ruby>い</h1>
+            <div class="image-wrap ri">
+                <img src="Office_Girls_01_475033-476667.jpg" alt="">
+            </div>
+            <p class="sentence ri"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<mark><ruby>儚<rt>はかな</rt></ruby>い</mark>、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
             <div class="divider ri"></div>
             <div class="def-row ri">
-                <p class="def">Lasting for a very short time; transitory, fleeting.</p>
+                <p class="def">Fleeting; transient; ephemeral</p>
                 <div class="def-audio">
                     <button class="replay-button" onclick="event.stopPropagation()">
                         <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
                     </button>
+                </div>
+            </div>
+            <div class="ri">
+                <button class="jp-def-toggle" onclick="event.stopPropagation(); toggleJpDef(this);">日本語 ›</button>
+                <div class="jp-def-wrap">
+                    <p class="jp-def">長く続かないさま。もろくてこわれやすいさま。</p>
                 </div>
             </div>
         </div>
@@ -470,11 +608,10 @@ body::after {
      PREVIEW-ONLY SCRIPT (not needed in Anki)
      ===================================================== -->
 <script>
-const frontCard = document.getElementById('front-card');
-const backCard = document.getElementById('back-card');
+const card = document.getElementById('card');
 const sideTag = document.getElementById('side-tag');
 const flipHint = document.getElementById('flip-hint');
-let showingFront = true;
+let flipped = false;
 
 function restartAnimations(container, selector) {
     container.querySelectorAll(selector).forEach(el => {
@@ -485,20 +622,24 @@ function restartAnimations(container, selector) {
 }
 
 function flip() {
-    if (showingFront) {
-        frontCard.style.display = 'none';
-        backCard.style.display = '';
-        restartAnimations(backCard, '.ri');
+    flipped = !flipped;
+    if (flipped) {
+        card.classList.add('flipped');
+        restartAnimations(card, '.ri');
         sideTag.textContent = 'back';
         flipHint.innerHTML = '<kbd>space</kbd> flip back';
     } else {
-        backCard.style.display = 'none';
-        frontCard.style.display = '';
-        restartAnimations(frontCard, '.fi');
+        card.classList.remove('flipped');
         sideTag.textContent = 'front';
         flipHint.innerHTML = '<kbd>space</kbd> show answer';
+        // Reset JP def on flip back
+        var wrap = card.querySelector('.jp-def-wrap');
+        var btn = card.querySelector('.jp-def-toggle');
+        if (wrap && wrap.classList.contains('open')) {
+            wrap.classList.remove('open');
+            btn.textContent = '日本語 ›';
+        }
     }
-    showingFront = !showingFront;
 }
 
 document.addEventListener('keydown', (e) => {
@@ -509,6 +650,7 @@ flipHint.addEventListener('click', flip);
 
 document.querySelector('.preview-frame').addEventListener('click', (e) => {
     if (e.target.closest('.replay-button')) return;
+    if (e.target.closest('.jp-def-toggle')) return;
     flip();
 });
 </script>
