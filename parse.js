@@ -107,14 +107,20 @@ function mergeFragments(sections) {
 function splitMultiplePitchNotations(sequences) {
   const result = [];
   for (const seq of sequences) {
-    const first = splitSection(seq[0]);
-    if (first.sep) {
-      for (const accent of first.accent.split(',')) {
-        result.push([`${first.word}:${accent.trim()}`, ...seq.slice(1)]);
+    // For each element, collect its alternatives (or just itself if no commas)
+    const alternatives = seq.map(raw => {
+      const sec = splitSection(raw);
+      if (sec.sep && sec.accent.includes(',')) {
+        return sec.accent.split(',').map(a => `${sec.word}:${a.trim()}`);
       }
-    } else {
-      result.push(seq);
+      return [raw];
+    });
+    // Cartesian product of all alternatives
+    let combos = [[]];
+    for (const alts of alternatives) {
+      combos = combos.flatMap(prev => alts.map(a => [...prev, a]));
     }
+    result.push(...combos);
   }
   return result;
 }
