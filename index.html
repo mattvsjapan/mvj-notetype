@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Pitch Accent Graph</title>
+<link rel="stylesheet" href="accent_colors.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -55,41 +56,6 @@ summary { cursor: pointer; margin-bottom: 8px; }
 details table { border-collapse: collapse; margin-top: 4px; }
 details td, details th { padding: 3px 12px 3px 0; text-align: left; }
 
-/* SVG pitch accent colors */
-.atamadaka, .atamadaka line, .atamadaka circle, .atamadaka text { fill: #E60000; stroke: #E60000; }
-.heiban, .heiban line, .heiban circle, .heiban text { fill: #005CE6; stroke: #005CE6; }
-.nakadaka, .nakadaka line, .nakadaka circle, .nakadaka text { fill: #E68A00; stroke: #E68A00; }
-.kifuku, .kifuku line, .kifuku circle, .kifuku text { fill: #AC00E6; stroke: #AC00E6; }
-.odaka, .odaka line, .odaka circle, .odaka text { fill: #00802B; stroke: #00802B; }
-.keihan_heiban, .keihan_heiban line, .keihan_heiban circle, .keihan_heiban text { fill: #3bb2ed; stroke: #3bb2ed; }
-.keihan_low_heiban, .keihan_low_heiban line, .keihan_low_heiban circle, .keihan_low_heiban text { fill: #096999; stroke: #096999; }
-.keihan_atamadaka, .keihan_atamadaka line, .keihan_atamadaka circle, .keihan_atamadaka text { fill: #f76d94; stroke: #f76d94; }
-.keihan_nakadaka, .keihan_nakadaka line, .keihan_nakadaka circle, .keihan_nakadaka text { fill: #a89c0f; stroke: #a89c0f; }
-.keihan_low_nakadaka, .keihan_low_nakadaka line, .keihan_low_nakadaka circle, .keihan_low_nakadaka text { fill: #876333; stroke: #876333; }
-.keihan_odaka, .keihan_odaka line, .keihan_odaka circle, .keihan_odaka text,
-.keihan_low_odaka, .keihan_low_odaka line, .keihan_low_odaka circle, .keihan_low_odaka text { fill: #658065; stroke: #658065; }
-.connector line, .connector circle, .connector text,
-.particle line, .particle circle, .particle text,
-.setsubigo line, .setsubigo circle, .setsubigo text { fill: gray; stroke: gray; }
-.particle circle { fill: none; }
-.black line, .black circle, .black text { fill: #4f4b4b; stroke: #4f4b4b; }
-
-/* HTML text accent colors */
-span.atamadaka { color: #E60000; }
-span.heiban { color: #005CE6; }
-span.nakadaka { color: #E68A00; }
-span.kifuku { color: #AC00E6; }
-span.odaka { color: #00802B; }
-span.keihan_heiban { color: #3bb2ed; }
-span.keihan_low_heiban { color: #096999; }
-span.keihan_atamadaka { color: #f76d94; }
-span.keihan_nakadaka { color: #a89c0f; }
-span.keihan_low_nakadaka { color: #876333; }
-span.keihan_odaka, span.keihan_low_odaka { color: #658065; }
-span.connector, span.particle, span.setsubigo { color: gray; }
-span.black { color: #4f4b4b; }
-span.empty { display: none; }
-
 /* Sentence display */
 .sentence-row {
   font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -99,12 +65,6 @@ span.empty { display: none; }
 }
 .sentence-row ruby { ruby-align: center; }
 .sentence-row rt { font-size: 0.55em; }
-.atamadaka text, .heiban text, .nakadaka text, .kifuku text, .odaka text,
-.keihan_heiban text, .keihan_low_heiban text, .keihan_atamadaka text,
-.keihan_nakadaka text, .keihan_low_nakadaka text, .keihan_odaka text,
-.keihan_low_odaka text, .particle text, .setsubigo text, .black text,
-.connector text { stroke: none; }
-circle.devoiced, rect.devoiced { fill: none !important; }
 </style>
 </head>
 <body>
