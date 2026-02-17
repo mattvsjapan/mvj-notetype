@@ -53,13 +53,13 @@ function determinePitchTokyo(sd) {
 function adjustKana(text) {
   if (config.convert_reading === 'katakana') {
     const literals = [];
-    text = text.replace(/\\(.)/g, (_, ch) => {
+    text = text.replace(/\/(.)/g, (_, ch) => {
       literals.push(ch);
       return '\uE000';
     });
     text = literalPronunciation(text);
     let i = 0;
-    text = text.replace(/\uE000/g, () => '\\' + toKatakana(literals[i++]));
+    text = text.replace(/\uE000/g, () => '/' + toKatakana(literals[i++]));
     return text;
   }
   if (config.convert_reading === 'hiragana') return toHiragana(text);
