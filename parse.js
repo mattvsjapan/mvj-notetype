@@ -48,7 +48,7 @@ function splitToMoras(reading) {
 }
 
 function splitSection(raw) {
-  const m = raw.match(/^([^；;:]+)([；;:])?(.*)$/);
+  const m = raw.match(/^([^:]+)(:)?(.*)$/);
   if (m) return { word: m[1], sep: m[2] || null, accent: m[3] || '' };
   return { word: raw, sep: null, accent: '' };
 }
@@ -63,7 +63,7 @@ function splitAccent(raw) {
       pitch: m[3] || null,
     };
   }
-  m = raw.match(/^([a-zA-Z]{1,2})[；;]([hlHL]+)$/);
+  m = raw.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
   if (m) {
     return { role: m[1], levels: m[2], keihan: true };
   }
@@ -76,7 +76,7 @@ function splitMultiplePitchNotations(sequences) {
     const first = splitSection(seq[0]);
     if (first.sep) {
       for (const accent of first.accent.split(',')) {
-        result.push([`${first.word};${accent.trim()}`, ...seq.slice(1)]);
+        result.push([`${first.word}:${accent.trim()}`, ...seq.slice(1)]);
       }
     } else {
       result.push(seq);

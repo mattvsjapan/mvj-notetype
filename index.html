@@ -76,30 +76,30 @@ details td, details th { padding: 3px 12px 3px 0; text-align: left; }
   <button onclick="setExample('devoiced')">Devoiced</button>
   <button onclick="setExample('ghost')">Ghost particle</button>
 </div>
-<textarea id="input" spellcheck="false" placeholder="Enter pitch accent notation...">がっこう;0
-おおもの;2
-にほんご;0 の じしょ;1
-ひとり;2+</textarea>
+<textarea id="input" spellcheck="false" placeholder="Enter pitch accent notation...">がっこう:0
+おおもの:2
+にほんご:0 の じしょ:1
+ひとり:2+</textarea>
 <div id="output"></div>
 
 <details>
 <summary>Syntax Reference</summary>
 <table>
 <tr><th>Syntax</th><th>Meaning</th></tr>
-<tr><td><code>word;0</code></td><td>Heiban (flat)</td></tr>
-<tr><td><code>word;1</code></td><td>Atamadaka (accent on 1st mora)</td></tr>
-<tr><td><code>word;2</code></td><td>Nakadaka (accent on 2nd mora)</td></tr>
-<tr><td><code>word;N</code></td><td>Accent on Nth mora (odaka if N = mora count)</td></tr>
-<tr><td><code>大物[おおもの];2</code></td><td>Kanji with furigana</td></tr>
-<tr><td><code>word; particle</code></td><td>Space-separated = solid connector</td></tr>
-<tr><td><code>word;1 ; word;0</code></td><td>Tape connector (dotted line)</td></tr>
-<tr><td><code>word;1 | word;0</code></td><td>Break (no connector)</td></tr>
-<tr><td><code>word;1 , word;0</code></td><td>Comma break</td></tr>
-<tr><td><code>word;1+</code></td><td>Ghost/trailing particle</td></tr>
-<tr><td><code>ぐらい;pa</code></td><td>Particle with atamadaka</td></tr>
+<tr><td><code>word:0</code></td><td>Heiban (flat)</td></tr>
+<tr><td><code>word:1</code></td><td>Atamadaka (accent on 1st mora)</td></tr>
+<tr><td><code>word:2</code></td><td>Nakadaka (accent on 2nd mora)</td></tr>
+<tr><td><code>word:N</code></td><td>Accent on Nth mora (odaka if N = mora count)</td></tr>
+<tr><td><code>大物[おおもの]:2</code></td><td>Kanji with furigana</td></tr>
+<tr><td><code>word: particle</code></td><td>Space-separated = solid connector</td></tr>
+<tr><td><code>word:1 ; word:0</code></td><td>Tape connector (dotted line)</td></tr>
+<tr><td><code>word:1 | word:0</code></td><td>Break (no connector)</td></tr>
+<tr><td><code>word:1 , word:0</code></td><td>Comma break</td></tr>
+<tr><td><code>word:1+</code></td><td>Ghost/trailing particle</td></tr>
+<tr><td><code>ぐらい:pa</code></td><td>Particle with atamadaka</td></tr>
 <tr><td><code>*き*み</code></td><td>Devoiced mora (prefix *)</td></tr>
-<tr><td><code>word;k2</code></td><td>Kifuku accent</td></tr>
-<tr><td><code>A;hlll</code></td><td>Keihan notation</td></tr>
+<tr><td><code>word:k2</code></td><td>Kifuku accent</td></tr>
+<tr><td><code>A:hlll</code></td><td>Keihan notation</td></tr>
 </table>
 </details>
 
@@ -148,11 +148,11 @@ inputEl.addEventListener('input', update);
 update();
 
 const examples = {
-  basic: 'がっこう;0\nにほんご;0\nおおもの;2\nつくった;2\nひとり;1',
-  particles: 'よねん; ぐらい;pa\nよねん; ぐらい;po1\nじぶん; じゃ',
-  connected: '大物[おおもの];2 ; まで;1\nじんせい;1 | まで;1\nじんせい;1 ; まで;a-1',
-  devoiced: '君[*き*み]; *の 嘘[*う*そ];1 *を',
-  ghost: 'ひとり;1+\nひとり;2+\nひとり;3+',
+  basic: 'がっこう:0\nにほんご:0\nおおもの:2\nつくった:2\nひとり:1',
+  particles: 'よねん: ぐらい:pa\nよねん: ぐらい:po1\nじぶん: じゃ',
+  connected: '大物[おおもの]:2 ; まで:1\nじんせい:1 | まで:1\nじんせい:1 ; まで:a-1',
+  devoiced: '君[*き*み]: *の 嘘[*う*そ]:1 *を',
+  ghost: 'ひとり:1+\nひとり:2+\nひとり:3+',
 };
 
 function setExample(name) {
