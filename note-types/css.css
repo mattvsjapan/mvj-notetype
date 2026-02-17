@@ -204,12 +204,14 @@ span.empty { display: none; }
     transition: stroke 200ms ease, fill 200ms ease;
 }
 
-/* Triangle — shifted 1px right for optical centering */
+/* Triangle — scale down Anki's oversized default path */
 .replay-button svg path,
 .replay-button .replayTriangle {
     fill: var(--text-2);
     stroke: none;
     transition: fill 200ms ease;
+    transform: scale(0.55);
+    transform-origin: 32px 32px;
 }
 
 .replay-button:hover svg circle,
