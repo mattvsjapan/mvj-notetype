@@ -11,7 +11,9 @@ body {
   background: #1a1a2e;
   color: #e0e0e0;
   min-height: 100vh;
-  padding: 24px;
+  padding: 48px 64px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 16px; color: #fff; }
 textarea {
@@ -22,7 +24,7 @@ textarea {
   border: 1px solid #333;
   border-radius: 8px;
   padding: 12px;
-  font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", monospace;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
   font-size: 16px;
   line-height: 1.6;
   resize: vertical;
@@ -40,17 +42,17 @@ textarea:focus { outline: none; border-color: #5a7; }
   padding: 8px 12px;
   display: inline-block;
 }
-.examples { margin-top: 8px; margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-.examples button {
-  background: #16213e;
-  color: #aaa;
-  border: 1px solid #333;
+.dl-btn {
+  background: none;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 4px 10px;
   cursor: pointer;
+  padding: 2px 8px;
   font-size: 13px;
+  color: #999;
+  margin-top: 4px;
 }
-.examples button:hover { border-color: #5a7; color: #fff; }
+.dl-btn:hover { border-color: #888; color: #333; }
 details { margin-top: 16px; color: #999; font-size: 13px; }
 summary { cursor: pointer; margin-bottom: 8px; }
 details table { border-collapse: collapse; margin-top: 4px; }
@@ -58,7 +60,7 @@ details td, details th { padding: 3px 12px 3px 0; text-align: left; }
 
 /* Sentence display */
 .sentence-row {
-  font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
   font-size: 22px;
   line-height: 1.6;
   margin-bottom: 2px;
@@ -69,13 +71,6 @@ details td, details th { padding: 3px 12px 3px 0; text-align: left; }
 </head>
 <body>
 <h1>Pitch Accent Graph</h1>
-<div class="examples">
-  <button onclick="setExample('basic')">Basic</button>
-  <button onclick="setExample('particles')">Particles</button>
-  <button onclick="setExample('connected')">Connected</button>
-  <button onclick="setExample('devoiced')">Devoiced</button>
-  <button onclick="setExample('ghost')">Ghost particle</button>
-</div>
 <textarea id="input" spellcheck="false" placeholder="Enter pitch accent notation...">がっこう:0
 おおもの:2
 にほんご:0 の: じしょ:1
@@ -142,27 +137,86 @@ function update() {
       const graph = makeGraph(seq);
       if (!graph) return '';
       const sentence = makeColoredSentence(seq);
-      return `<div class="graph-row"><div class="sentence-row">${sentence}</div>${graph}</div>`;
+      return `<div class="graph-row"><div class="sentence-row">${sentence}</div>${graph}<br><button class="dl-btn" onclick="downloadPng(this)">Save PNG</button> <button class="dl-btn" onclick="downloadSvg(this)">Save SVG</button></div>`;
     }).join('');
   } catch (e) {
     outputEl.innerHTML = `<div style="color:#e55">${e.message}</div>`;
   }
 }
 
-inputEl.addEventListener('input', update);
+const saved = localStorage.getItem('pitch-input');
+if (saved != null) inputEl.value = saved;
+
+inputEl.addEventListener('input', () => {
+  localStorage.setItem('pitch-input', inputEl.value);
+  update();
+});
 update();
 
-const examples = {
-  basic: 'がっこう:0\nにほんご:0\nおおもの:2\nつくった:2\nひとり:1',
-  particles: 'よねん:0 ぐらい:pa\nよねん:0 ぐらい:po1\nじぶん:0 じゃ',
-  connected: '大物[おおもの]:2 ; まで:1\nじんせい:1 | まで:1\nじんせい:1 ; まで:a-1',
-  devoiced: '君[*き*み]:0 *の: 嘘[*う*そ]:1 *を:',
-  ghost: 'ひとり:1+\nひとり:2+\nひとり:3+',
-};
+function getGraphName(row) {
+  return row.querySelector('.sentence-row')?.textContent.trim().slice(0, 20) || 'pitch';
+}
 
-function setExample(name) {
-  inputEl.value = examples[name] || '';
-  update();
+function cloneWithStyles(svg) {
+  const clone = svg.cloneNode(true);
+  const origEls = svg.querySelectorAll('*');
+  const cloneEls = clone.querySelectorAll('*');
+  const props = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'font-family', 'font-size', 'display'];
+  for (let i = 0; i < origEls.length; i++) {
+    const cs = getComputedStyle(origEls[i]);
+    for (const p of props) {
+      const v = cs.getPropertyValue(p);
+      if (v) cloneEls[i].style.setProperty(p, v);
+    }
+  }
+  return clone;
+}
+
+function triggerDownload(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadSvg(btn) {
+  const row = btn.closest('.graph-row');
+  const svg = row.querySelector('svg');
+  if (!svg) return;
+  const clone = cloneWithStyles(svg);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const data = new XMLSerializer().serializeToString(clone);
+  triggerDownload(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }), getGraphName(row) + '.svg');
+}
+
+function downloadPng(btn) {
+  const row = btn.closest('.graph-row');
+  const svg = row.querySelector('svg');
+  if (!svg) return;
+  const clone = cloneWithStyles(svg);
+
+  const vb = clone.getAttribute('viewBox').split(' ').map(Number);
+  const scale = 3;
+  const w = vb[2] * scale, h = vb[3] * scale;
+  clone.removeAttribute('height');
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+
+  const data = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    c.toBlob(pngBlob => {
+      triggerDownload(pngBlob, getGraphName(row) + '.png');
+    });
+  };
+  img.src = url;
 }
 </script>
 </body>

@@ -1,5 +1,33 @@
 /* ── Pitch accent colors ── */
 
+/* Utility roles (before accents so accent colors win when both apply) */
+
+.connector,
+.connector line,
+.connector circle,
+.connector text,
+.particle,
+.particle line,
+.particle circle,
+.particle text,
+.setsubigo,
+.setsubigo line,
+.setsubigo circle,
+.setsubigo text {
+  fill: gray;
+  stroke: gray;
+  color: gray;
+}
+
+.black,
+.black line,
+.black circle,
+.black text {
+  fill: #1a1a1a;
+  stroke: #1a1a1a;
+  color: #1a1a1a;
+}
+
 /* Tokyo */
 
 .atamadaka,
@@ -105,34 +133,6 @@
   fill: #658065;
   stroke: #658065;
   color: #658065;
-}
-
-/* Utility roles */
-
-.connector,
-.connector line,
-.connector circle,
-.connector text,
-.particle,
-.particle line,
-.particle circle,
-.particle text,
-.setsubigo,
-.setsubigo line,
-.setsubigo circle,
-.setsubigo text {
-  fill: gray;
-  stroke: gray;
-  color: gray;
-}
-
-.black,
-.black line,
-.black circle,
-.black text {
-  fill: #4f4b4b;
-  stroke: #4f4b4b;
-  color: #4f4b4b;
 }
 
 /* Text should not have a stroke */
