@@ -53,7 +53,7 @@ function determinePitchTokyo(sd) {
 function adjustKana(text) {
   if (config.convert_reading === 'katakana') {
     const literals = [];
-    text = text.replace(/\/(\*?)(.)/g, (_, star, ch) => {
+    text = text.replace(/\\(\*?)(.)/g, (_, star, ch) => {
       literals.push(ch);
       return star + '\uE000';
     });
