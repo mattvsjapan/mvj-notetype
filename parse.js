@@ -1,5 +1,5 @@
-const GHOST_PARTICLE = '-';
-const DEVOICED_PREFIX = 'd';
+const GHOST_PARTICLE = '+';
+const DEVOICED_PREFIX = '*';
 const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
@@ -21,7 +21,7 @@ function splitToSections(sentence) {
 }
 
 function detachGhostParticle(text) {
-  return text.replace(/-[\s\n.]*$/, ' -');
+  return text.replace(/(\++)[\s\n.]*$/, ' $1');
 }
 
 function furiganaToReading(word) {
@@ -29,11 +29,11 @@ function furiganaToReading(word) {
 }
 
 function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FFd\-]/g, '');
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+]/g, '');
 }
 
 function kanaToMoraes(kana) {
-  return kana.match(/d?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  return kana.match(/\*?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
 }
 
 function splitToMoras(reading) {

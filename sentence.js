@@ -20,7 +20,7 @@ function wordToRuby(word) {
 function makeColoredSentence(sequence) {
   const spans = [];
   for (const section of sequence) {
-    if (SENT_HIDDEN.includes(section.word) || section.isTape) continue;
+    if (SENT_HIDDEN.includes(section.word) || /^\++$/.test(section.word) || section.isTape) continue;
     spans.push(`<span class="${section.classname}">${wordToRuby(section.word)}</span>`);
   }
   return spans.join('');
