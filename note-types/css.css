@@ -57,6 +57,7 @@
 /* — Base — */
 
 .card-inner {
+    box-sizing: border-box;
     background:
         linear-gradient(
             165deg,
