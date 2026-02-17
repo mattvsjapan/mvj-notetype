@@ -6,7 +6,7 @@
 <title>Anki Card Preview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- =====================================================
      ANKI-COMPATIBLE STYLES
@@ -25,8 +25,8 @@
     --accent-soft: rgba(194, 122, 82, 0.12);
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', -apple-system, system-ui, sans-serif;
-    --jp: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
-    --jp-serif: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --jp: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --jp-kyokasho: 'YuKyokasho', 'YuKyokashotai', 'UD Digi Kyokasho NP-R', var(--jp);
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -174,7 +174,7 @@
 /* Target word — Japanese serif for kanji with ruby furigana */
 
 .target-word {
-    font-family: var(--jp-serif);
+    font-family: var(--jp-kyokasho);
     font-size: 44px;
     font-weight: 600;
     color: var(--text-1);
@@ -259,10 +259,10 @@ rt {
 
 .def {
     flex: 1;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 400;
     line-height: 1.6;
-    color: var(--text-3);
+    color: var(--text-2);
     font-style: italic;
     margin: 0;
 }
@@ -313,10 +313,10 @@ rt {
 
 .jp-def {
     font-family: var(--jp);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 400;
     line-height: 1.7;
-    color: var(--text-3);
+    color: var(--text-2);
     margin: 0;
     padding-top: 8px;
 }
@@ -583,7 +583,7 @@ body::after {
             <p class="sentence ri"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<mark><ruby>儚<rt>はかな</rt></ruby>い</mark>、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
             <div class="divider ri"></div>
             <div class="def-row ri">
-                <p class="def">Fleeting; transient; ephemeral</p>
+                <p class="def">Lasting only a brief moment; so short-lived and delicate that it seems as though it could vanish at any time</p>
                 <div class="def-audio">
                     <button class="replay-button" onclick="event.stopPropagation()">
                         <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M26 20v24l20-12z"/></svg>
@@ -593,7 +593,7 @@ body::after {
             <div class="ri">
                 <button class="jp-def-toggle" onclick="event.stopPropagation(); toggleJpDef(this);">日本語 ›</button>
                 <div class="jp-def-wrap">
-                    <p class="jp-def">長く続かないさま。もろくてこわれやすいさま。</p>
+                    <p class="jp-def">長く続かず、すぐに消えてしまうさま。もろくてこわれやすく、いつまでも保つことができないさま。人の命や美しさなど、永遠ではないものに対して使われることが多い。</p>
                 </div>
             </div>
         </div>
