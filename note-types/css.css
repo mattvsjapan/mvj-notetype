@@ -375,6 +375,8 @@ rt {
 .sentence rt {
     font-size: 0.58em;
     font-weight: 400;
+    color: inherit;
+    opacity: 0.7;
 }
 
 /* Sentence */
