@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="accent_colors.css">
 
 <!-- =====================================================
      ANKI-COMPATIBLE STYLES
@@ -29,11 +30,11 @@
     --text-2: rgba(255, 255, 255, 0.56);
     --text-3: rgba(255, 255, 255, 0.30);
 
-    /* Accent — warm copper (creates temperature tension against cool bg) */
-    --accent: #c27a52;
-    --accent-text: #d49a7a;
-    --accent-soft: rgba(194, 122, 82, 0.07);
-    --accent-glow: rgba(194, 122, 82, 0.18);
+    /* Accent — warm copper (temperature tension against cool bg) */
+    --accent: #c8805a;
+    --accent-text: #dba07e;
+    --accent-soft: rgba(200, 128, 90, 0.12);
+    --accent-glow: rgba(200, 128, 90, 0.22);
 
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
@@ -52,23 +53,59 @@
     background:
         linear-gradient(
             165deg,
-            rgba(255, 255, 255, 0.015) 0%,
-            transparent 50%
+            rgba(255, 255, 255, 0.02) 0%,
+            transparent 45%
         ),
         var(--bg-card);
     color: var(--text-1);
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
-    padding: 34px 34px 40px;
-    max-width: 540px;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 36px 40px;
+    max-width: 500px;
     margin: 0 auto;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-light) 20%, var(--border-light) 80%, transparent);
+    background: linear-gradient(90deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
+    margin: 24px 0;
 }
+
+/* Pitch graph */
+
+.pitch-graph {
+    text-align: center;
+    margin: -4px 0 20px;
+    line-height: 0;
+}
+
+/* Accent colors — dark theme */
+.card-inner .atamadaka circle,
+.card-inner .atamadaka line { fill: #ff6b6b; stroke: #ff6b6b; }
+.card-inner .atamadaka text { fill: #ff6b6b; }
+
+.card-inner .heiban circle,
+.card-inner .heiban line { fill: #6ea8fe; stroke: #6ea8fe; }
+.card-inner .heiban text { fill: #6ea8fe; }
+
+.card-inner .nakadaka circle,
+.card-inner .nakadaka line { fill: #ffb347; stroke: #ffb347; }
+.card-inner .nakadaka text { fill: #ffb347; }
+
+.card-inner .kifuku circle,
+.card-inner .kifuku line { fill: #c4a0ff; stroke: #c4a0ff; }
+.card-inner .kifuku text { fill: #c4a0ff; }
+
+.card-inner .odaka circle,
+.card-inner .odaka line { fill: #51cf66; stroke: #51cf66; }
+.card-inner .odaka text { fill: #51cf66; }
+
+.card-inner .connector line { stroke: rgba(255, 255, 255, 0.25); }
+.card-inner .particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
+.card-inner .particle line { stroke: rgba(255, 255, 255, 0.3); }
+.card-inner .particle text { fill: rgba(255, 255, 255, 0.3); }
 
 /* — Replay button (targets Anki's generated .replay-button) — */
 
@@ -143,11 +180,12 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    min-width: 72px;
 }
 
 .audio-item .replay-button svg {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
 }
 
 .audio-label {
@@ -178,35 +216,50 @@
    ================================================ */
 
 .front .audio-row {
-    padding: 54px 0;
+    padding: 48px 0;
 }
 
 /* ================================================
-   BACK — audio at top + answer section
+   BACK — compact audio controls + answer section
    ================================================ */
 
 .back .audio-row {
-    padding: 8px 0 0;
+    padding: 4px 0 0;
+    gap: 28px;
+}
+
+.back .audio-item {
+    gap: 6px;
+}
+
+.back .audio-item .replay-button svg {
+    width: 40px;
+    height: 40px;
+}
+
+.back .audio-label {
+    font-size: 9px;
 }
 
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 12px;
+    margin-top: 24px;
 }
 
 /* Target word — Japanese serif for kanji with ruby furigana */
 
 .target-word {
     font-family: var(--jp-kyokasho);
-    font-size: 58px;
+    font-size: 52px;
     font-weight: 600;
-    color: var(--text-1);
+    color: #c4a0ff;
     letter-spacing: 0.04em;
     line-height: 1.2;
     text-align: center;
-    margin: 0 0 22px;
-    padding-top: 2px;
+    margin: 16px 0 20px;
+    text-shadow: 0 0 40px rgba(196, 160, 255, 0.12);
+    text-rendering: optimizeLegibility;
 }
 
 /* Ruby (furigana) base styles */
@@ -225,6 +278,7 @@ rt {
     font-size: 0.34em;
     letter-spacing: 0.06em;
     transform: translateY(2px);
+    color: rgba(196, 160, 255, 0.5);
 }
 
 /* Sentence-level furigana */
@@ -242,10 +296,10 @@ rt {
 
 .image-wrap {
     width: 100%;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .image-wrap::after {
@@ -253,7 +307,8 @@ rt {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+               inset 0 2px 8px rgba(0, 0, 0, 0.25);
     pointer-events: none;
 }
 
@@ -272,7 +327,8 @@ rt {
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-2);
-    margin: 0 0 24px;
+    text-align: justify;
+    margin: 0;
 }
 
 .sentence mark {
@@ -283,35 +339,40 @@ rt {
     border-radius: 3px;
     font-weight: 500;
     text-decoration: none;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
 /* Definition */
 
 .def {
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 400;
-    line-height: 1.7;
+    line-height: 1.75;
     color: var(--text-2);
-    font-style: italic;
-    margin: 22px 0 0;
+    margin: 0;
 }
 
 /* Japanese definition reveal */
 
+.jp-def-section {
+    text-align: center;
+}
+
 .jp-def-toggle {
     display: inline-flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 6px;
-    padding: 5px 13px;
+    padding: 5px 12px;
     font-family: var(--jp);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--text-3);
     cursor: pointer;
     transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
-    margin-top: 12px;
+    margin-top: 16px;
 }
 
 .jp-def-toggle:hover {
@@ -321,6 +382,7 @@ rt {
 }
 
 .jp-def-wrap {
+    text-align: initial;
     max-height: 0;
     opacity: 0;
     overflow: hidden;
@@ -413,7 +475,7 @@ body::after {
 /* Preview card frame */
 .preview-frame {
     width: 90vw;
-    max-width: 540px;
+    max-width: 500px;
     position: relative;
 }
 
@@ -482,7 +544,20 @@ body::after {
    ================================================ */
 
 .preview-frame .card-inner .audio-row {
+    padding: 48px 0;
     transition: padding 400ms var(--ease), gap 400ms var(--ease);
+}
+
+.preview-frame .card-inner .audio-item {
+    transition: gap 350ms var(--ease);
+}
+
+.preview-frame .card-inner .audio-item .replay-button svg {
+    transition: width 350ms var(--ease), height 350ms var(--ease);
+}
+
+.preview-frame .card-inner .audio-label {
+    transition: font-size 350ms var(--ease);
 }
 
 .preview-frame .card-inner .answer {
@@ -493,7 +568,21 @@ body::after {
 }
 
 .preview-frame .card-inner.flipped .audio-row {
-    padding: 8px 0 0;
+    padding: 0;
+    gap: 28px;
+}
+
+.preview-frame .card-inner.flipped .audio-item {
+    gap: 6px;
+}
+
+.preview-frame .card-inner.flipped .audio-item .replay-button svg {
+    width: 40px;
+    height: 40px;
+}
+
+.preview-frame .card-inner.flipped .audio-label {
+    font-size: 9px;
 }
 
 .preview-frame .card-inner.flipped .answer {
@@ -589,11 +678,12 @@ body::after {
             </div>
             <div class="answer">
                 <h1 class="target-word ri">{{WordFurigana}}</h1>
+                <div class="pitch-graph ri">{{PitchGraph}}</div>
                 <div class="image-wrap ri">{{Image}}</div>
                 <p class="sentence ri">{{SentenceFurigana}}</p>
                 <div class="divider ri"></div>
                 <p class="def ri">{{Definition}}</p>
-                <div class="ri">
+                <div class="jp-def-section ri">
                     <button class="jp-def-toggle" onclick="toggleJpDef(this)">日本語 ›</button>
                     <div class="jp-def-wrap">
                         <p class="jp-def">{{DefinitionJP}}</p>
@@ -605,7 +695,7 @@ body::after {
 
     <div class="card-inner" id="card">
         <!-- Audio row: always visible, word first -->
-        <div class="audio-row" style="padding: 54px 0;">
+        <div class="audio-row">
             <div class="audio-item fi">
                 <button class="replay-button" onclick="event.stopPropagation()">
                     <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M27 20v24l19-12z"/></svg>
@@ -629,13 +719,14 @@ body::after {
         <!-- Answer section: hidden on front, revealed on flip -->
         <div class="answer">
             <h1 class="target-word ri"><ruby>儚<rt>はかな</rt></ruby>い</h1>
+            <div class="pitch-graph ri" id="pitch-graph"></div>
             <div class="image-wrap ri">
                 <img src="Office_Girls_01_475033-476667.jpg" alt="">
             </div>
-            <p class="sentence ri"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<mark><ruby>儚<rt>はかな</rt></ruby>い</mark>、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
+            <p class="sentence ri"><ruby>桜<rt>さくら</rt></ruby>の<ruby>美<rt>うつく</rt></ruby>しさは<ruby>儚<rt>はかな</rt></ruby>い、ほんの<ruby>数日<rt>すうじつ</rt></ruby>で<ruby>散<rt>ち</rt></ruby>ってしまう。</p>
             <div class="divider ri"></div>
             <p class="def ri">Lasting only a brief moment; so short-lived and delicate that it seems as though it could vanish at any time</p>
-            <div class="ri">
+            <div class="jp-def-section ri">
                 <button class="jp-def-toggle" onclick="event.stopPropagation(); toggleJpDef(this);">日本語 ›</button>
                 <div class="jp-def-wrap">
                     <p class="jp-def">長く続かず、すぐに消えてしまうさま。もろくてこわれやすく、いつまでも保つことができないさま。人の命や美しさなど、永遠ではないものに対して使われることが多い。</p>
@@ -652,11 +743,36 @@ body::after {
 <!-- =====================================================
      PREVIEW-ONLY SCRIPT (not needed in Anki)
      ===================================================== -->
+<script src="config.js"></script>
+<script src="kana.js"></script>
+<script src="parse.js"></script>
+<script src="section.js"></script>
+<script src="graph.js"></script>
 <script>
 const card = document.getElementById('card');
 const sideTag = document.getElementById('side-tag');
 const flipHint = document.getElementById('flip-hint');
 let flipped = false;
+
+// Generate pitch graph
+function makeSequences(expr) {
+    expr = normalizeForParsing(expr);
+    let sentences = splitToSentences(expr);
+    sentences = sentences.map(detachGhostParticle);
+    let bySection = sentences.map(splitToSections);
+    bySection = bySection.map(mergeFragments);
+    bySection = splitMultiplePitchNotations(bySection);
+    let sequences = bySection.map(parseSections);
+    sequences = sequences.map(buildHighLow);
+    return sequences;
+}
+
+config.no_text = false;
+const pitchSeqs = makeSequences('はかない:k3');
+if (pitchSeqs.length > 0) {
+    const svg = makeGraph(pitchSeqs[0]);
+    if (svg) document.getElementById('pitch-graph').innerHTML = svg;
+}
 
 function restartAnimations(container, selector) {
     container.querySelectorAll(selector).forEach(el => {
