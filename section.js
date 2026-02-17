@@ -91,8 +91,9 @@ class Section {
 
   get moraes() {
     const m = this._d.moraes;
-    if (this.isParticle && m.length === 1 && m[0].text === 'ハ') {
-      return [{ text: 'ワ', devoiced: false }];
+    if ((this.role === 'particle' || this.isParticle) && m.length === 1) {
+      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: false }];
+      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: false }];
     }
     return m;
   }
