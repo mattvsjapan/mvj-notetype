@@ -73,6 +73,32 @@ details td, details th { padding: 3px 12px 3px 0; text-align: left; }
 .setsubigo line, .setsubigo circle, .setsubigo text { fill: gray; stroke: gray; }
 .particle circle { fill: none; }
 .black line, .black circle, .black text { fill: #4f4b4b; stroke: #4f4b4b; }
+
+/* HTML text accent colors */
+span.atamadaka { color: #E60000; }
+span.heiban { color: #005CE6; }
+span.nakadaka { color: #E68A00; }
+span.kifuku { color: #AC00E6; }
+span.odaka { color: #00802B; }
+span.keihan_heiban { color: #3bb2ed; }
+span.keihan_low_heiban { color: #096999; }
+span.keihan_atamadaka { color: #f76d94; }
+span.keihan_nakadaka { color: #a89c0f; }
+span.keihan_low_nakadaka { color: #876333; }
+span.keihan_odaka, span.keihan_low_odaka { color: #658065; }
+span.connector, span.particle, span.setsubigo { color: gray; }
+span.black { color: #4f4b4b; }
+span.empty { display: none; }
+
+/* Sentence display */
+.sentence-row {
+  font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: 22px;
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+.sentence-row ruby { ruby-align: center; }
+.sentence-row rt { font-size: 0.55em; }
 .atamadaka text, .heiban text, .nakadaka text, .kifuku text, .odaka text,
 .keihan_heiban text, .keihan_low_heiban text, .keihan_atamadaka text,
 .keihan_nakadaka text, .keihan_low_nakadaka text, .keihan_odaka text,
@@ -604,6 +630,36 @@ function makeGraphs(sequences) {
   return sequences.map(makeGraph).filter(Boolean);
 }
 
+// ─── Colored sentence ───
+function wordToRuby(word) {
+  // Strip devoiced prefix from display
+  word = word.replaceAll(DEVOICED_PREFIX, '');
+  const re = /([^\[\]]+)\[([^\]]+)\]/g;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = re.exec(word)) !== null) {
+    if (match.index > lastIndex) {
+      result += word.slice(lastIndex, match.index);
+    }
+    result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < word.length) {
+    result += word.slice(lastIndex);
+  }
+  return result;
+}
+
+function makeColoredSentence(sequence) {
+  const spans = [];
+  for (const section of sequence) {
+    if (SENT_HIDDEN.includes(section.word) || section.isTape) continue;
+    spans.push(`<span class="${section.classname}">${wordToRuby(section.word)}</span>`);
+  }
+  return spans.join('');
+}
+
 // ─── UI ───
 const inputEl = document.getElementById('input');
 const outputEl = document.getElementById('output');
@@ -612,8 +668,13 @@ function update() {
   const expr = inputEl.value.trim();
   if (!expr) { outputEl.innerHTML = ''; return; }
   try {
-    const graphs = makeGraphs(makeSequences(expr));
-    outputEl.innerHTML = graphs.map(g => `<div class="graph-row">${g}</div>`).join('');
+    const sequences = makeSequences(expr);
+    outputEl.innerHTML = sequences.map(seq => {
+      const graph = makeGraph(seq);
+      if (!graph) return '';
+      const sentence = makeColoredSentence(seq);
+      return `<div class="graph-row"><div class="sentence-row">${sentence}</div>${graph}</div>`;
+    }).join('');
   } catch (e) {
     outputEl.innerHTML = `<div style="color:#e55">${e.message}</div>`;
   }
