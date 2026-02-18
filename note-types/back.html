@@ -697,3 +697,24 @@ function _renderBack() {
 _renderBack();
 })();
 </script>
+
+<script>
+(function() {
+  var HANDLER_KEY = '__jpDefHandler';
+  function handler(ev) {
+    if (ev.code === 'KeyG') {
+      var cb = document.getElementById('jp-toggle');
+      if (cb) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        cb.checked = !cb.checked;
+      }
+    }
+  }
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener('keydown', window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener('keydown', handler, { capture: true });
+})();
+</script>
