@@ -1097,10 +1097,14 @@ _renderBack();
   function play(item) {
     if (!item) return;
     var link = item.querySelector('.soundLink');
-    if (!link) return;
-    link.click();
-    var btn = item.querySelector('.replay-button');
-    if (btn) animateBtn(btn);
+    if (link) {
+      link.click();
+      var btn = item.querySelector('.replay-button');
+      if (btn) animateBtn(btn);
+      return;
+    }
+    var audio = item.querySelector('audio');
+    if (audio) { audio.currentTime = 0; audio.play(); }
   }
   function handler(ev) {
     var el = ev.target;

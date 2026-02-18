@@ -13,17 +13,32 @@
 </div>
 
 <script>
+// AnkiWeb: replace native <audio> players with styled replay buttons
+(function() {
+  var SVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+    if (item.querySelector('.replay-button')) return;
+    var audio = item.querySelector('audio');
+    if (!audio) return;
+    audio.style.display = 'none';
+    audio.removeAttribute('controls');
+    var btn = document.createElement('a');
+    btn.className = 'replay-button soundLink';
+    btn.href = '#';
+    btn.innerHTML = SVG;
+    item.insertBefore(btn, item.firstChild);
+    btn.addEventListener('click', function(ev) {
+      ev.preventDefault();
+      audio.currentTime = 0;
+      audio.play();
+    });
+  });
+})();
+</script>
+
+<script>
 (function() {
   var HANDLER_KEY = '__audioHandler';
-  function getSounds(item) {
-    if (!item) return [];
-    var sounds = [];
-    item.querySelectorAll('.soundLink').forEach(function(link) {
-      var m = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
-      if (m) sounds.push(m[1]);
-    });
-    return sounds;
-  }
   function animateBtn(btn) {
     var circle = btn.querySelector('circle, .replayCircle');
     var path = btn.querySelector('path, .replayTriangle');
@@ -39,11 +54,16 @@
     }, 350);
   }
   function play(item) {
-    var sounds = getSounds(item);
-    if (!sounds.length) return;
-    try { pycmd('play:' + sounds[0]); } catch(e) {}
-    var btn = item.querySelector('.replay-button');
-    if (btn) animateBtn(btn);
+    if (!item) return;
+    var link = item.querySelector('.soundLink');
+    if (link) {
+      link.click();
+      var btn = item.querySelector('.replay-button');
+      if (btn) animateBtn(btn);
+      return;
+    }
+    var audio = item.querySelector('audio');
+    if (audio) { audio.currentTime = 0; audio.play(); }
   }
   function handler(ev) {
     var el = ev.target;
