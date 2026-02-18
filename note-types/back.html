@@ -3,25 +3,68 @@
     {{FrontSide}}
 
     {{#Definition Audio}}
-    <div id="def-audio-container" style="display:none">
-        <div class="audio-item">
-            {{Definition Audio}}
-            <span class="audio-label">Definition</span>
-        </div>
-    </div>
+    <div id="def-audio-container" style="display:none">{{Definition Audio}}</div>
     {{/Definition Audio}}
 
     <script>
     (function() {
+        var container = document.getElementById('def-audio-container');
+        if (!container) return;
+        var text = container.textContent;
+        var m = text.match(/\[LOCKED:([^\]]+)\]/);
+        container.remove();
+        if (!m) return;
+
+        var filename = m[1];
+        var audio = document.createElement('audio');
+        audio.preload = 'auto';
+        audio.src = filename;
+        document.body.appendChild(audio);
+
+        var item = document.createElement('div');
+        item.className = 'audio-item bi';
+        var btn = document.createElement('a');
+        btn.className = 'replay-button';
+        btn.href = '#';
+        btn.innerHTML = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+        var label = document.createElement('span');
+        label.className = 'audio-label';
+        label.textContent = 'Definition';
+        item.appendChild(btn);
+        item.appendChild(label);
+
         var audioRow = document.querySelector('.audio-row');
-        var defContainer = document.getElementById('def-audio-container');
-        if (audioRow && defContainer) {
-            var defItem = defContainer.querySelector('.audio-item');
-            if (defItem) {
-                defItem.classList.add('bi');
-                audioRow.appendChild(defItem);
-            }
-            defContainer.remove();
+        if (audioRow) audioRow.appendChild(item);
+
+        function animateBtn() {
+            var circle = btn.querySelector('circle');
+            var path = btn.querySelector('path');
+            btn.style.transform = 'scale(0.95)';
+            btn.style.transitionDuration = '80ms';
+            if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
+            if (path) { path.style.fill = 'var(--accent)'; }
+            setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
+            setTimeout(function() {
+                btn.style.transform = '';
+                if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
+                if (path) { path.style.fill = ''; }
+            }, 350);
+        }
+
+        function playDef() {
+            audio.currentTime = 0;
+            audio.play();
+            animateBtn();
+        }
+
+        btn.addEventListener('click', function(ev) { ev.preventDefault(); playDef(); });
+        window.__playLockedDefAudio = playDef;
+
+        var toggle = document.getElementById('jp-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                if (toggle.checked) playDef();
+            });
         }
     })();
     </script>
@@ -760,7 +803,11 @@ _renderBack();
     switch (ev.key.toLowerCase()) {
       case 'n': ev.preventDefault(); ev.stopPropagation(); play(items[0]); break;
       case 'h': ev.preventDefault(); ev.stopPropagation(); play(items[1]); break;
-      case ',': ev.preventDefault(); ev.stopPropagation(); play(items[2]); break;
+      case ',':
+        ev.preventDefault(); ev.stopPropagation();
+        if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+        else play(items[2]);
+        break;
     }
   }
   if (window[HANDLER_KEY]) {
@@ -791,6 +838,7 @@ _renderBack();
         ev.preventDefault();
         ev.stopPropagation();
         cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event('change'));
         var label = document.querySelector('.jp-def-toggle');
         if (label) animateToggle(label);
       }
