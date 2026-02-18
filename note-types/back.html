@@ -94,6 +94,10 @@ const EQ_SOUNDS_HIRA = {
   'もう':'もー','よう':'よー','るう':'るー','ろう':'ろー','ぅう':'ぅー',
   'ぉう':'ぉー','ょう':'ょー','ゆう':'ゆー','いい':'いー','ちい':'ちー',
   'せい':'せー','じい':'じー','かあ':'かー','ゅう':'ゅー','ぜい':'ぜー',
+  'きい':'きー','しい':'しー','にい':'にー','ひい':'ひー','みい':'みー',
+  'りい':'りー','ぎい':'ぎー','びい':'びー','ぴい':'ぴー',
+  'えい':'えー','てい':'てー','ねい':'ねー','へい':'へー',
+  'でい':'でー','げい':'げー','ぺい':'ぺー',
   'つづ':'つず','じゃあ':'じゃー',
 };
 const EQUIVALENT_SOUNDS = {...EQ_SOUNDS_HIRA};
@@ -113,6 +117,7 @@ function literalPronunciation(text) { return toKatakana(unifyRepr(text)); }
 const GHOST_PARTICLE = '+';
 const DEVOICED_PREFIX = '*';
 const LITERAL_PREFIX = '\\';
+const HIGH_PREFIX = '^';
 const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
@@ -139,26 +144,32 @@ function detachGhostParticle(text) {
 }
 
 function furiganaToReading(word) {
-  return word.split(' ').map(part => part.replace(/([^\[\]]*\[|])/g, '')).join('');
+  return word.split(' ').map(part => {
+    part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
+    return part.replace(/([^\[\]]*\[|])/g, '');
+  }).join('');
 }
 
 function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\]/g, '');
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\\^]/g, '');
 }
 
 function kanaToMoraes(kana) {
-  return kana.match(/(?:\*\\?|\\\*?)?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  return kana.match(/(?:[\*\\\^]{1,3})?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
 }
 
 function splitToMoras(reading) {
   const kana = filterKana(reading);
   const raw = kanaToMoraes(kana);
   return raw.map(m => {
-    let devoiced = false, literal = false;
-    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
-    if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
-    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
-    return { text: m, devoiced, literal };
+    let devoiced = false, literal = false, high = false;
+    while (m.length > 0) {
+      if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
+      else if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
+      else if (m.startsWith(HIGH_PREFIX)) { high = true; m = m.slice(1); }
+      else break;
+    }
+    return { text: m, devoiced, literal, high };
   });
 }
 
@@ -345,13 +356,13 @@ class Section {
   get isTape() { return this.raw === ';'; }
   get isParticle() { return !!this._d.accent.is_particle; }
 
-  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, ''); }
+  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, '').replaceAll(HIGH_PREFIX, ''); }
 
   get moraes() {
     const m = this._d.moraes;
     if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
-      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false }];
-      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false }];
+      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
     }
     return m;
   }
@@ -402,6 +413,9 @@ function buildHighLow(sequence) {
       lastLow = section.levels[section.levels.length - 1] === L;
     } else {
       section.levels = buildLevelsTokyo(section, lastLow);
+      for (let i = 0; i < section.moraes.length; i++) {
+        if (section.moraes[i].high) section.levels[i] = H;
+      }
       lastLow = calcLastWordEndedLow(section, lastLow);
     }
   }
