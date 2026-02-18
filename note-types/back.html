@@ -830,8 +830,9 @@ _renderBack();
   function play(item) {
     var sounds = getSounds(item);
     if (!sounds.length) return;
-    sounds.forEach(function(f) { try { pycmd('play:' + f); } catch(e) {} });
-    item.querySelectorAll('.replay-button').forEach(animateBtn);
+    try { pycmd('play:' + sounds[0]); } catch(e) {}
+    var btn = item.querySelector('.replay-button');
+    if (btn) animateBtn(btn);
   }
   function handler(ev) {
     var el = ev.target;
