@@ -327,6 +327,22 @@ span.empty { display: none; }
     to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes rowSettle {
+    from { padding: 48px 0; gap: 40px; }
+}
+
+@keyframes btnSettle {
+    from { width: 52px; height: 52px; }
+}
+
+@keyframes itemSettle {
+    from { gap: 10px; }
+}
+
+@keyframes labelSettle {
+    from { font-size: 10px; }
+}
+
 /* ================================================
    FRONT — centered audio with extra padding
    ================================================ */
@@ -342,19 +358,23 @@ span.empty { display: none; }
 .back .audio-row {
     padding: 4px 0 0;
     gap: 28px;
+    animation: rowSettle 0.35s var(--ease) both;
 }
 
 .back .audio-item {
     gap: 6px;
+    animation: itemSettle 0.35s var(--ease) both;
 }
 
 .back .audio-item .replay-button svg {
     width: 40px;
     height: 40px;
+    animation: btnSettle 0.35s var(--ease) both;
 }
 
 .back .audio-label {
     font-size: 9px;
+    animation: labelSettle 0.35s var(--ease) both;
 }
 
 /* Unwrap {{FrontSide}} containers on back */
@@ -367,6 +387,11 @@ span.empty { display: none; }
 
 /* Suppress front entrance animations on back */
 .back .fi { animation: none; }
+
+.back .audio-item.bi {
+    animation: fadeIn 0.35s var(--spring) 70ms both,
+               itemSettle 0.35s var(--ease) both;
+}
 
 .answer {
     display: flex;
