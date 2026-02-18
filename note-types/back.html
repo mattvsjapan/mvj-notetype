@@ -63,7 +63,7 @@
         var toggle = document.getElementById('jp-toggle');
         if (toggle) {
             toggle.addEventListener('change', function() {
-                if (toggle.checked) playDef();
+                if (toggle.checked && !window.__monoUnlocked) playDef();
             });
         }
     })();
@@ -754,8 +754,19 @@ function _renderBack() {
   } else {
     defEl.style.display = 'none';
   }
-  if (defs.monolingual) {
-    jpDefEl.innerHTML = defs.monolingual;
+  if (defs.monolingual && !defs.LOCKED_monolingual) {
+    // Unlocked: show mono directly, bilingual behind toggle
+    defEl.innerHTML = defs.monolingual;
+    defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
+    defEl.style.lineHeight = '1.65';
+    jpDefEl.innerHTML = defs.bilingual || '';
+    jpDefEl.className = 'def';
+    var toggleLabel = document.querySelector('.jp-def-toggle');
+    if (toggleLabel) toggleLabel.textContent = 'Bilingual';
+    window.__monoUnlocked = true;
+    if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+  } else if (defs.LOCKED_monolingual) {
+    jpDefEl.innerHTML = defs.LOCKED_monolingual;
   } else {
     jpDefSection.style.display = 'none';
   }
