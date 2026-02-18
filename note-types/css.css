@@ -81,7 +81,7 @@ html {
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    padding: 40px 44px;
+    padding: 40px clamp(20px, 6vw, 44px);
     max-width: 580px;
     margin: 0 auto;
     border: 1px solid var(--border);
