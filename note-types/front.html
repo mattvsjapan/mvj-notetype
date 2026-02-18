@@ -19,6 +19,15 @@ window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fil
 window.__animateBtn = function(btn) {
     var circle = btn.querySelector('circle, .replayCircle');
     var path = btn.querySelector('path, .replayTriangle');
+    var isTouch = window.matchMedia('(hover: none)').matches;
+    if (isTouch) {
+        // Touch: subtle fill only (matches native [sound:] button feedback)
+        if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; }
+        setTimeout(function() {
+            if (circle) { circle.style.fill = ''; }
+        }, 350);
+        return;
+    }
     btn.style.transform = 'scale(0.95)';
     btn.style.transitionDuration = '80ms';
     if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }

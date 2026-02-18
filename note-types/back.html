@@ -38,6 +38,7 @@
                 audio.preload = 'auto';
                 audio.src = filenames[i];
                 document.body.appendChild(audio);
+
                 audios.push(audio);
             }
 
@@ -69,6 +70,13 @@
             animateBtn(btns[idx]);
         }
 
+        // Click handler: use new Audio() for iOS reliability
+        function playSingleFresh(idx) {
+            if (usePycmd) { window.__clickSoundLink(filenames[idx]); animateBtn(btns[idx]); return; }
+            new Audio(filenames[idx]).play();
+            animateBtn(btns[idx]);
+        }
+
         // Sequential playback: chain via onended
         function playAll() {
             if (usePycmd) { playSinglePycmd(0); return; }
@@ -86,7 +94,7 @@
 
         for (var j = 0; j < btns.length; j++) {
             (function(idx) {
-                btns[idx].addEventListener('click', function(ev) { ev.preventDefault(); playSingle(idx); });
+                btns[idx].addEventListener('click', function(ev) { ev.preventDefault(); playSingleFresh(idx); });
             })(j);
         }
 
@@ -863,6 +871,7 @@ function _renderBack() {
           pa.preload = 'auto';
           pa.src = primaryAudio.filenames[pi];
           document.body.appendChild(pa);
+
           primaryAudios.push(pa);
         }
       }
@@ -875,6 +884,7 @@ function _renderBack() {
           sa.preload = 'auto';
           sa.src = secondaryAudio.filenames[si];
           document.body.appendChild(sa);
+
           secondaryAudios.push(sa);
         }
       }
@@ -883,6 +893,7 @@ function _renderBack() {
 
       var animateBtnDef = window.__animateBtn;
 
+      // Pre-created audio playback (for autoplay/keyboard)
       var playGroup = function(audioInfo, audioEls) {
         if (audioInfo.usePycmd) {
           window.__clickSoundLink(audioInfo.filenames[0]);
@@ -897,6 +908,15 @@ function _renderBack() {
           audioEls[cur].play();
         };
         playNext();
+      };
+
+      // Fresh Audio playback (for click handlers — more reliable on iOS)
+      var playGroupFresh = function(audioInfo) {
+        if (audioInfo.usePycmd) {
+          window.__clickSoundLink(audioInfo.filenames[0]);
+          return;
+        }
+        new Audio(audioInfo.filenames[0]).play();
       };
 
       // Create audio-item(s) in .audio-row
@@ -921,7 +941,7 @@ function _renderBack() {
             playGroup(audioInfo, audioEls);
             animateBtnDef(btn);
           };
-          btn.addEventListener('click', function(ev) { ev.preventDefault(); playFn(); });
+          btn.addEventListener('click', function(ev) { ev.preventDefault(); playGroupFresh(audioInfo); animateBtnDef(btn); });
           return playFn;
         }
 
@@ -971,7 +991,7 @@ function _renderBack() {
           animateBtnDef(defBtn);
         };
 
-        defBtn.addEventListener('click', function(ev) { ev.preventDefault(); playPrimary(); });
+        defBtn.addEventListener('click', function(ev) { ev.preventDefault(); playGroupFresh(primaryAudio); animateBtnDef(defBtn); });
         window.__playLockedDefAudio = playPrimary;
 
         var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
