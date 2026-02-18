@@ -1,6 +1,7 @@
 const GHOST_PARTICLE = '+';
 const DEVOICED_PREFIX = '*';
 const LITERAL_PREFIX = '\\';
+const HIGH_PREFIX = '^';
 const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
@@ -27,26 +28,33 @@ function detachGhostParticle(text) {
 }
 
 function furiganaToReading(word) {
-  return word.split(' ').map(part => part.replace(/([^\[\]]*\[|])/g, '')).join('');
+  return word.split(' ').map(part => {
+    // Move prefix markers (^, *) from before kanji[reading] into the reading
+    part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
+    return part.replace(/([^\[\]]*\[|])/g, '');
+  }).join('');
 }
 
 function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\]/g, '');
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\\^]/g, '');
 }
 
 function kanaToMoraes(kana) {
-  return kana.match(/(?:\*\\?|\\\*?)?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  return kana.match(/(?:[\*\\\^]{1,3})?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
 }
 
 function splitToMoras(reading) {
   const kana = filterKana(reading);
   const raw = kanaToMoraes(kana);
   return raw.map(m => {
-    let devoiced = false, literal = false;
-    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
-    if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
-    if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
-    return { text: m, devoiced, literal };
+    let devoiced = false, literal = false, high = false;
+    while (m.length > 0) {
+      if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
+      else if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
+      else if (m.startsWith(HIGH_PREFIX)) { high = true; m = m.slice(1); }
+      else break;
+    }
+    return { text: m, devoiced, literal, high };
   });
 }
 

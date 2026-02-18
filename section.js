@@ -109,13 +109,13 @@ class Section {
 
   get isParticle() { return !!this._d.accent.is_particle; }
 
-  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, ''); }
+  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, '').replaceAll(HIGH_PREFIX, ''); }
 
   get moraes() {
     const m = this._d.moraes;
     if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
-      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false }];
-      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false }];
+      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
     }
     return m;
   }
@@ -166,6 +166,9 @@ function buildHighLow(sequence) {
       lastLow = section.levels[section.levels.length - 1] === L;
     } else {
       section.levels = buildLevelsTokyo(section, lastLow);
+      for (let i = 0; i < section.moraes.length; i++) {
+        if (section.moraes[i].high) section.levels[i] = H;
+      }
       lastLow = calcLastWordEndedLow(section, lastLow);
     }
   }
