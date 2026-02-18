@@ -652,7 +652,7 @@ function _renderBack() {
   var wordRaw = document.getElementById('raw-word');
   if (!wordRaw) return setTimeout(_renderBack, 10);
 
-  wordRaw = wordRaw.textContent.trim();
+  wordRaw = wordRaw.innerHTML.trim();
   var sentRaw = document.getElementById('raw-sentence').textContent.trim();
   var defHtml = document.getElementById('raw-definition').innerHTML;
 
