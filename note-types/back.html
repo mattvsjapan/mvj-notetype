@@ -11,7 +11,15 @@
         var container = document.getElementById('def-audio-container');
         if (!container) return;
         var text = container.textContent;
-        var m = text.match(/\[def:([^\]]+)\]/);
+        var m = text.match(/\[audio:([^\]]+)\]/);
+        if (!m) {
+            var soundLink = container.querySelector('.soundLink');
+            if (soundLink) {
+                var onclick = soundLink.getAttribute('onclick') || '';
+                var sm = onclick.match(/play:([^'")\s]+)/);
+                if (sm) m = sm;
+            }
+        }
         container.remove();
         if (!m) return;
 
