@@ -701,19 +701,16 @@ _renderBack();
 <script>
 (function() {
   var HANDLER_KEY = '__audioHandler';
-  function getSound(item) {
-    if (!item) return null;
-    var link = item.querySelector('.soundLink');
-    if (!link) return null;
-    var m = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
-    return m ? m[1] : null;
+  function getSounds(item) {
+    if (!item) return [];
+    var sounds = [];
+    item.querySelectorAll('.soundLink').forEach(function(link) {
+      var m = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
+      if (m) sounds.push(m[1]);
+    });
+    return sounds;
   }
-  function play(item) {
-    var fname = getSound(item);
-    if (!fname) return;
-    try { pycmd('play:' + fname); } catch(e) {}
-    var btn = item.querySelector('.replay-button');
-    if (!btn) return;
+  function animateBtn(btn) {
     var circle = btn.querySelector('circle, .replayCircle');
     var path = btn.querySelector('path, .replayTriangle');
     btn.style.transform = 'scale(0.95)';
@@ -726,6 +723,12 @@ _renderBack();
       if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
       if (path) { path.style.fill = ''; }
     }, 350);
+  }
+  function play(item) {
+    var sounds = getSounds(item);
+    if (!sounds.length) return;
+    sounds.forEach(function(f) { try { pycmd('play:' + f); } catch(e) {} });
+    item.querySelectorAll('.replay-button').forEach(animateBtn);
   }
   function handler(ev) {
     var el = ev.target;
