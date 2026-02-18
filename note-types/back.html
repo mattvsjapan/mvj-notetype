@@ -700,6 +700,53 @@ _renderBack();
 
 <script>
 (function() {
+  var HANDLER_KEY = '__audioHandler';
+  function getSound(item) {
+    if (!item) return null;
+    var link = item.querySelector('.soundLink');
+    if (!link) return null;
+    var m = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
+    return m ? m[1] : null;
+  }
+  function play(item) {
+    var fname = getSound(item);
+    if (!fname) return;
+    try { pycmd('play:' + fname); } catch(e) {}
+    var btn = item.querySelector('.replay-button');
+    if (!btn) return;
+    var circle = btn.querySelector('circle, .replayCircle');
+    var path = btn.querySelector('path, .replayTriangle');
+    btn.style.transform = 'scale(0.95)';
+    btn.style.transitionDuration = '80ms';
+    if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
+    if (path) { path.style.fill = 'var(--accent)'; }
+    setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
+    setTimeout(function() {
+      btn.style.transform = '';
+      if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
+      if (path) { path.style.fill = ''; }
+    }, 350);
+  }
+  function handler(ev) {
+    var el = ev.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+    var items = document.querySelectorAll('.audio-row .audio-item');
+    switch (ev.key.toLowerCase()) {
+      case 'n': ev.preventDefault(); ev.stopPropagation(); play(items[0]); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); play(items[1]); break;
+      case ',': ev.preventDefault(); ev.stopPropagation(); play(items[2]); break;
+    }
+  }
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener('keydown', window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener('keydown', handler, { capture: true });
+})();
+</script>
+
+<script>
+(function() {
   var HANDLER_KEY = '__jpDefHandler';
   function handler(ev) {
     if (ev.code === 'KeyG') {
