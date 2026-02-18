@@ -119,7 +119,7 @@ html {
 .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
-    margin: 28px 0;
+    margin: 20px 0;
 }
 
 /* Pitch graph */
