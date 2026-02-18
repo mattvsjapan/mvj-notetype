@@ -1076,18 +1076,10 @@ _renderBack();
       setTimeout(function() {
         var wrap = document.querySelector('.jp-def-wrap');
         if (!wrap) return;
-        var card = document.querySelector('.card');
-        if (!card) return;
-        var gap = wrap.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom;
-        if (gap <= 0) return;
-        var start = card.scrollTop, end = start + gap + 20;
-        var t0 = performance.now();
-        (function step(now) {
-          var p = Math.min((now - t0) / 300, 1);
-          card.scrollTop = start + (end - start) * p * (2 - p);
-          if (p < 1) requestAnimationFrame(step);
-        })(t0);
-      }, 200);
+        if (wrap.getBoundingClientRect().bottom > window.innerHeight) {
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      }, 250);
     });
   }
 })();

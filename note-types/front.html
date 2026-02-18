@@ -1,3 +1,10 @@
+<script>
+// Tag <html> so CSS can strip grain on mobile (body.mobile can't target its parent)
+if (document.body.classList.contains('mobile') || ('ontouchstart' in window && window.innerWidth < 768)) {
+    document.documentElement.classList.add('is-mobile');
+}
+</script>
+
 <div class="card-inner">
 <div class="front">
     <div class="audio-row">
