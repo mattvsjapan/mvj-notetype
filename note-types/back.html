@@ -40,12 +40,19 @@
         var m;
         while ((m = re.exec(text)) !== null) filenames.push(m[1]);
 
-        // Fallback: [sound:] via pycmd
+        // Fallback: [sound:] via soundLink (Desktop/AnkiDroid/AnkiMobile)
         if (!filenames.length) {
             container.querySelectorAll('.soundLink').forEach(function(link) {
                 filenames.push(link.outerHTML);
             });
             if (filenames.length) usePycmd = true;
+        }
+        // Fallback: [sound:] rendered as <audio> elements (AnkiWeb)
+        if (!filenames.length) {
+            container.querySelectorAll('audio').forEach(function(a) {
+                var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
+                if (src) filenames.push(src);
+            });
         }
         container.remove();
         if (!filenames.length) return;
@@ -877,6 +884,13 @@ function _renderBack() {
           fns.push(link.outerHTML);
         });
         if (fns.length) usePy = true;
+      }
+      // AnkiWeb fallback: [sound:] rendered as <audio> elements
+      if (!fns.length) {
+        tmp.querySelectorAll('audio').forEach(function(a) {
+          var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
+          if (src) fns.push(src);
+        });
       }
       return { filenames: fns, usePycmd: usePy };
     };
