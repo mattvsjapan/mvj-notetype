@@ -7,6 +7,19 @@
     {{/Definition Audio}}
 
     <script>
+    function clickSoundLink(html) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        var link = tmp.firstElementChild;
+        if (link) {
+            link.style.position = 'fixed';
+            link.style.opacity = '0';
+            link.style.pointerEvents = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(function() { if (link.parentNode) link.remove(); }, 200);
+        }
+    }
     (function() {
         var container = document.getElementById('def-audio-container');
         if (!container) return;
@@ -30,8 +43,7 @@
         // Fallback: [sound:] via pycmd
         if (!filenames.length) {
             container.querySelectorAll('.soundLink').forEach(function(link) {
-                var sm = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
-                if (sm) filenames.push(sm[1]);
+                filenames.push(link.outerHTML);
             });
             if (filenames.length) usePycmd = true;
         }
@@ -85,7 +97,7 @@
         }
 
         function playSinglePycmd(idx) {
-            try { pycmd('play:' + filenames[idx]); } catch(e) {}
+            clickSoundLink(filenames[idx]);
             animateBtn(btns[idx]);
         }
 
@@ -862,8 +874,7 @@ function _renderBack() {
       while ((am = audioRe.exec(txt)) !== null) fns.push(am[1]);
       if (!fns.length) {
         tmp.querySelectorAll('.soundLink').forEach(function(link) {
-          var sm = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
-          if (sm) fns.push(sm[1]);
+          fns.push(link.outerHTML);
         });
         if (fns.length) usePy = true;
       }
@@ -938,7 +949,7 @@ function _renderBack() {
 
       var playGroup = function(audioInfo, audioEls) {
         if (audioInfo.usePycmd) {
-          try { pycmd('play:' + audioInfo.filenames[0]); } catch(e) {}
+          clickSoundLink(audioInfo.filenames[0]);
           return;
         }
         var idx = 0;
@@ -1055,15 +1066,6 @@ _renderBack();
 <script>
 (function() {
   var HANDLER_KEY = '__audioHandler';
-  function getSounds(item) {
-    if (!item) return [];
-    var sounds = [];
-    item.querySelectorAll('.soundLink').forEach(function(link) {
-      var m = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
-      if (m) sounds.push(m[1]);
-    });
-    return sounds;
-  }
   function animateBtn(btn) {
     var circle = btn.querySelector('circle, .replayCircle');
     var path = btn.querySelector('path, .replayTriangle');
@@ -1079,9 +1081,10 @@ _renderBack();
     }, 350);
   }
   function play(item) {
-    var sounds = getSounds(item);
-    if (!sounds.length) return;
-    try { pycmd('play:' + sounds[0]); } catch(e) {}
+    if (!item) return;
+    var link = item.querySelector('.soundLink');
+    if (!link) return;
+    link.click();
     var btn = item.querySelector('.replay-button');
     if (btn) animateBtn(btn);
   }
