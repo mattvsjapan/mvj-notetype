@@ -322,7 +322,10 @@ span.empty { display: none; }
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    flex: 1 1 0;
+    max-width: 80px;
     min-width: 0;
+    overflow: visible;
 }
 
 .audio-item .replay-button svg {
@@ -381,7 +384,7 @@ span.empty { display: none; }
 
 .back .audio-row {
     padding: 4px 0 0;
-    gap: clamp(12px, 6vw, 28px);
+    gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
 }
 
@@ -642,7 +645,7 @@ rt {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: clamp(12px, 6vw, 28px);
+        gap: clamp(8px, 4vw, 20px);
         margin-top: 40px;
     }
 

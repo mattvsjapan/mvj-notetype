@@ -200,7 +200,10 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    min-width: 72px;
+    flex: 1 1 0;
+    max-width: 80px;
+    min-width: 0;
+    overflow: visible;
 }
 
 .audio-item .replay-button svg {
@@ -215,6 +218,7 @@
     letter-spacing: 0.1em;
     color: var(--text-3);
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 /* Front entrance */
