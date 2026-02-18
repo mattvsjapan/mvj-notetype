@@ -104,12 +104,11 @@
     <div class="answer">
         <h1 class="target-word ri" style="--d:0" id="target-word"></h1>
         <div class="pitch-graph ri" style="--d:50" id="pitch-graph"></div>
+        <p class="sentence ri" style="--d:95" id="sentence"></p>
         {{#Image}}
-        <div class="image-wrap ri" style="--d:95">{{Image}}</div>
+        <div class="image-wrap ri" style="--d:135">{{Image}}</div>
         {{/Image}}
-        <p class="sentence ri" style="--d:135" id="sentence"></p>
-        <div class="divider ri" style="--d:170"></div>
-        <p class="def ri" style="--d:200" id="def-bilingual"></p>
+        <p class="def ri" style="--d:170" id="def-bilingual"></p>
         <div class="jp-def-section ri" style="--d:225" id="jp-def-section">
             <input type="checkbox" id="jp-toggle" class="jp-def-input">
             <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
@@ -117,6 +116,7 @@
                 <p class="jp-def" id="def-monolingual"></p>
             </div>
         </div>
+        <div class="audio-row-bottom" id="audio-row-bottom"></div>
     </div>
 </div>
 </div>
@@ -987,6 +987,43 @@ function _renderBack() {
           }
         }
       }
+    }
+  }
+
+  // ── Mirror audio buttons to bottom row (mobile) ──
+  var bottomRow = document.getElementById('audio-row-bottom');
+  if (bottomRow) {
+    var SVG_BOTTOM = window.__audioSVG;
+    var animateBtnBottom = window.__animateBtn;
+    var topItems = document.querySelectorAll('.audio-row .audio-item');
+    for (var bi = 0; bi < topItems.length; bi++) {
+      (function(origItem) {
+        var clone = document.createElement('div');
+        clone.className = 'audio-item';
+        var origBtns = origItem.querySelectorAll('.replay-button');
+        for (var bj = 0; bj < origBtns.length; bj++) {
+          (function(origBtn) {
+            var btn = document.createElement('a');
+            btn.className = 'replay-button';
+            btn.href = '#';
+            btn.innerHTML = SVG_BOTTOM;
+            clone.appendChild(btn);
+            btn.addEventListener('click', function(ev) {
+              ev.preventDefault();
+              origBtn.click();
+              animateBtnBottom(btn);
+            });
+          })(origBtns[bj]);
+        }
+        var origLabel = origItem.querySelector('.audio-label');
+        if (origLabel) {
+          var lbl = document.createElement('span');
+          lbl.className = 'audio-label';
+          lbl.textContent = origLabel.textContent;
+          clone.appendChild(lbl);
+        }
+        bottomRow.appendChild(clone);
+      })(topItems[bi]);
     }
   }
 

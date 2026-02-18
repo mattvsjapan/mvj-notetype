@@ -405,7 +405,13 @@ span.empty { display: none; }
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 28px;
+    margin-top: 18px;
+}
+
+@media (hover: none) {
+    .answer {
+        margin-top: 10px;
+    }
 }
 
 /* Target word — Japanese serif for kanji with ruby furigana */
@@ -489,7 +495,7 @@ rt {
     line-height: 1.85;
     color: var(--text-1);
     text-align: center;
-    margin: 0;
+    margin: 0 0 20px;
 }
 
 .sentence.no-accent .particle {
@@ -522,6 +528,12 @@ rt {
 
 .jp-def-section {
     text-align: left;
+}
+
+@media (hover: none) {
+    .jp-def-section {
+        text-align: center;
+    }
 }
 
 .jp-def-input {
@@ -592,6 +604,35 @@ rt {
     color: var(--text-1);
     margin: 0;
     padding-top: 12px;
+}
+
+/* Bottom audio row — mobile only duplicate */
+
+.audio-row-bottom {
+    display: none;
+}
+
+@media (hover: none) {
+    .audio-row-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(12px, 6vw, 28px);
+        margin-top: 24px;
+    }
+
+    .audio-row-bottom .audio-item {
+        gap: 6px;
+    }
+
+    .audio-row-bottom .replay-button svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .audio-row-bottom .audio-label {
+        font-size: 9px;
+    }
 }
 
 /* Back entrance animation */
