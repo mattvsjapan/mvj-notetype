@@ -118,6 +118,7 @@
         }
 
         window.__playLockedDefAudio = playAll;
+        window.__autoPlayDefAudio = playAll;
 
         var toggle = document.getElementById('jp-toggle');
         if (toggle) {
@@ -1030,6 +1031,13 @@ function _renderBack() {
                            (primaryType === 'monolingual' && !!window.__monoUnlocked);
         if (primaryShown) {
           window.__autoPlayDefAudio = playPrimary;
+        } else {
+          var defToggle = document.getElementById('jp-toggle');
+          if (defToggle) {
+            defToggle.addEventListener('change', function() {
+              if (defToggle.checked) playPrimary();
+            });
+          }
         }
       }
     }
@@ -1038,8 +1046,6 @@ function _renderBack() {
   // ── Auto-play definition audio ──
   if (window.__autoPlayDefAudio) {
     window.__autoPlayDefAudio();
-  } else if (window.__monoUnlocked && window.__playLockedDefAudio) {
-    window.__playLockedDefAudio();
   }
 }
 _renderBack();
