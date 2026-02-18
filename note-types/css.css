@@ -49,7 +49,7 @@
 
 html {
     background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E") repeat, var(--bg) !important;
-    min-height: 100%;
+    min-height: 100vh;
 }
 
 .card {
@@ -57,7 +57,7 @@ html {
     margin: 0;
     padding: 40px 20px;
     box-sizing: border-box;
-    min-height: 100%;
+    min-height: 100vh;
 }
 
 /* — Mobile: strip grain textures (SVG feTurbulence is expensive on touch devices) — */
@@ -244,18 +244,14 @@ span.empty { display: none; }
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 180ms var(--spring);
     vertical-align: middle;
     line-height: 1;
 }
 
-.replay-button:hover {
-    transform: scale(1.06);
-}
-
-.replay-button:active {
-    transform: scale(0.95);
-    transition-duration: 80ms;
+@media (hover: hover) {
+    .replay-button {
+        transition: transform 180ms var(--spring);
+    }
 }
 
 .replay-button svg {
@@ -281,15 +277,33 @@ span.empty { display: none; }
     transform-origin: 32px 32px;
 }
 
-.replay-button:hover svg circle,
-.replay-button:hover .replayCircle {
-    fill: var(--bg-surface-hover);
-    stroke: var(--accent-glow);
+@media (hover: hover) {
+    .replay-button:hover {
+        transform: scale(1.06);
+    }
+
+    .replay-button:active {
+        transform: scale(0.95);
+        transition-duration: 80ms;
+    }
+
+    .replay-button:hover svg circle,
+    .replay-button:hover .replayCircle {
+        fill: var(--bg-surface-hover);
+        stroke: var(--accent-glow);
+    }
+
+    .replay-button:hover svg path,
+    .replay-button:hover .replayTriangle {
+        fill: var(--accent);
+    }
 }
 
-.replay-button:hover svg path,
-.replay-button:hover .replayTriangle {
-    fill: var(--accent);
+@media (hover: none) {
+    .replay-button:active svg circle,
+    .replay-button:active .replayCircle {
+        fill: var(--bg-surface-hover);
+    }
 }
 
 /* ================================================
@@ -563,10 +577,12 @@ rt {
     gap: 4px;
 }
 
-.jp-def-toggle:hover {
-    color: var(--text-1);
-    border-color: rgba(255, 255, 255, 0.10);
-    background: rgba(255, 255, 255, 0.04);
+@media (hover: hover) {
+    .jp-def-toggle:hover {
+        color: var(--text-1);
+        border-color: rgba(255, 255, 255, 0.10);
+        background: rgba(255, 255, 255, 0.04);
+    }
 }
 
 .jp-def-toggle::after {
