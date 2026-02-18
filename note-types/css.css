@@ -60,18 +60,19 @@ html {
     min-height: 100%;
 }
 
-/* — Mobile: strip grain textures (SVG feTurbulence is expensive on iOS/Android) —
-   .is-mobile is set on <html> by a script in front.html                         */
-html.is-mobile {
-    background: var(--bg) !important;
-}
+/* — Mobile: strip grain textures (SVG feTurbulence is expensive on touch devices) — */
+@media (hover: none) {
+    html {
+        background: var(--bg) !important;
+    }
 
-html.is-mobile .card {
-    background: var(--bg) !important;
-}
+    .card {
+        background: var(--bg) !important;
+    }
 
-html.is-mobile .card-inner::before {
-    display: none;
+    .card-inner::before {
+        display: none;
+    }
 }
 
 /* — Base — */
