@@ -38,35 +38,32 @@
     /* Motion */
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Grain — baked-in opacity avoids position:fixed (broken in iOS WebView) */
+    --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
 }
 
 /* — Anki page background —
    html:  covers the Qt widget gap (Desktop) and viewport edge cases
    .card: targets <body> in all Anki clients (Desktop, Mobile, AnkiDroid)
-   min-height on both: fixes position:fixed on AnkiMobile (iOS)
    --canvas override: syncs Anki Desktop's toolbar to our background */
 
 html {
-    background: var(--bg) !important;
-    min-height: 100vh;
+    background: var(--grain), var(--bg) !important;
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 .card {
-    background: var(--bg) !important;
+    background: var(--grain), var(--bg) !important;
     margin: 0;
-    min-height: 100vh;
     padding: 40px 20px;
-}
-
-/* Grain overlay on page background */
-.card::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 100;
-    opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
 }
 
 /* — Base — */
@@ -292,7 +289,7 @@ span.empty { display: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 40px;
+    gap: clamp(16px, 8vw, 40px);
 }
 
 .audio-item {
@@ -300,7 +297,7 @@ span.empty { display: none; }
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    min-width: 72px;
+    min-width: 0;
 }
 
 .audio-item .replay-button svg {
@@ -358,7 +355,7 @@ span.empty { display: none; }
 
 .back .audio-row {
     padding: 4px 0 0;
-    gap: 28px;
+    gap: clamp(12px, 6vw, 28px);
     animation: rowSettle 0.35s var(--ease) both;
 }
 
