@@ -11,7 +11,7 @@
         var container = document.getElementById('def-audio-container');
         if (!container) return;
         var text = container.textContent;
-        var m = text.match(/\[LOCKED:([^\]]+)\]/);
+        var m = text.match(/\[def:([^\]]+)\]/);
         container.remove();
         if (!m) return;
 
