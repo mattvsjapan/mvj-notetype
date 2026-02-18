@@ -977,8 +977,14 @@ function _renderBack() {
           return playFn;
         }
 
-        var playBi = makeDefItem('Bi-Def', biAudio, !biAudio.usePycmd ? primaryType === 'bilingual' ? primaryAudios : secondaryAudios : []);
-        var playMono = makeDefItem('Mono-Def', monoAudio, !monoAudio.usePycmd ? primaryType === 'monolingual' ? primaryAudios : secondaryAudios : []);
+        var playBi, playMono;
+        if (window.__monoUnlocked) {
+          playMono = makeDefItem('Mono-Def', monoAudio, !monoAudio.usePycmd ? primaryAudios : []);
+          playBi = makeDefItem('Bi-Def', biAudio, !biAudio.usePycmd ? secondaryAudios : []);
+        } else {
+          playBi = makeDefItem('Bi-Def', biAudio, !biAudio.usePycmd ? primaryAudios : []);
+          playMono = makeDefItem('Mono-Def', monoAudio, !monoAudio.usePycmd ? secondaryAudios : []);
+        }
 
         var playPrimary = window.__monoUnlocked ? playMono : playBi;
         var playSecondary = window.__monoUnlocked ? playBi : playMono;
