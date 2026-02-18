@@ -951,50 +951,79 @@ function _renderBack() {
         playNext();
       };
 
-      // Create "Definition" button in .audio-row
+      // Create audio-item(s) in .audio-row
       var audioRow = document.querySelector('.audio-row');
-      var defItem = document.createElement('div');
-      defItem.className = 'audio-item bi';
-      var defBtn = document.createElement('a');
-      defBtn.className = 'replay-button';
-      defBtn.href = '#';
-      defBtn.innerHTML = SVG_DEF;
-      defItem.appendChild(defBtn);
-      var defLabel = document.createElement('span');
-      defLabel.className = 'audio-label';
-      defLabel.textContent = 'Definition';
-      defItem.appendChild(defLabel);
-      if (audioRow) audioRow.appendChild(defItem);
 
-      var playPrimary = function() {
-        playGroup(primaryAudio, primaryAudios);
-        animateBtnDef(defBtn);
-      };
+      if (hasBiAudio && hasMonoAudio) {
+        // Two separate items: BI-DEF and MONO-DEF
+        function makeDefItem(label, audioInfo, audioEls) {
+          var item = document.createElement('div');
+          item.className = 'audio-item bi';
+          var btn = document.createElement('a');
+          btn.className = 'replay-button';
+          btn.href = '#';
+          btn.innerHTML = SVG_DEF;
+          item.appendChild(btn);
+          var lbl = document.createElement('span');
+          lbl.className = 'audio-label';
+          lbl.textContent = label;
+          item.appendChild(lbl);
+          if (audioRow) audioRow.appendChild(item);
+          var playFn = function() {
+            playGroup(audioInfo, audioEls);
+            animateBtnDef(btn);
+          };
+          btn.addEventListener('click', function(ev) { ev.preventDefault(); playFn(); });
+          return playFn;
+        }
 
-      // Wire button click
-      defBtn.addEventListener('click', function(ev) { ev.preventDefault(); playPrimary(); });
+        var playBi = makeDefItem('Bi-Def', biAudio, !biAudio.usePycmd ? primaryType === 'bilingual' ? primaryAudios : secondaryAudios : []);
+        var playMono = makeDefItem('Mono-Def', monoAudio, !monoAudio.usePycmd ? primaryType === 'monolingual' ? primaryAudios : secondaryAudios : []);
 
-      // Hotkey handler (comma key)
-      window.__playLockedDefAudio = playPrimary;
+        var playPrimary = window.__monoUnlocked ? playMono : playBi;
+        var playSecondary = window.__monoUnlocked ? playBi : playMono;
 
-      // Auto-play: only if primary audio's definition is currently shown
-      var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
-                         (primaryType === 'monolingual' && !!window.__monoUnlocked);
-      if (primaryShown) {
-        window.__autoPlayDefAudio = playPrimary;
-      }
+        window.__playLockedDefAudio = playPrimary;
 
-      // Wire toggle → play secondary audio
-      if (secondaryAudio) {
+        var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
+                           (primaryType === 'monolingual' && !!window.__monoUnlocked);
+        if (primaryShown) {
+          window.__autoPlayDefAudio = playPrimary;
+        }
+
         var defToggle = document.getElementById('jp-toggle');
         if (defToggle) {
-          var playSecondary = function() {
-            playGroup(secondaryAudio, secondaryAudios);
-            animateBtnDef(defBtn);
-          };
           defToggle.addEventListener('change', function() {
             if (defToggle.checked) playSecondary();
           });
+        }
+      } else {
+        // Single button
+        var defItem = document.createElement('div');
+        defItem.className = 'audio-item bi';
+        var defBtn = document.createElement('a');
+        defBtn.className = 'replay-button';
+        defBtn.href = '#';
+        defBtn.innerHTML = SVG_DEF;
+        defItem.appendChild(defBtn);
+        var defLabel = document.createElement('span');
+        defLabel.className = 'audio-label';
+        defLabel.textContent = 'Definition';
+        defItem.appendChild(defLabel);
+        if (audioRow) audioRow.appendChild(defItem);
+
+        var playPrimary = function() {
+          playGroup(primaryAudio, primaryAudios);
+          animateBtnDef(defBtn);
+        };
+
+        defBtn.addEventListener('click', function(ev) { ev.preventDefault(); playPrimary(); });
+        window.__playLockedDefAudio = playPrimary;
+
+        var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
+                           (primaryType === 'monolingual' && !!window.__monoUnlocked);
+        if (primaryShown) {
+          window.__autoPlayDefAudio = playPrimary;
         }
       }
     }
