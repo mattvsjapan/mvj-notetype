@@ -627,15 +627,6 @@ function parseDefinitions(html) {
   return defs;
 }
 
-// ── Accent color map ──
-const ACCENT_COLORS = {
-  atamadaka:  { color: '#ff6b6b', glow: 'rgba(255, 107, 107, 0.12)' },
-  heiban:     { color: '#6ea8fe', glow: 'rgba(110, 168, 254, 0.12)' },
-  nakadaka:   { color: '#ffb347', glow: 'rgba(255, 179, 71, 0.12)' },
-  kifuku:     { color: '#c4a0ff', glow: 'rgba(196, 160, 255, 0.12)' },
-  odaka:      { color: '#51cf66', glow: 'rgba(81, 207, 102, 0.12)' },
-};
-
 // ── Render (deferred for Anki front→back transitions) ──
 function _renderBack() {
   var wordRaw = document.getElementById('raw-word');
@@ -659,25 +650,6 @@ function _renderBack() {
     if (wordSeqs.length > 0) {
       // Target word display uses first sequence
       targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
-
-      // Detect accent role of first non-particle section
-      var accentRole = null;
-      for (var i = 0; i < wordSeqs[0].length; i++) {
-        var sec = wordSeqs[0][i];
-        if (sec.role !== 'particle' && sec.role !== 'empty' && !sec.isParticle) {
-          accentRole = sec.role;
-          break;
-        }
-      }
-
-      // Apply accent color to target word
-      if (accentRole && ACCENT_COLORS[accentRole]) {
-        var ac = ACCENT_COLORS[accentRole];
-        targetEl.style.color = ac.color;
-        targetEl.style.textShadow = '0 0 40px ' + ac.glow;
-      } else {
-        targetEl.style.color = 'var(--text-1)';
-      }
 
       // Pitch graphs for ALL sequences (stacked)
       var svgs = [];
