@@ -521,14 +521,18 @@ rt {
 
 .jp-def-wrap {
     text-align: initial;
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr;
     opacity: 0;
+    transition: grid-template-rows 350ms var(--ease), opacity 300ms ease;
+}
+
+.jp-def-wrap > * {
     overflow: hidden;
-    transition: max-height 350ms var(--ease), opacity 300ms ease;
 }
 
 .jp-def-input:checked ~ .jp-def-wrap {
-    max-height: 200px;
+    grid-template-rows: 1fr;
     opacity: 1;
 }
 
