@@ -757,6 +757,16 @@ _renderBack();
 <script>
 (function() {
   var HANDLER_KEY = '__jpDefHandler';
+  function animateToggle(label) {
+    label.style.color = 'var(--text-1)';
+    label.style.borderColor = 'rgba(255, 255, 255, 0.10)';
+    label.style.background = 'rgba(255, 255, 255, 0.04)';
+    setTimeout(function() {
+      label.style.color = '';
+      label.style.borderColor = '';
+      label.style.background = '';
+    }, 350);
+  }
   function handler(ev) {
     if (ev.code === 'KeyG') {
       var cb = document.getElementById('jp-toggle');
@@ -764,6 +774,8 @@ _renderBack();
         ev.preventDefault();
         ev.stopPropagation();
         cb.checked = !cb.checked;
+        var label = document.querySelector('.jp-def-toggle');
+        if (label) animateToggle(label);
       }
     }
   }
