@@ -391,9 +391,11 @@ rt {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     padding: 6px 14px;
-    font-family: var(--jp);
-    font-size: 13px;
+    font-family: var(--mono);
+    font-size: 10px;
     font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--text-3);
     cursor: pointer;
     transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
@@ -706,7 +708,7 @@ body::after {
                 {{#DefinitionJP}}
                 <div class="jp-def-section ri" style="--d:225">
                     <input type="checkbox" id="jp-toggle" class="jp-def-input">
-                    <label for="jp-toggle" class="jp-def-toggle">日本語</label>
+                    <label for="jp-toggle" class="jp-def-toggle">Monolingual</label>
                     <div class="jp-def-wrap">
                         <p class="jp-def">{{DefinitionJP}}</p>
                     </div>
@@ -751,7 +753,7 @@ body::after {
             <p class="def ri" style="--d:200">Lasting only a brief moment; so short-lived and delicate that it seems as though it could vanish at any time</p>
             <div class="jp-def-section ri" style="--d:225">
                 <input type="checkbox" id="jp-toggle" class="jp-def-input">
-                <label for="jp-toggle" class="jp-def-toggle">日本語</label>
+                <label for="jp-toggle" class="jp-def-toggle">Monolingual</label>
                 <div class="jp-def-wrap">
                     <p class="jp-def">長く続かず、すぐに消えてしまうさま。もろくてこわれやすく、いつまでも保つことができないさま。人の命や美しさなど、永遠ではないものに対して使われることが多い。</p>
                 </div>
