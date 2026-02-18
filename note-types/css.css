@@ -332,22 +332,23 @@ span.empty { display: none; }
 
 .audio-label {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: clamp(7px, 2.5vw, 10px);
     font-weight: 500;
     letter-spacing: 0.1em;
     color: var(--text-3);
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 /* Front entrance */
 .fi {
-    animation: fadeIn 0.35s var(--spring) both;
+    animation: fadeIn 0.5s var(--spring) both;
     animation-delay: calc(var(--d, 0) * 1ms);
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(28px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes rowSettle {
@@ -389,6 +390,11 @@ span.empty { display: none; }
     animation: itemSettle 0.35s var(--ease) both;
 }
 
+/* Hide extraneous elements Anki clients inject inside audio items */
+.back .audio-item > :not(.replay-button):not(.audio-label) {
+    display: none;
+}
+
 .back .audio-item .replay-button svg {
     width: 40px;
     height: 40px;
@@ -396,7 +402,7 @@ span.empty { display: none; }
 }
 
 .back .audio-label {
-    font-size: 9px;
+    font-size: clamp(6.5px, 2.2vw, 9px);
     animation: labelSettle 0.35s var(--ease) both;
 }
 
@@ -420,6 +426,7 @@ span.empty { display: none; }
     display: flex;
     flex-direction: column;
     margin-top: 18px;
+    padding-bottom: 8px;
 }
 
 @media (hover: none) {
@@ -634,7 +641,7 @@ rt {
         align-items: center;
         justify-content: center;
         gap: clamp(12px, 6vw, 28px);
-        margin-top: 24px;
+        margin-top: 40px;
     }
 
     .audio-row-bottom .audio-item {
@@ -647,24 +654,24 @@ rt {
     }
 
     .audio-row-bottom .audio-label {
-        font-size: 9px;
+        font-size: clamp(6.5px, 2.2vw, 9px);
     }
 }
 
 /* Back entrance animation */
 
 .ri {
-    animation: reveal 0.4s var(--spring) both;
+    animation: reveal 0.5s var(--spring) both;
     animation-delay: calc(var(--d, 0) * 1ms);
 }
 
 @keyframes reveal {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(36px) scale(0.92);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
