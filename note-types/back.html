@@ -7,19 +7,6 @@
     {{/Definition Audio}}
 
     <script>
-    function clickSoundLink(html) {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        var link = tmp.firstElementChild;
-        if (link) {
-            link.style.position = 'fixed';
-            link.style.opacity = '0';
-            link.style.pointerEvents = 'none';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(function() { if (link.parentNode) link.remove(); }, 200);
-        }
-    }
     (function() {
         var container = document.getElementById('def-audio-container');
         if (!container) return;
@@ -31,33 +18,13 @@
             return;
         }
 
-        var text = container.textContent;
-
-        // Collect all [audio:] filenames
-        var filenames = [];
-        var usePycmd = false;
-        var re = /\[audio:([^\]]+)\]/g;
-        var m;
-        while ((m = re.exec(text)) !== null) filenames.push(m[1]);
-
-        // Fallback: [sound:] via soundLink (Desktop/AnkiDroid/AnkiMobile)
-        if (!filenames.length) {
-            container.querySelectorAll('.soundLink').forEach(function(link) {
-                filenames.push(link.outerHTML);
-            });
-            if (filenames.length) usePycmd = true;
-        }
-        // Fallback: [sound:] rendered as <audio> elements (AnkiWeb)
-        if (!filenames.length) {
-            container.querySelectorAll('audio').forEach(function(a) {
-                var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
-                if (src) filenames.push(src);
-            });
-        }
+        var result = window.__extractAudio(container);
+        var filenames = result.filenames;
+        var usePycmd = result.usePycmd;
         container.remove();
         if (!filenames.length) return;
 
-        var SVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+        var SVG = window.__audioSVG;
         var audioRow = document.querySelector('.audio-row');
         var audios = [];
         var btns = [];
@@ -88,23 +55,10 @@
         item.appendChild(label);
         if (audioRow) audioRow.appendChild(item);
 
-        function animateBtn(btn) {
-            var circle = btn.querySelector('circle');
-            var path = btn.querySelector('path');
-            btn.style.transform = 'scale(0.95)';
-            btn.style.transitionDuration = '80ms';
-            if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
-            if (path) { path.style.fill = 'var(--accent)'; }
-            setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
-            setTimeout(function() {
-                btn.style.transform = '';
-                if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
-                if (path) { path.style.fill = ''; }
-            }, 350);
-        }
+        var animateBtn = window.__animateBtn;
 
         function playSinglePycmd(idx) {
-            clickSoundLink(filenames[idx]);
+            window.__clickSoundLink(filenames[idx]);
             animateBtn(btns[idx]);
         }
 
@@ -873,26 +827,7 @@ function _renderBack() {
     var extractAudioFilenames = function(blockHtml) {
       var tmp = document.createElement('div');
       tmp.innerHTML = blockHtml;
-      var fns = [];
-      var usePy = false;
-      var txt = tmp.textContent;
-      var audioRe = /\[audio:([^\]]+)\]/g;
-      var am;
-      while ((am = audioRe.exec(txt)) !== null) fns.push(am[1]);
-      if (!fns.length) {
-        tmp.querySelectorAll('.soundLink').forEach(function(link) {
-          fns.push(link.outerHTML);
-        });
-        if (fns.length) usePy = true;
-      }
-      // AnkiWeb fallback: [sound:] rendered as <audio> elements
-      if (!fns.length) {
-        tmp.querySelectorAll('audio').forEach(function(a) {
-          var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
-          if (src) fns.push(src);
-        });
-      }
-      return { filenames: fns, usePycmd: usePy };
+      return window.__extractAudio(tmp);
     };
 
     var biAudio = audioDefs.bilingual ? extractAudioFilenames(audioDefs.bilingual) : null;
@@ -944,26 +879,13 @@ function _renderBack() {
         }
       }
 
-      var SVG_DEF = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+      var SVG_DEF = window.__audioSVG;
 
-      var animateBtnDef = function(btn) {
-        var circle = btn.querySelector('circle');
-        var path = btn.querySelector('path');
-        btn.style.transform = 'scale(0.95)';
-        btn.style.transitionDuration = '80ms';
-        if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
-        if (path) { path.style.fill = 'var(--accent)'; }
-        setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
-        setTimeout(function() {
-          btn.style.transform = '';
-          if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
-          if (path) { path.style.fill = ''; }
-        }, 350);
-      };
+      var animateBtnDef = window.__animateBtn;
 
       var playGroup = function(audioInfo, audioEls) {
         if (audioInfo.usePycmd) {
-          clickSoundLink(audioInfo.filenames[0]);
+          window.__clickSoundLink(audioInfo.filenames[0]);
           return;
         }
         var idx = 0;
@@ -1080,20 +1002,7 @@ _renderBack();
 <script>
 (function() {
   var HANDLER_KEY = '__audioHandler';
-  function animateBtn(btn) {
-    var circle = btn.querySelector('circle, .replayCircle');
-    var path = btn.querySelector('path, .replayTriangle');
-    btn.style.transform = 'scale(0.95)';
-    btn.style.transitionDuration = '80ms';
-    if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
-    if (path) { path.style.fill = 'var(--accent)'; }
-    setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
-    setTimeout(function() {
-      btn.style.transform = '';
-      if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
-      if (path) { path.style.fill = ''; }
-    }, 350);
-  }
+  var animateBtn = window.__animateBtn;
   function play(item) {
     if (!item) return;
     var link = item.querySelector('.soundLink');
