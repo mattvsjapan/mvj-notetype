@@ -14,18 +14,18 @@
 
         // Collect all [audio:] filenames
         var filenames = [];
+        var usePycmd = false;
         var re = /\[audio:([^\]]+)\]/g;
         var m;
         while ((m = re.exec(text)) !== null) filenames.push(m[1]);
 
         // Fallback: [sound:] via pycmd
         if (!filenames.length) {
-            var soundLink = container.querySelector('.soundLink');
-            if (soundLink) {
-                var onclick = soundLink.getAttribute('onclick') || '';
-                var sm = onclick.match(/play:([^'")\s]+)/);
+            container.querySelectorAll('.soundLink').forEach(function(link) {
+                var sm = (link.getAttribute('onclick') || '').match(/play:([^'")\s]+)/);
                 if (sm) filenames.push(sm[1]);
-            }
+            });
+            if (filenames.length) usePycmd = true;
         }
         container.remove();
         if (!filenames.length) return;
@@ -39,11 +39,13 @@
         item.className = 'audio-item bi';
 
         for (var i = 0; i < filenames.length; i++) {
-            var audio = document.createElement('audio');
-            audio.preload = 'auto';
-            audio.src = filenames[i];
-            document.body.appendChild(audio);
-            audios.push(audio);
+            if (!usePycmd) {
+                var audio = document.createElement('audio');
+                audio.preload = 'auto';
+                audio.src = filenames[i];
+                document.body.appendChild(audio);
+                audios.push(audio);
+            }
 
             var btn = document.createElement('a');
             btn.className = 'replay-button';
@@ -74,7 +76,13 @@
             }, 350);
         }
 
+        function playSinglePycmd(idx) {
+            try { pycmd('play:' + filenames[idx]); } catch(e) {}
+            animateBtn(btns[idx]);
+        }
+
         function playSingle(idx) {
+            if (usePycmd) return playSinglePycmd(idx);
             audios[idx].currentTime = 0;
             audios[idx].play();
             animateBtn(btns[idx]);
@@ -82,6 +90,7 @@
 
         // Sequential playback: chain via onended
         function playAll() {
+            if (usePycmd) { playSinglePycmd(0); return; }
             var idx = 0;
             function playNext() {
                 if (idx >= audios.length) return;
