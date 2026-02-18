@@ -1,21 +1,27 @@
 <div class="card-inner">
 <div class="back">
-    <div class="audio-row">
-        <div class="audio-item">
-            {{Word Audio}}
-            <span class="audio-label">Word</span>
-        </div>
-        <div class="audio-item">
-            {{Sentence Audio}}
-            <span class="audio-label">Sentence</span>
-        </div>
-        {{#Definition Audio}}
+    {{FrontSide}}
+
+    {{#Definition Audio}}
+    <div id="def-audio-container" style="display:none">
         <div class="audio-item">
             {{Definition Audio}}
             <span class="audio-label">Definition</span>
         </div>
-        {{/Definition Audio}}
     </div>
+    {{/Definition Audio}}
+
+    <script>
+    (function() {
+        var audioRow = document.querySelector('.audio-row');
+        var defContainer = document.getElementById('def-audio-container');
+        if (audioRow && defContainer) {
+            var defItem = defContainer.querySelector('.audio-item');
+            if (defItem) audioRow.appendChild(defItem);
+            defContainer.remove();
+        }
+    })();
+    </script>
     <div class="answer">
         <h1 class="target-word ri" style="--d:0" id="target-word"></h1>
         <div class="pitch-graph ri" style="--d:50" id="pitch-graph"></div>

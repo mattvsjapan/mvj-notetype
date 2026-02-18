@@ -357,6 +357,17 @@ span.empty { display: none; }
     font-size: 9px;
 }
 
+/* Unwrap {{FrontSide}} containers on back */
+.back > .card-inner { display: contents; }
+.back > .card-inner::before { display: none; }
+.back .front { display: contents; }
+
+/* Hide Anki's auto-injected answer separator */
+.back > hr { display: none; }
+
+/* Suppress front entrance animations on back */
+.back .fi { animation: none; }
+
 .answer {
     display: flex;
     flex-direction: column;
