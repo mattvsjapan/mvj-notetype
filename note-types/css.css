@@ -390,11 +390,6 @@ span.empty { display: none; }
     animation: itemSettle 0.35s var(--ease) both;
 }
 
-/* Hide extraneous elements Anki clients inject inside audio items */
-.back .audio-item > :not(.replay-button):not(.audio-label) {
-    display: none;
-}
-
 .back .audio-item .replay-button svg {
     width: 40px;
     height: 40px;
@@ -425,7 +420,7 @@ span.empty { display: none; }
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 18px;
+    margin-top: 12px;
     padding-bottom: 8px;
 }
 
@@ -502,9 +497,16 @@ rt {
 }
 
 .sentence rt {
-    font-size: 0.58em;
+    font-size: 0.5em;
     font-weight: 400;
     color: inherit;
+    transform: translateY(-1px);
+}
+
+@media (hover: none) {
+    .sentence rt {
+        transform: translateY(8px);
+    }
 }
 
 /* Sentence */
