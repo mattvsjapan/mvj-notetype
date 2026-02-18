@@ -112,7 +112,7 @@
         <p class="def ri" style="--d:200" id="def-bilingual"></p>
         <div class="jp-def-section ri" style="--d:225" id="jp-def-section">
             <input type="checkbox" id="jp-toggle" class="jp-def-input">
-            <label for="jp-toggle" class="jp-def-toggle">Monolingual</label>
+            <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
             <div class="jp-def-wrap">
                 <p class="jp-def" id="def-monolingual"></p>
             </div>
@@ -1068,5 +1068,27 @@ _renderBack();
   }
   window[HANDLER_KEY] = handler;
   window.addEventListener('keydown', handler, { capture: true });
+
+  var jpToggle = document.getElementById('jp-toggle');
+  if (jpToggle) {
+    jpToggle.addEventListener('change', function() {
+      if (!jpToggle.checked) return;
+      setTimeout(function() {
+        var wrap = document.querySelector('.jp-def-wrap');
+        if (!wrap) return;
+        var card = document.querySelector('.card');
+        if (!card) return;
+        var gap = wrap.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom;
+        if (gap <= 0) return;
+        var start = card.scrollTop, end = start + gap + 20;
+        var t0 = performance.now();
+        (function step(now) {
+          var p = Math.min((now - t0) / 300, 1);
+          card.scrollTop = start + (end - start) * p * (2 - p);
+          if (p < 1) requestAnimationFrame(step);
+        })(t0);
+      }, 200);
+    });
+  }
 })();
 </script>
