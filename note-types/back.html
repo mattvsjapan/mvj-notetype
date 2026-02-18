@@ -11,40 +11,55 @@
         var container = document.getElementById('def-audio-container');
         if (!container) return;
         var text = container.textContent;
-        var m = text.match(/\[audio:([^\]]+)\]/);
-        if (!m) {
+
+        // Collect all [audio:] filenames
+        var filenames = [];
+        var re = /\[audio:([^\]]+)\]/g;
+        var m;
+        while ((m = re.exec(text)) !== null) filenames.push(m[1]);
+
+        // Fallback: [sound:] via pycmd
+        if (!filenames.length) {
             var soundLink = container.querySelector('.soundLink');
             if (soundLink) {
                 var onclick = soundLink.getAttribute('onclick') || '';
                 var sm = onclick.match(/play:([^'")\s]+)/);
-                if (sm) m = sm;
+                if (sm) filenames.push(sm[1]);
             }
         }
         container.remove();
-        if (!m) return;
+        if (!filenames.length) return;
 
-        var filename = m[1];
-        var audio = document.createElement('audio');
-        audio.preload = 'auto';
-        audio.src = filename;
-        document.body.appendChild(audio);
+        var SVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+        var audioRow = document.querySelector('.audio-row');
+        var audios = [];
+        var btns = [];
 
         var item = document.createElement('div');
         item.className = 'audio-item bi';
-        var btn = document.createElement('a');
-        btn.className = 'replay-button';
-        btn.href = '#';
-        btn.innerHTML = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+
+        for (var i = 0; i < filenames.length; i++) {
+            var audio = document.createElement('audio');
+            audio.preload = 'auto';
+            audio.src = filenames[i];
+            document.body.appendChild(audio);
+            audios.push(audio);
+
+            var btn = document.createElement('a');
+            btn.className = 'replay-button';
+            btn.href = '#';
+            btn.innerHTML = SVG;
+            item.appendChild(btn);
+            btns.push(btn);
+        }
+
         var label = document.createElement('span');
         label.className = 'audio-label';
         label.textContent = 'Definition';
-        item.appendChild(btn);
         item.appendChild(label);
-
-        var audioRow = document.querySelector('.audio-row');
         if (audioRow) audioRow.appendChild(item);
 
-        function animateBtn() {
+        function animateBtn(btn) {
             var circle = btn.querySelector('circle');
             var path = btn.querySelector('path');
             btn.style.transform = 'scale(0.95)';
@@ -59,19 +74,38 @@
             }, 350);
         }
 
-        function playDef() {
-            audio.currentTime = 0;
-            audio.play();
-            animateBtn();
+        function playSingle(idx) {
+            audios[idx].currentTime = 0;
+            audios[idx].play();
+            animateBtn(btns[idx]);
         }
 
-        btn.addEventListener('click', function(ev) { ev.preventDefault(); playDef(); });
-        window.__playLockedDefAudio = playDef;
+        // Sequential playback: chain via onended
+        function playAll() {
+            var idx = 0;
+            function playNext() {
+                if (idx >= audios.length) return;
+                var cur = idx++;
+                audios[cur].currentTime = 0;
+                audios[cur].onended = playNext;
+                audios[cur].play();
+                animateBtn(btns[cur]);
+            }
+            playNext();
+        }
+
+        for (var j = 0; j < btns.length; j++) {
+            (function(idx) {
+                btns[idx].addEventListener('click', function(ev) { ev.preventDefault(); playSingle(idx); });
+            })(j);
+        }
+
+        window.__playLockedDefAudio = playAll;
 
         var toggle = document.getElementById('jp-toggle');
         if (toggle) {
             toggle.addEventListener('change', function() {
-                if (toggle.checked && !window.__monoUnlocked) playDef();
+                if (toggle.checked && !window.__monoUnlocked) playAll();
             });
         }
     })();
