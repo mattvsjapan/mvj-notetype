@@ -91,9 +91,11 @@ window.__adoptNativeAudio = function(elements) {
             btn.className = 'replay-button soundLink';
             btn.href = '#';
             btn.innerHTML = SVG;
+            if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 b.addEventListener('click', function(ev) {
                     ev.preventDefault();
+                    window.__stopDefAudio();
                     audio.currentTime = 0;
                     audio.play();
                 });
@@ -102,6 +104,15 @@ window.__adoptNativeAudio = function(elements) {
         }
     }
     return buttons;
+};
+
+window.__stopDefAudio = function() {
+    var els = window.__defAudioEls || [];
+    for (var i = 0; i < els.length; i++) {
+        els[i].pause();
+        els[i].currentTime = 0;
+        els[i].onended = null;
+    }
 };
 </script>
 

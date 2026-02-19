@@ -11,6 +11,7 @@
         // Clear stale state from previous card (Anki reuses the webview)
         window.__defAudioRawHtml = null;
         window.__defAudioNativeContainer = null;
+        window.__defAudioEls = [];
         window.__monoUnlocked = false;
 
         var container = document.getElementById('def-audio-container');
@@ -49,6 +50,7 @@
                 audio.src = filenames[i];
                 document.body.appendChild(audio);
                 audios.push(audio);
+                window.__defAudioEls.push(audio);
 
                 var btn = document.createElement('a');
                 btn.className = 'replay-button';
@@ -67,11 +69,15 @@
             var animateBtn = window.__animateBtn;
 
             function playSingleFresh(idx) {
-                new Audio(filenames[idx]).play();
+                window.__stopDefAudio();
+                var a = new Audio(filenames[idx]);
+                window.__defAudioEls.push(a);
+                a.play();
                 animateBtn(btns[idx]);
             }
 
             function playAll() {
+                window.__stopDefAudio();
                 var idx = 0;
                 function playNext() {
                     if (idx >= audios.length) return;
@@ -987,6 +993,7 @@ function _renderBack() {
         pa.src = primaryFilenames[pi];
         document.body.appendChild(pa);
         primaryAudios.push(pa);
+        window.__defAudioEls.push(pa);
       }
 
       var secondaryAudios = [];
@@ -997,6 +1004,7 @@ function _renderBack() {
           sa.src = secondaryFilenames[sk];
           document.body.appendChild(sa);
           secondaryAudios.push(sa);
+          window.__defAudioEls.push(sa);
         }
       }
 
@@ -1004,6 +1012,7 @@ function _renderBack() {
       var animateBtnDef = window.__animateBtn;
 
       var playGroup = function(audioEls) {
+        window.__stopDefAudio();
         var idx = 0;
         var playNext = function() {
           if (idx >= audioEls.length) return;
@@ -1035,7 +1044,14 @@ function _renderBack() {
             playGroup(audioEls);
             animateBtnDef(btn);
           };
-          btn.addEventListener('click', function(ev) { ev.preventDefault(); new Audio(filenames[0]).play(); animateBtnDef(btn); });
+          btn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            window.__stopDefAudio();
+            var a = new Audio(filenames[0]);
+            window.__defAudioEls.push(a);
+            a.play();
+            animateBtnDef(btn);
+          });
           return playFn;
         };
 
@@ -1084,7 +1100,14 @@ function _renderBack() {
           animateBtnDef(defBtn);
         };
 
-        defBtn.addEventListener('click', function(ev) { ev.preventDefault(); new Audio(primaryFilenames[0]).play(); animateBtnDef(defBtn); });
+        defBtn.addEventListener('click', function(ev) {
+          ev.preventDefault();
+          window.__stopDefAudio();
+          var a = new Audio(primaryFilenames[0]);
+          window.__defAudioEls.push(a);
+          a.play();
+          animateBtnDef(defBtn);
+        });
         window.__playLockedDefAudio = playPrimary;
 
         var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
