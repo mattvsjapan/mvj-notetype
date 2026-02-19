@@ -253,6 +253,7 @@ html {
 .keihan_odaka,
 .keihan_low_odaka { color: #658065; }
 .particle { color: rgba(255, 255, 255, 0.3); }
+.target-word.no-accent span { color: var(--text-1) !important; }
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
