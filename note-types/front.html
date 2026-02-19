@@ -75,6 +75,34 @@ window.__extractAudio = function(container) {
     }
     return { filenames: filenames, usePycmd: usePycmd };
 };
+
+window.__adoptNativeAudio = function(elements) {
+    var SVG = window.__audioSVG;
+    var buttons = [];
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        if (el.classList && el.classList.contains('replay-button')) {
+            buttons.push(el);
+        } else if (el.tagName === 'AUDIO') {
+            el.style.display = 'none';
+            el.removeAttribute('controls');
+            document.body.appendChild(el);
+            var btn = document.createElement('a');
+            btn.className = 'replay-button soundLink';
+            btn.href = '#';
+            btn.innerHTML = SVG;
+            (function(audio, b) {
+                b.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    audio.currentTime = 0;
+                    audio.play();
+                });
+            })(el, btn);
+            buttons.push(btn);
+        }
+    }
+    return buttons;
+};
 </script>
 
 <script>
