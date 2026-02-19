@@ -17,6 +17,31 @@
 </div>
 
 <script>
+// Lock card-inner height in pixels so viewport-unit settling on the first
+// card load doesn't cause a visible expansion animation.
+(function() {
+    if (!window.matchMedia('(hover: none)').matches) return;
+    var ci = document.querySelector('.card-inner');
+    var fr = document.querySelector('.front');
+    if (!ci) return;
+    function setHeight() {
+        var h = window.innerHeight;
+        ci.style.minHeight = (h - 80) + 'px';
+        if (fr) fr.style.minHeight = (h - 160) + 'px';
+    }
+    if (window.innerHeight > 100) {
+        setHeight();
+    } else {
+        ci.style.visibility = 'hidden';
+        (function wait() {
+            requestAnimationFrame(function() {
+                if (window.innerHeight > 100) { setHeight(); ci.style.visibility = ''; }
+                else wait();
+            });
+        })();
+    }
+})();
+
 // Stop any audio still playing from the previous card
 if (window.__stopAllAudio) window.__stopAllAudio();
 

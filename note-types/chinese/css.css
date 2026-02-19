@@ -83,9 +83,22 @@ html {
     }
 
     .card {
-        min-height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
     }
 
+    .card-inner {
+        min-height: calc(100vh - 80px);
+        min-height: calc(100dvh - 80px);
+    }
+
+    .front {
+        min-height: calc(100vh - 160px);
+        min-height: calc(100dvh - 160px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 /* — Base — */
