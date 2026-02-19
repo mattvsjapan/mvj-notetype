@@ -2,20 +2,10 @@
 <div class="back">
     {{FrontSide}}
 
-    <div class="audio-row">
-        {{#Word Audio}}
-        <div class="audio-item bi" data-audio="word" style="--d:0">
-            {{Word Audio}}
-            <span class="audio-label">Word</span>
-        </div>
-        {{/Word Audio}}
-        {{#Sentence Audio}}
-        <div class="audio-item bi" data-audio="sentence" style="--d:70">
-            {{Sentence Audio}}
-            <span class="audio-label">Sentence</span>
-        </div>
-        {{/Sentence Audio}}
-    </div>
+    {{#Audio}}
+    <div id="audio-container" style="display:none">{{Audio}}</div>
+    {{/Audio}}
+    <div class="audio-row" id="audio-row"></div>
 
     <div class="answer">
         <h1 class="target-word" id="target-word" style="--d:0"></h1>
@@ -30,33 +20,52 @@
 </div>
 </div>
 
-<div id="raw-sentence" style="display:none">{{Sentence}}</div>
-<div id="raw-definition" style="display:none">{{Definition}}</div>
+<div id="raw-sentence" style="display:none">{{Prompt}}</div>
+<div id="raw-definition" style="display:none">{{Explanations}}</div>
 
 <script>
-// Replace native <audio> players or [audio:] tags with styled replay buttons
+// Build audio buttons from the combined Audio field
 (function() {
+  var container = document.getElementById('audio-container');
+  if (!container) return;
+  var row = document.getElementById('audio-row');
   var SVG = window.__audioSVG;
   var animateBtn = window.__animateBtn;
-  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
-    // [audio:] custom tags — extract filename, create Audio + button
-    var text = item.textContent;
-    var audioMatch = text.match(/\[audio:([^\]]+)\]/);
-    if (audioMatch) {
+  var files = [];
+
+  // Extract [audio:filename] custom tags
+  var text = container.textContent;
+  var re = /\[audio:([^\]]+)\]/g;
+  var m;
+  while ((m = re.exec(text)) !== null) files.push({ src: m[1], type: 'custom' });
+
+  // Extract native <audio> elements (from [sound:] tags)
+  var nativeAudios = container.querySelectorAll('audio');
+  for (var i = 0; i < nativeAudios.length; i++) {
+    var src = nativeAudios[i].querySelector('source');
+    src = src ? src.src : nativeAudios[i].src;
+    if (src) files.push({ src: src, type: 'native' });
+  }
+
+  for (var j = 0; j < files.length; j++) {
+    (function(file, idx) {
+      var item = document.createElement('div');
+      item.className = 'audio-item bi';
+      item.style.setProperty('--d', idx * 70);
+
       var audio = document.createElement('audio');
       audio.preload = 'auto';
-      audio.src = audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F');
+      audio.src = file.type === 'custom'
+        ? file.src.replace(/#/g, '%23').replace(/\?/g, '%3F')
+        : file.src;
       document.body.appendChild(audio);
       item._jsAudio = audio;
-      // Remove raw [audio:...] text nodes, keep <span> label
-      Array.from(item.childNodes).forEach(function(n) {
-        if (n.nodeType === 3) item.removeChild(n);
-      });
+
       var btn = document.createElement('a');
       btn.className = 'replay-button soundLink';
       btn.href = '#';
       btn.innerHTML = SVG;
-      item.insertBefore(btn, item.firstChild);
+      item.appendChild(btn);
       window.__onTap(btn, function() {
         window.__stopAllAudio(audio);
         audio.currentTime = 0;
@@ -64,25 +73,12 @@
         animateBtn(btn);
         window.__startPlaying(audio, btn);
       });
-      return;
-    }
-    // [sound:] native — existing code unchanged
-    if (item.querySelector('.replay-button')) return;
-    var nativeAudio = item.querySelector('audio');
-    if (!nativeAudio) return;
-    nativeAudio.style.display = 'none';
-    nativeAudio.removeAttribute('controls');
-    var btn = document.createElement('a');
-    btn.className = 'replay-button soundLink';
-    btn.href = '#';
-    btn.innerHTML = SVG;
-    item.insertBefore(btn, item.firstChild);
-    window.__onTap(btn, function() {
-      window.__stopAllAudio(nativeAudio);
-      nativeAudio.currentTime = 0;
-      window.__safePlay(nativeAudio);
-    });
-  });
+
+      row.appendChild(item);
+    })(files[j], j);
+  }
+
+  container.parentNode.removeChild(container);
 })();
 </script>
 
@@ -152,42 +148,29 @@ function _renderBack() {
     var SVG_BOTTOM = window.__audioSVG;
     var animateBtnBottom = window.__animateBtn;
     var topItems = document.querySelectorAll('.audio-row .audio-item');
-    var items = [];
-    for (var ti = 0; ti < topItems.length; ti++) items.push(topItems[ti]);
-    items.reverse();
-    for (var bi = 0; bi < items.length; bi++) {
+    for (var bi = 0; bi < topItems.length; bi++) {
       (function(origItem) {
         var clone = document.createElement('div');
         clone.className = 'audio-item';
-        var origBtns = origItem.querySelectorAll('.replay-button');
-        for (var bj = 0; bj < origBtns.length; bj++) {
-          (function(origBtn) {
-            var btn = document.createElement('a');
-            btn.className = 'replay-button';
-            btn.href = '#';
-            btn.innerHTML = SVG_BOTTOM;
-            clone.appendChild(btn);
-            window.__onTap(btn, function() {
-              if (origBtn._tapHandler) origBtn._tapHandler();
-              else origBtn.click();
-              animateBtnBottom(btn);
-            });
-            var obs = new MutationObserver(function() {
-              btn.classList.toggle('playing', origBtn.classList.contains('playing'));
-            });
-            obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
-            window.__observers.push(obs);
-          })(origBtns[bj]);
-        }
-        var origLabel = origItem.querySelector('.audio-label');
-        if (origLabel) {
-          var lbl = document.createElement('span');
-          lbl.className = 'audio-label';
-          lbl.textContent = origLabel.textContent;
-          clone.appendChild(lbl);
-        }
+        var origBtn = origItem.querySelector('.replay-button');
+        if (!origBtn) return;
+        var btn = document.createElement('a');
+        btn.className = 'replay-button';
+        btn.href = '#';
+        btn.innerHTML = SVG_BOTTOM;
+        clone.appendChild(btn);
+        window.__onTap(btn, function() {
+          if (origBtn._tapHandler) origBtn._tapHandler();
+          else origBtn.click();
+          animateBtnBottom(btn);
+        });
+        var obs = new MutationObserver(function() {
+          btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+        });
+        obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
+        window.__observers.push(obs);
         bottomRow.appendChild(clone);
-      })(items[bi]);
+      })(topItems[bi]);
     }
   }
 
@@ -205,27 +188,14 @@ _renderBack();
 (function() {
   var HANDLER_KEY = '__audioHandler';
   var animateBtn = window.__animateBtn;
-  function play(item) {
-    if (!item) return;
-    window.__stopAllAudio();
-    var link = item.querySelector('.soundLink');
-    if (link) {
-      link.click();
-      var btn = item.querySelector('.replay-button');
-      if (btn) animateBtn(btn);
-      return;
-    }
-    var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
-  }
   function playAll() {
     var items = document.querySelectorAll('.audio-row .audio-item');
     var queue = [];
-    items.forEach(function(item) {
-      var audio = item._jsAudio || item.querySelector('audio');
-      var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
-    });
+    for (var i = 0; i < items.length; i++) {
+      var audio = items[i]._jsAudio;
+      var btn = items[i].querySelector('.replay-button');
+      if (audio) queue.push({ audio: audio, btn: btn });
+    }
     if (!queue.length) return false;
     window.__stopAllAudio();
     var k = 0;
@@ -235,7 +205,7 @@ _renderBack();
       entry.audio.currentTime = 0;
       window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
-      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
+      window.__startPlaying(entry.audio, entry.btn);
       entry.audio.onended = next;
     }
     next();
@@ -244,12 +214,8 @@ _renderBack();
   function handler(ev) {
     var el = ev.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
-    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
     switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
-      case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
+      case 'n': ev.preventDefault(); ev.stopPropagation(); playAll(); break;
       case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
     }
   }
@@ -258,14 +224,5 @@ _renderBack();
   }
   window[HANDLER_KEY] = handler;
   window.addEventListener('keydown', handler, { capture: true });
-
-  // Stop all audio when a native [sound:] replay button is tapped on mobile
-  var audioRow = document.querySelector('.audio-row');
-  if (audioRow) {
-    audioRow.addEventListener('click', function(ev) {
-      var btn = ev.target.closest('.replay-button');
-      if (btn && !btn._hasHandler) window.__stopAllAudio();
-    }, true);
-  }
 })();
 </script>
