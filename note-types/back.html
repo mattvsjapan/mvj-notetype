@@ -1119,13 +1119,6 @@ _renderBack();
   if (jpToggle) {
     jpToggle.addEventListener('change', function() {
       if (!jpToggle.checked) return;
-      setTimeout(function() {
-        var wrap = document.querySelector('.jp-def-wrap');
-        if (!wrap) return;
-        if (wrap.getBoundingClientRect().bottom > window.innerHeight) {
-          wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-      }, 250);
     });
   }
 })();
