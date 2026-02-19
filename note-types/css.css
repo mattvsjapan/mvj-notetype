@@ -420,7 +420,6 @@ span.empty { display: none; }
 /* Mobile: skip layout-triggering settle animations (padding, gap, width, height,
    font-size all force reflow every frame — too expensive for mobile WebViews) */
 @media (hover: none) {
-    .back .audio-row,
     .back .audio-item,
     .back .audio-item .replay-button svg,
     .back .audio-item .replay-button img,
@@ -733,5 +732,9 @@ rt {
 }
 
 .android .back .audio-item.bi {
+    animation: none;
+}
+
+.android .back .audio-row {
     animation: none;
 }
