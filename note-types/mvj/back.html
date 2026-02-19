@@ -151,6 +151,7 @@
         {{#Image}}
         <div class="image-wrap" style="--d:135">{{Image}}</div>
         {{/Image}}
+        <div class="audio-row-bottom" id="audio-row-bottom" style="--d:150"></div>
         <p class="def" style="--d:170" id="def-bilingual"></p>
         <div class="jp-def-section" style="--d:225" id="jp-def-section">
             <input type="checkbox" id="jp-toggle" class="jp-def-input">
@@ -159,7 +160,6 @@
                 <p class="jp-def" id="def-monolingual"></p>
             </div>
         </div>
-        <div class="audio-row-bottom" id="audio-row-bottom"></div>
     </div>
 </div>
 </div>
@@ -1145,7 +1145,17 @@ function _renderBack() {
   if (bottomRow) {
     var SVG_BOTTOM = window.__audioSVG;
     var animateBtnBottom = window.__animateBtn;
-    var topItems = document.querySelectorAll('.audio-row .audio-item');
+    var topItemsRaw = document.querySelectorAll('.audio-row .audio-item');
+    var defItems = [], otherItems = [];
+    for (var si = 0; si < topItemsRaw.length; si++) {
+      if (topItemsRaw[si].getAttribute('data-audio') === 'def') defItems.push(topItemsRaw[si]);
+      else otherItems.push(topItemsRaw[si]);
+    }
+    // Order: word before sentence (preserve existing order)
+    // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
+    // Desired: secondary def, primary def, word, sentence
+    if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
+    var topItems = defItems.concat(otherItems);
     for (var bi = 0; bi < topItems.length; bi++) {
       (function(origItem) {
         var clone = document.createElement('div');

@@ -93,6 +93,8 @@ html {
         display: flex;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box;
+        padding-top: calc((100dvh - 160px) / 3);
     }
 }
 
@@ -413,6 +415,18 @@ span.empty { display: none; }
     padding: 48px 0;
 }
 
+@media (hover: none) {
+    .front .audio-item .replay-button {
+        width: 64px !important;
+        height: 64px !important;
+    }
+    .front .audio-item .replay-button svg,
+    .front .audio-item .replay-button img {
+        width: 64px !important;
+        height: 64px !important;
+    }
+}
+
 /* ================================================
    BACK — compact audio controls + answer section
    ================================================ */
@@ -448,6 +462,10 @@ span.empty { display: none; }
 /* Mobile: skip layout-triggering settle animations (padding, gap, width, height,
    font-size all force reflow every frame — too expensive for mobile WebViews) */
 @media (hover: none) {
+    .back .audio-row {
+        display: none;
+    }
+
     .back .audio-row,
     .back .audio-item,
     .back .audio-item .replay-button svg,
@@ -489,7 +507,7 @@ span.empty { display: none; }
 
 @media (hover: none) {
     .answer {
-        margin-top: 22px;
+        margin-top: 0;
     }
 }
 
@@ -713,7 +731,8 @@ rt {
         align-items: center;
         justify-content: center;
         gap: clamp(8px, 4vw, 20px);
-        margin-top: 40px;
+        margin-top: 0;
+        margin-bottom: 24px;
     }
 
     .audio-row-bottom .audio-item {
