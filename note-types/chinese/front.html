@@ -115,6 +115,9 @@ window.__adoptNativeAudio = function(elements) {
 };
 
 window.__stopAllAudio = function() {
+    document.querySelectorAll('.replay-button.playing').forEach(function(b) {
+        b.classList.remove('playing');
+    });
     var els = window.__defAudioEls || [];
     for (var i = 0; i < els.length; i++) {
         els[i].pause();
@@ -126,6 +129,19 @@ window.__stopAllAudio = function() {
         a.currentTime = 0;
         a.onended = null;
     });
+};
+
+window.__startPlaying = function(audio, btn) {
+    if (!btn) return;
+    btn.classList.add('playing');
+    btn._currentAudio = audio;
+    function done() {
+        if (btn._currentAudio === audio) btn.classList.remove('playing');
+        audio.removeEventListener('ended', done);
+        audio.removeEventListener('pause', done);
+    }
+    audio.addEventListener('ended', done);
+    audio.addEventListener('pause', done);
 };
 window.__stopDefAudio = window.__stopAllAudio;
 </script>
@@ -160,6 +176,7 @@ window.__stopDefAudio = window.__stopAllAudio;
         audio.currentTime = 0;
         audio.play();
         animateBtn(btn);
+        window.__startPlaying(audio, btn);
       });
       return;
     }
@@ -194,7 +211,7 @@ window.__stopDefAudio = window.__stopAllAudio;
   items.forEach(function(item) {
     var audio = item._jsAudio || item.querySelector('audio');
     var btn = item.querySelector('.replay-button');
-    if (audio) queue.push({ audio: audio, btn: btn });
+    if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
   });
   if (!queue.length) return;
   var i = 0;
@@ -204,6 +221,7 @@ window.__stopDefAudio = window.__stopAllAudio;
     entry.audio.currentTime = 0;
     entry.audio.play();
     if (entry.btn) animateBtn(entry.btn);
+    if (entry.js) window.__startPlaying(entry.audio, entry.btn);
     entry.audio.onended = playNext;
   }
   setTimeout(playNext, 0);
@@ -233,7 +251,7 @@ window.__stopDefAudio = window.__stopAllAudio;
     items.forEach(function(item) {
       var audio = item._jsAudio || item.querySelector('audio');
       var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn });
+      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
     });
     if (!queue.length) return false;
     window.__stopAllAudio();
@@ -244,6 +262,7 @@ window.__stopDefAudio = window.__stopAllAudio;
       entry.audio.currentTime = 0;
       entry.audio.play();
       if (entry.btn) animateBtn(entry.btn);
+      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
       entry.audio.onended = next;
     }
     next();

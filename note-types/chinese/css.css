@@ -231,6 +231,18 @@ html {
     }
 }
 
+/* Playing state — keeps accent colors while [audio:] is playing */
+.replay-button.playing svg circle,
+.replay-button.playing .replayCircle {
+    fill: var(--bg-surface-hover);
+    stroke: var(--accent-glow);
+}
+
+.replay-button.playing svg path,
+.replay-button.playing .replayTriangle {
+    fill: var(--accent);
+}
+
 /* ================================================
    AUDIO ROW (always visible — front & back)
    ================================================ */
