@@ -133,7 +133,6 @@
 </div>
 </div>
 
-<!-- Hidden raw fields for JS processing -->
 <div id="raw-word" style="display:none">{{Word}}</div>
 <div id="raw-sentence" style="display:none">{{Sentence}}</div>
 <div id="raw-definition" style="display:none">{{Definition}}</div>
@@ -730,7 +729,9 @@ function makeSequences(expr) {
 // ── parseDefinitions ──
 function parseDefinitions(html) {
   const defs = {};
-  const re = /<!--\s*def-type="(\w+)".*?-->([\s\S]*?)<!--\s*def-end\s*-->/g;
+  var CMT = '<' + '!--';
+  var END = '--' + '>';
+  const re = new RegExp(CMT + '\\s*def-type="(\\w+)".*?' + END + '([\\s\\S]*?)' + CMT + '\\s*def-end\\s*' + END, 'g');
   let m;
   while ((m = re.exec(html)) !== null) {
     defs[m[1]] = m[2].trim();
@@ -759,10 +760,8 @@ function _renderBack() {
     var wordSeqs = makeSequences(wordRaw);
 
     if (wordSeqs.length > 0) {
-      // Target word display uses first sequence
       targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
 
-      // Pitch graphs for ALL sequences (stacked)
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
         var svg = makeGraph(wordSeqs[s]);
@@ -799,20 +798,16 @@ function _renderBack() {
   var hasMono = !!monoKey;
 
   if (hasBi && !hasMono) {
-    // Bilingual only — show directly, hide toggle
     defEl.innerHTML = defs.bilingual;
     jpDefSection.style.display = 'none';
   } else if (hasMono && !hasBi) {
-    // Mono only — show directly with JP font, hide toggle
     defEl.innerHTML = defs[monoKey];
     defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
     defEl.style.lineHeight = '1.65';
     jpDefSection.style.display = 'none';
     window.__monoUnlocked = true;
   } else if (hasBi && hasMono) {
-    // Both definitions present
     if (defs.monolingual) {
-      // Unlocked: mono in bilingual slot, bilingual behind toggle
       defEl.innerHTML = defs.monolingual;
       defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
       defEl.style.lineHeight = '1.65';
@@ -822,12 +817,10 @@ function _renderBack() {
       if (toggleLabel) toggleLabel.textContent = 'Bilingual';
       window.__monoUnlocked = true;
     } else {
-      // Locked: bilingual visible, mono behind toggle
       defEl.innerHTML = defs.bilingual;
       jpDefEl.innerHTML = defs.LOCKED_monolingual;
     }
   } else {
-    // Neither definition
     defEl.style.display = 'none';
     jpDefSection.style.display = 'none';
   }
@@ -875,7 +868,6 @@ function _renderBack() {
           pa.preload = 'auto';
           pa.src = primaryAudio.filenames[pi];
           document.body.appendChild(pa);
-
           primaryAudios.push(pa);
         }
       }
@@ -888,16 +880,13 @@ function _renderBack() {
           sa.preload = 'auto';
           sa.src = secondaryAudio.filenames[si];
           document.body.appendChild(sa);
-
           secondaryAudios.push(sa);
         }
       }
 
       var SVG_DEF = window.__audioSVG;
-
       var animateBtnDef = window.__animateBtn;
 
-      // Pre-created audio playback (for autoplay/keyboard)
       var playGroup = function(audioInfo, audioEls) {
         if (audioInfo.usePycmd) {
           window.__clickSoundLink(audioInfo.filenames[0]);
@@ -914,7 +903,6 @@ function _renderBack() {
         playNext();
       };
 
-      // Fresh Audio playback (for click handlers — more reliable on iOS)
       var playGroupFresh = function(audioInfo) {
         if (audioInfo.usePycmd) {
           window.__clickSoundLink(audioInfo.filenames[0]);
@@ -923,11 +911,9 @@ function _renderBack() {
         new Audio(audioInfo.filenames[0]).play();
       };
 
-      // Create audio-item(s) in .audio-row
       var audioRow = document.querySelector('.audio-row');
 
       if (hasBiAudio && hasMonoAudio) {
-        // Two separate items: BI-DEF and MONO-DEF
         function makeDefItem(label, audioInfo, audioEls) {
           var item = document.createElement('div');
           item.className = 'audio-item bi';
@@ -976,7 +962,6 @@ function _renderBack() {
           });
         }
       } else {
-        // Single button
         var defItem = document.createElement('div');
         defItem.className = 'audio-item bi';
         var defBtn = document.createElement('a');
@@ -1051,9 +1036,9 @@ function _renderBack() {
     }
   }
 
-  // ── Auto-play definition audio ──
+  // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
   if (window.__autoPlayDefAudio) {
-    window.__autoPlayDefAudio();
+    setTimeout(window.__autoPlayDefAudio, 0);
   }
 }
 _renderBack();
