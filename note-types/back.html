@@ -13,6 +13,8 @@
         window.__defAudioNativeContainer = null;
         window.__defAudioEls = [];
         window.__monoUnlocked = false;
+        window.__autoPlayDefAudio = null;
+        window.__playLockedDefAudio = null;
 
         var container = document.getElementById('def-audio-container');
         if (!container) return;
