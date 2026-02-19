@@ -138,14 +138,14 @@
     })();
     </script>
     <div class="answer">
-        <h1 class="target-word ri" style="--d:0" id="target-word"></h1>
-        <div class="pitch-graph ri" style="--d:50" id="pitch-graph"></div>
-        <p class="sentence ri" style="--d:95" id="sentence"></p>
+        <h1 class="target-word" style="--d:0" id="target-word"></h1>
+        <div class="pitch-graph" style="--d:50" id="pitch-graph"></div>
+        <p class="sentence" style="--d:95" id="sentence"></p>
         {{#Image}}
-        <div class="image-wrap ri" style="--d:135">{{Image}}</div>
+        <div class="image-wrap" style="--d:135">{{Image}}</div>
         {{/Image}}
-        <p class="def ri" style="--d:170" id="def-bilingual"></p>
-        <div class="jp-def-section ri" style="--d:225" id="jp-def-section">
+        <p class="def" style="--d:170" id="def-bilingual"></p>
+        <div class="jp-def-section" style="--d:225" id="jp-def-section">
             <input type="checkbox" id="jp-toggle" class="jp-def-input">
             <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
             <div class="jp-def-wrap">
@@ -1162,6 +1162,12 @@ function _renderBack() {
       })(topItems[bi]);
     }
   }
+
+  // ── Trigger reveal animations after content is ready ──
+  requestAnimationFrame(function() {
+    var els = document.querySelectorAll('.answer > [style*="--d"]');
+    for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
+  });
 
   // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
   if (window.__autoPlayDefAudio) {

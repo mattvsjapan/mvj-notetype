@@ -417,6 +417,18 @@ span.empty { display: none; }
     animation: labelSettle 0.35s var(--ease) both;
 }
 
+/* Mobile: skip layout-triggering settle animations (padding, gap, width, height,
+   font-size all force reflow every frame — too expensive for mobile WebViews) */
+@media (hover: none) {
+    .back .audio-row,
+    .back .audio-item,
+    .back .audio-item .replay-button svg,
+    .back .audio-item .replay-button img,
+    .back .audio-label {
+        animation: none;
+    }
+}
+
 /* Unwrap {{FrontSide}} containers on back */
 .back > .card-inner { display: contents; }
 .back > .card-inner::before { display: none; }
@@ -431,6 +443,12 @@ span.empty { display: none; }
 .back .audio-item.bi {
     animation: fadeIn 0.35s var(--spring) 70ms both,
                itemSettle 0.35s var(--ease) both;
+}
+
+@media (hover: none) {
+    .back .audio-item.bi {
+        animation: fadeIn 0.35s var(--spring) 70ms both;
+    }
 }
 
 .answer {
@@ -683,7 +701,11 @@ rt {
     }
 }
 
-/* Back entrance animation */
+/* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
+
+.answer > [style*="--d"] {
+    opacity: 0;
+}
 
 .ri {
     animation: reveal 0.5s var(--spring) both;
