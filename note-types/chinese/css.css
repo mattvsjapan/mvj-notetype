@@ -150,11 +150,11 @@ html {
 
 /* Tone colors */
 
-.tone1 { color: #cc1515; }
-.tone2 { color: #d4881a; }
-.tone3 { color: #219438; }
-.tone4 { color: #2818d0; }
-.tone5 { color: gray; }
+.tone1 { color: #e83838; }
+.tone2 { color: #e89b33; }
+.tone3 { color: #2db852; }
+.tone4 { color: #3350e8; }
+.tone5 { color: #8a8a8a; }
 
 /* — Replay button (targets Anki's generated .replay-button) — */
 
@@ -485,7 +485,7 @@ rt {
 
 .sentence {
     font-family: 'Source Hans', var(--zh);
-    font-size: 21px;
+    font-size: 25px;
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-1);
@@ -508,7 +508,7 @@ rt {
 /* Definition */
 
 .def {
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 400;
     line-height: 1.75;
     color: var(--text-1);
@@ -592,7 +592,7 @@ rt {
 
 .jp-def {
     font-family: var(--zh);
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-1);
