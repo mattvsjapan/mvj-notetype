@@ -1,0 +1,362 @@
+<div class="card-inner">
+<div class="front">
+    <div class="audio-row">
+        {{#Word Audio}}
+        <div class="audio-item fi" data-audio="word" style="--d:0">
+            {{Word Audio}}
+            <span class="audio-label">Word</span>
+        </div>
+        {{/Word Audio}}
+        {{#Sentence Audio}}
+        <div class="audio-item fi" data-audio="sentence" style="--d:70">
+            {{Sentence Audio}}
+            <span class="audio-label">Sentence</span>
+        </div>
+        {{/Sentence Audio}}
+    </div>
+</div>
+
+<script>
+// Lock card-inner height in pixels so viewport-unit settling on the first
+// card load doesn't cause a visible expansion animation.
+(function() {
+    if (!window.matchMedia('(hover: none)').matches) return;
+    var ci = document.querySelector('.card-inner');
+    var fr = document.querySelector('.front');
+    if (!ci) return;
+    function setHeight() {
+        var h = window.innerHeight;
+        ci.style.minHeight = (h - 80) + 'px';
+        if (fr) fr.style.minHeight = (h - 160) + 'px';
+    }
+    if (window.innerHeight > 100) {
+        setHeight();
+    } else {
+        ci.style.visibility = 'hidden';
+        (function wait() {
+            requestAnimationFrame(function() {
+                if (window.innerHeight > 100) { setHeight(); ci.style.visibility = ''; }
+                else wait();
+            });
+        })();
+    }
+})();
+
+// Clean up previous card
+if (window.__stopAllAudio) window.__stopAllAudio();
+document.querySelectorAll('body > audio').forEach(function(a) {
+    a.pause();
+    a.removeAttribute('src');
+    a.load();
+    a.remove();
+});
+if (window.__observers) {
+    for (var i = 0; i < window.__observers.length; i++) window.__observers[i].disconnect();
+}
+window.__observers = [];
+
+// Shared audio utilities (available on back via {{FrontSide}})
+window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+
+window.__animateBtn = function(btn) {
+    var circle = btn.querySelector('circle, .replayCircle');
+    var path = btn.querySelector('path, .replayTriangle');
+    var isTouch = window.matchMedia('(hover: none)').matches;
+    if (isTouch) {
+        // Touch: subtle fill only (matches native [sound:] button feedback)
+        if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; }
+        setTimeout(function() {
+            if (circle) { circle.style.fill = ''; }
+        }, 350);
+        return;
+    }
+    btn.style.transform = 'scale(0.95)';
+    btn.style.transitionDuration = '80ms';
+    if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
+    if (path) { path.style.fill = 'var(--accent)'; }
+    setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
+    setTimeout(function() {
+        btn.style.transform = '';
+        if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
+        if (path) { path.style.fill = ''; }
+    }, 350);
+};
+
+window.__onTap = function(btn, handler) {
+    btn._hasHandler = true;
+    btn._tapHandler = handler;
+    if (btn._onTapBound) return;
+    btn._onTapBound = true;
+    var moved;
+    btn.addEventListener('touchstart', function() { moved = false; }, { passive: true });
+    btn.addEventListener('touchmove', function() { moved = true; }, { passive: true });
+    btn.addEventListener('touchend', function(ev) {
+        if (moved) return;
+        ev.preventDefault();
+        btn._lastTapTime = Date.now();
+        btn._tapHandler(ev);
+    });
+    btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        if (btn._lastTapTime && Date.now() - btn._lastTapTime < 400) return;
+        btn._tapHandler(ev);
+    });
+};
+
+window.__clickSoundLink = function(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var link = tmp.firstElementChild;
+    if (link) {
+        link.style.position = 'fixed';
+        link.style.opacity = '0';
+        link.style.pointerEvents = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function() { if (link.parentNode) link.remove(); }, 200);
+    }
+};
+
+window.__extractAudio = function(container) {
+    var filenames = [];
+    var usePycmd = false;
+    var text = container.textContent;
+    var re = /\[audio:([^\]]+)\]/g;
+    var m;
+    while ((m = re.exec(text)) !== null) filenames.push(m[1].replace(/#/g, '%23').replace(/\?/g, '%3F'));
+    if (!filenames.length) {
+        container.querySelectorAll('.soundLink').forEach(function(link) {
+            filenames.push(link.outerHTML);
+        });
+        if (filenames.length) usePycmd = true;
+    }
+    if (!filenames.length) {
+        container.querySelectorAll('audio').forEach(function(a) {
+            var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
+            if (src) filenames.push(src);
+        });
+    }
+    return { filenames: filenames, usePycmd: usePycmd };
+};
+
+window.__adoptNativeAudio = function(elements) {
+    var SVG = window.__audioSVG;
+    var buttons = [];
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        if (el.classList && el.classList.contains('replay-button')) {
+            buttons.push(el);
+        } else if (el.tagName === 'AUDIO') {
+            el.style.display = 'none';
+            el.removeAttribute('controls');
+            document.body.appendChild(el);
+            var btn = document.createElement('a');
+            btn.className = 'replay-button soundLink';
+            btn.href = '#';
+            btn.innerHTML = SVG;
+            if (window.__defAudioEls) window.__defAudioEls.push(el);
+            (function(audio, b) {
+                window.__onTap(b, function() {
+                    window.__stopAllAudio(audio);
+                    audio.currentTime = 0;
+                    window.__safePlay(audio);
+                    window.__animateBtn(b);
+                });
+            })(el, btn);
+            buttons.push(btn);
+        }
+    }
+    return buttons;
+};
+
+window.__stopAllAudio = function(except) {
+    document.querySelectorAll('.replay-button.playing').forEach(function(b) {
+        b.classList.remove('playing');
+    });
+    var els = window.__defAudioEls || [];
+    for (var i = 0; i < els.length; i++) {
+        if (els[i] !== except) { els[i].pause(); els[i].currentTime = 0; }
+        els[i].onended = null;
+    }
+    document.querySelectorAll('audio').forEach(function(a) {
+        if (a !== except) { a.pause(); a.currentTime = 0; }
+        a.onended = null;
+    });
+};
+
+window.__safePlay = function(audio) {
+    var p = audio.play();
+    if (p && p['catch']) p['catch'](function() {
+        if (audio.readyState < 3) {
+            audio.addEventListener('canplay', function retry() {
+                audio.removeEventListener('canplay', retry);
+                audio.play()['catch'](function() {});
+            });
+        }
+    });
+};
+
+window.__startPlaying = function(audio, btn) {
+    if (!btn) return;
+    btn.classList.add('playing');
+    btn._currentAudio = audio;
+    function done() {
+        if (btn._currentAudio === audio) btn.classList.remove('playing');
+        audio.removeEventListener('ended', done);
+        audio.removeEventListener('pause', done);
+    }
+    audio.addEventListener('ended', done);
+    audio.addEventListener('pause', done);
+};
+window.__stopDefAudio = window.__stopAllAudio;
+</script>
+
+<script>
+// Replace native <audio> players or [audio:] tags with styled replay buttons
+(function() {
+  var SVG = window.__audioSVG;
+  var animateBtn = window.__animateBtn;
+  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+    // [audio:] custom tags — extract filename, create Audio + button
+    var text = item.textContent;
+    var audioMatch = text.match(/\[audio:([^\]]+)\]/);
+    if (audioMatch) {
+      var audio = document.createElement('audio');
+      audio.preload = 'auto';
+      audio.src = audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F');
+      document.body.appendChild(audio);
+      item._jsAudio = audio;
+      // Remove raw [audio:...] text nodes, keep <span> label
+      Array.from(item.childNodes).forEach(function(n) {
+        if (n.nodeType === 3) item.removeChild(n);
+      });
+      var btn = document.createElement('a');
+      btn.className = 'replay-button soundLink';
+      btn.href = '#';
+      btn.innerHTML = SVG;
+      item.insertBefore(btn, item.firstChild);
+      window.__onTap(btn, function() {
+        window.__stopAllAudio(audio);
+        audio.currentTime = 0;
+        window.__safePlay(audio);
+        animateBtn(btn);
+        window.__startPlaying(audio, btn);
+      });
+      return;
+    }
+    // [sound:] native — existing code unchanged
+    if (item.querySelector('.replay-button')) return;
+    var nativeAudio = item.querySelector('audio');
+    if (!nativeAudio) return;
+    nativeAudio.style.display = 'none';
+    nativeAudio.removeAttribute('controls');
+    var btn = document.createElement('a');
+    btn.className = 'replay-button soundLink';
+    btn.href = '#';
+    btn.innerHTML = SVG;
+    item.insertBefore(btn, item.firstChild);
+    window.__onTap(btn, function() {
+      window.__stopAllAudio(nativeAudio);
+      nativeAudio.currentTime = 0;
+      window.__safePlay(nativeAudio);
+    });
+  });
+})();
+</script>
+
+<script>
+// Autoplay audio items in sequence (front side only)
+(function() {
+  if (document.querySelector('.back')) return;
+  var items = document.querySelectorAll('.audio-row .audio-item');
+  var queue = [];
+  var animateBtn = window.__animateBtn;
+  items.forEach(function(item) {
+    var audio = item._jsAudio || item.querySelector('audio');
+    var btn = item.querySelector('.replay-button');
+    if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+  });
+  if (!queue.length) return;
+  var i = 0;
+  function playNext() {
+    if (i >= queue.length) return;
+    var entry = queue[i++];
+    entry.audio.currentTime = 0;
+    window.__safePlay(entry.audio);
+    if (entry.btn) animateBtn(entry.btn);
+    if (entry.js) window.__startPlaying(entry.audio, entry.btn);
+    entry.audio.onended = playNext;
+  }
+  setTimeout(playNext, 0);
+})();
+</script>
+
+<script>
+(function() {
+  var HANDLER_KEY = '__audioHandler';
+  var animateBtn = window.__animateBtn;
+  function play(item) {
+    if (!item) return;
+    window.__stopAllAudio();
+    var link = item.querySelector('.soundLink');
+    if (link) {
+      link.click();
+      var btn = item.querySelector('.replay-button');
+      if (btn) animateBtn(btn);
+      return;
+    }
+    var audio = item.querySelector('audio');
+    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
+  }
+  function playAll() {
+    var items = document.querySelectorAll('.audio-row .audio-item');
+    var queue = [];
+    items.forEach(function(item) {
+      var audio = item._jsAudio || item.querySelector('audio');
+      var btn = item.querySelector('.replay-button');
+      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+    });
+    if (!queue.length) return false;
+    window.__stopAllAudio();
+    var k = 0;
+    function next() {
+      if (k >= queue.length) return;
+      var entry = queue[k++];
+      entry.audio.currentTime = 0;
+      window.__safePlay(entry.audio);
+      if (entry.btn) animateBtn(entry.btn);
+      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
+      entry.audio.onended = next;
+    }
+    next();
+    return true;
+  }
+  function handler(ev) {
+    var el = ev.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
+    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
+    switch (ev.key.toLowerCase()) {
+      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
+      case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
+      case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
+    }
+  }
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener('keydown', window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener('keydown', handler, { capture: true });
+
+  // Stop all audio when a native [sound:] replay button is tapped on mobile
+  var audioRow = document.querySelector('.audio-row');
+  if (audioRow) {
+    audioRow.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('.replay-button');
+      if (btn && !btn._hasHandler) window.__stopAllAudio();
+    }, true);
+  }
+})();
+</script>
+</div>
