@@ -328,9 +328,15 @@ span.empty { display: none; }
     overflow: visible;
 }
 
-.audio-item .replay-button svg {
-    width: 52px;
-    height: 52px;
+.audio-item .replay-button {
+    width: 52px !important;
+    height: 52px !important;
+    overflow: hidden;
+}
+.audio-item .replay-button svg,
+.audio-item .replay-button img {
+    width: 52px !important;
+    height: 52px !important;
 }
 
 .audio-label {
@@ -393,9 +399,15 @@ span.empty { display: none; }
     animation: itemSettle 0.35s var(--ease) both;
 }
 
-.back .audio-item .replay-button svg {
-    width: 40px;
-    height: 40px;
+.back .audio-item .replay-button {
+    width: 40px !important;
+    height: 40px !important;
+    overflow: hidden;
+}
+.back .audio-item .replay-button svg,
+.back .audio-item .replay-button img {
+    width: 40px !important;
+    height: 40px !important;
     animation: btnSettle 0.35s var(--ease) both;
 }
 
