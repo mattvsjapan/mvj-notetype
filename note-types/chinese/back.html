@@ -264,9 +264,9 @@ function _renderBack() {
   // Definition → bilingual + monolingual
   var defs = parseDefinitions(defHtml);
   var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
-  var biKey = defs.bilingual ? 'bilingual' : (defs.bilingual_jp ? 'bilingual_jp' : null);
+  var biKey = defs.bilingual ? 'bilingual' : (defs.bilingual_jp ? 'bilingual_jp' : (defs.LOCKED_bilingual ? 'LOCKED_bilingual' : (defs.LOCKED_bilingual_jp ? 'LOCKED_bilingual_jp' : null)));
   var hasBi = !!biKey;
-  var biIsJp = biKey === 'bilingual_jp';
+  var biIsJp = biKey === 'bilingual_jp' || biKey === 'LOCKED_bilingual_jp';
   var hasMono = !!monoKey;
 
   if (hasBi && !hasMono) {
@@ -323,7 +323,7 @@ function _renderBack() {
       }
     }
 
-    var nativeBiKey = nativeGroups.bilingual ? 'bilingual' : (nativeGroups.bilingual_jp ? 'bilingual_jp' : null);
+    var nativeBiKey = nativeGroups.bilingual ? 'bilingual' : (nativeGroups.bilingual_jp ? 'bilingual_jp' : (nativeGroups.LOCKED_bilingual ? 'LOCKED_bilingual' : (nativeGroups.LOCKED_bilingual_jp ? 'LOCKED_bilingual_jp' : null)));
     var biBtns = nativeBiKey ? window.__adoptNativeAudio(nativeGroups[nativeBiKey]) : [];
     var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var monoBtns = nativeMonoKey ? window.__adoptNativeAudio(nativeGroups[nativeMonoKey]) : [];
@@ -413,7 +413,7 @@ function _renderBack() {
       return window.__extractAudio(tmp).filenames;
     };
 
-    var audioBiKey = audioDefs.bilingual ? 'bilingual' : (audioDefs.bilingual_jp ? 'bilingual_jp' : null);
+    var audioBiKey = audioDefs.bilingual ? 'bilingual' : (audioDefs.bilingual_jp ? 'bilingual_jp' : (audioDefs.LOCKED_bilingual ? 'LOCKED_bilingual' : (audioDefs.LOCKED_bilingual_jp ? 'LOCKED_bilingual_jp' : null)));
     var biFilenames = audioBiKey ? extractAudioFilenames(audioDefs[audioBiKey]) : [];
     var audioMonoKey = audioDefs.monolingual ? 'monolingual' : (audioDefs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var monoFilenames = audioMonoKey ? extractAudioFilenames(audioDefs[audioMonoKey]) : [];
