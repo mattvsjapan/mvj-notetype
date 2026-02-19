@@ -1270,7 +1270,7 @@ _renderBack();
     }, 350);
   }
   function handler(ev) {
-    if (ev.code === 'KeyG') {
+    if (ev.code === 'KeyG' || ev.key === '.') {
       var cb = document.getElementById('jp-toggle');
       if (cb) {
         ev.preventDefault();
