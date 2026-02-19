@@ -456,7 +456,7 @@ rt {
     font-size: 18px;
     font-family: var(--zh);
     color: var(--text-1);
-    margin-left: -4px;
+    margin-left: 0;
 }
 
 .target-word rt .bopo-body {
