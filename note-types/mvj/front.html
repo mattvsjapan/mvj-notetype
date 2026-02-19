@@ -67,7 +67,7 @@ window.__extractAudio = function(container) {
     var text = container.textContent;
     var re = /\[audio:([^\]]+)\]/g;
     var m;
-    while ((m = re.exec(text)) !== null) filenames.push(m[1]);
+    while ((m = re.exec(text)) !== null) filenames.push(m[1].replace(/#/g, '%23').replace(/\?/g, '%3F'));
     if (!filenames.length) {
         container.querySelectorAll('.soundLink').forEach(function(link) {
             filenames.push(link.outerHTML);
@@ -142,7 +142,7 @@ window.__stopDefAudio = window.__stopAllAudio;
     if (audioMatch) {
       var audio = document.createElement('audio');
       audio.preload = 'auto';
-      audio.src = audioMatch[1];
+      audio.src = audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F');
       document.body.appendChild(audio);
       item._jsAudio = audio;
       // Remove raw [audio:...] text nodes, keep <span> label
