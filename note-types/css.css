@@ -722,3 +722,16 @@ rt {
         transform: translateY(0) scale(1);
     }
 }
+
+/* AnkiDroid: disable all back-side animations (WebView performance) */
+.android .answer > [style*="--d"] {
+    opacity: 1;
+}
+
+.android .ri {
+    animation: none;
+}
+
+.android .back .audio-item.bi {
+    animation: none;
+}
