@@ -177,6 +177,14 @@ window.__stopDefAudio = window.__stopAllAudio;
   }
   window[HANDLER_KEY] = handler;
   window.addEventListener('keydown', handler, { capture: true });
+
+  // Stop all audio when any replay button is tapped (catches native [sound:] taps on mobile)
+  var audioRow = document.querySelector('.audio-row');
+  if (audioRow) {
+    audioRow.addEventListener('click', function(ev) {
+      if (ev.target.closest('.replay-button')) window.__stopAllAudio();
+    }, true);
+  }
 })();
 </script>
 </div>
