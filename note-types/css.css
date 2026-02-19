@@ -81,18 +81,13 @@ html {
         min-height: auto;
     }
 
-    .card-inner::before {
-        display: none;
-    }
 }
 
 /* — Base — */
 
 .card-inner {
     box-sizing: border-box;
-    background:
-        radial-gradient(300px 250px at 200px 120px, rgba(255, 255, 255, 0.04) 0%, transparent 100%),
-        rgba(21, 22, 28, 0.68);
+    background: rgba(21, 22, 28, 0.58);
     color: var(--text-1);
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
@@ -109,6 +104,17 @@ html {
         0 1px 3px rgba(8, 10, 24, 0.40),
         0 4px 12px rgba(8, 10, 24, 0.28),
         0 16px 36px rgba(8, 10, 24, 0.16);
+}
+
+/* Glass sheen on card surface */
+.card-inner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(300px 250px at 50% 120px, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* Grain on card surface */
@@ -129,6 +135,7 @@ html {
     position: relative;
     z-index: 1;
 }
+
 
 .divider {
     height: 1px;
@@ -437,7 +444,8 @@ span.empty { display: none; }
 
 /* Unwrap {{FrontSide}} containers on back */
 .back > .card-inner { display: contents; }
-.back > .card-inner::before { display: none; }
+.back > .card-inner::before,
+.back > .card-inner::after { display: none; }
 .back .front { display: contents; }
 
 /* Hide Anki's auto-injected answer separator */
