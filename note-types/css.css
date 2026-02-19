@@ -64,10 +64,12 @@ html {
 @media (hover: none) {
     html {
         background: var(--bg) !important;
+        min-height: auto;
     }
 
     .card {
         background: var(--bg) !important;
+        min-height: auto;
     }
 
     .card-inner::before {
