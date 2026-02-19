@@ -414,15 +414,24 @@ rt {
     color: var(--text-2);
 }
 
+.target-word ruby {
+    display: inline-flex;
+    align-items: center;
+}
+
+.target-word ruby > span {
+    display: inline-flex;
+    align-items: center;
+}
+
 .target-word rt {
     display: inline-block;
     writing-mode: vertical-rl;
     text-orientation: upright;
-    vertical-align: middle;
     font-size: 18px;
     font-family: var(--zh);
     color: var(--text-1);
-    margin-left: -8px;
+    margin-left: -4px;
 }
 
 /* Image */
