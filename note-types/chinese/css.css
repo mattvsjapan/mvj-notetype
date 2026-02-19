@@ -98,6 +98,8 @@ html {
         display: flex;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box;
+        padding-top: calc((100dvh - 160px) / 3);
     }
 }
 
@@ -334,6 +336,18 @@ html {
 
 .front .audio-row {
     padding: 48px 0;
+}
+
+@media (hover: none) {
+    .front .audio-item .replay-button {
+        width: 64px !important;
+        height: 64px !important;
+    }
+    .front .audio-item .replay-button svg,
+    .front .audio-item .replay-button img {
+        width: 64px !important;
+        height: 64px !important;
+    }
 }
 
 /* ================================================
