@@ -75,7 +75,7 @@
                 window.__stopAllAudio();
                 var a = new Audio(filenames[idx]);
                 window.__defAudioEls.push(a);
-                a.play();
+                window.__safePlay(a);
                 animateBtn(btns[idx]);
                 window.__startPlaying(a, btns[idx]);
             }
@@ -88,7 +88,7 @@
                     var cur = idx++;
                     audios[cur].currentTime = 0;
                     audios[cur].onended = playNext;
-                    audios[cur].play();
+                    window.__safePlay(audios[cur]);
                     animateBtn(btns[cur]);
                     window.__startPlaying(audios[cur], btns[cur]);
                 }
@@ -509,7 +509,7 @@ function _renderBack() {
           var cur = idx++;
           audioEls[cur].currentTime = 0;
           audioEls[cur].onended = playNext;
-          audioEls[cur].play();
+          window.__safePlay(audioEls[cur]);
           if (btn) window.__startPlaying(audioEls[cur], btn);
         };
         playNext();
@@ -540,7 +540,7 @@ function _renderBack() {
             window.__stopAllAudio();
             var a = new Audio(filenames[0]);
             window.__defAudioEls.push(a);
-            a.play();
+            window.__safePlay(a);
             animateBtnDef(btn);
             window.__startPlaying(a, btn);
           });
@@ -597,7 +597,7 @@ function _renderBack() {
           window.__stopAllAudio();
           var a = new Audio(primaryFilenames[0]);
           window.__defAudioEls.push(a);
-          a.play();
+          window.__safePlay(a);
           animateBtnDef(defBtn);
           window.__startPlaying(a, defBtn);
         });
@@ -689,7 +689,7 @@ _renderBack();
       return;
     }
     var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; audio.play(); }
+    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
   }
   function playAll() {
     var items = document.querySelectorAll('.audio-row .audio-item');
@@ -709,7 +709,7 @@ _renderBack();
       }
       var entry = queue[k++];
       entry.audio.currentTime = 0;
-      entry.audio.play();
+      window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
       if (entry.js) window.__startPlaying(entry.audio, entry.btn);
       entry.audio.onended = next;

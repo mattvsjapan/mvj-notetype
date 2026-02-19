@@ -83,10 +83,12 @@ window.__onTap = function(btn, handler) {
     btn.addEventListener('touchend', function(ev) {
         if (moved) return;
         ev.preventDefault();
+        btn._lastTapTime = Date.now();
         btn._tapHandler(ev);
     });
     btn.addEventListener('click', function(ev) {
         ev.preventDefault();
+        if (btn._lastTapTime && Date.now() - btn._lastTapTime < 400) return;
         btn._tapHandler(ev);
     });
 };
@@ -147,7 +149,7 @@ window.__adoptNativeAudio = function(elements) {
                 window.__onTap(b, function() {
                     window.__stopAllAudio(audio);
                     audio.currentTime = 0;
-                    audio.play();
+                    window.__safePlay(audio);
                     window.__animateBtn(b);
                 });
             })(el, btn);
@@ -170,6 +172,11 @@ window.__stopAllAudio = function(except) {
         if (a !== except) { a.pause(); a.currentTime = 0; }
         a.onended = null;
     });
+};
+
+window.__safePlay = function(audio) {
+    var p = audio.play();
+    if (p && p['catch']) p['catch'](function() {});
 };
 
 window.__startPlaying = function(audio, btn) {
@@ -214,7 +221,7 @@ window.__stopDefAudio = window.__stopAllAudio;
       window.__onTap(btn, function() {
         window.__stopAllAudio(audio);
         audio.currentTime = 0;
-        audio.play();
+        window.__safePlay(audio);
         animateBtn(btn);
         window.__startPlaying(audio, btn);
       });
@@ -234,7 +241,7 @@ window.__stopDefAudio = window.__stopAllAudio;
     window.__onTap(btn, function() {
       window.__stopAllAudio(nativeAudio);
       nativeAudio.currentTime = 0;
-      nativeAudio.play();
+      window.__safePlay(nativeAudio);
     });
   });
 })();
@@ -258,7 +265,7 @@ window.__stopDefAudio = window.__stopAllAudio;
     if (i >= queue.length) return;
     var entry = queue[i++];
     entry.audio.currentTime = 0;
-    entry.audio.play();
+    window.__safePlay(entry.audio);
     if (entry.btn) animateBtn(entry.btn);
     if (entry.js) window.__startPlaying(entry.audio, entry.btn);
     entry.audio.onended = playNext;
@@ -282,7 +289,7 @@ window.__stopDefAudio = window.__stopAllAudio;
       return;
     }
     var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; audio.play(); }
+    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
   }
   function playAll() {
     var items = document.querySelectorAll('.audio-row .audio-item');
@@ -299,7 +306,7 @@ window.__stopDefAudio = window.__stopAllAudio;
       if (k >= queue.length) return;
       var entry = queue[k++];
       entry.audio.currentTime = 0;
-      entry.audio.play();
+      window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
       if (entry.js) window.__startPlaying(entry.audio, entry.btn);
       entry.audio.onended = next;
