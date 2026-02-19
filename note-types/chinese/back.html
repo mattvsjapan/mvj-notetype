@@ -632,10 +632,10 @@ function _renderBack() {
       if (topItemsRaw[si].getAttribute('data-audio') === 'def') defItems.push(topItemsRaw[si]);
       else otherItems.push(topItemsRaw[si]);
     }
-    // Order: word before sentence (preserve existing order)
     // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
-    // Desired: secondary def, primary def, word, sentence
+    // Desired: secondary def, primary def, sentence, word
     if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
+    otherItems.reverse();
     var topItems = defItems.concat(otherItems);
     for (var bi = 0; bi < topItems.length; bi++) {
       (function(origItem) {
@@ -654,9 +654,11 @@ function _renderBack() {
               else origBtn.click();
               animateBtnBottom(btn);
             });
-            new MutationObserver(function() {
+            var obs = new MutationObserver(function() {
               btn.classList.toggle('playing', origBtn.classList.contains('playing'));
-            }).observe(origBtn, { attributes: true, attributeFilter: ['class'] });
+            });
+            obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
+            window.__observers.push(obs);
           })(origBtns[bj]);
         }
         var origLabel = origItem.querySelector('.audio-label');

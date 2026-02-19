@@ -42,8 +42,13 @@
     }
 })();
 
-// Stop any audio still playing from the previous card
+// Clean up previous card
 if (window.__stopAllAudio) window.__stopAllAudio();
+document.querySelectorAll('body > audio').forEach(function(a) { a.remove(); });
+if (window.__observers) {
+    for (var i = 0; i < window.__observers.length; i++) window.__observers[i].disconnect();
+}
+window.__observers = [];
 
 // Shared audio utilities (available on back via {{FrontSide}})
 window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
