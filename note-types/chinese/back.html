@@ -697,6 +697,7 @@ _renderBack();
         else play(defItem);
         break;
       case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
+      case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
     }
   }
   if (window[HANDLER_KEY]) {
