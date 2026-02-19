@@ -543,6 +543,15 @@ rt {
     color: inherit;
 }
 
+/* Front: hide furigana and pitch colors (structure preserved for toggling) */
+.front .target-word rt {
+    opacity: 0;
+}
+
+.front .target-word span {
+    color: var(--text-1) !important;
+}
+
 /* Image */
 
 .image-wrap {
@@ -621,102 +630,12 @@ rt {
 /* Definition */
 
 .def {
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.75;
-    color: var(--text-1);
-    margin: 0 0 16px;
-}
-
-/* Japanese definition — pure CSS toggle */
-
-.jp-def-section {
-    text-align: left;
-}
-
-@media (hover: none) {
-    .jp-def-section {
-        text-align: center;
-    }
-}
-
-.jp-def-input {
-    position: absolute;
-    width: 0;
-    height: 0;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.jp-def-toggle {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-    padding: 6px 14px;
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    cursor: pointer;
-    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
-    margin-top: 0;
-    gap: 4px;
-}
-
-@media (hover: hover) {
-    .jp-def-toggle:hover {
-        color: var(--text-1);
-        border-color: rgba(255, 255, 255, 0.10);
-        background: rgba(255, 255, 255, 0.04);
-    }
-}
-
-.jp-def-toggle::after {
-    content: '▸';
-    font-size: 10px;
-    transition: transform 200ms ease;
-}
-
-.jp-def-input:checked + .jp-def-toggle::after {
-    transform: rotate(90deg);
-}
-
-.jp-def-wrap {
-    text-align: initial;
-    display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transition: grid-template-rows 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms ease 50ms;
-}
-
-.jp-def-wrap > * {
-    overflow: hidden;
-    min-height: 0;
-}
-
-.jp-def-input:checked ~ .jp-def-wrap {
-    grid-template-rows: 1fr;
-    opacity: 1;
-}
-
-.jp-def {
     font-family: var(--jp);
     font-size: 17px;
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-1);
-    margin: 0;
-    padding-top: 0;
-}
-
-.jp-def::before {
-    content: '';
-    display: block;
-    height: 3px;
+    margin: 0 0 16px;
 }
 
 /* Bottom audio row — mobile only duplicate */

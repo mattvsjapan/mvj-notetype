@@ -1,20 +1,9 @@
 <div class="card-inner">
 <div class="front">
-    <div class="audio-row">
-        {{#Word Audio}}
-        <div class="audio-item fi" data-audio="word" style="--d:0">
-            {{Word Audio}}
-            <span class="audio-label">Word</span>
-        </div>
-        {{/Word Audio}}
-        {{#Sentence Audio}}
-        <div class="audio-item fi" data-audio="sentence" style="--d:70">
-            {{Sentence Audio}}
-            <span class="audio-label">Sentence</span>
-        </div>
-        {{/Sentence Audio}}
-    </div>
+    <h1 class="target-word" id="front-word"></h1>
 </div>
+
+<div id="raw-word" style="display:none">{{Word}}</div>
 
 <script>
 // Lock card-inner height in pixels so viewport-unit settling on the first
@@ -154,7 +143,6 @@ window.__adoptNativeAudio = function(elements) {
             btn.className = 'replay-button soundLink';
             btn.href = '#';
             btn.innerHTML = SVG;
-            if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 window.__onTap(b, function() {
                     window.__stopAllAudio(audio);
@@ -173,11 +161,6 @@ window.__stopAllAudio = function(except) {
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
-    var els = window.__defAudioEls || [];
-    for (var i = 0; i < els.length; i++) {
-        if (els[i] !== except) { els[i].pause(); els[i].currentTime = 0; }
-        els[i].onended = null;
-    }
     document.querySelectorAll('audio').forEach(function(a) {
         if (a !== except) { a.pause(); a.currentTime = 0; }
         a.onended = null;
@@ -208,155 +191,608 @@ window.__startPlaying = function(audio, btn) {
     audio.addEventListener('ended', done);
     audio.addEventListener('pause', done);
 };
-window.__stopDefAudio = window.__stopAllAudio;
 </script>
 
 <script>
-// Replace native <audio> players or [audio:] tags with styled replay buttons
-(function() {
-  var SVG = window.__audioSVG;
-  var animateBtn = window.__animateBtn;
-  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
-    // [audio:] custom tags — extract filename, create Audio + button
-    var text = item.textContent;
-    var audioMatch = text.match(/\[audio:([^\]]+)\]/);
-    if (audioMatch) {
-      var audio = document.createElement('audio');
-      audio.preload = 'auto';
-      audio.src = audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F');
-      document.body.appendChild(audio);
-      item._jsAudio = audio;
-      // Remove raw [audio:...] text nodes, keep <span> label
-      Array.from(item.childNodes).forEach(function(n) {
-        if (n.nodeType === 3) item.removeChild(n);
-      });
-      var btn = document.createElement('a');
-      btn.className = 'replay-button soundLink';
-      btn.href = '#';
-      btn.innerHTML = SVG;
-      item.insertBefore(btn, item.firstChild);
-      window.__onTap(btn, function() {
-        window.__stopAllAudio(audio);
-        audio.currentTime = 0;
-        window.__safePlay(audio);
-        animateBtn(btn);
-        window.__startPlaying(audio, btn);
-      });
-      return;
+// ── config.js ──
+const config = {
+  no_text: false, size_unit: 25, font_size: 24, text_dx: -12,
+  x_step: 50, circle_radius: 5.25, devoiced_circle_width: 1.5,
+  devoiced_circle_radius: 17, devoiced_stroke_disarray: "2 3",
+  devoiced_rectangle_padding: 5, stroke_width: 2.5, graph_height: 40,
+  graph_visible_height: 100, graph_horizontal_padding: 6,
+  graph_font: "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
+  convert_reading: 'katakana', stroke_dasharray: '4',
+};
+
+// ── kana.js ──
+const _hiragana = [
+  'が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど',
+  'ば','び','ぶ','べ','ぼ','ぱ','ぴ','ぷ','ぺ','ぽ','あ','い','う','え','お',
+  'か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と',
+  'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も',
+  'や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','ぁ','ぃ','ぅ','ぇ','ぉ',
+  'ゃ','ゅ','ょ','っ',
+];
+const _katakana = [
+  'ガ','ギ','グ','ゲ','ゴ','ザ','ジ','ズ','ゼ','ゾ','ダ','ヂ','ヅ','デ','ド',
+  'バ','ビ','ブ','ベ','ボ','パ','ピ','プ','ペ','ポ','ア','イ','ウ','エ','オ',
+  'カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','タ','チ','ツ','テ','ト',
+  'ナ','ニ','ヌ','ネ','ノ','ハ','ヒ','フ','ヘ','ホ','マ','ミ','ム','メ','モ',
+  'ヤ','ユ','ヨ','ラ','リ','ル','レ','ロ','ワ','ヲ','ン','ァ','ィ','ゥ','ェ','ォ',
+  'ャ','ュ','ョ','ッ',
+];
+const k2h = {}, h2k = {};
+_katakana.forEach((k, i) => { k2h[k] = _hiragana[i]; h2k[_hiragana[i]] = k; });
+
+function toHiragana(s) { return [...s].map(c => k2h[c] || c).join(''); }
+function toKatakana(s) { return [...s].map(c => h2k[c] || c).join(''); }
+
+const EQ_SOUNDS_HIRA = {
+  'ぢ':'じ','づ':'ず','を':'お','れい':'れー','めい':'めー','べい':'べー',
+  'けい':'けー','ぐう':'ぐー','ごう':'ごー','ずう':'ずー','づう':'ずー',
+  'づー':'ずー','ぞう':'ぞー','どう':'どー','どお':'どー','ぶう':'ぶー',
+  'ぼう':'ぼー','ぷう':'ぷー','ぽう':'ぽー','うう':'うー','おう':'おー',
+  'おお':'おー','くう':'くー','こう':'こー','すう':'すー','そう':'そー',
+  'つう':'つー','とう':'とー','とお':'とー','こお':'こー','ぬう':'ぬー',
+  'のう':'のー','ふう':'ふー','ほう':'ほー','ほお':'ほー','むう':'むー',
+  'もう':'もー','よう':'よー','るう':'るー','ろう':'ろー','ぅう':'ぅー',
+  'ぉう':'ぉー','ょう':'ょー','ゆう':'ゆー','いい':'いー','ちい':'ちー',
+  'せい':'せー','じい':'じー','かあ':'かー','ゅう':'ゅー','ぜい':'ぜー',
+  'きい':'きー','しい':'しー','にい':'にー','ひい':'ひー','みい':'みー',
+  'りい':'りー','ぎい':'ぎー','びい':'びー','ぴい':'ぴー',
+  'えい':'えー','てい':'てー','ねい':'ねー','へい':'へー',
+  'でい':'でー','げい':'げー','ぺい':'ぺー',
+  'つづ':'つず','じゃあ':'じゃー',
+};
+const EQUIVALENT_SOUNDS = {...EQ_SOUNDS_HIRA};
+for (const [k, v] of Object.entries(EQ_SOUNDS_HIRA)) {
+  EQUIVALENT_SOUNDS[toKatakana(k)] = toKatakana(v);
+}
+
+function unifyRepr(reading) {
+  for (const [k, v] of Object.entries(EQUIVALENT_SOUNDS)) {
+    reading = reading.replaceAll(k, v);
+  }
+  return reading;
+}
+function literalPronunciation(text) { return toKatakana(unifyRepr(text)); }
+
+// ── parse.js ──
+const GHOST_PARTICLE = '+';
+const DEVOICED_PREFIX = '*';
+const LITERAL_PREFIX = '\\';
+const HIGH_PREFIX = '^';
+const SENT_HIDDEN = ['|', GHOST_PARTICLE];
+const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
+
+function normalizeForParsing(expr) {
+  expr = expr.replace(/\//g, ';');
+  expr = expr.replace(/<br>/gi, ' . ');
+  expr = expr.replace(/<[^<>]+>/gi, '');
+  expr = expr.replace(/([。!?！？])/g, ' $1 .');
+  expr = expr.replace(/([「」|、､])/g, ' $1 ');
+  expr = expr.replace(/([^ ]), /g, ' $1 , ');
+  return expr;
+}
+
+function splitToSentences(expr) {
+  return expr.split(/[.\n]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function splitToSections(sentence) {
+  return sentence.split(/[\t\s\u3000]+/).filter(Boolean);
+}
+
+function detachGhostParticle(text) {
+  return text.replace(/(\++)[\s\n.]*$/, ' $1');
+}
+
+function furiganaToReading(word) {
+  return word.split(' ').map(part => {
+    part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
+    return part.replace(/([^\[\]]*\[|])/g, '');
+  }).join('');
+}
+
+function filterKana(reading) {
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\\^]/g, '');
+}
+
+function kanaToMoraes(kana) {
+  return kana.match(/(?:[\*\\\^]{1,3})?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+}
+
+function splitToMoras(reading) {
+  const kana = filterKana(reading);
+  const raw = kanaToMoraes(kana);
+  return raw.map(m => {
+    let devoiced = false, literal = false, high = false;
+    while (m.length > 0) {
+      if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
+      else if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
+      else if (m.startsWith(HIGH_PREFIX)) { high = true; m = m.slice(1); }
+      else break;
     }
-    // [sound:] native — existing code unchanged
-    if (item.querySelector('.replay-button')) return;
-    var nativeAudio = item.querySelector('audio');
-    if (!nativeAudio) return;
-    nativeAudio.style.display = 'none';
-    nativeAudio.removeAttribute('controls');
-    var btn = document.createElement('a');
-    btn.className = 'replay-button soundLink';
-    btn.href = '#';
-    btn.innerHTML = SVG;
-    item.insertBefore(btn, item.firstChild);
-    window.__onTap(btn, function() {
-      window.__stopAllAudio(nativeAudio);
-      nativeAudio.currentTime = 0;
-      window.__safePlay(nativeAudio);
-    });
+    return { text: m, devoiced, literal, high };
   });
-})();
-</script>
+}
 
-<script>
-// Autoplay audio items in sequence (front side only)
-(function() {
-  if (document.querySelector('.back')) return;
-  var items = document.querySelectorAll('.audio-row .audio-item');
-  var queue = [];
-  var animateBtn = window.__animateBtn;
-  items.forEach(function(item) {
-    var audio = item._jsAudio || item.querySelector('audio');
-    var btn = item.querySelector('.replay-button');
-    if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
-  });
-  if (!queue.length) return;
-  var i = 0;
-  function playNext() {
-    if (i >= queue.length) return;
-    var entry = queue[i++];
-    entry.audio.currentTime = 0;
-    window.__safePlay(entry.audio);
-    if (entry.btn) animateBtn(entry.btn);
-    if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-    entry.audio.onended = playNext;
+function splitSection(raw) {
+  const m = raw.match(/^([^:]+)(:)?(.*)$/);
+  if (m) return { word: m[1], sep: m[2] || null, accent: m[3] || '' };
+  return { word: raw, sep: null, accent: '' };
+}
+
+function splitAccent(raw) {
+  if (!raw && raw !== '') raw = '';
+  let m = raw.match(/^(p)?([a-zA-Z])?(-)?(\d)?(-)?$/);
+  if (m) {
+    return {
+      is_particle: m[1] || null,
+      role: m[2] || m[1] || null,
+      allLow: !!(m[3] || m[5]),
+      pitch: m[4] || null,
+    };
   }
-  setTimeout(playNext, 0);
-})();
-</script>
+  m = raw.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
+  if (m) {
+    return { role: m[1], levels: m[2], keihan: true };
+  }
+  return { role: null, pitch: null };
+}
 
-<script>
-(function() {
-  var HANDLER_KEY = '__audioHandler';
-  var animateBtn = window.__animateBtn;
-  function play(item) {
-    if (!item) return;
-    window.__stopAllAudio();
-    var link = item.querySelector('.soundLink');
-    if (link) {
-      link.click();
-      var btn = item.querySelector('.replay-button');
-      if (btn) animateBtn(btn);
-      return;
+const SEPARATORS = [';', '|', ',', '、', '+', '「', '」'];
+
+function mergeFragments(sections) {
+  const result = [];
+  let pending = [];
+  for (const raw of sections) {
+    if (SEPARATORS.includes(raw)) {
+      result.push(...pending);
+      pending = [];
+      result.push(raw);
+      continue;
     }
-    var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
+    const { sep } = splitSection(raw);
+    if (sep == null) {
+      pending.push(raw);
+    } else {
+      if (pending.length) {
+        const merged = [...pending, raw.replace(/:.*$/, '')].join(' ');
+        const accent = raw.replace(/^[^:]*:/, '');
+        result.push(merged + ':' + accent);
+        pending = [];
+      } else {
+        result.push(raw);
+      }
+    }
   }
-  function playAll() {
-    var items = document.querySelectorAll('.audio-row .audio-item');
-    var queue = [];
-    items.forEach(function(item) {
-      var audio = item._jsAudio || item.querySelector('audio');
-      var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+  result.push(...pending);
+  return result;
+}
+
+function splitMultiplePitchNotations(sequences) {
+  const result = [];
+  for (const seq of sequences) {
+    const alternatives = seq.map(raw => {
+      const sec = splitSection(raw);
+      if (sec.sep && sec.accent.includes(',')) {
+        return sec.accent.split(',').map(a => `${sec.word}:${a.trim()}`);
+      }
+      return [raw];
     });
-    if (!queue.length) return false;
-    window.__stopAllAudio();
-    var k = 0;
-    function next() {
-      if (k >= queue.length) return;
-      var entry = queue[k++];
-      entry.audio.currentTime = 0;
-      window.__safePlay(entry.audio);
-      if (entry.btn) animateBtn(entry.btn);
-      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-      entry.audio.onended = next;
+    let combos = [[]];
+    for (const alts of alternatives) {
+      combos = combos.flatMap(prev => alts.map(a => [...prev, a]));
     }
-    next();
-    return true;
+    result.push(...combos);
   }
-  function handler(ev) {
-    var el = ev.target;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
-    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
-    switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
-      case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
-      case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
-    }
-  }
-  if (window[HANDLER_KEY]) {
-    window.removeEventListener('keydown', window[HANDLER_KEY], true);
-  }
-  window[HANDLER_KEY] = handler;
-  window.addEventListener('keydown', handler, { capture: true });
+  return result;
+}
 
-  // Stop all audio when a native [sound:] replay button is tapped on mobile
-  var audioRow = document.querySelector('.audio-row');
-  if (audioRow) {
-    audioRow.addEventListener('click', function(ev) {
-      var btn = ev.target.closest('.replay-button');
-      if (btn && !btn._hasHandler) window.__stopAllAudio();
-    }, true);
+// ── section.js ──
+const RoleFromValue = {
+  'h':'heiban','a':'atamadaka','n':'nakadaka','o':'odaka','k':'kifuku',
+  'b':'black','w':'white','s':'setsubigo','e':'empty','p':'particle',
+  'H':'keihan_heiban','A':'keihan_atamadaka','N':'keihan_nakadaka',
+  'L':'keihan_low_heiban','M':'keihan_low_nakadaka','O':'keihan_low_odaka',
+  'K':'keihan_kifuku',
+};
+
+function isEmptyParticle(word) { return /^[|,、]$/.test(word); }
+
+function determineRoleKeihan(rawRole) {
+  const val = String(rawRole || 'H');
+  return RoleFromValue[val.toUpperCase()] || RoleFromValue[val.toLowerCase()] || 'keihan_heiban';
+}
+
+function determineLevelsKeihan(levels, moraes) {
+  const arr = [...String(levels).toLowerCase()];
+  while (arr.length < moraes.length) arr.push(arr[arr.length - 1]);
+  return arr;
+}
+
+function guessRoleFromPitchNum(moraes, pitchN) {
+  if (pitchN == null) return 'heiban';
+  const n = parseInt(pitchN);
+  if (n === 0) return 'heiban';
+  if (n === 1) return 'atamadaka';
+  if (n === moraes.length) return 'odaka';
+  if (n < moraes.length) return 'nakadaka';
+  return 'heiban';
+}
+
+function determineRoleTokyo(sd) {
+  if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
+  if (sd.sep == null) return 'particle';
+  if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
+  if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
+  return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
+}
+
+function determinePitchTokyo(sd) {
+  if (sd.accent.allLow) return -1;
+  if (sd.sep && sd.accent.pitch != null) return parseInt(sd.accent.pitch);
+  const role = sd.accent.role;
+  if (role === 'heiban' || role === 'setsubigo') return 0;
+  if (role === 'atamadaka') return 1;
+  if (role === 'nakadaka' || role === 'kifuku') return 2;
+  if (role === 'odaka') return sd.moraes.length;
+  if (role === 'particle') return null;
+  if (role === 'empty') return -1;
+  return 0;
+}
+
+function adjustKana(text) {
+  if (config.convert_reading === 'katakana') {
+    const literals = [];
+    text = text.replace(/\\(\*?)(.)/g, (_, star, ch) => {
+      literals.push(ch);
+      return star + '\uE000';
+    });
+    const devoiced = new Set();
+    let clean = '';
+    for (const ch of text) {
+      if (ch === DEVOICED_PREFIX) devoiced.add(clean.length);
+      else clean += ch;
+    }
+    clean = literalPronunciation(clean);
+    text = '';
+    for (let i = 0; i < clean.length; i++) {
+      if (devoiced.has(i)) text += DEVOICED_PREFIX;
+      text += clean[i];
+    }
+    let j = 0;
+    text = text.replace(/\uE000/g, () => LITERAL_PREFIX + toKatakana(literals[j++]));
+    return text;
   }
+  if (config.convert_reading === 'hiragana') return toHiragana(text);
+  return text;
+}
+
+function prepareMoras(word) {
+  let reading = furiganaToReading(word);
+  reading = adjustKana(reading);
+  return splitToMoras(reading);
+}
+
+class Section {
+  constructor(rawSection) {
+    this.raw = rawSection;
+    this._d = splitSection(rawSection);
+    this._d.moraes = prepareMoras(this._d.word || '');
+    this._d.accent = splitAccent(this._d.accent || '');
+    this._initAccent();
+  }
+
+  _initAccent() {
+    const a = this._d.accent;
+    if (a.keihan) {
+      a.role = determineRoleKeihan(a.role);
+      a.levels = determineLevelsKeihan(a.levels, this._d.moraes);
+    } else {
+      a.keihan = false;
+      a.role = determineRoleTokyo(this._d);
+      a.pitch = determinePitchTokyo(this._d);
+    }
+  }
+
+  get isTape() { return this.raw === ';'; }
+  get isParticle() { return !!this._d.accent.is_particle; }
+
+  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, '').replaceAll(HIGH_PREFIX, ''); }
+
+  get moraes() {
+    const m = this._d.moraes;
+    if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
+      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+    }
+    return m;
+  }
+
+  get role() { return this._d.accent.role; }
+
+  get classname() {
+    if (this.isParticle) {
+      return [...new Set(['particle', this.role])].join(' ');
+    }
+    return this.role;
+  }
+
+  get pitch() { return this._d.accent.pitch; }
+  set pitch(v) { this._d.accent.pitch = v; }
+
+  get levels() { return this._d.accent.levels; }
+  set levels(v) { this._d.accent.levels = v; }
+
+  get isKeihan() { return !!this._d.accent.keihan; }
+}
+
+const H = 'h', L = 'l';
+
+function buildLevelsTokyo(section, lastLow) {
+  if (section.pitch == null) section.pitch = lastLow ? -1 : -2;
+  if (section.pitch === -1) return section.moraes.map(() => L);
+  if (section.pitch === -2) return section.moraes.map(() => H);
+  if (section.pitch === 1) return [H, ...section.moraes.slice(1).map(() => L)];
+
+  return section.moraes.map((_, i) => {
+    if (i === 0) return lastLow ? L : H;
+    return (i < section.pitch || section.pitch === 0) ? H : L;
+  });
+}
+
+function calcLastWordEndedLow(section, lastLow) {
+  if (section.role === 'empty' && !PITCH_BREAKS.includes(section.word)) return lastLow;
+  if (section.pitch === 1) return true;
+  if (section.pitch === 0 || section.pitch === -2) return false;
+  return section.moraes.length >= section.pitch;
+}
+
+function buildHighLow(sequence) {
+  let lastLow = true;
+  for (const section of sequence) {
+    if (section.isKeihan) {
+      lastLow = section.levels[section.levels.length - 1] === L;
+    } else {
+      section.levels = buildLevelsTokyo(section, lastLow);
+      for (let i = 0; i < section.moraes.length; i++) {
+        if (section.moraes[i].high) section.levels[i] = H;
+      }
+      lastLow = calcLastWordEndedLow(section, lastLow);
+    }
+  }
+  return sequence;
+}
+
+function parseSections(seq) { return seq.map(s => new Section(s)); }
+
+function filterEmptyMoraes(sequence) {
+  return sequence.filter(s =>
+    s.moraes.length || PITCH_BREAKS.includes(s.word) || s.isTape
+  );
+}
+
+// ── graph.js ──
+class Line {
+  constructor() { this.x1 = this.y1 = this.x2 = this.y2 = null; this._tape = false; }
+  start(x, y, tape = false) { this.x1 = x; this.y1 = y; this._tape = tape; return this; }
+  end(x, y) { this.x2 = x; this.y2 = y; return this; }
+  get isUnfinished() { return this.x1 != null && this.y1 != null; }
+  get isCompleted() { return this.x2 != null && this.y2 != null; }
+
+  adjustToRadius(r) {
+    const tan = config.graph_height / config.x_step;
+    const denom = Math.sqrt(1 + tan * tan);
+    const sin = tan / denom, cos = 1 / denom;
+    const oy = r * sin, ox = r * cos;
+    if (this.y1 === this.y2) { this.x1 += r; this.x2 -= r; }
+    else if (this.y1 > this.y2) { this.x1 += ox; this.y1 -= oy; this.x2 -= ox; this.y2 += oy; }
+    else { this.x1 += ox; this.y1 += oy; this.x2 -= ox; this.y2 -= oy; }
+    return this;
+  }
+
+  draw() {
+    let s = `<line stroke="black" stroke-width="${config.stroke_width}" x1="${this.x1.toFixed(3)}" y1="${this.y1.toFixed(3)}" x2="${this.x2.toFixed(3)}" y2="${this.y2.toFixed(3)}" />`;
+    if (this._tape) s = s.replace('<line', `<line stroke-dasharray="${config.stroke_dasharray}"`);
+    return s;
+  }
+}
+
+class Path {
+  constructor() { this.lines = []; }
+  get last() { return this.lines[this.lines.length - 1]; }
+  startAt(x, y) { this.lines.push(new Line().start(x, y)); }
+  goTo(x, y) { this.last.end(x, y); }
+  push(x, y) {
+    if (this.lines.length === 0) { this.startAt(x, y); }
+    else if (this.last.isCompleted) { this.startAt(this.last.x2, this.last.y2); this.goTo(x, y); }
+    else { this.goTo(x, y); }
+  }
+  draw() {
+    return this.lines
+      .filter(l => l.isCompleted)
+      .map(l => { l.adjustToRadius(config.circle_radius); return l.draw(); })
+      .join('');
+  }
+}
+
+function shouldConnect(section, prev) {
+  if (prev.isTape) return true;
+  if (section.role === 'empty' || prev.role === 'empty') return false;
+  return true;
+}
+
+function makeCircle(x, y) {
+  return `<circle fill="black" stroke="black" stroke-width="${config.stroke_width}" cx="${x}" cy="${y}" r="${config.circle_radius}"></circle>`;
+}
+
+function makeDevoicedCircle(mora, x, y) {
+  if (mora.text.length === 1) {
+    const cx = x + config.font_size / 2 + config.text_dx;
+    const cy = y + config.text_dx + Math.ceil(config.stroke_width);
+    return `<circle class="devoiced" cx="${cx}" cy="${cy}" stroke-width="${config.devoiced_circle_width}" r="${config.devoiced_circle_radius}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+  }
+  const fs = config.font_size, r = config.devoiced_circle_radius;
+  const ry = y - config.font_size - Math.floor(config.stroke_width);
+  const pad = config.devoiced_rectangle_padding;
+  return `<rect class="devoiced" x="${x - fs - pad}" y="${ry}" width="${fs * 2 + pad * 2}" height="${r * 2}" rx="${r}" stroke-width="${config.devoiced_circle_width}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+}
+
+function makeGroup(elements, cls) { return `<g class="${cls}">${elements.join('')}</g>`; }
+function makeSvg(contents, w, h, vh) {
+  return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
+}
+function makeText(mora, x, y, dx) {
+  const cls = mora.devoiced ? ' class="devoiced"' : '';
+  return `<text${cls} font-size="${config.font_size}px" fill="black" x="${x}" y="${y}" dx="${dx}">${mora.text}</text>`;
+}
+
+function calcSvgWidth(sequence, step) {
+  return sequence.reduce((sum, s) => sum + (s.role !== 'empty' ? s.moraes.length : 0), 0) * step
+    + config.graph_horizontal_padding * 2;
+}
+
+function makeGraph(sequence) {
+  sequence = filterEmptyMoraes(sequence);
+  if (!sequence.length) return null;
+
+  let xPos = config.size_unit + config.graph_horizontal_padding;
+  let yPos = config.size_unit;
+  const heightHigh = config.size_unit;
+  const heightLow = heightHigh + config.graph_height;
+  const xStep = config.x_step;
+  const heightKana = heightLow + xStep;
+
+  const circles = [], paths = [], text = [];
+
+  for (let i = 0; i < sequence.length; i++) {
+    const section = sequence[i];
+    if (section.role === 'empty' || section.isTape) continue;
+
+    const wordCircles = [], textMoraes = [];
+    const path = new Path();
+    const connector = new Line();
+
+    if (i > 0 && shouldConnect(section, sequence[i - 1])) {
+      connector.start(xPos - xStep, yPos, sequence[i - 1].isTape);
+    }
+
+    const moraes = section.moraes;
+    for (let j = 0; j < moraes.length; j++) {
+      const mora = moraes[j];
+      let moraLevel;
+      if (mora.text === 'っ' || mora.text === 'ッ') {
+        moraLevel = (j === 1 && section.levels[j - 1] === L) ? section.levels[j - 1] : section.levels[j];
+      } else {
+        moraLevel = section.levels[j];
+      }
+      yPos = moraLevel === H ? heightHigh : heightLow;
+      wordCircles.push(makeCircle(xPos, yPos));
+      path.push(xPos, yPos);
+
+      if (j === 0 && connector.isUnfinished) {
+        connector.end(xPos, yPos);
+      }
+
+      if (mora.text !== GHOST_PARTICLE) {
+        if (mora.devoiced) {
+          textMoraes.push(makeDevoicedCircle(mora, xPos, heightKana));
+        }
+        textMoraes.push(makeText(mora, xPos, heightKana, config.text_dx * mora.text.length));
+      }
+
+      xPos += xStep;
+    }
+
+    circles.push(makeGroup(wordCircles, section.classname));
+    paths.push(makeGroup([path.draw()], section.classname));
+    text.push(makeGroup(textMoraes, section.classname));
+
+    if (connector.isCompleted) {
+      paths.push(makeGroup([connector.adjustToRadius(config.circle_radius).draw()], 'connector'));
+    }
+  }
+
+  const content = [makeGroup(paths, 'paths'), makeGroup(circles, 'circles')];
+  const svgWidth = calcSvgWidth(sequence, xStep);
+  const svgHeightText = heightKana + config.size_unit;
+  const svgHeightNoText = heightLow + config.size_unit;
+
+  let svgHeight, visibleHeight;
+  if (config.no_text) {
+    svgHeight = svgHeightNoText;
+    visibleHeight = Math.round((svgHeightNoText / svgHeightText) * config.graph_visible_height);
+  } else {
+    svgHeight = svgHeightText;
+    visibleHeight = config.graph_visible_height;
+    content.push(makeGroup(text, 'text'));
+  }
+
+  return makeSvg(content.join(''), svgWidth, svgHeight, visibleHeight);
+}
+
+// ── sentence.js ──
+function wordToRubyFragment(fragment) {
+  const re = /([^\[\]]+)\[([^\]]+)\]/g;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = re.exec(fragment)) !== null) {
+    if (match.index > lastIndex) {
+      result += fragment.slice(lastIndex, match.index);
+    }
+    result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < fragment.length) {
+    result += fragment.slice(lastIndex);
+  }
+  return result;
+}
+
+function wordToRuby(word) {
+  word = word.replaceAll(DEVOICED_PREFIX, '');
+  word = word.replaceAll(LITERAL_PREFIX, '');
+  return word.split(' ').map(wordToRubyFragment).join('');
+}
+
+function makeColoredSentence(sequence) {
+  const spans = [];
+  for (const section of sequence) {
+    if (SENT_HIDDEN.includes(section.word) || /^\++$/.test(section.word) || section.isTape) continue;
+    spans.push(`<span class="${section.classname}">${wordToRuby(section.word)}</span>`);
+  }
+  return spans.join('');
+}
+
+// ── makeSequences glue ──
+function makeSequences(expr) {
+  expr = normalizeForParsing(expr);
+  let sentences = splitToSentences(expr);
+  sentences = sentences.map(detachGhostParticle);
+  let bySection = sentences.map(splitToSections);
+  bySection = bySection.map(mergeFragments);
+  bySection = splitMultiplePitchNotations(bySection);
+  let sequences = bySection.map(parseSections);
+  sequences = sequences.map(buildHighLow);
+  return sequences;
+}
+</script>
+
+<script>
+// Render word on front (hidden furigana/colors via CSS)
+(function() {
+    var el = document.getElementById('raw-word');
+    if (!el) return;
+    var raw = el.innerHTML.trim();
+    if (!raw) return;
+    var seqs = makeSequences(raw);
+    if (seqs.length > 0) {
+        document.getElementById('front-word').innerHTML = makeColoredSentence(seqs[0]);
+    }
 })();
 </script>
 </div>
