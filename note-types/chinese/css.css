@@ -1,8 +1,9 @@
 /* Fonts — add .woff2 files to Anki media folder (prefix _ prevents cleanup) */
 @font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900; }
 @font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
-@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
-@font-face { font-family: 'YuKyokasho'; src: url('_yukyokasho-bold.woff2') format('woff2'); font-weight: 600 900; }
+@font-face { font-family: 'MOE'; src: url('_moeStandard.ttf'); }
+@font-face { font-family: 'Noto Serif TC'; src: url('_notoSerifTC.ttf'); }
+@font-face { font-family: 'Source Hans'; src: url('_sourceHans.otf'); }
 
 :root,
 :root[class*=night-mode] {
@@ -33,8 +34,8 @@
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', -apple-system, system-ui, sans-serif;
-    --jp: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-    --jp-kyokasho: 'YuKyokasho', 'YuKyokashotai', 'UD Digi Kyokasho NP-R', var(--jp);
+    --zh: 'Noto Serif TC', 'MOE', serif;
+    --zh-display: 'MOE', 'Noto Serif TC', serif;
 
     /* Motion */
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -145,107 +146,13 @@ html {
     margin: 0 0 20px;
 }
 
-/* Pitch graph */
+/* Tone colors */
 
-.pitch-graph {
-    text-align: center;
-    margin: 0 0 20px;
-    line-height: 0;
-}
-
-/* Pitch accent colors (SVG) */
-
-.atamadaka circle,
-.atamadaka line { fill: #E60000; stroke: #E60000; }
-.atamadaka text { fill: #E60000; }
-
-.heiban circle,
-.heiban line { fill: #005CE6; stroke: #005CE6; }
-.heiban text { fill: #005CE6; }
-
-.nakadaka circle,
-.nakadaka line { fill: #E68A00; stroke: #E68A00; }
-.nakadaka text { fill: #E68A00; }
-
-.kifuku circle,
-.kifuku line { fill: #AC00E6; stroke: #AC00E6; }
-.kifuku text { fill: #AC00E6; }
-
-.odaka circle,
-.odaka line { fill: #00802B; stroke: #00802B; }
-.odaka text { fill: #00802B; }
-
-/* Keihan pitch accent colors (SVG) */
-
-.keihan_heiban circle,
-.keihan_heiban line { fill: #3bb2ed; stroke: #3bb2ed; }
-.keihan_heiban text { fill: #3bb2ed; }
-
-.keihan_low_heiban circle,
-.keihan_low_heiban line { fill: #096999; stroke: #096999; }
-.keihan_low_heiban text { fill: #096999; }
-
-.keihan_atamadaka circle,
-.keihan_atamadaka line { fill: #f76d94; stroke: #f76d94; }
-.keihan_atamadaka text { fill: #f76d94; }
-
-.keihan_nakadaka circle,
-.keihan_nakadaka line { fill: #a89c0f; stroke: #a89c0f; }
-.keihan_nakadaka text { fill: #a89c0f; }
-
-.keihan_low_nakadaka circle,
-.keihan_low_nakadaka line { fill: #876333; stroke: #876333; }
-.keihan_low_nakadaka text { fill: #876333; }
-
-.keihan_odaka circle,
-.keihan_odaka line,
-.keihan_low_odaka circle,
-.keihan_low_odaka line { fill: #658065; stroke: #658065; }
-.keihan_odaka text,
-.keihan_low_odaka text { fill: #658065; }
-
-.connector line { stroke: rgba(255, 255, 255, 0.25); }
-.particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
-.particle line { stroke: rgba(255, 255, 255, 0.3); }
-.particle text { fill: rgba(255, 255, 255, 0.3); }
-
-/* Text should not have stroke */
-.atamadaka text,
-.heiban text,
-.nakadaka text,
-.kifuku text,
-.odaka text,
-.keihan_heiban text,
-.keihan_low_heiban text,
-.keihan_atamadaka text,
-.keihan_nakadaka text,
-.keihan_low_nakadaka text,
-.keihan_odaka text,
-.keihan_low_odaka text,
-.connector text,
-.particle text { stroke: none; }
-
-/* Pitch accent colors (HTML spans) */
-
-.atamadaka { color: #E60000; }
-.heiban { color: #005CE6; }
-.nakadaka { color: #E68A00; }
-.kifuku { color: #AC00E6; }
-.odaka { color: #00802B; }
-.keihan_heiban { color: #3bb2ed; }
-.keihan_low_heiban { color: #096999; }
-.keihan_atamadaka { color: #f76d94; }
-.keihan_nakadaka { color: #a89c0f; }
-.keihan_low_nakadaka { color: #876333; }
-.keihan_odaka,
-.keihan_low_odaka { color: #658065; }
-.particle { color: rgba(255, 255, 255, 0.3); }
-
-/* Devoiced markers are hollow */
-circle.devoiced, rect.devoiced { fill: none !important; }
-
-/* Hidden elements */
-span.empty { display: none; }
+.tone1 { color: #bf0a0a; }
+.tone2 { color: #cc7f12; }
+.tone3 { color: #1b872e; }
+.tone4 { color: #190abf; }
+.tone5 { color: gray; }
 
 /* — Replay button (targets Anki's generated .replay-button) — */
 
@@ -481,13 +388,12 @@ span.empty { display: none; }
     }
 }
 
-/* Target word — Japanese serif for kanji with ruby furigana */
+/* Target word — Chinese serif with vertical bopomofo */
 
 .target-word {
-    font-family: var(--jp-kyokasho);
-    font-size: 64px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-family: var(--zh-display);
+    font-size: 80px;
+    font-weight: normal;
     line-height: 1.2;
     text-align: center;
     margin: 0 0 18px;
@@ -501,15 +407,18 @@ ruby {
 }
 
 rt {
-    font-family: var(--jp);
+    font-family: var(--zh);
     font-weight: 400;
     color: var(--text-2);
 }
 
 .target-word rt {
-    font-size: 0.34em;
-    letter-spacing: 0.06em;
-    transform: translateY(2px);
+    display: inline-block;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    vertical-align: middle;
+    font-size: 18px;
+    font-family: var(--zh);
     color: inherit;
 }
 
@@ -563,17 +472,13 @@ rt {
 /* Sentence */
 
 .sentence {
-    font-family: var(--jp);
+    font-family: 'Source Hans', var(--zh);
     font-size: 21px;
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-1);
     text-align: center;
     margin: 0 0 20px;
-}
-
-.sentence.no-accent .particle {
-    color: inherit;
 }
 
 .sentence mark {
@@ -674,7 +579,7 @@ rt {
 }
 
 .jp-def {
-    font-family: var(--jp);
+    font-family: var(--zh);
     font-size: 17px;
     font-weight: 400;
     line-height: 1.85;
