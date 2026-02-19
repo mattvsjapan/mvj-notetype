@@ -647,8 +647,10 @@ rt {
     padding-top: 0;
 }
 
-.jp-def-input:checked ~ .jp-def-wrap .jp-def {
-    padding-top: 12px;
+.jp-def::before {
+    content: '';
+    display: block;
+    height: 3px;
 }
 
 /* Bottom audio row — mobile only duplicate */
