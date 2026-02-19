@@ -1,0 +1,643 @@
+@font-face { font-family: times; src: url('_times.ttf'); }
+@font-face { font-family: yumin; src: url('_yumin.ttf'); }
+
+
+/* structure */
+
+.card,
+.nightMode.card {
+    margin: 0px;
+    font-family: "times", "yumin", "ヒラギノ明朝 ProN W3", "simsun";
+    color: #4f4b4b;
+}
+
+.omote rt {
+    visibility: hidden
+}
+
+.outer_container {
+    position: relative;
+    display: flex;
+    flex-direction: row-reverse;
+    height: 100vh;
+    width: 100%;
+    margin: 0px;
+    writing-mode: vertical-rl;
+    overflow: auto;
+}
+
+.mobile .outer_container {
+    height: 85vh;
+}
+
+.inner_container {
+    max-height: 100%;
+    height: 600px;
+    margin: 0px auto auto auto;
+    font-size: 0px;
+}
+
+.flashcard {
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 10px;
+    height: calc(100% - 120px);
+    margin: 20px;
+    padding: 40px;
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.mobile .flashcard {
+    margin-right: 20px;
+}
+
+.hyojun .flashcard {
+    box-shadow: 0 5px 10px -5px #8552bf;
+}
+
+.keihan .flashcard {
+    box-shadow: 0 5px 10px -5px #647ade;
+}
+
+
+
+
+b {
+    background-color: #d5d3d1;
+    font-weight: normal;
+}
+
+.hyojun .dotted {
+    border-left: 1px dotted rgb(216, 208, 249);
+    border-right: 0px;
+    height: 100%;
+}
+
+.keihan .dotted {
+    border-left: 1px dotted #adcdff;
+    border-right: 0px;
+    height: 100%;
+}
+
+
+.upright {
+    text-combine-upright: all;
+}
+
+.hor {
+    writing-mode: horizontal-tb;
+}
+
+
+.front_visible rt,
+.display_front rt,
+.omote .display_back rt {
+    visibility: visible !important
+}
+
+.ura .display_front,
+.omote .display_back,
+.display_none hr {
+    display: none;
+}
+
+
+.hyoki {
+    background-color: #ff6665;
+    border-radius: 3px;
+    padding: 3px;
+    font-size: 17px;
+  }
+
+
+
+
+/* background */
+
+.hyojun_image,
+.keihan_image {
+    background-image: url('_wood.jpeg');
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    z-index: 1;
+    overflow: auto;
+    height: 100vh;
+}
+
+.hyojun,
+.keihan {
+    background-color: rgba(255, 255, 255,.7);
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    z-index: 2;
+    overflow: auto;
+    height: 100vh;
+}
+
+.hyojun_color,
+.keihan_color {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    z-index: 3;
+    overflow: auto;
+    height: 100vh;
+}
+
+.hyojun_color {
+    background-color: rgba(87, 24, 196,.3);
+}
+
+.keihan_color {
+    background-color: rgba(20, 55, 227,.3);
+}
+
+
+
+
+
+/* fields */
+
+
+.backside_out {
+  animation-name: slideLeft;
+  animation-duration: .2s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;  /* keep end state */
+  animation-delay: 0s;  
+
+height: 100%;
+
+}
+
+.backside_in {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+  opacity: 0;
+
+  animation-name: appear;
+  animation-duration: .25s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;  /* keep end state */
+  animation-delay: .3s;  
+}
+
+@keyframes slideLeft {
+  0% {
+    max-width: 0;
+
+  }
+  100% {
+    max-width: 1000px;            /* adjust to at least your content height */
+
+  }
+}
+
+@keyframes appear {
+  0% {
+    opacity: 0;
+
+  }
+  100% {
+    opacity: 1;            /* adjust to at least your content height */
+
+  }
+}
+
+
+
+
+
+
+.sentence {
+    text-align: left;
+    font-size: 25px;
+    margin-left: 0px;
+}
+
+.sentence rt {
+    font-size: 11px;
+}
+
+
+hr {
+    border-right: 0px;
+    height: 100%;
+    order: 1;
+    margin: 0px 20px 0px 0px;
+}
+
+.hyojun hr {
+    border-left: 1px solid rgb(216, 208, 249);
+}
+
+.keihan hr {
+    border-left: 1px dotted #adcdff;
+}
+
+
+.meaning {
+    text-align: left;
+    font-size: 21px;
+    order: 2;
+    margin-right: 20px;
+    height: 100%;
+
+    padding: 20px;
+    background-color: rgba(241,241,241,255);
+    border-radius: 4px;
+
+}
+
+.word_graph {
+    order: 3;
+    align-self: center;
+    writing-mode: horizontal-tb;
+    margin-right: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+}
+
+.word {
+    order: 1;
+    align-self: center;
+    font-size: 45px;
+
+}
+
+
+
+/* images */
+
+.img {
+    order: 4;
+    align-self: center;
+
+}
+
+img {
+    border-radius: 4px;
+    max-height: 200px;
+    max-width: 300px;
+    margin: auto 20px auto 0px;
+}
+
+.svg {
+    order: 2;
+    align-self: center;
+    margin: -10px 0px -30px 0px;
+
+}
+
+.svg svg {
+    writing-mode: horizontal-tb;
+    overflow: visible;
+    height: 110px;
+}
+
+.outer_container svg {
+    max-height: 100%;
+}
+
+
+
+
+
+
+
+/* replay button */
+
+.audio {
+    order: 5;
+    align-self: center;
+    margin: 0px 20px 0px 0px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+}
+
+.replay-button {
+    width: 40px; 
+    height: 40px;
+    transition: transform 0.3s ease;
+
+}
+
+.replay-button:hover {
+    transform: scale(1.2);
+}
+
+.replay-button:last-child {
+
+
+}
+
+.replay-button svg circle { 
+    stroke-width: 1;
+}
+
+.replay-button svg path { 
+    transform: scale(0.6) translate(19px, 20px);
+}
+
+
+.hyojun .replay-button svg circle { 
+    fill: rgb(246, 245, 253);
+    stroke: rgb(216, 208, 249);
+}
+
+.hyojun .replay-button svg path { 
+    fill: rgb(75, 50, 174);
+}
+
+
+.keihan .replay-button svg circle { 
+    fill: #f2f7ff;
+    stroke: #c5dafa;
+}
+
+.keihan .replay-button svg path { 
+    fill: #0c4194;
+}
+
+
+
+
+
+/* pitch accent colors */
+
+text {    
+    font-family: "times", "yumin", "ヒラギノ明朝 ProN W3", "simsun";
+}
+
+.ura .atamadaka,
+.ura .atamadaka line,
+.ura .atamadaka circle,
+.ura .atamadaka rect,
+.ura .atamadaka text {
+    fill: #E60000;
+    stroke: #E60000;
+    color: #E60000;
+}
+
+.ura .atamadaka circle.devoiced,
+.ura .atamadaka rect {
+    fill: none;
+}
+
+.ura .particle.atamadaka,
+.ura .particle.atamadaka line,
+.ura .particle.atamadaka circle {
+    stroke: #E60000;
+}
+
+.ura .particle.atamadaka text {
+    fill: #E60000;
+}
+
+
+.ura .heiban, 
+.ura .heiban line,
+.ura .heiban circle,
+.ura .heiban rect,
+.ura .heiban text {
+    fill: #005CE6;
+    stroke: #005CE6;
+    color: #005CE6;
+}
+
+.ura .heiban circle.devoiced,
+.ura .heiban rect {
+    fill: none;
+}
+
+.ura .particle.heiban,
+.ura .particle.heiban line,
+.ura .particle.heiban circle {
+    stroke: #005CE6;
+
+}
+
+.ura .particle.heiban text {
+    fill: #005CE6;
+}
+
+.ura .nakadaka,
+.ura .nakadaka line,
+.ura .nakadaka circle,
+.ura .nakadaka rect,
+.ura .nakadaka text {
+    fill: #E68A00;
+    stroke: #E68A00;
+    color: #E68A00;
+}
+
+.ura .nakadaka circle.devoiced,
+.ura .nakadaka rect {
+    fill: none;
+}
+
+.ura .particle.nakadaka,
+.ura .particle.nakadaka line,
+.ura .particle.nakadaka circle {
+    stroke: #E68A00;
+}
+
+.ura .particle.nakadaka text {
+    fill: #E68A00;
+}
+
+.ura .kifuku, 
+.ura .kifuku line, 
+.ura .kifuku circle,
+.ura .kifuku text {
+    fill: #AC00E6;
+    stroke: #AC00E6;
+    color: #AC00E6;
+}
+
+.ura .kifuku circle.devoiced {
+    fill: none;
+}
+
+.ura .particle.kifuku,
+.ura .particle.kifuku line,
+.ura .particle.kifuku circle {
+    stroke: #AC00E6;
+
+}
+
+.ura .particle.kifuku text {
+    fill: #AC00E6;
+}
+
+.ura .odaka,
+.ura .odaka line,
+.ura .odaka circle,
+.ura .odaka text {
+    fill: #00802B;
+    stroke: #00802B;
+    color: #00802B;
+}
+
+.ura .odaka circle.devoiced {
+    fill: none;
+}
+
+.ura .particle.odaka,
+.ura .particle.odaka line,
+.ura .particle.odaka circle {
+    stroke: #00802B;
+
+}
+
+.ura .particle.odaka text {
+    fill: #00802B;
+}
+
+.ura .keihan_heiban, 
+.ura .keihan_heiban line, 
+.ura .keihan_heiban circle, 
+.ura .keihan_heiban text, 
+.ura .h {
+    fill: #3bb2ed;
+    stroke: #3bb2ed;
+    color: #3bb2ed;
+}
+
+.ura .keihan_low_heiban, 
+.ura .keihan_low_heiban line, 
+.ura .keihan_low_heiban circle, 
+.ura .keihan_low_heiban text, 
+.ura .l {
+    fill: #096999;
+    stroke: #096999;
+    color: #096999;
+}
+
+.ura .keihan_atamadaka, 
+.ura .keihan_atamadaka line, 
+.ura .keihan_atamadaka circle,
+.ura .keihan_atamadaka text, 
+.ura .a {
+    fill: #f76d94;
+    stroke: #f76d94;
+    color: #f76d94;
+}
+
+.ura .keihan_nakadaka,
+.ura .keihan_nakadaka line, 
+.ura .keihan_nakadaka circle, 
+.ura .keihan_nakadaka text, 
+.ura .n {
+    fill: #a89c0f;
+    stroke: #a89c0f;
+    color: #a89c0f;
+}
+
+.ura .keihan_low_nakadaka,
+.ura .keihan_low_nakadaka line, 
+.ura .keihan_low_nakadaka circle, 
+.ura .keihan_low_nakadaka text, 
+.ura .m {
+    fill: #876333;
+    stroke: #876333;
+    color: #876333;
+}
+
+
+.ura .keihan_low_odaka, 
+.ura .keihan_odaka line, 
+.ura .keihan_odaka circle,
+.ura .keihan_odaka text,
+.ura .keihan_low_odaka line, 
+.ura .keihan_low_odaka circle,
+.ura .keihan_low_odaka text, 
+.ura .o {
+    fill: #658065;
+    stroke: #658065;
+    color: #658065
+}
+
+.ura .connector line,
+.ura .connector circle,
+.ura .connector text,
+.ura .particle,
+.ura .particle line,
+.ura .particle circle,
+.ura .particle text,
+.ura .setsubigo line,
+.ura .setsubigo circle,
+.ura .setsubigo text, 
+.ura .keihan_particle line,
+.ura .keihan_particle circle,
+.ura .keihan_particle text,
+.ura .keihan_setsubigo line,
+.ura .keihan_setsubigo circle,
+.ura .keihan_setsubigo text, 
+.ura .p {
+    fill: gray;
+    stroke: gray;
+    color: gray;
+}
+
+.ura .particle circle,
+.ura .keihan_particle circle {
+    fill: none;
+}
+
+
+.ura .black line,
+.ura .black circle,
+.ura .black text {
+    color: #1a1818;
+    stroke: #1a1818;
+}
+
+.ura .particle.black,
+.ura .particle.black line,
+.ura .particle.black circle {
+    stroke: #1a1818;
+}
+
+.ura .particle.black text {
+    fill: #1a1818;
+}
+
+.ura .atamadaka text,
+.ura .heiban text,
+.ura .nakadaka text,
+.ura .kifuku text,
+.ura .odaka text,
+.ura .keihan_heiban text,
+.ura .keihan_low_heiban text,
+.ura .keihan_atamadaka text,
+.ura .keihan_nakadaka text,
+.ura .keihan_low_nakadaka text,
+.ura .keihan_odaka text,
+.ura .keihan_low_odaka text,
+.ura .keihan_particle text,
+.ura .keihan_setsubigo text,
+.ura .black text,
+.ura .particle text,
+.ura .setsubigo text {
+    stroke: none;
+}

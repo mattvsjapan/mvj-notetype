@@ -1,0 +1,400 @@
+<div class="container-back">
+    <div class="flashcard-back">
+
+
+{{FrontSide}}
+
+<hr>
+
+
+        {{#Word}}
+            <div class="word" id="word-field">
+                {{furigana:Word}}
+            </div>
+        {{/Word}}
+
+        {{#Sentence}}
+            <div class="sentence">
+                {{Sentence}}
+            </div>
+        {{/Sentence}}
+
+
+        {{#Definition Audio}}
+            <div class="audio" id="snd3">
+                {{Definition Audio}}
+            </div>
+        {{/Definition Audio}}
+
+        {{#Definition}}
+            <div class="definition definition-conditional" id="definition-field">
+                {{Definition}}
+            </div>
+        {{/Definition}}
+
+        {{#Image}}
+            <div class="image">
+                {{Image}}
+            </div>
+        {{/Image}}
+
+
+    </div>
+</div>
+
+
+
+<style>
+.container-front {
+    margin: 0px;
+}
+
+.flashcard-front {
+    box-shadow: 0 0px 0px 0px;
+    padding: 0px;
+}
+</style>
+
+
+<script>
+(function() {
+  // ========== 1. HIDE LOCKED AUDIO BUTTONS ==========
+  // Hide audio buttons marked with LOCKED_ in HTML comments
+  const audioContainer = document.querySelector('#snd3');
+  if (audioContainer) {
+    const walker = document.createTreeWalker(
+      audioContainer,
+      NodeFilter.SHOW_COMMENT,
+      null
+    );
+
+    let currentNode;
+    while (currentNode = walker.nextNode()) {
+      if (currentNode.nodeValue && currentNode.nodeValue.includes('def-type="LOCKED_')) {
+        let nextElement = currentNode.nextSibling;
+        while (nextElement) {
+          if (nextElement.nodeType === 1 && nextElement.classList.contains('replay-button')) {
+            nextElement.style.display = 'none';
+            break;
+          }
+          nextElement = nextElement.nextSibling;
+        }
+      }
+    }
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // ========== 2. HIDE LOCKED MONOLINGUAL AUDIO BLOCKS ==========
+  const LOCKED_MONO_AUDIO_REGEX = /<!-- def-type="LOCKED_monolingual".*?-->[\s\S]*?<!-- def-end -->/g;
+
+  function hideDisabledMonolingualAudio() {
+    const audioField = document.getElementById('snd3');
+    if (!audioField) return;
+
+    const originalHtml = audioField.innerHTML;
+    const hasDisabledMono = LOCKED_MONO_AUDIO_REGEX.test(originalHtml);
+    if (!hasDisabledMono) return;
+
+    let modifiedHtml = originalHtml.replace(LOCKED_MONO_AUDIO_REGEX, '');
+    audioField.innerHTML = modifiedHtml;
+  }
+
+  hideDisabledMonolingualAudio();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideDisabledMonolingualAudio);
+  } else {
+    setTimeout(hideDisabledMonolingualAudio, 100);
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // ========== 3. CLICK-TO-REVEAL FOR LOCKED MONOLINGUAL TEXT ==========
+  var LOCKED_MONO_REGEX = /(<!-- def-br-start -->[\s\S]*?<!-- def-br-end -->\s*)?<!-- def-type="LOCKED_monolingual".*?-->[\s\S]*?<!-- def-end -->(\s*<!-- def-br-start -->[\s\S]*?<!-- def-br-end -->)?/g;
+
+  function wrapLockedMonolingualText() {
+    var field = document.getElementById('definition-field');
+    if (!field) return;
+
+    var html = field.innerHTML;
+    if (!/LOCKED_monolingual/.test(html)) return;
+
+    var originals = [];
+    html = html.replace(LOCKED_MONO_REGEX, function(match) {
+      var idx = originals.length;
+      originals.push(match);
+      return '<div class="mono-definition-revealer" data-mono-text-index="' + idx + '">' +
+        '<div class="reveal-button" role="button" tabindex="0">Show Monolingual Definition</div>' +
+      '</div>';
+    });
+
+    field.innerHTML = html;
+    field.setAttribute('data-has-locked-mono', 'true');
+
+    var buttons = field.querySelectorAll('.mono-definition-revealer .reveal-button');
+    for (var i = 0; i < buttons.length; i++) {
+      (function(button, originalHtml) {
+        var wrapper = button.parentElement;
+        var reveal = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Strip LOCKED_ prefix so definition displays properly, restore BR separators
+          var restored = originalHtml.replace(/LOCKED_monolingual/g, 'monolingual');
+          wrapper.insertAdjacentHTML('beforebegin', restored);
+          wrapper.remove();
+        };
+        button.addEventListener('click', reveal);
+        button.addEventListener('touchend', reveal);
+        button.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') reveal(e);
+        });
+      })(buttons[i], originals[i]);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapLockedMonolingualText);
+  } else {
+    wrapLockedMonolingualText();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // ========== 4. CONDITIONAL VISIBILITY BASED ON AUDIO ==========
+  // Hide definition text when non-disabled bilingual audio exists
+
+  function shouldShowDefinitionText() {
+    // Always show if locked mono definitions exist (they are reveal buttons now)
+    var defField = document.getElementById('definition-field');
+    if (defField && defField.getAttribute('data-has-locked-mono') === 'true') return true;
+
+    var audioField = document.getElementById('snd3');
+    if (!audioField) return true;
+
+    var audioHtml = audioField.innerHTML;
+    if (!audioHtml || audioHtml.trim() === '') return true;
+
+    // Check for non-DISABLED bilingual audio (including bilingual_jp)
+    var hasNonDisabledBilingualAudio = /<!-- def-type="(?!LOCKED_)(bilingual_jp|bilingual)"/.test(audioHtml);
+    return !hasNonDisabledBilingualAudio;
+  }
+
+  function applyDefinitionVisibility() {
+    const conditionalDefField = document.querySelector('.definition-conditional');
+    if (!conditionalDefField) return;
+
+    if (shouldShowDefinitionText()) {
+      conditionalDefField.classList.remove('hide-definition');
+    } else {
+      conditionalDefField.classList.add('hide-definition');
+    }
+  }
+
+  applyDefinitionVisibility();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyDefinitionVisibility);
+  } else {
+    setTimeout(applyDefinitionVisibility, 100);
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // ========== 5. CLICK-TO-REVEAL FOR BILINGUAL DEFINITIONS ==========
+  function applyClickToReveal() {
+    const field = document.getElementById('definition-field');
+    if (!field) return;
+
+    let html = field.innerHTML;
+
+    // Check if bilingual definition exists (including bilingual_jp)
+    const hasBilingual = /<!-- def-type="(bilingual_jp|bilingual)"/.test(html);
+    if (!hasBilingual) return;
+
+    // Count valid monolingual definitions (excluding LOCKED_monolingual)
+    const monoCount = (html.match(/<!-- def-type="monolingual"/g) || []).length;
+    const disabledCount = (html.match(/<!-- def-type="LOCKED_monolingual"/g) || []).length;
+    const validMonoTextCount = monoCount - disabledCount;
+
+    // Check AUDIO definitions in Definition Audio field (#snd3)
+    const audioField = document.getElementById('snd3');
+    let validMonoAudioCount = 0;
+    if (audioField) {
+      const audioHtml = audioField.innerHTML;
+      const audioMonoCount = (audioHtml.match(/<!-- def-type="monolingual"/g) || []).length;
+      const audioDisabledCount = (audioHtml.match(/<!-- def-type="LOCKED_monolingual"/g) || []).length;
+      validMonoAudioCount = audioMonoCount - audioDisabledCount;
+    }
+
+    const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+    // Only wrap bilingual if valid monolingual exists (text OR audio)
+    if (validMonoCount > 0) {
+      const originals = [];
+      const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+      // Match bilingual definition blocks with optional BR separators (including bilingual_jp)
+      html = html.replace(
+        /(<!-- def-br-start -->[\s\S]*?<!-- def-br-end -->\s*)?<!-- def-type="(bilingual_jp|bilingual)".*?-->[\s\S]*?<!-- def-end -->(\s*<!-- def-br-start -->[\s\S]*?<!-- def-br-end -->)?/g,
+        function(match, leadingBr, trailingBr) {
+          const idx = originals.length;
+          originals.push(match);
+
+          const classes = ['definition-revealer'];
+          if (leadingBr || hadDisabledMono) {
+            classes.push('definition-revealer--mono-above-bi');
+          } else if (validMonoTextCount > 0) {
+            classes.push('definition-revealer--bi-above-mono');
+          } else {
+            classes.push('definition-revealer--bi-only');
+          }
+
+          return '' +
+            '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+              '<div class="reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+            '</div>';
+        }
+      );
+
+      field.innerHTML = html;
+
+      // Attach handlers directly to each button (iOS WebView compatibility)
+      var buttons = field.querySelectorAll('.reveal-button');
+      for (var i = 0; i < buttons.length; i++) {
+        (function(button, originalHtml) {
+          var wrapper = button.parentElement;
+
+          var reveal = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Click for desktop, touchend for iOS
+          button.addEventListener('click', reveal);
+          button.addEventListener('touchend', reveal);
+
+          // Keyboard accessibility
+          button.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              reveal(e);
+            }
+          });
+        })(buttons[i], originals[i]);
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // ========== 6. KEYBOARD SHORTCUT FOR REVEAL BUTTONS ==========
+  var HANDLER_KEY = '__revealHandler';
+  function handler(ev) {
+    if (ev.code === 'KeyG') {
+      var btn = document.querySelector('.reveal-button');
+      if (btn) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        btn.click();
+      }
+    }
+  }
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener('keydown', window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener('keydown', handler, { capture: true });
+})();
+</script>
+
+<script>
+(function () {
+  // ========== TONE COLORING (your existing script) ==========
+  function onReady(fn){document.readyState!=='loading'?fn():document.addEventListener('DOMContentLoaded',fn);}
+
+  function detectTone(rtText, baseChar){
+    const t = (rtText || '').trim();
+    if (t.includes('˙')) return 'tone5';
+    if (t.includes('ˊ')) return 'tone2';
+    if (t.includes('ˇ')) return 'tone3';
+    if (t.includes('ˋ')) return 'tone4';
+
+    const base = (baseChar || '').trim();
+    if (base === '兒' || base === 'ㄦ' || /ㄦ/.test(t)) return 'tone5';
+
+    return 'tone1';
+  }
+
+  onReady(function () {
+    const container = document.getElementById('word-field');
+    if (!container || container.dataset.toneColored === '1') return;
+
+    const rubies = Array.prototype.slice.call(container.getElementsByTagName('ruby'));
+    rubies.forEach(function (ruby) {
+      let node = ruby.firstChild;
+      while (node) {
+        if (node.nodeType === 3 && /\S/.test(node.nodeValue)) {
+          const charNode = node;
+          let rt = charNode.nextSibling;
+          while (rt && !(rt.nodeType === 1 && rt.tagName.toLowerCase() === 'rt')) rt = rt.nextSibling;
+          if (rt) {
+            const baseChar = charNode.nodeValue;
+            const toneClass = detectTone(rt.textContent || '', baseChar);
+            const wrap = document.createElement('span');
+            wrap.className = toneClass;
+            ruby.insertBefore(wrap, charNode);
+            wrap.appendChild(charNode);
+            wrap.appendChild(rt);
+            node = wrap.nextSibling;
+            continue;
+          }
+        }
+
+        if (node.nodeType === 1 && node.tagName.toLowerCase() === 'rb') {
+          const rb = node;
+          const next = rb.nextElementSibling;
+          if (next && next.tagName.toLowerCase() === 'rt') {
+            const toneClass = detectTone(next.textContent || '', rb.textContent || '');
+            const wrap = document.createElement('span');
+            wrap.className = toneClass;
+            ruby.insertBefore(wrap, rb);
+            wrap.appendChild(rb);
+            wrap.appendChild(next);
+            node = wrap.nextSibling;
+            continue;
+          }
+        }
+
+        node = node.nextSibling;
+      }
+    });
+
+    if (rubies.length === 0) {
+      container.innerHTML = container.innerHTML.replace(/([\u4E00-\u9FFFㄦ])\[(.*?)\]/g, function(_, han, zhuyin){
+        const toneClass = detectTone(zhuyin, han);
+        return '<span class="'+toneClass+'">'+han+'['+zhuyin+']</span>';
+      });
+    }
+
+    container.dataset.toneColored = '1';
+  });
+})();
+</script>

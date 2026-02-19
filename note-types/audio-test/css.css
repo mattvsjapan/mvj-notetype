@@ -1,0 +1,100 @@
+.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+    padding: 20px;
+  }
+  
+  /* Question styling */
+  .card-front {
+    margin-bottom: 20px;
+  }
+  
+  .question {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  /* Answer styling */
+  .answer {
+    font-size: 20px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+  }
+  
+  /* Audio section */
+  .audio-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .audio-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .audio-container {
+    margin-bottom: 15px;
+    min-height: 30px;
+  }
+  
+  /* Divider */
+  hr#answer {
+    border: none;
+    border-top: 2px solid #ddd;
+    margin: 20px 0;
+  }
+  
+  /* -------------------- SOUND-MUTED BUTTON STYLING -------------------- */
+  /* Style the muted audio buttons with gray color to differentiate from autoplay */
+  .replay-button.muted svg circle,
+  .soundLink.muted svg circle {
+    fill: gray;
+  }
+  
+  html:not(.android) .replay-button.soundLink.muted span {
+      display: inline-flex;
+  }
+  
+  /* Make sure audio buttons are visible and properly sized */
+  .replay-button {
+    display: inline-block;
+    margin: 5px;
+  }
+  
+  .replay-button svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  /* Night mode support */
+  .night_mode .card {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+  }
+  
+  .night_mode .answer {
+    background-color: #2d2d2d;
+  }
+  
+  .night_mode .audio-section {
+    background-color: #2d2d2d;
+  }
+  
+  .night_mode .audio-label {
+    color: #e0e0e0;
+  }
+  
+  .night_mode hr#answer {
+    border-top-color: #555;
+  }

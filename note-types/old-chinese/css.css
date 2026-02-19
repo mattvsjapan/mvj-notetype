@@ -1,0 +1,242 @@
+@font-face { font-family: simsun; src: url('_simsun.ttf'); }
+@font-face { font-family: times; src: url('_times.ttf'); }
+@font-face { font-family: yumin; src: url('_yumin.ttf'); }
+
+@font-face { font-family: moe; src: url('_moeStandard.ttf'); }
+@font-face { font-family: noto; src: url('_notoSerifTC.ttf'); }
+@font-face { font-family: source; src: url('_sourceHans.otf'); }
+
+.card,
+.nightMode.card {
+    margin: 0px;
+    font-family: "times", "simsun", "yumin", "ヒラギノ明朝 ProN W3";
+    color: #4f4b4b;
+    background-color: #380404;
+}
+
+.jp {
+    font-family: "times", "yumin", "ヒラギノ明朝 ProN W3", "simsun";
+    line-height: ;
+    font-size: 90%;
+}
+
+
+
+
+.container-front,
+.container-back {
+    margin: 20px;
+    position: relative;
+}
+
+
+.flashcard-front,
+.flashcard-back {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 10px -5px #451111;
+
+    max-width: calc(100% - 80px);
+    width: 550px;
+    border-radius: 10px;
+    font-size: 0px;
+    margin: auto;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+.omote rt {
+    visibility: hidden
+}
+
+.word {
+    text-align: center;
+    font-size: 80px;
+    order: 3;
+    font-family: "moe", "Noto Serif TC";
+}
+
+.word rt {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  vertical-align:middle;
+  font-size: 18px;
+  font-family: "noto";
+  color: gray;
+#  color: inherit;
+}
+
+.sentence {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 23px;
+    order: 3;
+    font-family: "source";
+}
+
+.audio {
+    align-self: center;
+    order: 2;
+}
+
+.image {
+    margin-top: 20px;
+    align-self: center;
+    order: 3;
+}
+
+img {
+    border-radius: 4px;
+    max-height: 200px;
+}
+
+.meaning {
+    font-size: 23px;
+    margin-top: 20px;
+    order: 4;
+    font-family: "times", "yumin", "ヒラギノ明朝 ProN W3", "simsun";
+}
+
+
+.alternate {
+    font-size: 21px;
+    margin-top: 20px;
+    color: gray;
+    text-align: center;
+    order: 5;
+}
+
+
+hr {
+    border-top: 1px solid rgb(222, 200, 200);
+    height: 0;
+    border-bottom: 0px;
+    margin: 10px;
+    margin-top: 10px;
+    order: 2;
+}
+
+
+
+
+
+
+
+
+.replay-button svg { 
+    width: 40px; 
+    height: 40px; 
+    transition: transform 0.3s ease;
+}
+
+.replay-button:hover svg { 
+    transform: scale(1.2);
+}
+
+.replay-button svg circle { 
+    fill: rgb(240, 235, 235);
+    stroke: rgb(222, 200, 200);
+    stroke-width: 1;
+}
+
+.replay-button svg path  { 
+    fill: rgb(77, 5, 5);
+    transform: scale(0.6) translate(19px, 20px);
+}
+
+
+
+
+
+
+
+
+.tone1{
+    color:#bf0a0a;
+}
+
+.tone2{
+    color:#cc7f12;
+}
+
+.tone3{
+    color:#1b872e;
+}
+
+.tone4{
+    color:#190abf;
+}
+
+.tone5{
+    color:gray;
+}
+
+
+/* ========== DEFINITION SHOW/HIDE SYSTEM ========== */
+
+/* Definition field styling */
+.definition {
+    font-size: 20px;
+    margin-top: 20px;
+    order: 4;
+    font-family: "times", "yumin", "ヒラギノ明朝 ProN W3", "simsun";
+    text-align: center;
+}
+
+/* Conditional definition visibility */
+.definition-conditional {
+    display: block;
+}
+
+.definition-conditional.hide-definition {
+    display: none;
+}
+
+/* Click-to-reveal button styling */
+.reveal-button {
+    display: inline-block;
+    padding: 8px 16px;
+    margin: 10px 0;
+    background-color: rgba(222, 200, 200, 0.3);
+    border: 1px solid rgb(222, 200, 200);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4f4b4b;
+    transition: background-color 0.2s ease;
+}
+
+.reveal-button:hover {
+    background-color: rgba(222, 200, 200, 0.5);
+}
+
+.reveal-button:focus {
+    outline: 2px solid rgb(200, 150, 150);
+    outline-offset: 2px;
+}
+
+/* Revealer wrapper styling for different layouts */
+.definition-revealer {
+    text-align: center;
+}
+
+.definition-revealer--mono-above-bi {
+    margin-top: 15px;
+}
+
+.definition-revealer--bi-above-mono {
+    margin-bottom: 15px;
+}
+
+.definition-revealer--bi-only {
+    margin: 10px 0;
+}
+
+/* Monolingual click-to-reveal wrapper */
+.mono-definition-revealer {
+    text-align: center;
+    margin: 10px 0;
+}

@@ -1,0 +1,94 @@
+<div class="container-front">
+        <div class="flashcard-front">
+    
+    
+        {{#Word Audio}}
+            <div id="snd1" class="audio">
+                {{Word Audio}}
+            </div>
+        {{/Word Audio}}
+
+        {{#Sentence Audio}}
+            <div id="snd2" class="audio">
+                {{Sentence Audio}}
+            </div>
+        {{/Sentence Audio}}
+    
+        </div>
+</div>
+
+
+
+
+
+<script>
+(() => {
+  /* -------- helper: pull "filename.mp3" out of <span class="soundLink"> --- */
+  function getSound(divId) {
+    const link = document.querySelector(`#${divId} .soundLink`);
+    if (!link) return null;
+    const m = link.getAttribute("onclick")?.match(/play:([^']+)/);
+    return m ? m[1] : null;
+  }
+  /* -------- helper: pull ALL non-locked filenames from a container --- */
+  function getSounds(divId) {
+    const links = document.querySelectorAll(`#${divId} .soundLink`);
+    const sounds = [];
+    for (const link of links) {
+      const m = link.getAttribute("onclick")?.match(/play:([^']+)/);
+      if (m && !m[1].startsWith("LOCKED_")) {
+        sounds.push(m[1]);
+      }
+    }
+    return sounds;
+  }
+  function play(fname) {
+    if (!fname) return;
+    try { pycmd("play:" + fname); } catch {}             // desktop only
+  }
+  function playAll(files) {
+    for (const fname of files) {
+      try { pycmd("play:" + fname); } catch {}
+    }
+  }
+
+  function init() {
+    const file1 = getSound("snd1");   // Word Audio
+    const file2 = getSound("snd2");   // Sentence Audio
+    const files3 = getSounds("snd3"); // Definition Audio (all non-locked)
+
+    document.addEventListener(
+      "keydown",
+      ev => {
+        const el = ev.target;
+        if (
+          el &&
+          (el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.isContentEditable)
+        )
+          return;
+
+        switch (ev.key.toLowerCase()) {
+          case "n":       // Word Audio
+            ev.preventDefault(); ev.stopPropagation();
+            play(file1); break;
+          case "h":       // Sentence Audio
+            ev.preventDefault(); ev.stopPropagation();
+            play(file2); break;
+          case ",":       // Definition Audio (play all non-locked)
+            ev.preventDefault(); ev.stopPropagation();
+            playAll(files3); break;
+        }
+      },
+      true /* capture */
+    );
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0));
+  } else {
+    setTimeout(init, 0);
+  }
+})();
+</script>

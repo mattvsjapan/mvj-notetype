@@ -1,0 +1,216 @@
+<div class="ura">
+
+  {{^京阪式}}
+      <div class="hyojun_image">
+      <div class="hyojun">
+      <div class="hyojun_color">  
+  {{/京阪式}}
+
+  {{#京阪式}}
+      <div class="keihan_image">
+      <div class="keihan">
+      <div class="keihan_color">  
+  {{/京阪式}}
+      
+      {{^Meaning}}{{^Image}}{{^Audio}}
+      <div class="display_none">
+      {{/Audio}}{{/Image}}{{/Meaning}}
+      
+      <div class="outer_container">
+          <div class="inner_container">
+              <div class="flashcard">
+      
+      
+                      <div class="sentence">
+                          {{furigana:Sentence}}
+                      </div>
+
+
+<div class="backside_out">
+<div class="backside_in">
+
+      
+                      <hr>
+      
+                      {{#Meaning}}
+                          <div class="meaning">
+                              <div class="pitch">
+                                  {{furigana:Meaning}}
+                              </div>
+                          </div>
+                      {{/Meaning}}
+
+                      {{#Word}}{{#Graph}}
+                          <div class="word_graph">
+                              <div class="word">
+                                  {{furigana:Word}}
+                              </div>
+
+                              <div class="svg">
+                                  {{Graph}}
+                              </div>
+                          </div>
+                      {{/Graph}}{{/Word}}
+
+                      {{#Image}}
+                          <div class="img">{{Image}}</div>
+                      {{/Image}}
+      
+                      {{#Audio}}
+          <div id="snd1" class="audio">
+                                  {{Audio}}
+                              </div>
+                      {{/Audio}}
+      
+</div>
+</div>        
+              </div>
+          </div>
+      </div>
+      
+      {{^Meaning}}{{^Image}}{{^Audio}}
+      </div>
+      {{/Audio}}{{/Image}}{{/Meaning}}
+      
+  </div>
+  </div>      
+  </div>
+</div>
+      
+
+
+
+<script>
+(() => {
+/* -------- helper: pull “filename.mp3” out of <span class="soundLink"> --- */
+function getSound(divId) {
+  const link = document.querySelector(`#${divId} .soundLink`);
+  if (!link) return null;                              // field empty
+  const m = link.getAttribute("onclick")?.match(/play:([^']+)/);
+  return m ? m[1] : null;
+}
+function play(fname) {
+  if (!fname) return;
+  try { pycmd("play:" + fname); } catch {}             // desktop only
+}
+
+function init() {
+  const file1 = getSound("snd1");   // Word Audio
+  const file2 = getSound("snd2");   // Sentence Audio
+  const file3 = getSound("snd3");   // Third Audio
+
+  document.addEventListener(
+    "keydown",
+    ev => {
+      const el = ev.target;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.isContentEditable)
+      )
+        return;
+
+      switch (ev.key.toLowerCase()) {
+        case "n":       // Word Audio
+          ev.preventDefault(); ev.stopPropagation();
+          play(file1); break;
+        case "h":       // Sentence Audio
+          ev.preventDefault(); ev.stopPropagation();
+          play(file2); break;
+        case ",":       // Third Audio
+          ev.preventDefault(); ev.stopPropagation();
+          play(file3); break;
+      }
+    },
+    true /* capture */
+  );
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0));
+} else {
+  setTimeout(init, 0);
+}
+})();
+</script>
+
+
+
+<script>
+/*
+* 1. Wrap any [ … ] that contains ≥1 digit in <span class="hor">…</span>.
+* 2. Convert every remaining ASCII digit (0-9) to its full-width twin (０-９),
+*    provided it is not already inside .hor or inside <script>/<style>.
+*/
+(() => {
+const SKIP_PARENT_TAGS = /^(script|style|noscript)$/i;
+const BRACKET_DIGIT_RE  = /\[[^\]]*\d[^\]]*\]/g;   // [ … digit … ]
+const ANY_DIGIT_RE      = /[0-9]/;                 // one ASCII digit
+const TO_FULLWIDTH = ch => String.fromCharCode(ch.charCodeAt(0) + 0xFEE0);
+
+/* ------------------------------------------------------------------
+ * PASS 1 – wrap bracketed segments that contain a digit
+ * ------------------------------------------------------------------ */
+processTextNodes(BRACKET_DIGIT_RE, wrapWholeMatch);
+
+/* ------------------------------------------------------------------
+ * PASS 2 – turn every other digit into its full-width counterpart
+ * ------------------------------------------------------------------ */
+processTextNodes(ANY_DIGIT_RE, replaceDigitsWithFullwidth);
+
+/* ========= helpers ================================================= */
+
+/** Walk every TEXT node in <body> that matches `regex` and isn’t excluded */
+function processTextNodes(regex, handler) {
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        if (
+          SKIP_PARENT_TAGS.test(node.parentNode.nodeName) ||
+          node.parentNode.closest('.hor')
+        ) return NodeFilter.FILTER_REJECT;
+
+        return regex.test(node.nodeValue)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_SKIP;
+      }
+    },
+    false
+  );
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+  targets.forEach(node => handler(node, regex));
+}
+
+/** Replace the *entire* [ … ] match with one <span class="hor">…</span> */
+function wrapWholeMatch(node, regex) {
+  const txt  = node.nodeValue;
+  const frag = document.createDocumentFragment();
+  let last = 0, m;
+  regex.lastIndex = 0;
+  while ((m = regex.exec(txt))) {
+    if (m.index > last)
+      frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+
+    const span = document.createElement('span');
+    span.className   = 'hor';
+    span.textContent = m[0];
+    frag.appendChild(span);
+    last = regex.lastIndex;
+  }
+  if (last < txt.length)
+    frag.appendChild(document.createTextNode(txt.slice(last)));
+
+  node.parentNode.replaceChild(frag, node);
+}
+
+/** Convert each ASCII digit in the node to full-width form */
+function replaceDigitsWithFullwidth(node) {
+  node.nodeValue = node.nodeValue.replace(/[0-9]/g, TO_FULLWIDTH);
+}
+})();
+</script>
+

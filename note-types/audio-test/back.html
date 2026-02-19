@@ -1,0 +1,76 @@
+{{FrontSide}}
+
+  <hr id="answer">
+
+  <div class="answer">{{Back}}</div>
+
+  <div class="audio-section">
+    <div class="audio-label">Standard Audio (autoplays):</div>
+    <div class="audio-container">{{Audio Autoplay}}</div>
+
+    <div class="audio-label">Manual Audio (click to play):</div>
+    <div class="audio-container" id="manual-audio">{{Audio Manual}}</div>
+  </div>
+
+  <style>
+  #manual-audio { visibility: hidden; }
+  </style>
+
+  <script>
+  setTimeout(()=>{
+    const isAndroid = document.documentElement.classList.contains("android");
+    const pattern = /\[sound-muted:(.*?)\]/g;
+
+    // Store filenames for later reference
+    const filenames = [];
+
+    function audioHTML(filename) {
+      return `<audio id="muted_audio${filenames.length}"><source src="${filename}"></audio>`;
+    }
+
+    function buttonHTML(index) {
+      return `<a class="replay-button soundLink muted" href="#" data-audio-index="${index}">
+        ${isAndroid ? '<span>' : ''}
+          <svg class="playImage" viewBox="0 0 64 64" version="1.1">
+            <circle cx="32" cy="32" r="29"></circle>
+            <path d="M56.502,32.301l-37.502,20.101l0.329,-40.804l37.173,20.703Z"></path>
+          </svg>
+        ${isAndroid ? '</span>' : ''}
+      </a>`;
+    }
+
+    document.body.innerHTML = document.body.innerHTML.replace(pattern, (match, filename) => {
+      const index = filenames.length;
+      filenames.push(filename);
+      return audioHTML(filename) + buttonHTML(index);
+    });
+
+    const audios = Array.from(document.querySelectorAll('audio[id^="muted_audio"]'));
+
+    // Manual play - stops others first
+    document.querySelectorAll('[data-audio-index]').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        // Stop all audio and clear handlers
+        audios.forEach(a => { a.pause(); a.currentTime = 0; a.onended = null; });
+        // Play just this one
+        const index = parseInt(btn.dataset.audioIndex);
+        audios[index].play();
+      };
+    });
+
+    // Show the container
+    const manualAudio = document.getElementById('manual-audio');
+    if (manualAudio) manualAudio.style.visibility = 'visible';
+
+    // Sequential autoplay
+    function playNext(index) {
+      if (index < audios.length) {
+        audios[index].play();
+        audios[index].onended = () => playNext(index + 1);
+      }
+    }
+
+    playNext(0);
+  }, 0);
+  </script>

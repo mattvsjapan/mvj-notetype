@@ -5,7 +5,7 @@ from aqt.qt import *
 from pitch_graph import make_sequences, make_graphs
 
 _dir = os.path.dirname(__file__)
-with open(os.path.join(_dir, 'accent_colors.css')) as f:
+with open(os.path.join(_dir, '..', 'accent_colors.css')) as f:
     _accent_css = f.read()
 
 
