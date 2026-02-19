@@ -105,8 +105,13 @@ function _renderBack() {
 
     if (wordSeqs.length > 0) {
       if (frontDiv) { frontDiv.style.display = 'contents'; frontDiv.classList.remove('front'); }
-      if (frontWord) frontWord.classList.add('reveal');
+      if (frontWord) {
+        frontWord.classList.add('reveal');
+        if (wordRaw.indexOf(':') === -1) frontWord.classList.add('no-accent');
+      }
+    }
 
+    if (wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
         var svg = makeGraph(wordSeqs[s]);
