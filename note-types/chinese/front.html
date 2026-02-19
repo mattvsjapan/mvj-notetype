@@ -185,16 +185,16 @@ window.__stopDefAudio = window.__stopAllAudio;
 </script>
 
 <script>
-// Autoplay [audio:] items in sequence (front side only)
+// Autoplay audio items in sequence (front side only)
 (function() {
   if (document.querySelector('.back')) return;
   var items = document.querySelectorAll('.audio-row .audio-item');
   var queue = [];
   var animateBtn = window.__animateBtn;
   items.forEach(function(item) {
-    if (item._jsAudio) {
-      queue.push({ audio: item._jsAudio, btn: item.querySelector('.replay-button') });
-    }
+    var audio = item._jsAudio || item.querySelector('audio');
+    var btn = item.querySelector('.replay-button');
+    if (audio) queue.push({ audio: audio, btn: btn });
   });
   if (!queue.length) return;
   var i = 0;
