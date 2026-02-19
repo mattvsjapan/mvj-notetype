@@ -4,6 +4,7 @@
 @font-face { font-family: 'MOE'; src: url('_moeStandard.ttf'); }
 @font-face { font-family: 'Noto Serif TC'; src: url('_notoSerifTC.ttf'); }
 @font-face { font-family: 'Source Hans'; src: url('_sourceHans.otf'); }
+@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
 
 :root,
 :root[class*=night-mode] {
@@ -36,6 +37,7 @@
     --sans: 'Inter', -apple-system, system-ui, sans-serif;
     --zh: 'Noto Serif TC', 'MOE', serif;
     --zh-display: 'MOE', 'Noto Serif TC', serif;
+    --jp: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
 
     /* Motion */
     --ease: cubic-bezier(0.16, 1, 0.3, 1);

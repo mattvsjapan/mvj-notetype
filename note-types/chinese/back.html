@@ -264,11 +264,14 @@ function _renderBack() {
   // Definition → bilingual + monolingual
   var defs = parseDefinitions(defHtml);
   var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
-  var hasBi = !!defs.bilingual;
+  var biKey = defs.bilingual ? 'bilingual' : (defs.bilingual_jp ? 'bilingual_jp' : null);
+  var hasBi = !!biKey;
+  var biIsJp = biKey === 'bilingual_jp';
   var hasMono = !!monoKey;
 
   if (hasBi && !hasMono) {
-    defEl.innerHTML = defs.bilingual;
+    defEl.innerHTML = defs[biKey];
+    if (biIsJp) { defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; defEl.style.lineHeight = '1.65'; }
     jpDefSection.style.display = 'none';
   } else if (hasMono && !hasBi) {
     defEl.innerHTML = defs[monoKey];
@@ -281,13 +284,15 @@ function _renderBack() {
       defEl.innerHTML = defs.monolingual;
       defEl.style.fontFamily = "'Noto Serif TC', 'MOE', serif";
       defEl.style.lineHeight = '1.65';
-      jpDefEl.innerHTML = defs.bilingual;
+      jpDefEl.innerHTML = defs[biKey];
       jpDefEl.className = 'def';
+      if (biIsJp) { jpDefEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; jpDefEl.style.lineHeight = '1.65'; }
       var toggleLabel = document.querySelector('.jp-def-toggle');
       if (toggleLabel) toggleLabel.textContent = 'Bilingual';
       window.__monoUnlocked = true;
     } else {
-      defEl.innerHTML = defs.bilingual;
+      defEl.innerHTML = defs[biKey];
+      if (biIsJp) { defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; defEl.style.lineHeight = '1.65'; }
       jpDefEl.innerHTML = defs.LOCKED_monolingual;
     }
   } else {
@@ -318,7 +323,8 @@ function _renderBack() {
       }
     }
 
-    var biBtns = nativeGroups.bilingual ? window.__adoptNativeAudio(nativeGroups.bilingual) : [];
+    var nativeBiKey = nativeGroups.bilingual ? 'bilingual' : (nativeGroups.bilingual_jp ? 'bilingual_jp' : null);
+    var biBtns = nativeBiKey ? window.__adoptNativeAudio(nativeGroups[nativeBiKey]) : [];
     var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var monoBtns = nativeMonoKey ? window.__adoptNativeAudio(nativeGroups[nativeMonoKey]) : [];
     var hasBiBtns = biBtns.length > 0;
@@ -407,7 +413,8 @@ function _renderBack() {
       return window.__extractAudio(tmp).filenames;
     };
 
-    var biFilenames = audioDefs.bilingual ? extractAudioFilenames(audioDefs.bilingual) : [];
+    var audioBiKey = audioDefs.bilingual ? 'bilingual' : (audioDefs.bilingual_jp ? 'bilingual_jp' : null);
+    var biFilenames = audioBiKey ? extractAudioFilenames(audioDefs[audioBiKey]) : [];
     var audioMonoKey = audioDefs.monolingual ? 'monolingual' : (audioDefs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var monoFilenames = audioMonoKey ? extractAudioFilenames(audioDefs[audioMonoKey]) : [];
     var hasBiAudio = biFilenames.length > 0;
