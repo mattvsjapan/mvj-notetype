@@ -1,14 +1,18 @@
 <div class="card-inner">
 <div class="front">
     <div class="audio-row">
-        <div class="audio-item fi" style="--d:0">
+        {{#Word Audio}}
+        <div class="audio-item fi" data-audio="word" style="--d:0">
             {{Word Audio}}
             <span class="audio-label">Word</span>
         </div>
-        <div class="audio-item fi" style="--d:70">
+        {{/Word Audio}}
+        {{#Sentence Audio}}
+        <div class="audio-item fi" data-audio="sentence" style="--d:70">
             {{Sentence Audio}}
             <span class="audio-label">Sentence</span>
         </div>
+        {{/Sentence Audio}}
     </div>
 </div>
 
@@ -226,10 +230,11 @@ window.__stopDefAudio = window.__stopAllAudio;
   function handler(ev) {
     var el = ev.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    var items = document.querySelectorAll('.audio-row .audio-item');
+    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
+    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
     switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(items[0]); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(items[1]); break;
+      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
     }
   }
   if (window[HANDLER_KEY]) {

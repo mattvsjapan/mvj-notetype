@@ -45,6 +45,7 @@
 
             var item = document.createElement('div');
             item.className = 'audio-item bi';
+            item.setAttribute('data-audio', 'def');
 
             for (var i = 0; i < filenames.length; i++) {
                 var audio = document.createElement('audio');
@@ -117,6 +118,7 @@
             var audioRow = document.querySelector('.audio-row');
             var item = document.createElement('div');
             item.className = 'audio-item bi';
+            item.setAttribute('data-audio', 'def');
             for (var i = 0; i < buttons.length; i++) {
                 item.appendChild(buttons[i]);
             }
@@ -338,6 +340,7 @@ function _renderBack() {
         var makeNativeDefItem = function(label, btns) {
           var item = document.createElement('div');
           item.className = 'audio-item bi';
+          item.setAttribute('data-audio', 'def');
           for (var bk = 0; bk < btns.length; bk++) {
             item.appendChild(btns[bk]);
           }
@@ -376,6 +379,7 @@ function _renderBack() {
 
         var singleItem = document.createElement('div');
         singleItem.className = 'audio-item bi';
+        singleItem.setAttribute('data-audio', 'def');
         for (var si = 0; si < singleBtns.length; si++) {
           singleItem.appendChild(singleBtns[si]);
         }
@@ -486,6 +490,7 @@ function _renderBack() {
         var makeDefItem = function(label, filenames, audioEls) {
           var item = document.createElement('div');
           item.className = 'audio-item bi';
+          item.setAttribute('data-audio', 'def');
           var btn = document.createElement('a');
           btn.className = 'replay-button';
           btn.href = '#';
@@ -540,6 +545,7 @@ function _renderBack() {
       } else {
         var defItem = document.createElement('div');
         defItem.className = 'audio-item bi';
+        defItem.setAttribute('data-audio', 'def');
         var defBtn = document.createElement('a');
         defBtn.className = 'replay-button';
         defBtn.href = '#';
@@ -654,14 +660,16 @@ _renderBack();
   function handler(ev) {
     var el = ev.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    var items = document.querySelectorAll('.audio-row .audio-item');
+    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
+    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
+    var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
     switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(items[0]); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(items[1]); break;
+      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
       case ',':
         ev.preventDefault(); ev.stopPropagation();
         if (window.__playLockedDefAudio) window.__playLockedDefAudio();
-        else play(items[2]);
+        else play(defItem);
         break;
     }
   }
