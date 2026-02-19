@@ -44,7 +44,12 @@
 
 // Clean up previous card
 if (window.__stopAllAudio) window.__stopAllAudio();
-document.querySelectorAll('body > audio').forEach(function(a) { a.remove(); });
+document.querySelectorAll('body > audio').forEach(function(a) {
+    a.pause();
+    a.removeAttribute('src');
+    a.load();
+    a.remove();
+});
 if (window.__observers) {
     for (var i = 0; i < window.__observers.length; i++) window.__observers[i].disconnect();
 }
@@ -181,7 +186,14 @@ window.__stopAllAudio = function(except) {
 
 window.__safePlay = function(audio) {
     var p = audio.play();
-    if (p && p['catch']) p['catch'](function() {});
+    if (p && p['catch']) p['catch'](function() {
+        if (audio.readyState < 3) {
+            audio.addEventListener('canplay', function retry() {
+                audio.removeEventListener('canplay', retry);
+                audio.play()['catch'](function() {});
+            });
+        }
+    });
 };
 
 window.__startPlaying = function(audio, btn) {

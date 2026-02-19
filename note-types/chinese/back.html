@@ -71,13 +71,12 @@
 
             var animateBtn = window.__animateBtn;
 
-            function playSingleFresh(idx) {
-                window.__stopAllAudio();
-                var a = new Audio(filenames[idx]);
-                window.__defAudioEls.push(a);
-                window.__safePlay(a);
+            function playSingle(idx) {
+                window.__stopAllAudio(audios[idx]);
+                audios[idx].currentTime = 0;
+                window.__safePlay(audios[idx]);
                 animateBtn(btns[idx]);
-                window.__startPlaying(a, btns[idx]);
+                window.__startPlaying(audios[idx], btns[idx]);
             }
 
             function playAll() {
@@ -97,7 +96,7 @@
 
             for (var j = 0; j < btns.length; j++) {
                 (function(idx) {
-                    window.__onTap(btns[idx], function() { playSingleFresh(idx); });
+                    window.__onTap(btns[idx], function() { playSingle(idx); });
                 })(j);
             }
 
@@ -539,12 +538,11 @@ function _renderBack() {
             animateBtnDef(btn);
           };
           window.__onTap(btn, function() {
-            window.__stopAllAudio();
-            var a = new Audio(filenames[0]);
-            window.__defAudioEls.push(a);
-            window.__safePlay(a);
+            window.__stopAllAudio(audioEls[0]);
+            audioEls[0].currentTime = 0;
+            window.__safePlay(audioEls[0]);
             animateBtnDef(btn);
-            window.__startPlaying(a, btn);
+            window.__startPlaying(audioEls[0], btn);
           });
           return playFn;
         };
@@ -596,12 +594,11 @@ function _renderBack() {
         };
 
         window.__onTap(defBtn, function() {
-          window.__stopAllAudio();
-          var a = new Audio(primaryFilenames[0]);
-          window.__defAudioEls.push(a);
-          window.__safePlay(a);
+          window.__stopAllAudio(primaryAudios[0]);
+          primaryAudios[0].currentTime = 0;
+          window.__safePlay(primaryAudios[0]);
           animateBtnDef(defBtn);
-          window.__startPlaying(a, defBtn);
+          window.__startPlaying(primaryAudios[0], defBtn);
         });
         window.__playLockedDefAudio = playPrimary;
 
