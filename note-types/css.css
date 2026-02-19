@@ -332,6 +332,7 @@ span.empty { display: none; }
     width: 52px !important;
     height: 52px !important;
     overflow: hidden;
+    font-size: 0;
 }
 .audio-item .replay-button svg,
 .audio-item .replay-button img {
