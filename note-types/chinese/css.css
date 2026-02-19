@@ -419,7 +419,8 @@ rt {
     vertical-align: middle;
     font-size: 18px;
     font-family: var(--zh);
-    color: inherit;
+    color: var(--text-1);
+    margin-left: -8px;
 }
 
 /* Image */
