@@ -552,6 +552,23 @@ rt {
     color: var(--text-1) !important;
 }
 
+/* Back: reveal pitch colors and furigana on the reused front word */
+.target-word.reveal span {
+    animation: revealColor 0.45s ease 50ms both;
+}
+
+.target-word.reveal rt {
+    animation: revealFuri 0.45s ease 80ms both;
+}
+
+@keyframes revealColor {
+    from { color: var(--text-1); }
+}
+
+@keyframes revealFuri {
+    from { opacity: 0; }
+}
+
 /* Image */
 
 .image-wrap {

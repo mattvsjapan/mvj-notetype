@@ -8,7 +8,6 @@
     <div class="audio-row" id="audio-row"></div>
 
     <div class="answer">
-        <h1 class="target-word" id="target-word" style="--d:0"></h1>
         <div class="pitch-graph" id="pitch-graph" style="--d:50"></div>
         <p class="sentence" id="sentence" style="--d:95"></p>
         {{#Image}}
@@ -94,17 +93,19 @@ function _renderBack() {
   var sentRaw = document.getElementById('raw-sentence').textContent.trim();
   var defHtml = document.getElementById('raw-definition').innerHTML;
 
-  var targetEl = document.getElementById('target-word');
   var graphEl = document.getElementById('pitch-graph');
   var sentEl = document.getElementById('sentence');
   var defEl = document.getElementById('definition');
 
-  // Word → target word + pitch graph
+  // Word → reveal colors/furigana in place + pitch graph
+  var frontDiv = document.querySelector('.front');
+  var frontWord = document.getElementById('front-word');
   if (wordRaw) {
     var wordSeqs = makeSequences(wordRaw);
 
     if (wordSeqs.length > 0) {
-      targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
+      if (frontDiv) { frontDiv.style.display = 'contents'; frontDiv.classList.remove('front'); }
+      if (frontWord) frontWord.classList.add('reveal');
 
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
