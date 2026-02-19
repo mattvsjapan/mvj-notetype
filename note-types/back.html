@@ -8,6 +8,10 @@
 
     <script>
     (function() {
+        // Clear stale state from previous card (Anki reuses the webview)
+        window.__defAudioRawHtml = null;
+        window.__monoUnlocked = false;
+
         var container = document.getElementById('def-audio-container');
         if (!container) return;
 
