@@ -126,14 +126,14 @@ html {
 .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
-    margin: 20px 0;
+    margin: 0 0 20px;
 }
 
 /* Pitch graph */
 
 .pitch-graph {
     text-align: center;
-    margin: -4px 0 20px;
+    margin: 0 0 20px;
     line-height: 0;
 }
 
@@ -436,13 +436,13 @@ span.empty { display: none; }
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 12px;
+    margin-top: 30px;
     padding-bottom: 8px;
 }
 
 @media (hover: none) {
     .answer {
-        margin-top: 10px;
+        margin-top: 28px;
     }
 }
 
@@ -455,7 +455,7 @@ span.empty { display: none; }
     letter-spacing: 0.04em;
     line-height: 1.2;
     text-align: center;
-    margin: 18px 0 22px;
+    margin: 0 0 18px;
     text-rendering: optimizeLegibility;
 }
 
@@ -560,7 +560,7 @@ rt {
     font-weight: 400;
     line-height: 1.75;
     color: var(--text-1);
-    margin: 0;
+    margin: 0 0 16px;
 }
 
 /* Japanese definition — pure CSS toggle */
@@ -598,7 +598,7 @@ rt {
     color: var(--text-3);
     cursor: pointer;
     transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
-    margin-top: 16px;
+    margin-top: 0;
     gap: 4px;
 }
 
