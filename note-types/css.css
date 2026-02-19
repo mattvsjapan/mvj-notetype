@@ -434,6 +434,7 @@ span.empty { display: none; }
 /* Mobile: skip layout-triggering settle animations (padding, gap, width, height,
    font-size all force reflow every frame — too expensive for mobile WebViews) */
 @media (hover: none) {
+    .back .audio-row,
     .back .audio-item,
     .back .audio-item .replay-button svg,
     .back .audio-item .replay-button img,
@@ -752,4 +753,20 @@ rt {
 
 .android .back .audio-row {
     animation: none;
+}
+
+/* AnkiDroid: plain background, opaque card, no sheen */
+.android,
+.android .card {
+    background: var(--bg) !important;
+}
+
+.android .card-inner {
+    background: var(--bg-card);
+    border: none;
+    box-shadow: none;
+}
+
+.android .card-inner::after {
+    display: none;
 }
