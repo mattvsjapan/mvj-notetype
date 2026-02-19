@@ -95,7 +95,7 @@ window.__adoptNativeAudio = function(elements) {
             (function(audio, b) {
                 b.addEventListener('click', function(ev) {
                     ev.preventDefault();
-                    window.__stopDefAudio();
+                    window.__stopAllAudio();
                     audio.currentTime = 0;
                     audio.play();
                 });
@@ -106,14 +106,19 @@ window.__adoptNativeAudio = function(elements) {
     return buttons;
 };
 
-window.__stopDefAudio = function() {
+window.__stopAllAudio = function() {
     var els = window.__defAudioEls || [];
     for (var i = 0; i < els.length; i++) {
         els[i].pause();
         els[i].currentTime = 0;
         els[i].onended = null;
     }
+    document.querySelectorAll('audio').forEach(function(a) {
+        a.pause();
+        a.currentTime = 0;
+    });
 };
+window.__stopDefAudio = window.__stopAllAudio;
 </script>
 
 <script>
@@ -133,6 +138,7 @@ window.__stopDefAudio = function() {
     item.insertBefore(btn, item.firstChild);
     btn.addEventListener('click', function(ev) {
       ev.preventDefault();
+      window.__stopAllAudio();
       audio.currentTime = 0;
       audio.play();
     });
@@ -146,6 +152,7 @@ window.__stopDefAudio = function() {
   var animateBtn = window.__animateBtn;
   function play(item) {
     if (!item) return;
+    window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
       link.click();
