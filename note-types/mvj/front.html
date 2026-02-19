@@ -101,6 +101,7 @@ window.__adoptNativeAudio = function(elements) {
                     window.__stopAllAudio();
                     audio.currentTime = 0;
                     audio.play();
+                    window.__animateBtn(b);
                 });
             })(el, btn);
             buttons.push(btn);
