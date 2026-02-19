@@ -1,0 +1,193 @@
+<div class="card-inner">
+<div class="front">
+    <div class="audio-row">
+        <div class="audio-item fi" style="--d:0">
+            {{Word Audio}}
+            <span class="audio-label">Word</span>
+        </div>
+        <div class="audio-item fi" style="--d:70">
+            {{Sentence Audio}}
+            <span class="audio-label">Sentence</span>
+        </div>
+    </div>
+</div>
+
+<script>
+// Stop any audio still playing from the previous card
+if (window.__stopAllAudio) window.__stopAllAudio();
+
+// Shared audio utilities (available on back via {{FrontSide}})
+window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
+
+window.__animateBtn = function(btn) {
+    var circle = btn.querySelector('circle, .replayCircle');
+    var path = btn.querySelector('path, .replayTriangle');
+    var isTouch = window.matchMedia('(hover: none)').matches;
+    if (isTouch) {
+        // Touch: subtle fill only (matches native [sound:] button feedback)
+        if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; }
+        setTimeout(function() {
+            if (circle) { circle.style.fill = ''; }
+        }, 350);
+        return;
+    }
+    btn.style.transform = 'scale(0.95)';
+    btn.style.transitionDuration = '80ms';
+    if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
+    if (path) { path.style.fill = 'var(--accent)'; }
+    setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
+    setTimeout(function() {
+        btn.style.transform = '';
+        if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
+        if (path) { path.style.fill = ''; }
+    }, 350);
+};
+
+window.__clickSoundLink = function(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var link = tmp.firstElementChild;
+    if (link) {
+        link.style.position = 'fixed';
+        link.style.opacity = '0';
+        link.style.pointerEvents = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function() { if (link.parentNode) link.remove(); }, 200);
+    }
+};
+
+window.__extractAudio = function(container) {
+    var filenames = [];
+    var usePycmd = false;
+    var text = container.textContent;
+    var re = /\[audio:([^\]]+)\]/g;
+    var m;
+    while ((m = re.exec(text)) !== null) filenames.push(m[1]);
+    if (!filenames.length) {
+        container.querySelectorAll('.soundLink').forEach(function(link) {
+            filenames.push(link.outerHTML);
+        });
+        if (filenames.length) usePycmd = true;
+    }
+    if (!filenames.length) {
+        container.querySelectorAll('audio').forEach(function(a) {
+            var src = a.getAttribute('src') || (a.querySelector('source') || {}).getAttribute && (a.querySelector('source') || {}).getAttribute('src');
+            if (src) filenames.push(src);
+        });
+    }
+    return { filenames: filenames, usePycmd: usePycmd };
+};
+
+window.__adoptNativeAudio = function(elements) {
+    var SVG = window.__audioSVG;
+    var buttons = [];
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        if (el.classList && el.classList.contains('replay-button')) {
+            buttons.push(el);
+        } else if (el.tagName === 'AUDIO') {
+            el.style.display = 'none';
+            el.removeAttribute('controls');
+            document.body.appendChild(el);
+            var btn = document.createElement('a');
+            btn.className = 'replay-button soundLink';
+            btn.href = '#';
+            btn.innerHTML = SVG;
+            if (window.__defAudioEls) window.__defAudioEls.push(el);
+            (function(audio, b) {
+                b.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    window.__stopAllAudio();
+                    audio.currentTime = 0;
+                    audio.play();
+                });
+            })(el, btn);
+            buttons.push(btn);
+        }
+    }
+    return buttons;
+};
+
+window.__stopAllAudio = function() {
+    var els = window.__defAudioEls || [];
+    for (var i = 0; i < els.length; i++) {
+        els[i].pause();
+        els[i].currentTime = 0;
+        els[i].onended = null;
+    }
+    document.querySelectorAll('audio').forEach(function(a) {
+        a.pause();
+        a.currentTime = 0;
+    });
+};
+window.__stopDefAudio = window.__stopAllAudio;
+</script>
+
+<script>
+// AnkiWeb: replace native <audio> players with styled replay buttons
+(function() {
+  var SVG = window.__audioSVG;
+  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+    if (item.querySelector('.replay-button')) return;
+    var audio = item.querySelector('audio');
+    if (!audio) return;
+    audio.style.display = 'none';
+    audio.removeAttribute('controls');
+    var btn = document.createElement('a');
+    btn.className = 'replay-button soundLink';
+    btn.href = '#';
+    btn.innerHTML = SVG;
+    item.insertBefore(btn, item.firstChild);
+    btn.addEventListener('click', function(ev) {
+      ev.preventDefault();
+      window.__stopAllAudio();
+      audio.currentTime = 0;
+      audio.play();
+    });
+  });
+})();
+</script>
+
+<script>
+(function() {
+  var HANDLER_KEY = '__audioHandler';
+  var animateBtn = window.__animateBtn;
+  function play(item) {
+    if (!item) return;
+    window.__stopAllAudio();
+    var link = item.querySelector('.soundLink');
+    if (link) {
+      link.click();
+      var btn = item.querySelector('.replay-button');
+      if (btn) animateBtn(btn);
+      return;
+    }
+    var audio = item.querySelector('audio');
+    if (audio) { audio.currentTime = 0; audio.play(); }
+  }
+  function handler(ev) {
+    var el = ev.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+    var items = document.querySelectorAll('.audio-row .audio-item');
+    switch (ev.key.toLowerCase()) {
+      case 'n': ev.preventDefault(); ev.stopPropagation(); play(items[0]); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); play(items[1]); break;
+    }
+  }
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener('keydown', window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener('keydown', handler, { capture: true });
+
+  // Stop all audio when any replay button is tapped (catches native [sound:] taps on mobile)
+  var audioRow = document.querySelector('.audio-row');
+  if (audioRow) {
+    audioRow.addEventListener('click', function(ev) {
+      if (ev.target.closest('.replay-button')) window.__stopAllAudio();
+    }, true);
+  }
+})();
+</script>
+</div>
