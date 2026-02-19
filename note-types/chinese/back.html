@@ -285,6 +285,8 @@ function _renderBack() {
         rt.appendChild(toneSpan);
       }
     }
+    var charCount = targetEl.querySelectorAll('ruby').length || targetEl.textContent.trim().length;
+    if (charCount === 3) targetEl.classList.add('chars-3');
   } else {
     targetEl.style.display = 'none';
   }

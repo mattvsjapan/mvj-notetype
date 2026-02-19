@@ -428,6 +428,12 @@ html {
     text-rendering: optimizeLegibility;
 }
 
+@media (hover: none) {
+    .target-word.chars-3 {
+        font-size: 64px;
+    }
+}
+
 /* Ruby (furigana) base styles */
 
 ruby {
