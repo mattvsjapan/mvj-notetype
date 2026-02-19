@@ -270,6 +270,7 @@ span.empty { display: none; }
 
 .replay-button svg {
     display: block;
+    pointer-events: none;
 }
 
 /* Circle */

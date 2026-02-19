@@ -81,7 +81,7 @@
             }
 
             function playAll() {
-                window.__stopAllAudio();
+                window.__stopAllAudio(audios[0]);
                 var idx = 0;
                 function playNext() {
                     if (idx >= audios.length) return;
@@ -1023,7 +1023,7 @@ function _renderBack() {
       var animateBtnDef = window.__animateBtn;
 
       var playGroup = function(audioEls, btn) {
-        window.__stopAllAudio();
+        window.__stopAllAudio(audioEls[0]);
         var idx = 0;
         var playNext = function() {
           if (idx >= audioEls.length) return;
@@ -1047,6 +1047,7 @@ function _renderBack() {
           btn.className = 'replay-button';
           btn.href = '#';
           btn.innerHTML = SVG_DEF;
+          btn._hasHandler = true;
           item.appendChild(btn);
           var lbl = document.createElement('span');
           lbl.className = 'audio-label';
@@ -1103,6 +1104,7 @@ function _renderBack() {
         defBtn.className = 'replay-button';
         defBtn.href = '#';
         defBtn.innerHTML = SVG_DEF;
+        defBtn._hasHandler = true;
         defItem.appendChild(defBtn);
         var defLabel = document.createElement('span');
         defLabel.className = 'audio-label';

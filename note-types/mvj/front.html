@@ -99,10 +99,11 @@ window.__adoptNativeAudio = function(elements) {
             btn.href = '#';
             btn.innerHTML = SVG;
             if (window.__defAudioEls) window.__defAudioEls.push(el);
+            btn._hasHandler = true;
             (function(audio, b) {
                 b.addEventListener('click', function(ev) {
                     ev.preventDefault();
-                    window.__stopAllAudio();
+                    window.__stopAllAudio(audio);
                     audio.currentTime = 0;
                     audio.play();
                     window.__animateBtn(b);
@@ -114,19 +115,17 @@ window.__adoptNativeAudio = function(elements) {
     return buttons;
 };
 
-window.__stopAllAudio = function() {
+window.__stopAllAudio = function(except) {
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
     var els = window.__defAudioEls || [];
     for (var i = 0; i < els.length; i++) {
-        els[i].pause();
-        els[i].currentTime = 0;
+        if (els[i] !== except) { els[i].pause(); els[i].currentTime = 0; }
         els[i].onended = null;
     }
     document.querySelectorAll('audio').forEach(function(a) {
-        a.pause();
-        a.currentTime = 0;
+        if (a !== except) { a.pause(); a.currentTime = 0; }
         a.onended = null;
     });
 };
@@ -169,10 +168,11 @@ window.__stopDefAudio = window.__stopAllAudio;
       btn.className = 'replay-button soundLink';
       btn.href = '#';
       btn.innerHTML = SVG;
+      btn._hasHandler = true;
       item.insertBefore(btn, item.firstChild);
       btn.addEventListener('click', function(ev) {
         ev.preventDefault();
-        window.__stopAllAudio();
+        window.__stopAllAudio(audio);
         audio.currentTime = 0;
         audio.play();
         animateBtn(btn);
@@ -190,10 +190,11 @@ window.__stopDefAudio = window.__stopAllAudio;
     btn.className = 'replay-button soundLink';
     btn.href = '#';
     btn.innerHTML = SVG;
+    btn._hasHandler = true;
     item.insertBefore(btn, item.firstChild);
     btn.addEventListener('click', function(ev) {
       ev.preventDefault();
-      window.__stopAllAudio();
+      window.__stopAllAudio(nativeAudio);
       nativeAudio.currentTime = 0;
       nativeAudio.play();
     });
@@ -286,11 +287,12 @@ window.__stopDefAudio = window.__stopAllAudio;
   window[HANDLER_KEY] = handler;
   window.addEventListener('keydown', handler, { capture: true });
 
-  // Stop all audio when any replay button is tapped (catches native [sound:] taps on mobile)
+  // Stop all audio when a native [sound:] replay button is tapped on mobile
   var audioRow = document.querySelector('.audio-row');
   if (audioRow) {
     audioRow.addEventListener('click', function(ev) {
-      if (ev.target.closest('.replay-button')) window.__stopAllAudio();
+      var btn = ev.target.closest('.replay-button');
+      if (btn && !btn._hasHandler) window.__stopAllAudio();
     }, true);
   }
 })();

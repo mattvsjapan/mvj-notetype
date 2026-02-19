@@ -181,6 +181,7 @@ html {
 
 .replay-button svg {
     display: block;
+    pointer-events: none;
 }
 
 /* Circle */
@@ -437,13 +438,24 @@ rt {
 }
 
 .target-word rt {
-    display: inline-block;
-    writing-mode: vertical-rl;
-    text-orientation: upright;
+    display: inline-grid;
+    grid-template-columns: auto auto;
     font-size: 18px;
     font-family: var(--zh);
     color: var(--text-1);
     margin-left: -4px;
+}
+
+.target-word rt .bopo-body {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    line-height: 1;
+}
+
+.target-word rt .bopo-tone {
+    align-self: center;
+    justify-self: center;
+    line-height: 1;
 }
 
 /* Image */
