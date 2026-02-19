@@ -120,21 +120,51 @@ window.__stopAllAudio = function() {
     document.querySelectorAll('audio').forEach(function(a) {
         a.pause();
         a.currentTime = 0;
+        a.onended = null;
     });
 };
 window.__stopDefAudio = window.__stopAllAudio;
 </script>
 
 <script>
-// AnkiWeb: replace native <audio> players with styled replay buttons
+// Replace native <audio> players or [audio:] tags with styled replay buttons
 (function() {
   var SVG = window.__audioSVG;
+  var animateBtn = window.__animateBtn;
   document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+    // [audio:] custom tags — extract filename, create Audio + button
+    var text = item.textContent;
+    var audioMatch = text.match(/\[audio:([^\]]+)\]/);
+    if (audioMatch) {
+      var audio = document.createElement('audio');
+      audio.preload = 'auto';
+      audio.src = audioMatch[1];
+      document.body.appendChild(audio);
+      item._jsAudio = audio;
+      // Remove raw [audio:...] text nodes, keep <span> label
+      Array.from(item.childNodes).forEach(function(n) {
+        if (n.nodeType === 3) item.removeChild(n);
+      });
+      var btn = document.createElement('a');
+      btn.className = 'replay-button soundLink';
+      btn.href = '#';
+      btn.innerHTML = SVG;
+      item.insertBefore(btn, item.firstChild);
+      btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        window.__stopAllAudio();
+        audio.currentTime = 0;
+        audio.play();
+        animateBtn(btn);
+      });
+      return;
+    }
+    // [sound:] native — existing code unchanged
     if (item.querySelector('.replay-button')) return;
-    var audio = item.querySelector('audio');
-    if (!audio) return;
-    audio.style.display = 'none';
-    audio.removeAttribute('controls');
+    var nativeAudio = item.querySelector('audio');
+    if (!nativeAudio) return;
+    nativeAudio.style.display = 'none';
+    nativeAudio.removeAttribute('controls');
     var btn = document.createElement('a');
     btn.className = 'replay-button soundLink';
     btn.href = '#';
@@ -143,10 +173,36 @@ window.__stopDefAudio = window.__stopAllAudio;
     btn.addEventListener('click', function(ev) {
       ev.preventDefault();
       window.__stopAllAudio();
-      audio.currentTime = 0;
-      audio.play();
+      nativeAudio.currentTime = 0;
+      nativeAudio.play();
     });
   });
+})();
+</script>
+
+<script>
+// Autoplay [audio:] items in sequence (front side only)
+(function() {
+  if (document.querySelector('.back')) return;
+  var items = document.querySelectorAll('.audio-row .audio-item');
+  var queue = [];
+  var animateBtn = window.__animateBtn;
+  items.forEach(function(item) {
+    if (item._jsAudio) {
+      queue.push({ audio: item._jsAudio, btn: item.querySelector('.replay-button') });
+    }
+  });
+  if (!queue.length) return;
+  var i = 0;
+  function playNext() {
+    if (i >= queue.length) return;
+    var entry = queue[i++];
+    entry.audio.currentTime = 0;
+    entry.audio.play();
+    if (entry.btn) animateBtn(entry.btn);
+    entry.audio.onended = playNext;
+  }
+  setTimeout(playNext, 0);
 })();
 </script>
 
