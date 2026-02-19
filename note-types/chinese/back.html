@@ -616,6 +616,9 @@ function _renderBack() {
               origBtn.click();
               animateBtnBottom(btn);
             });
+            new MutationObserver(function() {
+              btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+            }).observe(origBtn, { attributes: true, attributeFilter: ['class'] });
           })(origBtns[bj]);
         }
         var origLabel = origItem.querySelector('.audio-label');
