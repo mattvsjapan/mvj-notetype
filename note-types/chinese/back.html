@@ -97,7 +97,7 @@
 
             for (var j = 0; j < btns.length; j++) {
                 (function(idx) {
-                    btns[idx].addEventListener('click', function(ev) { ev.preventDefault(); playSingleFresh(idx); });
+                    window.__onTap(btns[idx], function() { playSingleFresh(idx); });
                 })(j);
             }
 
@@ -526,7 +526,6 @@ function _renderBack() {
           btn.className = 'replay-button';
           btn.href = '#';
           btn.innerHTML = SVG_DEF;
-          btn._hasHandler = true;
           item.appendChild(btn);
           var lbl = document.createElement('span');
           lbl.className = 'audio-label';
@@ -537,8 +536,7 @@ function _renderBack() {
             playGroup(audioEls, btn);
             animateBtnDef(btn);
           };
-          btn.addEventListener('click', function(ev) {
-            ev.preventDefault();
+          window.__onTap(btn, function() {
             window.__stopAllAudio();
             var a = new Audio(filenames[0]);
             window.__defAudioEls.push(a);
@@ -583,7 +581,6 @@ function _renderBack() {
         defBtn.className = 'replay-button';
         defBtn.href = '#';
         defBtn.innerHTML = SVG_DEF;
-        defBtn._hasHandler = true;
         defItem.appendChild(defBtn);
         var defLabel = document.createElement('span');
         defLabel.className = 'audio-label';
@@ -596,8 +593,7 @@ function _renderBack() {
           animateBtnDef(defBtn);
         };
 
-        defBtn.addEventListener('click', function(ev) {
-          ev.preventDefault();
+        window.__onTap(defBtn, function() {
           window.__stopAllAudio();
           var a = new Audio(primaryFilenames[0]);
           window.__defAudioEls.push(a);
@@ -641,9 +637,9 @@ function _renderBack() {
             btn.href = '#';
             btn.innerHTML = SVG_BOTTOM;
             clone.appendChild(btn);
-            btn.addEventListener('click', function(ev) {
-              ev.preventDefault();
-              origBtn.click();
+            window.__onTap(btn, function() {
+              if (origBtn._tapHandler) origBtn._tapHandler();
+              else origBtn.click();
               animateBtnBottom(btn);
             });
             new MutationObserver(function() {

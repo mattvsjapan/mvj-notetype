@@ -47,6 +47,25 @@ window.__animateBtn = function(btn) {
     }, 350);
 };
 
+window.__onTap = function(btn, handler) {
+    btn._hasHandler = true;
+    btn._tapHandler = handler;
+    if (btn._onTapBound) return;
+    btn._onTapBound = true;
+    var moved;
+    btn.addEventListener('touchstart', function() { moved = false; }, { passive: true });
+    btn.addEventListener('touchmove', function() { moved = true; }, { passive: true });
+    btn.addEventListener('touchend', function(ev) {
+        if (moved) return;
+        ev.preventDefault();
+        btn._tapHandler(ev);
+    });
+    btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        btn._tapHandler(ev);
+    });
+};
+
 window.__clickSoundLink = function(html) {
     var tmp = document.createElement('div');
     tmp.innerHTML = html;
@@ -99,10 +118,8 @@ window.__adoptNativeAudio = function(elements) {
             btn.href = '#';
             btn.innerHTML = SVG;
             if (window.__defAudioEls) window.__defAudioEls.push(el);
-            btn._hasHandler = true;
             (function(audio, b) {
-                b.addEventListener('click', function(ev) {
-                    ev.preventDefault();
+                window.__onTap(b, function() {
                     window.__stopAllAudio(audio);
                     audio.currentTime = 0;
                     audio.play();
@@ -168,10 +185,8 @@ window.__stopDefAudio = window.__stopAllAudio;
       btn.className = 'replay-button soundLink';
       btn.href = '#';
       btn.innerHTML = SVG;
-      btn._hasHandler = true;
       item.insertBefore(btn, item.firstChild);
-      btn.addEventListener('click', function(ev) {
-        ev.preventDefault();
+      window.__onTap(btn, function() {
         window.__stopAllAudio(audio);
         audio.currentTime = 0;
         audio.play();
@@ -190,10 +205,8 @@ window.__stopDefAudio = window.__stopAllAudio;
     btn.className = 'replay-button soundLink';
     btn.href = '#';
     btn.innerHTML = SVG;
-    btn._hasHandler = true;
     item.insertBefore(btn, item.firstChild);
-    btn.addEventListener('click', function(ev) {
-      ev.preventDefault();
+    window.__onTap(btn, function() {
       window.__stopAllAudio(nativeAudio);
       nativeAudio.currentTime = 0;
       nativeAudio.play();
