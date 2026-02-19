@@ -147,7 +147,7 @@ html {
 
 .pitch-graph {
     text-align: center;
-    margin: 0 0 20px;
+    margin: 0 0 14px;
     line-height: 0;
 }
 
@@ -469,13 +469,13 @@ span.empty { display: none; }
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 30px;
+    margin-top: 24px;
     padding-bottom: 8px;
 }
 
 @media (hover: none) {
     .answer {
-        margin-top: 28px;
+        margin-top: 22px;
     }
 }
 
@@ -488,7 +488,7 @@ span.empty { display: none; }
     letter-spacing: 0.04em;
     line-height: 1.2;
     text-align: center;
-    margin: 0 0 18px;
+    margin: 0 0 12px;
     text-rendering: optimizeLegibility;
 }
 

@@ -392,13 +392,13 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 30px;
+    margin-top: 24px;
     padding-bottom: 8px;
 }
 
 @media (hover: none) {
     .answer {
-        margin-top: 28px;
+        margin-top: 22px;
     }
 }
 
@@ -406,11 +406,11 @@ html {
 
 .target-word {
     font-family: var(--zh-display);
-    font-size: 80px;
+    font-size: 88px;
     font-weight: normal;
     line-height: 1.2;
     text-align: center;
-    margin: 0 0 18px;
+    margin: 0 0 12px;
     text-rendering: optimizeLegibility;
 }
 
