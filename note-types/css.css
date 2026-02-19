@@ -624,11 +624,12 @@ rt {
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
-    transition: grid-template-rows 350ms var(--ease), opacity 300ms ease;
+    transition: grid-template-rows 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms ease 50ms;
 }
 
 .jp-def-wrap > * {
     overflow: hidden;
+    min-height: 0;
 }
 
 .jp-def-input:checked ~ .jp-def-wrap {
@@ -643,6 +644,10 @@ rt {
     line-height: 1.85;
     color: var(--text-1);
     margin: 0;
+    padding-top: 0;
+}
+
+.jp-def-input:checked ~ .jp-def-wrap .jp-def {
     padding-top: 12px;
 }
 
