@@ -567,6 +567,7 @@ rt {
     line-height: 1.45;
     color: var(--text-1);
     margin: 0 0 16px;
+    text-align: left;
 }
 
 /* Japanese definition — pure CSS toggle */
