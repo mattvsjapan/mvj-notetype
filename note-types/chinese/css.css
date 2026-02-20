@@ -328,6 +328,9 @@ html {
 }
 
 @media (hover: none) {
+    .front .audio-row {
+        padding-bottom: 0;
+    }
     .front .audio-item .replay-button {
         width: 68px !important;
         height: 68px !important;
