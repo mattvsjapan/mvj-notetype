@@ -1170,9 +1170,8 @@ function _renderBack() {
       else otherItems.push(topItemsRaw[si]);
     }
     // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
-    // Desired: secondary def, primary def, sentence, word
+    // Desired: secondary def, primary def, word, sentence
     if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
-    otherItems.reverse();
     var topItems = defItems.concat(otherItems);
     for (var bi = 0; bi < topItems.length; bi++) {
       (function(origItem) {
