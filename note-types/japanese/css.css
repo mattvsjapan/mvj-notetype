@@ -73,30 +73,9 @@ html {
 }
 
 @media (hover: none) {
-    html {
-        min-height: auto;
-    }
-
-    .card {
-        padding: 20px;
-        min-height: 100vh;
-        min-height: 100dvh;
-    }
-
-    .card-inner {
-        min-height: calc(100vh - 40px);
-        min-height: calc(100dvh - 40px);
-    }
-
-    .front {
-        min-height: calc(100vh - 120px);
-        min-height: calc(100dvh - 120px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        padding-top: calc((100dvh - 120px) / 3);
-    }
+    html { min-height: 100dvh; }
+    .card { padding: 20px; min-height: auto; }
+    .front { padding-top: calc((100dvh - 120px) * 0.52); }
 }
 
 /* — Base — */
@@ -417,6 +396,9 @@ span.empty { display: none; }
 }
 
 @media (hover: none) {
+    .front .audio-row {
+        padding-bottom: 0;
+    }
     .front .audio-item .replay-button {
         width: 68px !important;
         height: 68px !important;
@@ -659,6 +641,7 @@ rt {
     line-height: 1.85;
     color: var(--text-1);
     margin: 0 0 16px;
+    text-align: left;
 }
 
 /* Bottom audio row — mobile only duplicate */

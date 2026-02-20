@@ -17,25 +17,21 @@
 </div>
 
 <script>
-// Lock card-inner height in pixels so viewport-unit settling on the first
-// card load doesn't cause a visible expansion animation.
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
-    var ci = document.querySelector('.card-inner');
+    if (document.querySelector('.back')) return;
     var fr = document.querySelector('.front');
-    if (!ci) return;
-    function setHeight() {
+    if (!fr) return;
+    function lock() {
         var h = window.innerHeight;
-        ci.style.minHeight = (h - 40) + 'px';
-        if (fr) fr.style.minHeight = (h - 120) + 'px';
+        fr.style.paddingTop = Math.round((h - 120) * 0.52) + 'px';
     }
     if (window.innerHeight > 100) {
-        setHeight();
+        lock();
     } else {
-        ci.style.visibility = 'hidden';
         (function wait() {
             requestAnimationFrame(function() {
-                if (window.innerHeight > 100) { setHeight(); ci.style.visibility = ''; }
+                if (window.innerHeight > 100) { lock(); }
                 else wait();
             });
         })();
