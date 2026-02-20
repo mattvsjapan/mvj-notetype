@@ -341,13 +341,13 @@ html {
 
 @media (hover: none) {
     .front .audio-item .replay-button {
-        width: 64px !important;
-        height: 64px !important;
+        width: 68px !important;
+        height: 68px !important;
     }
     .front .audio-item .replay-button svg,
     .front .audio-item .replay-button img {
-        width: 64px !important;
-        height: 64px !important;
+        width: 68px !important;
+        height: 68px !important;
     }
 }
 
@@ -693,13 +693,13 @@ rt {
     }
 
     .audio-row-bottom .audio-item .replay-button {
-        width: 56px !important;
-        height: 56px !important;
+        width: 50px !important;
+        height: 50px !important;
     }
 
     .audio-row-bottom .audio-item .replay-button svg {
-        width: 56px !important;
-        height: 56px !important;
+        width: 50px !important;
+        height: 50px !important;
     }
 
     .audio-row-bottom .audio-label {
