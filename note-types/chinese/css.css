@@ -83,23 +83,24 @@ html {
     }
 
     .card {
+        padding: 20px;
         min-height: 100vh;
         min-height: 100dvh;
     }
 
     .card-inner {
-        min-height: calc(100vh - 80px);
-        min-height: calc(100dvh - 80px);
+        min-height: calc(100vh - 40px);
+        min-height: calc(100dvh - 40px);
     }
 
     .front {
-        min-height: calc(100vh - 160px);
-        min-height: calc(100dvh - 160px);
+        min-height: calc(100vh - 120px);
+        min-height: calc(100dvh - 120px);
         display: flex;
         align-items: center;
         justify-content: center;
         box-sizing: border-box;
-        padding-top: calc((100dvh - 160px) / 3);
+        padding-top: calc((100dvh - 120px) / 3);
     }
 }
 
@@ -389,6 +390,10 @@ html {
         display: none;
     }
 
+    .back > .answer {
+        margin-top: -20px;
+    }
+
     .back .audio-row,
     .back .audio-item,
     .back .audio-item .replay-button svg,
@@ -571,7 +576,7 @@ rt {
 .def {
     font-size: 22px;
     font-weight: 400;
-    line-height: 1.75;
+    line-height: 1.45;
     color: var(--text-1);
     margin: 0 0 16px;
 }
