@@ -1,4 +1,4 @@
-const GHOST_PARTICLE = '+';
+const GHOST_PARTICLE = '-';
 const DEVOICED_PREFIX = '*';
 const LITERAL_PREFIX = '\\';
 const HIGH_PREFIX = '^';
@@ -24,7 +24,7 @@ function splitToSections(sentence) {
 }
 
 function detachGhostParticle(text) {
-  return text.replace(/(\++)[\s\n.]*$/, ' $1');
+  return text.replace(/(-+)[\s\n.]*$/, ' $1');
 }
 
 function furiganaToReading(word) {
@@ -36,7 +36,7 @@ function furiganaToReading(word) {
 }
 
 function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\+\\\^]/g, '');
+  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\-\\\^]/g, '');
 }
 
 function kanaToMoraes(kana) {
@@ -66,7 +66,7 @@ function splitSection(raw) {
 
 function splitAccent(raw) {
   if (!raw && raw !== '') raw = '';
-  let m = raw.match(/^(p)?([a-zA-Z])?(-)?(\d)?(-)?$/);
+  let m = raw.match(/^(p)?([a-zA-Z])?(~)?(\d)?(~)?$/);
   if (m) {
     return {
       is_particle: m[1] || null,
@@ -82,7 +82,7 @@ function splitAccent(raw) {
   return { role: null, pitch: null };
 }
 
-const SEPARATORS = [';', '|', ',', '、', '+', '「', '」'];
+const SEPARATORS = [';', '|', ',', '、', '-', '「', '」'];
 
 function mergeFragments(sections) {
   const result = [];
