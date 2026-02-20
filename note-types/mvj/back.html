@@ -73,10 +73,16 @@
 
             function playSingle(idx) {
                 window.__stopAllAudio(audios[idx]);
-                audios[idx].currentTime = 0;
-                window.__safePlay(audios[idx]);
-                animateBtn(btns[idx]);
-                window.__startPlaying(audios[idx], btns[idx]);
+                if (window.matchMedia('(hover: none)').matches) {
+                    var fa = window.__freshPlay(audios[idx].src, btns[idx]);
+                    animateBtn(btns[idx]);
+                    window.__startPlaying(fa, btns[idx]);
+                } else {
+                    audios[idx].currentTime = 0;
+                    window.__safePlay(audios[idx]);
+                    animateBtn(btns[idx]);
+                    window.__startPlaying(audios[idx], btns[idx]);
+                }
             }
 
             function playAll() {
@@ -1061,10 +1067,16 @@ function _renderBack() {
           };
           window.__onTap(btn, function() {
             window.__stopAllAudio(audioEls[0]);
-            audioEls[0].currentTime = 0;
-            window.__safePlay(audioEls[0]);
-            animateBtnDef(btn);
-            window.__startPlaying(audioEls[0], btn);
+            if (window.matchMedia('(hover: none)').matches) {
+              var fa = window.__freshPlay(audioEls[0].src, btn);
+              animateBtnDef(btn);
+              window.__startPlaying(fa, btn);
+            } else {
+              audioEls[0].currentTime = 0;
+              window.__safePlay(audioEls[0]);
+              animateBtnDef(btn);
+              window.__startPlaying(audioEls[0], btn);
+            }
           });
           return playFn;
         };
@@ -1117,10 +1129,16 @@ function _renderBack() {
 
         window.__onTap(defBtn, function() {
           window.__stopAllAudio(primaryAudios[0]);
-          primaryAudios[0].currentTime = 0;
-          window.__safePlay(primaryAudios[0]);
-          animateBtnDef(defBtn);
-          window.__startPlaying(primaryAudios[0], defBtn);
+          if (window.matchMedia('(hover: none)').matches) {
+            var fa = window.__freshPlay(primaryAudios[0].src, defBtn);
+            animateBtnDef(defBtn);
+            window.__startPlaying(fa, defBtn);
+          } else {
+            primaryAudios[0].currentTime = 0;
+            window.__safePlay(primaryAudios[0]);
+            animateBtnDef(defBtn);
+            window.__startPlaying(primaryAudios[0], defBtn);
+          }
         });
         window.__playLockedDefAudio = playPrimary;
 

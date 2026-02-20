@@ -158,9 +158,16 @@ window.__adoptNativeAudio = function(elements) {
             (function(audio, b) {
                 window.__onTap(b, function() {
                     window.__stopAllAudio(audio);
-                    audio.currentTime = 0;
-                    window.__safePlay(audio);
-                    window.__animateBtn(b);
+                    if (window.matchMedia('(hover: none)').matches) {
+                        var fa = window.__freshPlay(audio.src, b);
+                        window.__animateBtn(b);
+                        window.__startPlaying(fa, b);
+                    } else {
+                        audio.currentTime = 0;
+                        window.__safePlay(audio);
+                        window.__animateBtn(b);
+                        window.__startPlaying(audio, b);
+                    }
                 });
             })(el, btn);
             buttons.push(btn);
@@ -186,12 +193,16 @@ window.__stopAllAudio = function(except) {
 
 window.__safePlay = function(audio) {
     var p = audio.play();
-    if (p && p['catch']) p['catch'](function() {
+    if (p && p['catch']) p['catch'](function(e) {
+        if (e && e.name === 'NotAllowedError') return;
         if (audio.readyState < 3) {
-            audio.addEventListener('canplay', function retry() {
-                audio.removeEventListener('canplay', retry);
+            audio.load();
+            audio.addEventListener('canplaythrough', function retry() {
+                audio.removeEventListener('canplaythrough', retry);
                 audio.play()['catch'](function() {});
             });
+        } else {
+            setTimeout(function() { audio.play()['catch'](function() {}); }, 50);
         }
     });
 };
@@ -207,7 +218,34 @@ window.__startPlaying = function(audio, btn) {
     }
     audio.addEventListener('ended', done);
     audio.addEventListener('pause', done);
+    setTimeout(function() {
+        if (btn._currentAudio === audio && audio.paused) btn.classList.remove('playing');
+    }, 1000);
 };
+
+window.__freshPlay = function(src, btn) {
+    if (btn && btn._freshAudio) {
+        btn._freshAudio.pause();
+        btn._freshAudio.removeAttribute('src');
+        btn._freshAudio.load();
+        if (btn._freshAudio.parentNode) btn._freshAudio.remove();
+        btn._freshAudio = null;
+    }
+    var a = new Audio(src);
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    if (btn) btn._freshAudio = a;
+    a.play()['catch'](function() {});
+    return a;
+};
+
+if (window.matchMedia('(hover: none)').matches && !window.__audioUnlocked) {
+    document.addEventListener('touchend', function() {
+        window.__audioUnlocked = true;
+        var s = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        s.play()['catch'](function() {});
+    }, { capture: true, once: true });
+}
 window.__stopDefAudio = window.__stopAllAudio;
 </script>
 
@@ -237,10 +275,16 @@ window.__stopDefAudio = window.__stopAllAudio;
       item.insertBefore(btn, item.firstChild);
       window.__onTap(btn, function() {
         window.__stopAllAudio(audio);
-        audio.currentTime = 0;
-        window.__safePlay(audio);
-        animateBtn(btn);
-        window.__startPlaying(audio, btn);
+        if (window.matchMedia('(hover: none)').matches) {
+          var fa = window.__freshPlay(audio.src, btn);
+          animateBtn(btn);
+          window.__startPlaying(fa, btn);
+        } else {
+          audio.currentTime = 0;
+          window.__safePlay(audio);
+          animateBtn(btn);
+          window.__startPlaying(audio, btn);
+        }
       });
       return;
     }
@@ -257,8 +301,16 @@ window.__stopDefAudio = window.__stopAllAudio;
     item.insertBefore(btn, item.firstChild);
     window.__onTap(btn, function() {
       window.__stopAllAudio(nativeAudio);
-      nativeAudio.currentTime = 0;
-      window.__safePlay(nativeAudio);
+      if (window.matchMedia('(hover: none)').matches) {
+        var fa = window.__freshPlay(nativeAudio.src, btn);
+        animateBtn(btn);
+        window.__startPlaying(fa, btn);
+      } else {
+        nativeAudio.currentTime = 0;
+        window.__safePlay(nativeAudio);
+        animateBtn(btn);
+        window.__startPlaying(nativeAudio, btn);
+      }
     });
   });
 })();

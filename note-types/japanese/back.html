@@ -67,10 +67,16 @@
       item.appendChild(btn);
       window.__onTap(btn, function() {
         window.__stopAllAudio(audio);
-        audio.currentTime = 0;
-        window.__safePlay(audio);
-        animateBtn(btn);
-        window.__startPlaying(audio, btn);
+        if (window.matchMedia('(hover: none)').matches) {
+          var fa = window.__freshPlay(audio.src, btn);
+          animateBtn(btn);
+          window.__startPlaying(fa, btn);
+        } else {
+          audio.currentTime = 0;
+          window.__safePlay(audio);
+          animateBtn(btn);
+          window.__startPlaying(audio, btn);
+        }
       });
 
       row.appendChild(item);

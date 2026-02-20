@@ -169,12 +169,16 @@ window.__stopAllAudio = function(except) {
 
 window.__safePlay = function(audio) {
     var p = audio.play();
-    if (p && p['catch']) p['catch'](function() {
+    if (p && p['catch']) p['catch'](function(e) {
+        if (e && e.name === 'NotAllowedError') return;
         if (audio.readyState < 3) {
-            audio.addEventListener('canplay', function retry() {
-                audio.removeEventListener('canplay', retry);
+            audio.load();
+            audio.addEventListener('canplaythrough', function retry() {
+                audio.removeEventListener('canplaythrough', retry);
                 audio.play()['catch'](function() {});
             });
+        } else {
+            setTimeout(function() { audio.play()['catch'](function() {}); }, 50);
         }
     });
 };
@@ -190,7 +194,34 @@ window.__startPlaying = function(audio, btn) {
     }
     audio.addEventListener('ended', done);
     audio.addEventListener('pause', done);
+    setTimeout(function() {
+        if (btn._currentAudio === audio && audio.paused) btn.classList.remove('playing');
+    }, 1000);
 };
+
+window.__freshPlay = function(src, btn) {
+    if (btn && btn._freshAudio) {
+        btn._freshAudio.pause();
+        btn._freshAudio.removeAttribute('src');
+        btn._freshAudio.load();
+        if (btn._freshAudio.parentNode) btn._freshAudio.remove();
+        btn._freshAudio = null;
+    }
+    var a = new Audio(src);
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    if (btn) btn._freshAudio = a;
+    a.play()['catch'](function() {});
+    return a;
+};
+
+if (window.matchMedia('(hover: none)').matches && !window.__audioUnlocked) {
+    document.addEventListener('touchend', function() {
+        window.__audioUnlocked = true;
+        var s = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        s.play()['catch'](function() {});
+    }, { capture: true, once: true });
+}
 </script>
 
 <script>
