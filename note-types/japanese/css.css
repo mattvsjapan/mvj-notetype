@@ -135,6 +135,9 @@ html {
     z-index: 1;
 }
 
+@media (hover: none) {
+    .card-inner { padding-bottom: 20px; }
+}
 
 .divider {
     height: 1px;
