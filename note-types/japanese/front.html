@@ -8,12 +8,15 @@
 <script>
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
-    if (document.querySelector('.back')) return;
-    var fr = document.querySelector('.front');
-    if (!fr) return;
+    var ci = document.querySelector('.card-inner');
+    if (!ci) return;
+    var isBack = !!document.querySelector('.back');
+    var fr = !isBack && document.querySelector('.front');
+    document.documentElement.style.overflow = isBack ? '' : 'hidden';
     function lock() {
         var h = window.innerHeight;
-        fr.style.paddingTop = Math.round((h - 120) * 0.52) + 'px';
+        ci.style.minHeight = (h - 40) + 'px';
+        if (fr) fr.style.paddingTop = Math.round((h - 120) * 0.52) + 'px';
     }
     if (window.innerHeight > 100) {
         lock();

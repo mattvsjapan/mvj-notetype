@@ -75,6 +75,10 @@ html {
 @media (hover: none) {
     html { min-height: 100dvh; }
     .card { padding: 20px; min-height: auto; }
+    .card-inner {
+        min-height: calc(100vh - 40px);
+        min-height: calc(100dvh - 40px);
+    }
     .front { padding-top: calc((100dvh - 120px) * 0.52); }
 }
 
