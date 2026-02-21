@@ -566,6 +566,10 @@ rt {
     display: block;
 }
 
+.image-wrap br {
+    display: none;
+}
+
 /* Sentence-level furigana */
 
 .sentence ruby {
