@@ -105,6 +105,10 @@ html {
         0 16px 36px rgba(8, 10, 24, 0.16);
 }
 
+@media (hover: none) {
+    .card-inner { padding-bottom: 20px; }
+}
+
 /* Glass sheen on card surface */
 .card-inner::after {
     content: '';
@@ -133,10 +137,6 @@ html {
 .card-inner > * {
     position: relative;
     z-index: 1;
-}
-
-@media (hover: none) {
-    .card-inner { padding-bottom: 20px; }
 }
 
 .divider {
@@ -692,6 +692,7 @@ rt {
 .jp-def-wrap > * {
     overflow: hidden;
     min-height: 0;
+    margin: 0;
 }
 
 .jp-def-input:checked ~ .jp-def-wrap {
