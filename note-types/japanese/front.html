@@ -157,6 +157,7 @@ window.__adoptNativeAudio = function(elements) {
 };
 
 window.__stopAllAudio = function(except) {
+    window.__autoPlayDefAudio = null;
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
@@ -169,7 +170,7 @@ window.__stopAllAudio = function(except) {
 window.__safePlay = function(audio) {
     var p = audio.play();
     if (p && p['catch']) p['catch'](function(e) {
-        if (e && e.name === 'NotAllowedError') return;
+        if (e && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;
         if (audio.readyState < 3) {
             audio.load();
             audio.addEventListener('canplaythrough', function retry() {

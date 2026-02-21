@@ -66,12 +66,13 @@
       btn.innerHTML = SVG;
       item.appendChild(btn);
       window.__onTap(btn, function() {
-        window.__stopAllAudio(audio);
         if (window.matchMedia('(hover: none)').matches) {
+          window.__stopAllAudio();
           var fa = window.__freshPlay(audio.src, btn);
           animateBtn(btn);
           window.__startPlaying(fa, btn);
         } else {
+          window.__stopAllAudio(audio);
           audio.currentTime = 0;
           window.__safePlay(audio);
           animateBtn(btn);

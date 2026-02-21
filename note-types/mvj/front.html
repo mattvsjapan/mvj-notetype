@@ -156,12 +156,13 @@ window.__adoptNativeAudio = function(elements) {
             if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 window.__onTap(b, function() {
-                    window.__stopAllAudio(audio);
                     if (window.matchMedia('(hover: none)').matches) {
+                        window.__stopAllAudio();
                         var fa = window.__freshPlay(audio.src, b);
                         window.__animateBtn(b);
                         window.__startPlaying(fa, b);
                     } else {
+                        window.__stopAllAudio(audio);
                         audio.currentTime = 0;
                         window.__safePlay(audio);
                         window.__animateBtn(b);
@@ -176,6 +177,7 @@ window.__adoptNativeAudio = function(elements) {
 };
 
 window.__stopAllAudio = function(except) {
+    window.__autoPlayDefAudio = null;
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
@@ -193,7 +195,7 @@ window.__stopAllAudio = function(except) {
 window.__safePlay = function(audio) {
     var p = audio.play();
     if (p && p['catch']) p['catch'](function(e) {
-        if (e && e.name === 'NotAllowedError') return;
+        if (e && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;
         if (audio.readyState < 3) {
             audio.load();
             audio.addEventListener('canplaythrough', function retry() {
@@ -273,12 +275,13 @@ window.__stopDefAudio = window.__stopAllAudio;
       btn.innerHTML = SVG;
       item.insertBefore(btn, item.firstChild);
       window.__onTap(btn, function() {
-        window.__stopAllAudio(audio);
         if (window.matchMedia('(hover: none)').matches) {
+          window.__stopAllAudio();
           var fa = window.__freshPlay(audio.src, btn);
           animateBtn(btn);
           window.__startPlaying(fa, btn);
         } else {
+          window.__stopAllAudio(audio);
           audio.currentTime = 0;
           window.__safePlay(audio);
           animateBtn(btn);
@@ -299,12 +302,13 @@ window.__stopDefAudio = window.__stopAllAudio;
     btn.innerHTML = SVG;
     item.insertBefore(btn, item.firstChild);
     window.__onTap(btn, function() {
-      window.__stopAllAudio(nativeAudio);
       if (window.matchMedia('(hover: none)').matches) {
+        window.__stopAllAudio();
         var fa = window.__freshPlay(nativeAudio.src, btn);
         animateBtn(btn);
         window.__startPlaying(fa, btn);
       } else {
+        window.__stopAllAudio(nativeAudio);
         nativeAudio.currentTime = 0;
         window.__safePlay(nativeAudio);
         animateBtn(btn);
