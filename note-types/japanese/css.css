@@ -106,7 +106,7 @@ html {
 }
 
 @media (hover: none) {
-    .card-inner { padding-bottom: 20px; }
+    .card-inner { padding-bottom: 30px; }
 }
 
 /* Glass sheen on card surface */
@@ -647,7 +647,7 @@ rt {
     font-weight: 400;
     line-height: 1.85;
     color: var(--text-1);
-    margin: 0 0 16px;
+    margin: 0;
     text-align: left;
 }
 
