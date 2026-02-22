@@ -96,7 +96,8 @@
                         var cur = idx++;
                         animateBtn(btns[cur]);
                         window.__playMobile(audios[cur].src, btns[cur])
-                            .then(function() { if (gen === window.__webAudioGen) next(); });
+                            .then(function() { if (gen === window.__webAudioGen) next(); })
+                            ['catch'](function() { if (gen === window.__webAudioGen) next(); });
                     })();
                 } else {
                     window.__stopAllAudio(audios[0]);
@@ -532,7 +533,8 @@ function _renderBack() {
             if (idx >= audioEls.length || gen !== window.__webAudioGen) return;
             var cur = idx++;
             window.__playMobile(audioEls[cur].src, btn)
-                .then(function() { if (gen === window.__webAudioGen) next(); });
+                .then(function() { if (gen === window.__webAudioGen) next(); })
+                ['catch'](function() { if (gen === window.__webAudioGen) next(); });
           })();
         } else {
           window.__stopAllAudio(audioEls[0]);

@@ -21,7 +21,7 @@
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
 // Create AudioContext eagerly — Anki's WKWebView sets
-// mediaTypesRequiringUserActionForPlayback=[] which may allow
+// mediaTypesRequiringUserActionForPlayback=[] which allows
 // AudioContext to reach 'running' without a gesture.
 if (!window.__audioCtx) {
     window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -272,18 +272,7 @@ window.__freshPlay = function(src, btn) {
     return a;
 };
 
-if (window.matchMedia('(hover: none)').matches && !window.__audioUnlocked) {
-    document.addEventListener('touchend', function() {
-        window.__audioUnlocked = true;
-        var s = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-        s.play()['catch'](function() {});
-    }, { capture: true, once: true });
-}
-
 window.__stopDefAudio = window.__stopAllAudio;
-
-window.__webAudioGen = 0;
-window.__webAudioSource = null;
 
 window.__webAudioPlay = function(src, btn, gen) {
     return fetch(src)
@@ -407,7 +396,8 @@ window.__playMobile = function(src, btn) {
         var entry = queue[i++];
         if (entry.btn) animateBtn(entry.btn);
         window.__playMobile(entry.audio.src, entry.btn)
-            .then(function() { if (gen === window.__webAudioGen) playNext(); });
+            .then(function() { if (gen === window.__webAudioGen) playNext(); })
+            ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
       })();
     }, 0);
   } else {
