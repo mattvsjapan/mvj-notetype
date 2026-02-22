@@ -819,7 +819,7 @@ html:not(.tategaki) .answer .jp-def-section {
 /* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
 
 .answer > [style*="--d"],
-.word-column > [style*="--d"] {
+.word-column [style*="--d"] {
     opacity: 0;
 }
 
@@ -978,6 +978,7 @@ html:not(.tategaki) .answer .jp-def-section {
     flex-wrap: wrap;
     align-items: center;
     align-content: flex-end;
+    justify-content: space-between;
     order: 0;
     gap: 0;
 }
@@ -988,11 +989,18 @@ html:not(.tategaki) .answer .jp-def-section {
 
 .tategaki .target-word {
     letter-spacing: 0;
-    margin: 0 12px 12px 0;
+    margin: 0 0 12px 0;
 }
 
 .tategaki .pitch-graph {
-    margin: 0 12px 14px 0;
+    margin: 0;
+}
+
+.tategaki .word-pitch-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 12px;
 }
 
 /* Tategaki: def audio row inside word column (between pitch graph and image) */
@@ -1001,7 +1009,7 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     justify-content: center;
     gap: clamp(16px, 8vw, 40px);
-    margin: auto 12px 0 0;
+    margin: 0 12px 0 0;
 }
 
 .tategaki .def-audio-row .audio-item {
@@ -1091,7 +1099,7 @@ html:not(.tategaki) .divider {
 
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
 .tategaki .answer > [style*="--d"],
-.tategaki .word-column > [style*="--d"] {
+.tategaki .word-column [style*="--d"] {
     opacity: 0;
 }
 
@@ -1133,7 +1141,7 @@ html:not(.tategaki) .divider {
 
 /* AnkiDroid: disable all back-side animations (WebView performance) */
 .android .answer > [style*="--d"],
-.android .word-column > [style*="--d"] {
+.android .word-column [style*="--d"] {
     opacity: 1;
 }
 
@@ -1155,7 +1163,7 @@ html:not(.tategaki) .divider {
 }
 
 .android.tategaki .answer > [style*="--d"],
-.android.tategaki .word-column > [style*="--d"] {
+.android.tategaki .word-column [style*="--d"] {
     opacity: 1;
 }
 

@@ -1254,19 +1254,28 @@
           targetRow.appendChild(clone);
         })(topItems[bi]);
       }
-      if (isTategaki && defAudioRow && defAudioRow.children.length > 0) {
+      if (isTategaki) {
         var wordCol = document.querySelector('.word-column');
         if (wordCol) {
-          var imageWrap = wordCol.querySelector('.image-wrap');
-          if (imageWrap) wordCol.insertBefore(defAudioRow, imageWrap);
-          else wordCol.appendChild(defAudioRow);
+          var wpGroup = document.createElement('div');
+          wpGroup.className = 'word-pitch-group';
+          var targetWord = wordCol.querySelector('.target-word');
+          var pitchGraph = wordCol.querySelector('.pitch-graph');
+          if (targetWord) wpGroup.appendChild(targetWord);
+          if (pitchGraph) wpGroup.appendChild(pitchGraph);
+          wordCol.insertBefore(wpGroup, wordCol.firstChild);
+          if (defAudioRow && defAudioRow.children.length > 0) {
+            var imageWrap = wordCol.querySelector('.image-wrap');
+            if (imageWrap) wordCol.insertBefore(defAudioRow, imageWrap);
+            else wordCol.appendChild(defAudioRow);
+          }
         }
       }
     }
   
     // ── Trigger reveal animations after content is ready ──
     requestAnimationFrame(function() {
-      var els = document.querySelectorAll('.answer > [style*="--d"], .word-column > [style*="--d"]');
+      var els = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');
       for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
     });
   
