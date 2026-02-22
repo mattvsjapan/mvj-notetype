@@ -830,7 +830,7 @@ rt {
 }
 
 @keyframes tategakiReveal {
-    from { opacity: 0; transform: translate(-24px, 20px) scale(0.92); }
+    from { opacity: 0; transform: translate(-24px, 0) scale(0.92); }
     to   { opacity: 1; transform: translate(0, 0) scale(1); }
 }
 
@@ -932,7 +932,7 @@ rt {
     order: -4;
     gap: clamp(8px, 4vw, 20px);
     margin: 0;
-    padding-left: 16px;
+    padding-left: 20px;
     align-self: center;
 }
 
@@ -1057,9 +1057,9 @@ rt {
 .tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { animation-delay: 70ms; }
 .tategaki .audio-row-bottom .audio-item[data-audio="def"]      { animation-delay: 140ms; }
 
-/* Front .fi — audio column is horizontal-tb, translateY works fine */
+/* Front .fi — slide in from left like back-side elements */
 .tategaki .fi {
-    animation: fadeIn 0.5s var(--spring) both;
+    animation: tategakiReveal 0.5s var(--spring) both;
     animation-delay: calc(var(--d, 0) * 1ms);
 }
 
