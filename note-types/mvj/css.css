@@ -1001,7 +1001,7 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     justify-content: center;
     gap: clamp(16px, 8vw, 40px);
-    margin: 12px 12px 12px 0;
+    margin: auto 12px 0 0;
 }
 
 .tategaki .def-audio-row .audio-item {
