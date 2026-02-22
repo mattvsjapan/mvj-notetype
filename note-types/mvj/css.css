@@ -786,6 +786,16 @@ rt {
     }
 }
 
+@keyframes tategakiExpand {
+    from { clip-path: inset(0 50% 0 50%); }
+    to   { clip-path: inset(0); }
+}
+
+@keyframes tategakiReveal {
+    from { opacity: 0; transform: translateX(36px) scale(0.92); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
 /* ================================================
    TATEGAKI (vertical writing) mode
    ================================================ */
@@ -801,6 +811,7 @@ rt {
 
 .tategaki .card-inner:has(> .back) {
     overflow: visible;
+    animation: tategakiExpand 200ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
 }
 
 .tategaki .back {
@@ -808,7 +819,6 @@ rt {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background: rgba(255, 0, 0, 0.3); /* DEBUG */
 }
 
 /* Re-assert display:contents on FrontSide's inner card-inner */
@@ -833,7 +843,7 @@ rt {
 
 .tategaki .front .audio-row {
     flex-direction: column;
-    gap: 16px;
+    gap: clamp(16px, 8vw, 40px);
     padding: 24px 0;
 }
 
@@ -852,7 +862,6 @@ rt {
     margin-top: 0;
     padding-bottom: 0;
     min-height: 0;
-    outline: 3px solid lime; /* DEBUG */
 }
 
 @media (hover: none) {
@@ -868,9 +877,14 @@ rt {
     align-items: center;
     writing-mode: horizontal-tb;
     order: -4;
-    gap: 12px;
+    gap: clamp(8px, 4vw, 20px);
     margin: 0;
+    padding-left: 16px;
     align-self: center;
+}
+
+.tategaki .audio-row-bottom .audio-item[data-audio="def"] {
+    order: 1;
 }
 
 .tategaki .audio-row-bottom .audio-item .replay-button {
@@ -931,7 +945,6 @@ rt {
 .tategaki .def {
     margin: 0;
     order: -2;
-    outline: 3px solid yellow; /* DEBUG */
 }
 
 /* JP def section — follows definition */
@@ -959,18 +972,33 @@ rt {
     margin: 0;
 }
 
-/* Disable entrance animations (translateY is wrong axis for vertical layout) */
-.tategaki .fi,
-.tategaki .ri {
-    animation: none;
-    opacity: 1;
-}
-
+/* Children start hidden, .ri triggers staggered reveal (right-to-left) */
 .tategaki .answer > [style*="--d"],
 .tategaki .word-column > [style*="--d"] {
-    opacity: 1;
+    opacity: 0;
 }
 
+.tategaki .ri {
+    animation: tategakiReveal 0.5s var(--spring) both;
+    animation-delay: calc(50ms + var(--d, 0) * 1ms);
+}
+
+/* Tategaki stagger order: audio → sentence → definition → word → image */
+.tategaki .audio-row-bottom.ri  { animation-delay: 50ms; }
+.tategaki .sentence.ri          { animation-delay: 110ms; }
+.tategaki .def.ri               { animation-delay: 170ms; }
+.tategaki .jp-def-section.ri    { animation-delay: 200ms; }
+.tategaki .target-word.ri       { animation-delay: 250ms; }
+.tategaki .pitch-graph.ri       { animation-delay: 290ms; }
+.tategaki .image-wrap.ri        { animation-delay: 330ms; }
+
+/* Front .fi — audio column is horizontal-tb, translateY works fine */
+.tategaki .fi {
+    animation: fadeIn 0.5s var(--spring) both;
+    animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+/* Settle animations irrelevant — front audio row hidden on tategaki back */
 .tategaki .back .audio-item,
 .tategaki .back .audio-item .replay-button svg,
 .tategaki .back .audio-item .replay-button img,
@@ -1000,6 +1028,20 @@ rt {
 }
 
 .android .back .audio-row {
+    animation: none;
+}
+
+/* AnkiDroid: disable tategaki animations */
+.android.tategaki .card-inner:has(> .back) {
+    animation: none;
+}
+
+.android.tategaki .answer > [style*="--d"],
+.android.tategaki .word-column > [style*="--d"] {
+    opacity: 1;
+}
+
+.android.tategaki .ri {
     animation: none;
 }
 

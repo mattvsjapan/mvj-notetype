@@ -1186,6 +1186,8 @@
         (function(origItem) {
           var clone = document.createElement('div');
           clone.className = 'audio-item';
+          var da = origItem.getAttribute('data-audio');
+          if (da) clone.setAttribute('data-audio', da);
           var origBtns = origItem.querySelectorAll('.replay-button');
           for (var bj = 0; bj < origBtns.length; bj++) {
             (function(origBtn) {
