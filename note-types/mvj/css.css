@@ -1062,6 +1062,19 @@ html.tategaki:has(.back) {
     max-height: min(250px, 100%);
 }
 
+@media (hover: none) {
+    .tategaki .image-wrap {
+        align-self: stretch;
+    }
+    .tategaki .image-wrap img {
+        width: 100% !important;
+        min-width: 100%;
+        height: clamp(140px, 45vw, 220px);
+        max-height: none;
+        object-fit: cover;
+    }
+}
+
 /* Sentence — right after audio buttons */
 .tategaki .sentence {
     text-align: start;
