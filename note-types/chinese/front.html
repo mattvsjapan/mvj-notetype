@@ -17,6 +17,20 @@
 </div>
 
 <script>
+// Route Web Audio through media channel (audible even with mute switch)
+if (navigator.audioSession) navigator.audioSession.type = 'playback';
+
+if (!window.__audioCtxTouchHandler) {
+    window.__audioCtxTouchHandler = function() {
+        if (!window.__audioCtx) {
+            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } else if (window.__audioCtx.state !== 'running') {
+            window.__audioCtx.resume()['catch'](function() {});
+        }
+    };
+    document.addEventListener('touchend', window.__audioCtxTouchHandler, { capture: true });
+}
+
 // Lock .front padding-top in pixels so viewport-unit settling on the
 // first card load doesn't cause a visible shift.
 (function() {
@@ -162,9 +176,8 @@ window.__adoptNativeAudio = function(elements) {
                 window.__onTap(b, function() {
                     if (window.matchMedia('(hover: none)').matches) {
                         window.__stopAllAudio();
-                        var fa = window.__freshPlay(audio.src, b);
                         window.__animateBtn(b);
-                        window.__startPlaying(fa, b);
+                        window.__playMobile(audio.src, b);
                     } else {
                         window.__stopAllAudio(audio);
                         audio.currentTime = 0;
@@ -181,6 +194,11 @@ window.__adoptNativeAudio = function(elements) {
 };
 
 window.__stopAllAudio = function(except) {
+    window.__webAudioGen = (window.__webAudioGen || 0) + 1;
+    if (window.__webAudioSource) {
+        try { window.__webAudioSource.stop(); } catch(e) {}
+        window.__webAudioSource = null;
+    }
     window.__autoPlayDefAudio = null;
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
@@ -253,6 +271,40 @@ if (window.matchMedia('(hover: none)').matches && !window.__audioUnlocked) {
 }
 
 window.__stopDefAudio = window.__stopAllAudio;
+
+window.__webAudioGen = 0;
+window.__webAudioSource = null;
+
+window.__webAudioPlay = function(src, btn, gen) {
+    return fetch(src)
+        .then(function(r) { return r.arrayBuffer(); })
+        .then(function(buf) { return window.__audioCtx.decodeAudioData(buf); })
+        .then(function(audioBuf) {
+            if (gen !== undefined && gen !== window.__webAudioGen) return;
+            return new Promise(function(resolve) {
+                var source = window.__audioCtx.createBufferSource();
+                source.buffer = audioBuf;
+                source.connect(window.__audioCtx.destination);
+                source.start();
+                window.__webAudioSource = source;
+                if (btn) { btn.classList.add('playing'); btn._currentAudio = source; }
+                source.onended = function() {
+                    if (window.__webAudioSource === source) window.__webAudioSource = null;
+                    if (btn && btn._currentAudio === source) btn.classList.remove('playing');
+                    resolve();
+                };
+            });
+        });
+};
+
+window.__playMobile = function(src, btn) {
+    if (window.__audioCtx && window.__audioCtx.state === 'running') {
+        return window.__webAudioPlay(src, btn, window.__webAudioGen);
+    }
+    var fa = window.__freshPlay(src, btn);
+    window.__startPlaying(fa, btn);
+    return new Promise(function(resolve) { fa.onended = resolve; });
+};
 </script>
 
 <script>
@@ -282,9 +334,8 @@ window.__stopDefAudio = window.__stopAllAudio;
       window.__onTap(btn, function() {
         if (window.matchMedia('(hover: none)').matches) {
           window.__stopAllAudio();
-          var fa = window.__freshPlay(audio.src, btn);
           animateBtn(btn);
-          window.__startPlaying(fa, btn);
+          window.__playMobile(audio.src, btn);
         } else {
           window.__stopAllAudio(audio);
           audio.currentTime = 0;
@@ -309,9 +360,8 @@ window.__stopDefAudio = window.__stopAllAudio;
     window.__onTap(btn, function() {
       if (window.matchMedia('(hover: none)').matches) {
         window.__stopAllAudio();
-        var fa = window.__freshPlay(nativeAudio.src, btn);
         animateBtn(btn);
-        window.__startPlaying(fa, btn);
+        window.__playMobile(nativeAudio.src, btn);
       } else {
         window.__stopAllAudio(nativeAudio);
         nativeAudio.currentTime = 0;
@@ -339,23 +389,29 @@ window.__stopDefAudio = window.__stopAllAudio;
   if (!queue.length) return;
   var isMobile = window.matchMedia('(hover: none)').matches;
   var i = 0;
-  function playNext() {
-    if (i >= queue.length) return;
-    var entry = queue[i++];
-    if (isMobile) {
-      var fa = window.__freshPlay(entry.audio.src, entry.btn);
-      if (entry.btn) animateBtn(entry.btn);
-      window.__startPlaying(fa, entry.btn);
-      fa.onended = playNext;
-    } else {
+  if (isMobile) {
+    setTimeout(function() {
+      var gen = window.__webAudioGen;
+      (function playNext() {
+        if (i >= queue.length || gen !== window.__webAudioGen) return;
+        var entry = queue[i++];
+        if (entry.btn) animateBtn(entry.btn);
+        window.__playMobile(entry.audio.src, entry.btn)
+            .then(function() { if (gen === window.__webAudioGen) playNext(); });
+      })();
+    }, 0);
+  } else {
+    function playNext() {
+      if (i >= queue.length) return;
+      var entry = queue[i++];
       entry.audio.currentTime = 0;
       window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
       if (entry.js) window.__startPlaying(entry.audio, entry.btn);
       entry.audio.onended = playNext;
     }
+    setTimeout(playNext, 0);
   }
-  setTimeout(playNext, 0);
 })();
 </script>
 

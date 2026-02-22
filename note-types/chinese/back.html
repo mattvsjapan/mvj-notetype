@@ -74,9 +74,8 @@
             function playSingle(idx) {
                 if (window.matchMedia('(hover: none)').matches) {
                     window.__stopAllAudio();
-                    var fa = window.__freshPlay(audios[idx].src, btns[idx]);
                     animateBtn(btns[idx]);
-                    window.__startPlaying(fa, btns[idx]);
+                    window.__playMobile(audios[idx].src, btns[idx]);
                 } else {
                     window.__stopAllAudio(audios[idx]);
                     audios[idx].currentTime = 0;
@@ -88,25 +87,31 @@
 
             function playAll() {
                 var mob = window.matchMedia('(hover: none)').matches;
-                window.__stopAllAudio(mob ? undefined : audios[0]);
-                var idx = 0;
-                function playNext() {
-                    if (idx >= audios.length) return;
-                    var cur = idx++;
-                    if (mob) {
-                        var fa = window.__freshPlay(audios[cur].src, btns[cur]);
+                if (mob) {
+                    window.__stopAllAudio();
+                    var gen = window.__webAudioGen;
+                    var idx = 0;
+                    (function next() {
+                        if (idx >= audios.length || gen !== window.__webAudioGen) return;
+                        var cur = idx++;
                         animateBtn(btns[cur]);
-                        window.__startPlaying(fa, btns[cur]);
-                        fa.onended = playNext;
-                    } else {
+                        window.__playMobile(audios[cur].src, btns[cur])
+                            .then(function() { if (gen === window.__webAudioGen) next(); });
+                    })();
+                } else {
+                    window.__stopAllAudio(audios[0]);
+                    var idx = 0;
+                    function playNext() {
+                        if (idx >= audios.length) return;
+                        var cur = idx++;
                         audios[cur].currentTime = 0;
                         audios[cur].onended = playNext;
                         window.__safePlay(audios[cur]);
                         animateBtn(btns[cur]);
                         window.__startPlaying(audios[cur], btns[cur]);
                     }
+                    playNext();
                 }
-                playNext();
             }
 
             for (var j = 0; j < btns.length; j++) {
@@ -519,23 +524,29 @@ function _renderBack() {
 
       var playGroup = function(audioEls, btn) {
         var mob = window.matchMedia('(hover: none)').matches;
-        window.__stopAllAudio(mob ? undefined : audioEls[0]);
-        var idx = 0;
-        var playNext = function() {
-          if (idx >= audioEls.length) return;
-          var cur = idx++;
-          if (mob) {
-            var fa = window.__freshPlay(audioEls[cur].src, btn);
-            if (btn) window.__startPlaying(fa, btn);
-            fa.onended = playNext;
-          } else {
+        if (mob) {
+          window.__stopAllAudio();
+          var gen = window.__webAudioGen;
+          var idx = 0;
+          (function next() {
+            if (idx >= audioEls.length || gen !== window.__webAudioGen) return;
+            var cur = idx++;
+            window.__playMobile(audioEls[cur].src, btn)
+                .then(function() { if (gen === window.__webAudioGen) next(); });
+          })();
+        } else {
+          window.__stopAllAudio(audioEls[0]);
+          var idx = 0;
+          var playNext = function() {
+            if (idx >= audioEls.length) return;
+            var cur = idx++;
             audioEls[cur].currentTime = 0;
             audioEls[cur].onended = playNext;
             window.__safePlay(audioEls[cur]);
             if (btn) window.__startPlaying(audioEls[cur], btn);
-          }
-        };
-        playNext();
+          };
+          playNext();
+        }
       };
 
       var audioRow = document.querySelector('.audio-row');
@@ -562,9 +573,8 @@ function _renderBack() {
           window.__onTap(btn, function() {
             if (window.matchMedia('(hover: none)').matches) {
               window.__stopAllAudio();
-              var fa = window.__freshPlay(audioEls[0].src, btn);
               animateBtnDef(btn);
-              window.__startPlaying(fa, btn);
+              window.__playMobile(audioEls[0].src, btn);
             } else {
               window.__stopAllAudio(audioEls[0]);
               audioEls[0].currentTime = 0;
@@ -625,9 +635,8 @@ function _renderBack() {
         window.__onTap(defBtn, function() {
           if (window.matchMedia('(hover: none)').matches) {
             window.__stopAllAudio();
-            var fa = window.__freshPlay(primaryAudios[0].src, defBtn);
             animateBtnDef(defBtn);
-            window.__startPlaying(fa, defBtn);
+            window.__playMobile(primaryAudios[0].src, defBtn);
           } else {
             window.__stopAllAudio(primaryAudios[0]);
             primaryAudios[0].currentTime = 0;
