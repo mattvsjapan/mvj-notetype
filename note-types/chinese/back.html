@@ -390,10 +390,12 @@ function _renderBack() {
       var audioRow = document.querySelector('.audio-row');
 
       if (hasBiBtns && hasMonoBtns) {
-        var makeNativeDefItem = function(label, btns) {
+        var makeNativeDefItem = function(label, btns, defRole, defLang) {
           var item = document.createElement('div');
           item.className = 'audio-item bi';
           item.setAttribute('data-audio', 'def');
+          item.setAttribute('data-def-role', defRole);
+          item.setAttribute('data-def-lang', defLang);
           for (var bk = 0; bk < btns.length; bk++) {
             item.appendChild(btns[bk]);
           }
@@ -404,13 +406,10 @@ function _renderBack() {
           if (audioRow) audioRow.appendChild(item);
         };
 
-        if (window.__monoUnlocked) {
-          makeNativeDefItem('Mono-Def', monoBtns);
-          makeNativeDefItem('Bi-Def', biBtns);
-        } else {
-          makeNativeDefItem('Bi-Def', biBtns);
-          makeNativeDefItem('Mono-Def', monoBtns);
-        }
+        makeNativeDefItem('Bi-Def', biBtns,
+          window.__monoUnlocked ? 'secondary' : 'primary', 'bi');
+        makeNativeDefItem('Mono-Def', monoBtns,
+          window.__monoUnlocked ? 'primary' : 'secondary', 'mono');
 
         var primaryBtns = window.__monoUnlocked ? monoBtns : biBtns;
         var secondaryBtns = window.__monoUnlocked ? biBtns : monoBtns;
@@ -555,10 +554,12 @@ function _renderBack() {
       var audioRow = document.querySelector('.audio-row');
 
       if (hasBiAudio && hasMonoAudio) {
-        var makeDefItem = function(label, filenames, audioEls) {
+        var makeDefItem = function(label, filenames, audioEls, defRole, defLang) {
           var item = document.createElement('div');
           item.className = 'audio-item bi';
           item.setAttribute('data-audio', 'def');
+          item.setAttribute('data-def-role', defRole);
+          item.setAttribute('data-def-lang', defLang);
           var btn = document.createElement('a');
           btn.className = 'replay-button';
           btn.href = '#';
@@ -590,13 +591,12 @@ function _renderBack() {
         };
 
         var playBi, playMono;
-        if (window.__monoUnlocked) {
-          playMono = makeDefItem('Mono-Def', monoFilenames, primaryAudios);
-          playBi = makeDefItem('Bi-Def', biFilenames, secondaryAudios);
-        } else {
-          playBi = makeDefItem('Bi-Def', biFilenames, primaryAudios);
-          playMono = makeDefItem('Mono-Def', monoFilenames, secondaryAudios);
-        }
+        playBi = makeDefItem('Bi-Def', biFilenames,
+          window.__monoUnlocked ? secondaryAudios : primaryAudios,
+          window.__monoUnlocked ? 'secondary' : 'primary', 'bi');
+        playMono = makeDefItem('Mono-Def', monoFilenames,
+          window.__monoUnlocked ? primaryAudios : secondaryAudios,
+          window.__monoUnlocked ? 'primary' : 'secondary', 'mono');
 
         var playPrimary = window.__monoUnlocked ? playMono : playBi;
         var playSecondary = window.__monoUnlocked ? playBi : playMono;
@@ -678,20 +678,17 @@ function _renderBack() {
   if (bottomRow) {
     var SVG_BOTTOM = window.__audioSVG;
     var animateBtnBottom = window.__animateBtn;
-    var topItemsRaw = document.querySelectorAll('.audio-row .audio-item');
-    var defItems = [], otherItems = [];
-    for (var si = 0; si < topItemsRaw.length; si++) {
-      if (topItemsRaw[si].getAttribute('data-audio') === 'def') defItems.push(topItemsRaw[si]);
-      else otherItems.push(topItemsRaw[si]);
-    }
-    // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
-    // Desired: secondary def, primary def, word, sentence
-    if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
-    var topItems = defItems.concat(otherItems);
+    var topItems = document.querySelectorAll('.audio-row .audio-item');
     for (var bi = 0; bi < topItems.length; bi++) {
       (function(origItem) {
         var clone = document.createElement('div');
         clone.className = 'audio-item';
+        var attrs = origItem.attributes;
+        for (var ai = 0; ai < attrs.length; ai++) {
+          if (attrs[ai].name.indexOf('data-') === 0) {
+            clone.setAttribute(attrs[ai].name, attrs[ai].value);
+          }
+        }
         var origBtns = origItem.querySelectorAll('.replay-button');
         for (var bj = 0; bj < origBtns.length; bj++) {
           (function(origBtn) {
@@ -839,15 +836,7 @@ _renderBack();
   if (jpToggle) {
     jpToggle.addEventListener('change', function() {
       if (!jpToggle.checked) {
-        var els = window.__defAudioEls || [];
-        for (var i = 0; i < els.length; i++) {
-          els[i].pause();
-          els[i].currentTime = 0;
-          els[i].onended = null;
-        }
-        document.querySelectorAll('.audio-item[data-audio="def"] .replay-button.playing').forEach(function(b) {
-          b.classList.remove('playing');
-        });
+        window.__stopAllAudio();
       }
     });
   }

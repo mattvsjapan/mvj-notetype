@@ -1373,15 +1373,7 @@
     if (jpToggle) {
       jpToggle.addEventListener('change', function() {
         if (!jpToggle.checked) {
-          var els = window.__defAudioEls || [];
-          for (var i = 0; i < els.length; i++) {
-            els[i].pause();
-            els[i].currentTime = 0;
-            els[i].onended = null;
-          }
-          document.querySelectorAll('.audio-item[data-audio="def"] .replay-button.playing').forEach(function(b) {
-            b.classList.remove('playing');
-          });
+          window.__stopAllAudio();
         }
       });
     }

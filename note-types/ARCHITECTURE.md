@@ -20,7 +20,7 @@ Consolidate all audio item creation into `createAudioItem()`. Add `data-def-role
 
 | Card | Status | Notes |
 |------|--------|-------|
-| Chinese | NOT STARTED | Has tagged bi/mono audio, bottom-row mirroring with reorder logic. |
+| Chinese | DONE | Data attributes on dual-def items, simplified bottom-row cloning, CSS ordering. |
 | Japanese | NOT STARTED | Simpler — single def audio, basic bottom-row mirroring. |
 | MVJ | NOT STARTED | Most complex — 4 audio code paths, tategaki ordering, dual-def reversal. |
 
@@ -112,6 +112,29 @@ Record what was done in each session so the next context window has a worked exa
 - All audio creation, cloning, playback, and keyboard handling unchanged
 
 **Gotchas:** None. No `[data-font="zh"]` needed — MVJ only has JP monolingual definitions, never Chinese.
+
+#### 2026-02-22 — Chinese card Phase 2
+
+**Files modified:** `chinese/back.html`, `chinese/css.css`
+
+**What changed in `back.html`:**
+- Tagged native dual path (`makeNativeDefItem`): Added `defRole` and `defLang` parameters. Function now sets `data-def-role` and `data-def-lang` on the item. Call sites changed from conditional insertion order to consistent order (Bi-Def first, Mono-Def second) with role/lang attributes determined by `window.__monoUnlocked`.
+- Tagged `[audio:]` dual path (`makeDefItem`): Same pattern — added `defRole` and `defLang` parameters, sets both data attributes. Call sites changed to consistent insertion order with ternary-driven attributes and audio element assignment.
+- Bottom row cloning: Removed `defItems`/`otherItems` separation and `defItems[1], defItems[0]` reversal. Now queries all `.audio-row .audio-item` directly. Clone creation copies all `data-*` attributes from the original item via attribute iteration.
+
+**What changed in `css.css`:**
+- Added CSS `order` rules for `.audio-row-bottom` before the bottom audio row section:
+  - `[data-def-role="secondary"]` → order 0
+  - `[data-def-role="primary"]` and `:not([data-def-role])` → order 1
+  - `[data-audio="word"]` → order 2
+  - `[data-audio="sentence"]` → order 3
+
+**What JS still does (unchanged):**
+- All playback logic (`playSingle`, `playAll`, `playGroup`, `__playLockedDefAudio`, `__autoPlayDefAudio`)
+- Toggle listeners, keyboard handlers
+- Untagged and single-def audio paths (no `data-def-role` needed)
+
+**Gotchas:** None. No top-row ordering needed — DOM order is already correct for desktop.
 
 ---
 
