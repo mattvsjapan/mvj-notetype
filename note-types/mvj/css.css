@@ -964,7 +964,7 @@ rt {
 /* JP def section — follows definition */
 .tategaki .jp-def-section {
     margin: 0;
-    margin-block-start: 16px;
+    margin-block-start: 0;
     order: -1;
 }
 
@@ -975,7 +975,16 @@ rt {
 }
 
 .tategaki .jp-def-toggle {
-    writing-mode: horizontal-tb;
+    writing-mode: vertical-rl;
+    padding: 14px 6px;
+}
+
+.tategaki .jp-def-toggle::after {
+    transform: rotate(90deg);
+}
+
+.tategaki .jp-def-input:checked + .jp-def-toggle::after {
+    transform: rotate(180deg);
 }
 
 /* Divider — vertical in tategaki */
