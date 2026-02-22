@@ -79,12 +79,15 @@ html {
 
 @media (hover: none) {
     html {
-        min-height: 100dvh;
+        height: 100dvh;
+        overflow: hidden;
     }
 
     .card {
         padding: 20px;
         min-height: auto;
+        height: 100dvh;
+        overflow-y: auto;
     }
 
     .card-inner {
