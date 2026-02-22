@@ -425,8 +425,14 @@
   }
   
   function determineRoleTokyo(sd) {
-    if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
+    if (isEmptyParticle(sd.word)) return 'empty';
+    if (sd.moraes.length === 0 && sd.sep == null) return 'empty';
     if (sd.sep == null) return 'particle';
+    if (sd.moraes.length === 0) {
+      if (sd.accent.role != null) return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
+      if (sd.accent.pitch != null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
+      return 'empty';
+    }
     if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
     if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
     return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
