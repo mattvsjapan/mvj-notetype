@@ -243,6 +243,8 @@ html {
 .keihan_low_odaka { color: #658065; }
 .particle { color: rgba(255, 255, 255, 0.3); }
 .target-word.no-accent span { color: var(--text-1) !important; }
+.def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
+.def.no-accent .particle, .jp-def.no-accent .particle { color: inherit; }
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
@@ -645,6 +647,10 @@ rt {
     color: var(--text-1);
     margin: 0;
     text-align: left;
+}
+
+.def rt, .jp-def rt {
+    color: inherit;
 }
 
 /* Japanese definition — pure CSS toggle */
