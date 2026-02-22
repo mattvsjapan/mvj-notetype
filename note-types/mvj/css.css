@@ -994,6 +994,7 @@ html.tategaki:has(.back) {
     justify-content: space-between;
     order: 0;
     gap: 0;
+    height: 100%;
 }
 
 .tategaki .word-column > * {
@@ -1051,6 +1052,7 @@ html.tategaki:has(.back) {
 
 .tategaki .image-wrap {
     width: auto;
+    max-height: 250px;
     margin: 0 12px 0 0;
 }
 
@@ -1058,7 +1060,7 @@ html.tategaki:has(.back) {
     width: auto !important;
     min-width: auto;
     height: auto;
-    max-height: min(250px, calc(100vh - 168px));
+    max-height: min(250px, 100%);
 }
 
 /* Sentence — right after audio buttons */
