@@ -20,11 +20,21 @@
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
+// Create AudioContext eagerly — Anki's WKWebView sets
+// mediaTypesRequiringUserActionForPlayback=[] which may allow
+// AudioContext to reach 'running' without a gesture.
+if (!window.__audioCtx) {
+    window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+if (window.__audioCtx.state === 'suspended') {
+    window.__audioCtx.resume()['catch'](function() {});
+}
+
+// Safety net: if AudioContext is still suspended after page load,
+// resume it on the next user gesture.
 if (!window.__audioCtxTouchHandler) {
     window.__audioCtxTouchHandler = function() {
-        if (!window.__audioCtx) {
-            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } else if (window.__audioCtx.state !== 'running') {
+        if (window.__audioCtx && window.__audioCtx.state !== 'running') {
             window.__audioCtx.resume()['catch'](function() {});
         }
     };
