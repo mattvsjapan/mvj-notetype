@@ -856,7 +856,8 @@ rt {
 .tategaki .card-inner {
     max-width: none;
     width: fit-content;
-    height: min(calc(100vh - 80px), 700px);
+    padding: 44px;
+    height: min(calc(100vh - 80px), 668px);
     display: flex;
     flex-direction: column;
 }
