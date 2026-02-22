@@ -606,6 +606,7 @@ rt {
 
 @media (hover: none) {
     .sentence rt {
+        font-size: 0.4em;
         transform: translateY(8px);
     }
 }
@@ -651,6 +652,20 @@ rt {
 
 .def rt, .jp-def rt {
     color: inherit;
+}
+
+.tategaki .def rt,
+.tategaki .jp-def rt {
+    font-size: 0.47em;
+    letter-spacing: 0.1em;
+}
+
+@media (hover: none) {
+    .tategaki .def rt,
+    .tategaki .jp-def rt {
+        font-size: 0.47em;
+        transform: translate(-7px, 1px);
+    }
 }
 
 /* Japanese definition — pure CSS toggle */
@@ -1123,7 +1138,7 @@ html.tategaki:has(.back) {
 @media (hover: none) {
     .tategaki .sentence rt {
         transform: translate(-7px, 1px);
-        font-size: 0.57em;
+        font-size: 0.47em;
         letter-spacing: 0.1em;
     }
 }
@@ -1133,6 +1148,7 @@ html.tategaki:has(.back) {
     margin: 0;
     order: -2;
     height: 100%;
+    line-height: 1.65;
 }
 
 /* JP def section — follows definition */

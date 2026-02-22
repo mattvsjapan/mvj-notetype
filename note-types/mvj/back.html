@@ -267,6 +267,7 @@
   const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
   
   function normalizeForParsing(expr) {
+    expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
     expr = expr.replace(/\//g, ';');
     expr = expr.replace(/<br>/gi, ' . ');
     expr = expr.replace(/<[^<>]+>/gi, '');
@@ -744,15 +745,19 @@
       if (match.index > lastIndex) {
         result += fragment.slice(lastIndex, match.index);
       }
-      result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+      if (/[\u3040-\u309F\u30A0-\u30FF]/.test(match[2])) {
+        result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+      } else {
+        result += match[0];
+      }
       lastIndex = re.lastIndex;
     }
     if (lastIndex < fragment.length) {
       result += fragment.slice(lastIndex);
     }
-    return result;
+    return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
   }
-  
+
   function wordToRuby(word) {
     word = word.replaceAll(DEVOICED_PREFIX, '');
     word = word.replaceAll(LITERAL_PREFIX, '');
@@ -853,10 +858,14 @@
     var isTategaki = document.documentElement.classList.contains('tategaki');
     function colorizeText(raw, el) {
       if (!raw) return '';
-      var seqs = makeSequences(raw);
-      if (seqs.length === 0) return '';
       if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
-      return seqs.map(makeColoredSentence).join('');
+      var lines = raw.split(/<br\s*\/?>/gi);
+      var colored = lines.map(function(line) {
+        var seqs = makeSequences(line);
+        if (seqs.length === 0) return line;
+        return seqs.map(makeColoredSentence).join('');
+      });
+      return colored.join('<br>');
     }
     var defs = parseDefinitions(defHtml);
     // Plain definition without comment markers → treat as monolingual
@@ -873,13 +882,13 @@
       defEl.innerHTML = defs.bilingual;
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
-      defEl.innerHTML = (!isTategaki && colorizeText(defs[monoKey], defEl)) || defs[monoKey];
+      defEl.innerHTML = colorizeText(defs[monoKey], defEl) || defs[monoKey];
       defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
     } else if (hasBi && hasMono) {
       if (defs.monolingual) {
-        defEl.innerHTML = (!isTategaki && colorizeText(defs.monolingual, defEl)) || defs.monolingual;
+        defEl.innerHTML = colorizeText(defs.monolingual, defEl) || defs.monolingual;
         defEl.setAttribute('data-font', 'jp');
         jpDefEl.innerHTML = defs.bilingual;
         jpDefEl.className = 'def';
@@ -889,7 +898,7 @@
         window.__monoUnlocked = true;
       } else {
         defEl.innerHTML = defs.bilingual;
-        jpDefEl.innerHTML = (!isTategaki && colorizeText(defs.LOCKED_monolingual, jpDefEl)) || defs.LOCKED_monolingual;
+        jpDefEl.innerHTML = colorizeText(defs.LOCKED_monolingual, jpDefEl) || defs.LOCKED_monolingual;
         answerEl.setAttribute('data-def-layout', 'dual-bi');
       }
     } else {
