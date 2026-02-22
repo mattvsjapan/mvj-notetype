@@ -1236,8 +1236,9 @@ html:not(.tategaki) .divider {
     animation: none;
 }
 
-.android.tategaki .audio-row-bottom .audio-item .replay-button {
+.android.tategaki .audio-row-bottom .audio-item {
     animation: none;
+    opacity: 1;
 }
 
 /* AnkiDroid: plain background, opaque card, no sheen */
