@@ -978,6 +978,7 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     writing-mode: horizontal-tb;
     align-self: stretch;
+    margin-right: 12px;
 }
 
 .tategaki .target-word {
@@ -1029,7 +1030,7 @@ html:not(.tategaki) .answer .jp-def-section {
     width: auto !important;
     min-width: auto;
     height: auto;
-    max-height: 200px;
+    max-height: 250px;
 }
 
 /* Sentence — right after audio buttons */
@@ -1071,12 +1072,18 @@ html:not(.tategaki) .answer .jp-def-section {
     transform: rotate(180deg);
 }
 
-/* Divider — vertical in tategaki */
+/* Divider — tategaki only */
+html:not(.tategaki) .divider {
+    display: none;
+}
+
 .tategaki .divider {
     width: 1px;
     height: auto;
-    background: linear-gradient(180deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
-    margin: 0;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.30) 25%, rgba(255, 255, 255, 0.30) 75%, transparent);
+    margin: 0 8px;
+    order: -2;
+    align-self: stretch;
 }
 
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
