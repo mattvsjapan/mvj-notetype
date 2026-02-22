@@ -707,6 +707,11 @@ rt {
     }
 }
 
+/* Data-attribute driven visibility */
+[data-state="empty"] {
+    display: none;
+}
+
 /* AnkiDroid: disable all back-side animations (WebView performance) */
 .android .answer > [style*="--d"] {
     opacity: 1;

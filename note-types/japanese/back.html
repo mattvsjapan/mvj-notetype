@@ -110,7 +110,7 @@ function _renderBack() {
     var wordSeqs = makeSequences(wordRaw);
 
     if (wordSeqs.length > 0) {
-      if (frontDiv) { frontDiv.style.display = 'contents'; frontDiv.classList.remove('front'); }
+      if (frontDiv) { frontDiv.classList.remove('front'); }
       if (frontWord) {
         frontWord.classList.add('reveal');
         if (wordRaw.indexOf(':') === -1) frontWord.classList.add('no-accent');
@@ -126,13 +126,13 @@ function _renderBack() {
       if (svgs.length > 0) {
         graphEl.innerHTML = svgs.join('');
       } else {
-        graphEl.style.display = 'none';
+        graphEl.setAttribute('data-state', 'empty');
       }
     } else {
-      graphEl.style.display = 'none';
+      graphEl.setAttribute('data-state', 'empty');
     }
   } else {
-    graphEl.style.display = 'none';
+    graphEl.setAttribute('data-state', 'empty');
   }
 
   // Sentence → colored sentence
@@ -151,7 +151,7 @@ function _renderBack() {
   if (defHtml && defHtml.trim()) {
     defEl.innerHTML = defHtml;
   } else {
-    defEl.style.display = 'none';
+    defEl.setAttribute('data-state', 'empty');
   }
 
   // ── Mirror audio buttons to bottom row (mobile) ──

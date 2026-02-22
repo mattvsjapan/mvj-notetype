@@ -12,7 +12,7 @@ Replace all inline `style.display`, `style.fontFamily`, `style.lineHeight` with 
 | Card | Status | Notes |
 |------|--------|-------|
 | Chinese | DONE | Simplest card, no tategaki. Completed first. |
-| Japanese | NOT STARTED | Similar to Chinese but has pitch graph. Do second. |
+| Japanese | DONE | Similar to Chinese but has pitch graph. Completed second. |
 | MVJ | NOT STARTED | Most complex. Has tategaki. Do last. |
 
 ### Phase 2: Audio item factory and ordering
@@ -64,6 +64,25 @@ Record what was done in each session so the next context window has a worked exa
 - Sets `window.__monoUnlocked` flag
 
 **Gotchas:** None encountered. The Chinese card has no tategaki and no pitch graph, making it a clean migration.
+
+#### 2026-02-22 — Japanese card Phase 1
+
+**Files modified:** `japanese/back.html`, `japanese/css.css`
+
+**What changed in `back.html`:**
+- Line 113: Removed redundant `frontDiv.style.display = 'contents'` — CSS already handles this via `.back .front { display: contents; }`. Kept `classList.remove('front')` which deactivates `.front .target-word rt { opacity: 0 }` and `.front .target-word span { color: ... }` rules.
+- Lines 129, 132, 135: `graphEl.style.display = 'none'` → `graphEl.setAttribute('data-state', 'empty')` in all three pitch graph empty paths (no SVGs produced, no accent data, no word data).
+- Line 154: `defEl.style.display = 'none'` → `defEl.setAttribute('data-state', 'empty')` for empty definition.
+
+**What changed in `css.css`:**
+- Added `[data-state="empty"] { display: none; }` rule before the AnkiDroid section.
+
+**What JS still does (content-only, unchanged):**
+- Sets `innerHTML` on graphEl, sentEl, defEl
+- Adds `.reveal`, `.no-accent` classes to frontWord
+- Mirrors audio buttons to bottom row
+
+**Gotchas:** None. Simpler than Chinese — no font switching, no `data-def-layout`, no bilingual/monolingual toggle.
 
 ---
 
