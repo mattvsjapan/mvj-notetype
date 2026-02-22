@@ -943,6 +943,14 @@ html.tategaki:has(.back) {
 }
 
 @media (hover: none) {
+    .tategaki .card {
+        overflow-y: hidden;
+        overscroll-behavior-y: none;
+        touch-action: pan-x;
+    }
+    .tategaki #content {
+        margin: 0;
+    }
     .tategaki .card-inner {
         min-height: calc(100dvh - 40px);
     }
@@ -955,7 +963,7 @@ html.tategaki:has(.back) {
 .tategaki .audio-row-bottom {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     writing-mode: horizontal-tb;
     order: -4;
@@ -983,6 +991,12 @@ html.tategaki:has(.back) {
 
 .tategaki .audio-row-bottom .audio-label {
     font-size: 9px;
+}
+
+@media (hover: none) {
+    .tategaki .audio-row-bottom {
+        justify-content: flex-end;
+    }
 }
 
 /* Word column — word+graph at top, image at bottom */
@@ -1018,8 +1032,8 @@ html.tategaki:has(.back) {
     margin-right: 12px;
 }
 
-/* Tategaki: def audio row inside word column (between pitch graph and image) */
-.tategaki .def-audio-row {
+/* Tategaki: mid audio row inside word column (between pitch graph and image) */
+.tategaki .mid-audio-row {
     display: grid;
     grid-auto-flow: column;
     grid-template-rows: repeat(auto-fit, minmax(76px, auto));
@@ -1030,25 +1044,28 @@ html.tategaki:has(.back) {
     row-gap: 12px;
     column-gap: clamp(16px, 8vw, 40px);
     margin: 0 12px 12px 0;
+    will-change: transform;
 }
 
-.tategaki .def-audio-row .audio-item {
+.tategaki .mid-audio-row .audio-item {
     gap: 6px;
 }
-.tategaki .def-audio-row .audio-item[data-def-role="primary"] { order: 0; }
-.tategaki .def-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
+.tategaki .mid-audio-row .audio-item[data-audio="word"] { order: -2; }
+.tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: -1; }
+.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: 0; }
+.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
 
-.tategaki .def-audio-row .replay-button {
+.tategaki .mid-audio-row .replay-button {
     width: 52px !important;
     height: 52px !important;
 }
 
-.tategaki .def-audio-row .replay-button svg {
+.tategaki .mid-audio-row .replay-button svg {
     width: 52px !important;
     height: 52px !important;
 }
 
-.tategaki .def-audio-row .audio-label {
+.tategaki .mid-audio-row .audio-label {
     font-size: 9px;
 }
 

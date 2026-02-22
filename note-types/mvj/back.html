@@ -1205,11 +1205,11 @@
       var SVG_BOTTOM = window.__audioSVG;
       var animateBtnBottom = window.__animateBtn;
       var isTategaki = document.documentElement.classList.contains('tategaki');
-      var defAudioRow = null;
+      var midAudioRow = null;
       if (isTategaki) {
-        defAudioRow = document.createElement('div');
-        defAudioRow.className = 'def-audio-row';
-        defAudioRow.style.cssText = '--d:80';
+        midAudioRow = document.createElement('div');
+        midAudioRow.className = 'mid-audio-row';
+        midAudioRow.style.cssText = '--d:80';
       }
       function cloneItemToRow(origItem, targetRow) {
         var clone = document.createElement('div');
@@ -1253,9 +1253,16 @@
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
           var isDef = origItem.getAttribute('data-audio') === 'def';
-          if (isTategaki && isDef && defAudioRow) {
-            cloneItemToRow(origItem, defAudioRow);
-            if (window.matchMedia('(hover: none)').matches) {
+          if (isTategaki && midAudioRow) {
+            if (isDef) {
+              cloneItemToRow(origItem, midAudioRow);
+              if (window.matchMedia('(hover: none)').matches) {
+                cloneItemToRow(origItem, bottomRow);
+              }
+            } else if (window.matchMedia('(hover: none)').matches) {
+              cloneItemToRow(origItem, midAudioRow);
+              cloneItemToRow(origItem, bottomRow);
+            } else {
               cloneItemToRow(origItem, bottomRow);
             }
           } else {
@@ -1273,10 +1280,10 @@
           if (targetWord) wpGroup.appendChild(targetWord);
           if (pitchGraph) wpGroup.appendChild(pitchGraph);
           wordCol.insertBefore(wpGroup, wordCol.firstChild);
-          if (defAudioRow && defAudioRow.children.length > 0) {
+          if (midAudioRow && midAudioRow.children.length > 0) {
             var imageWrap = wordCol.querySelector('.image-wrap');
-            if (imageWrap) wordCol.insertBefore(defAudioRow, imageWrap);
-            else wordCol.appendChild(defAudioRow);
+            if (imageWrap) wordCol.insertBefore(midAudioRow, imageWrap);
+            else wordCol.appendChild(midAudioRow);
           }
         }
       }
