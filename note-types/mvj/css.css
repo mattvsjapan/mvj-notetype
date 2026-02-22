@@ -244,7 +244,7 @@ html {
 .particle { color: rgba(255, 255, 255, 0.3); }
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
-.def.no-accent .particle, .jp-def.no-accent .particle { color: inherit; }
+.def .particle, .jp-def .particle { color: inherit; }
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
@@ -622,7 +622,7 @@ rt {
     margin: 0 0 20px;
 }
 
-.sentence.no-accent .particle {
+.sentence .particle {
     color: inherit;
 }
 
