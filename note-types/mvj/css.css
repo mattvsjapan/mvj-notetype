@@ -950,6 +950,7 @@ html:not(.tategaki) .answer .jp-def-section {
     padding-left: 20px;
 }
 
+.tategaki .audio-row-bottom .audio-item { flex: 0 0 auto; }
 .tategaki .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
 .tategaki .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
@@ -979,7 +980,6 @@ html:not(.tategaki) .answer .jp-def-section {
     align-content: flex-end;
     order: 0;
     gap: 0;
-    margin-right: 12px;
 }
 
 .tategaki .word-column > * {
@@ -988,13 +988,11 @@ html:not(.tategaki) .answer .jp-def-section {
 
 .tategaki .target-word {
     letter-spacing: 0;
-    margin: 0;
-    margin-bottom: 12px;
+    margin: 0 12px 12px 0;
 }
 
 .tategaki .pitch-graph {
-    margin: 0;
-    margin-bottom: 14px;
+    margin: 0 12px 14px 0;
 }
 
 /* Tategaki: def audio row inside word column (between pitch graph and image) */
@@ -1003,7 +1001,7 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     justify-content: center;
     gap: clamp(16px, 8vw, 40px);
-    margin: 12px 0;
+    margin: 12px 12px 12px 0;
 }
 
 .tategaki .def-audio-row .audio-item {
@@ -1026,7 +1024,7 @@ html:not(.tategaki) .answer .jp-def-section {
 
 .tategaki .image-wrap {
     width: auto;
-    margin: 12px 0 0;
+    margin: 12px 12px 0 0;
 }
 
 .tategaki .image-wrap img {
