@@ -1203,9 +1203,18 @@
     if (bottomRow) {
       var SVG_BOTTOM = window.__audioSVG;
       var animateBtnBottom = window.__animateBtn;
+      var isTategaki = document.documentElement.classList.contains('tategaki');
+      var defAudioRow = null;
+      if (isTategaki) {
+        defAudioRow = document.createElement('div');
+        defAudioRow.className = 'def-audio-row';
+        defAudioRow.style.cssText = '--d:80';
+      }
       var topItems = document.querySelectorAll('.audio-row .audio-item');
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
+          var isDef = origItem.getAttribute('data-audio') === 'def';
+          var targetRow = (isTategaki && isDef && defAudioRow) ? defAudioRow : bottomRow;
           var clone = document.createElement('div');
           clone.className = 'audio-item';
           var attrs = origItem.attributes;
@@ -1241,8 +1250,16 @@
             lbl.textContent = origLabel.textContent;
             clone.appendChild(lbl);
           }
-          bottomRow.appendChild(clone);
+          targetRow.appendChild(clone);
         })(topItems[bi]);
+      }
+      if (isTategaki && defAudioRow && defAudioRow.children.length > 0) {
+        var wordCol = document.querySelector('.word-column');
+        if (wordCol) {
+          var imageWrap = wordCol.querySelector('.image-wrap');
+          if (imageWrap) wordCol.insertBefore(defAudioRow, imageWrap);
+          else wordCol.appendChild(defAudioRow);
+        }
       }
     }
   

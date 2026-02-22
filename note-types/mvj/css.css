@@ -958,13 +958,13 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
 
 .tategaki .audio-row-bottom .audio-item .replay-button {
-    width: 40px !important;
-    height: 40px !important;
+    width: 52px !important;
+    height: 52px !important;
 }
 
 .tategaki .audio-row-bottom .audio-item .replay-button svg {
-    width: 40px !important;
-    height: 40px !important;
+    width: 52px !important;
+    height: 52px !important;
 }
 
 .tategaki .audio-row-bottom .audio-label {
@@ -989,6 +989,34 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .pitch-graph {
     margin: 0;
     margin-bottom: 14px;
+}
+
+/* Tategaki: def audio row inside word column (between pitch graph and image) */
+.tategaki .def-audio-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 8vw, 40px);
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.tategaki .def-audio-row .audio-item {
+    gap: 6px;
+}
+
+.tategaki .def-audio-row .replay-button {
+    width: 52px !important;
+    height: 52px !important;
+}
+
+.tategaki .def-audio-row .replay-button svg {
+    width: 52px !important;
+    height: 52px !important;
+}
+
+.tategaki .def-audio-row .audio-label {
+    font-size: 9px;
 }
 
 .tategaki .image-wrap {
