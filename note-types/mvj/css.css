@@ -983,14 +983,21 @@ rt {
     animation-delay: calc(50ms + var(--d, 0) * 1ms);
 }
 
-/* Tategaki stagger order: audio → sentence → definition → word → image */
-.tategaki .audio-row-bottom.ri  { animation-delay: 50ms; }
-.tategaki .sentence.ri          { animation-delay: 110ms; }
-.tategaki .def.ri               { animation-delay: 170ms; }
-.tategaki .jp-def-section.ri    { animation-delay: 200ms; }
-.tategaki .target-word.ri       { animation-delay: 250ms; }
-.tategaki .pitch-graph.ri       { animation-delay: 290ms; }
-.tategaki .image-wrap.ri        { animation-delay: 330ms; }
+/* Tategaki stagger order: audio (individually) → sentence → definition → word → image */
+.tategaki .audio-row-bottom.ri          { animation: none; opacity: 1; }
+.tategaki .audio-row-bottom .audio-item {
+    opacity: 0;
+    animation: fadeIn 0.5s var(--spring) both;
+}
+.tategaki .audio-row-bottom .audio-item[data-audio="word"]     { animation-delay: 50ms; }
+.tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { animation-delay: 110ms; }
+.tategaki .audio-row-bottom .audio-item[data-audio="def"]      { animation-delay: 170ms; }
+.tategaki .sentence.ri          { animation-delay: 230ms; }
+.tategaki .def.ri               { animation-delay: 290ms; }
+.tategaki .jp-def-section.ri    { animation-delay: 320ms; }
+.tategaki .target-word.ri       { animation-delay: 370ms; }
+.tategaki .pitch-graph.ri       { animation-delay: 410ms; }
+.tategaki .image-wrap.ri        { animation-delay: 450ms; }
 
 /* Front .fi — audio column is horizontal-tb, translateY works fine */
 .tategaki .fi {
@@ -999,11 +1006,11 @@ rt {
 }
 
 /* Settle animations irrelevant — front audio row hidden on tategaki back */
-.tategaki .back .audio-item,
-.tategaki .back .audio-item .replay-button svg,
-.tategaki .back .audio-item .replay-button img,
-.tategaki .back .audio-label,
-.tategaki .back .audio-item.bi {
+.tategaki .back .audio-row .audio-item,
+.tategaki .back .audio-row .audio-item .replay-button svg,
+.tategaki .back .audio-row .audio-item .replay-button img,
+.tategaki .back .audio-row .audio-label,
+.tategaki .back .audio-row .audio-item.bi {
     animation: none;
 }
 
