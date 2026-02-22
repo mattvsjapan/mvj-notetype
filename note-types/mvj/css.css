@@ -641,7 +641,7 @@ rt {
 .def {
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.75;
+    line-height: 1.45;
     color: var(--text-1);
     margin: 0;
     text-align: left;
@@ -806,6 +806,14 @@ rt {
 /* Word column — wraps target-word, pitch-graph, image; invisible in normal mode */
 .word-column {
     display: contents;
+}
+
+/* Non-tategaki: show image after sentence (image is before sentence in DOM) */
+html:not(.tategaki) .answer .image-wrap,
+html:not(.tategaki) .answer .audio-row-bottom,
+html:not(.tategaki) .answer .def,
+html:not(.tategaki) .answer .jp-def-section {
+    order: 1;
 }
 
 /* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
