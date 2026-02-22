@@ -308,7 +308,7 @@ function _renderBack() {
     var charCount = targetEl.querySelectorAll('ruby').length || targetEl.textContent.trim().length;
     if (charCount === 3) targetEl.classList.add('chars-3');
   } else {
-    targetEl.style.display = 'none';
+    targetEl.setAttribute('data-state', 'empty');
   }
 
   // Sentence
@@ -324,35 +324,36 @@ function _renderBack() {
   var biIsJp = biKey === 'bilingual_jp' || biKey === 'LOCKED_bilingual_jp';
   var hasMono = !!monoKey;
 
+  var answerEl = document.querySelector('.answer');
+
   if (hasBi && !hasMono) {
+    answerEl.setAttribute('data-def-layout', 'bi-only');
     defEl.innerHTML = defs[biKey];
-    if (biIsJp) { defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; defEl.style.lineHeight = '1.65'; }
-    jpDefSection.style.display = 'none';
+    if (biIsJp) defEl.setAttribute('data-font', 'jp');
   } else if (hasMono && !hasBi) {
+    answerEl.setAttribute('data-def-layout', 'mono-only');
     defEl.innerHTML = defs[monoKey];
-    defEl.style.fontFamily = "'Noto Serif TC', 'MOE', serif";
-    defEl.style.lineHeight = '1.65';
-    jpDefSection.style.display = 'none';
+    defEl.setAttribute('data-font', 'zh');
     window.__monoUnlocked = true;
   } else if (hasBi && hasMono) {
     if (defs.monolingual) {
+      answerEl.setAttribute('data-def-layout', 'dual-mono');
       defEl.innerHTML = defs.monolingual;
-      defEl.style.fontFamily = "'Noto Serif TC', 'MOE', serif";
-      defEl.style.lineHeight = '1.65';
+      defEl.setAttribute('data-font', 'zh');
       jpDefEl.innerHTML = defs[biKey];
       jpDefEl.className = 'def';
-      if (biIsJp) { jpDefEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; jpDefEl.style.lineHeight = '1.65'; }
+      if (biIsJp) jpDefEl.setAttribute('data-font', 'jp');
       var toggleLabel = document.querySelector('.jp-def-toggle');
       if (toggleLabel) toggleLabel.textContent = 'Bilingual';
       window.__monoUnlocked = true;
     } else {
+      answerEl.setAttribute('data-def-layout', 'dual-bi');
       defEl.innerHTML = defs[biKey];
-      if (biIsJp) { defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif"; defEl.style.lineHeight = '1.65'; }
+      if (biIsJp) defEl.setAttribute('data-font', 'jp');
       jpDefEl.innerHTML = defs.LOCKED_monolingual;
     }
   } else {
-    defEl.style.display = 'none';
-    jpDefSection.style.display = 'none';
+    answerEl.setAttribute('data-def-layout', 'none');
   }
 
   // ── Tagged definition audio: native [sound:] elements ──
