@@ -898,7 +898,7 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .card-inner:not(:has(> .back)) .front {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
+    align-items: flex-start;
     flex: 1;
 }
 
@@ -945,10 +945,10 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     writing-mode: horizontal-tb;
     order: -4;
-    gap: clamp(8px, 4vw, 20px);
+    gap: clamp(12px, 6.15vw, 31px);
     margin: 0;
     padding-left: 20px;
-    align-self: center;
+    align-self: flex-start;
 }
 
 .tategaki .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
@@ -958,13 +958,13 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
 
 .tategaki .audio-row-bottom .audio-item .replay-button {
-    width: 50px !important;
-    height: 50px !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .tategaki .audio-row-bottom .audio-item .replay-button svg {
-    width: 50px !important;
-    height: 50px !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .tategaki .audio-row-bottom .audio-label {
