@@ -390,32 +390,18 @@ window.__playMobile = function(src, btn) {
     if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
   });
   if (!queue.length) return;
-  var isMobile = window.matchMedia('(hover: none)').matches;
   var i = 0;
-  if (isMobile) {
-    setTimeout(function() {
-      var gen = window.__webAudioGen;
-      (function playNext() {
-        if (i >= queue.length || gen !== window.__webAudioGen) return;
-        var entry = queue[i++];
-        if (entry.btn) animateBtn(entry.btn);
-        window.__playMobile(entry.audio.src, entry.btn)
-            .then(function() { if (gen === window.__webAudioGen) playNext(); })
-            ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
-      })();
-    }, 0);
-  } else {
-    function playNext() {
-      if (i >= queue.length) return;
+  setTimeout(function() {
+    var gen = window.__webAudioGen;
+    (function playNext() {
+      if (i >= queue.length || gen !== window.__webAudioGen) return;
       var entry = queue[i++];
-      entry.audio.currentTime = 0;
-      window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
-      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-      entry.audio.onended = playNext;
-    }
-    setTimeout(playNext, 0);
-  }
+      window.__playMobile(entry.audio.src, entry.btn)
+          .then(function() { if (gen === window.__webAudioGen) playNext(); })
+          ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
+    })();
+  }, 0);
 })();
 </script>
 
