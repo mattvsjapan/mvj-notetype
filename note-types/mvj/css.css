@@ -1223,3 +1223,10 @@ html:not(.tategaki) .divider {
 .android .card-inner::after {
     display: none;
 }
+
+/* Fix: WebKit miscalculates paint bounds for writing-mode:vertical-rl containers,
+   visually clipping the audio buttons on their right edge. Promoting them to their
+   own compositing layer lets them paint independently of the parent's broken bounds. */
+.tategaki .audio-row-bottom {
+    will-change: transform;
+}
