@@ -869,12 +869,10 @@ html:not(.tategaki) .answer .jp-def-section {
 
 /* Card shrinks to fit content horizontally in vertical writing mode */
 .tategaki .card-inner {
+    writing-mode: vertical-rl;
     max-width: none;
-    width: fit-content;
     padding: 44px;
     height: min(calc(100vh - 80px), 668px);
-    display: flex;
-    flex-direction: column;
 }
 
 .tategaki .card-inner::after {
@@ -889,10 +887,7 @@ html:not(.tategaki) .answer .jp-def-section {
 }
 
 .tategaki .back {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    height: 100%;
 }
 
 /* Re-assert display:contents on FrontSide's inner card-inner */
@@ -905,7 +900,8 @@ html:not(.tategaki) .answer .jp-def-section {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
-    flex: 1;
+    height: 100%;
+    writing-mode: horizontal-tb;
 }
 
 /* On back side, .front must stay display:contents — the :not(:has(> .back))
@@ -928,14 +924,12 @@ html:not(.tategaki) .answer .jp-def-section {
 
 /* Answer — flex layout: audio right, content left */
 .tategaki .answer {
-    writing-mode: vertical-rl;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 16px;
-    flex: 1;
+    height: 100%;
     margin-top: 0;
     padding-bottom: 0;
-    min-height: 0;
 }
 
 @media (hover: none) {
@@ -954,7 +948,6 @@ html:not(.tategaki) .answer .jp-def-section {
     gap: clamp(12px, 6.15vw, 31px);
     margin: 0;
     padding-left: 20px;
-    align-self: flex-start;
 }
 
 .tategaki .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
@@ -980,11 +973,17 @@ html:not(.tategaki) .answer .jp-def-section {
 /* Word column — word+graph at top, image at bottom */
 .tategaki .word-column {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    writing-mode: horizontal-tb;
-    align-self: stretch;
+    align-content: flex-end;
+    order: 0;
+    gap: 0;
     margin-right: 12px;
+}
+
+.tategaki .word-column > * {
+    writing-mode: horizontal-tb;
 }
 
 .tategaki .target-word {
@@ -1004,8 +1003,7 @@ html:not(.tategaki) .answer .jp-def-section {
     align-items: center;
     justify-content: center;
     gap: clamp(16px, 8vw, 40px);
-    margin-top: auto;
-    margin-bottom: auto;
+    margin: 12px 0;
 }
 
 .tategaki .def-audio-row .audio-item {
@@ -1028,8 +1026,7 @@ html:not(.tategaki) .answer .jp-def-section {
 
 .tategaki .image-wrap {
     width: auto;
-    margin: 0;
-    margin-top: auto;
+    margin: 12px 0 0;
 }
 
 .tategaki .image-wrap img {
@@ -1043,13 +1040,15 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .sentence {
     text-align: start;
     margin: 0;
-    order: -2;
+    order: -3;
+    height: 100%;
 }
 
 /* Definition — placed right after audio buttons in R→L flow */
 .tategaki .def {
     margin: 0;
     order: -2;
+    height: 100%;
 }
 
 /* JP def section — follows definition */
@@ -1057,6 +1056,7 @@ html:not(.tategaki) .answer .jp-def-section {
     margin: 0;
     margin-block-start: 0;
     order: -1;
+    height: 100%;
 }
 
 @media (hover: none) {
@@ -1085,11 +1085,10 @@ html:not(.tategaki) .divider {
 
 .tategaki .divider {
     width: 1px;
-    height: auto;
+    height: 100%;
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.30) 25%, rgba(255, 255, 255, 0.30) 75%, transparent);
     margin: 0 8px;
     order: -2;
-    align-self: stretch;
 }
 
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
