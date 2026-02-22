@@ -1050,10 +1050,10 @@ html.tategaki:has(.back) {
 .tategaki .mid-audio-row .audio-item {
     gap: 6px;
 }
-.tategaki .mid-audio-row .audio-item[data-audio="word"] { order: -2; }
-.tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: -1; }
-.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: 0; }
-.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
+.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: -2; }
+.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: -1; }
+.tategaki .mid-audio-row .audio-item[data-audio="word"] { order: 0; }
+.tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: 1; }
 
 .tategaki .mid-audio-row .replay-button {
     width: 52px !important;
