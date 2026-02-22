@@ -154,7 +154,8 @@
                   buttons[0].click();
                   window.__animateBtn(buttons[0]);
               };
-  
+              window.__autoPlayDefAudio = window.__playLockedDefAudio;
+
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
@@ -947,7 +948,8 @@
             primaryBtns[0].click();
             window.__animateBtn(primaryBtns[0]);
           };
-  
+          window.__autoPlayDefAudio = window.__playLockedDefAudio;
+
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
@@ -977,7 +979,9 @@
   
           var singleShown = (singleType === 'bilingual' && !window.__monoUnlocked) ||
                              (singleType === 'monolingual' && !!window.__monoUnlocked);
-          if (!singleShown) {
+          if (singleShown) {
+            window.__autoPlayDefAudio = window.__playLockedDefAudio;
+          } else {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {

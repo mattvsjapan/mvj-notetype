@@ -370,6 +370,16 @@ span.empty { display: none; }
     white-space: nowrap;
 }
 
+/* Playing state — keeps accent colors while audio is playing */
+.replay-button.playing svg circle {
+    fill: var(--bg-surface-hover);
+    stroke: var(--accent-glow);
+}
+
+.replay-button.playing svg path {
+    fill: var(--accent);
+}
+
 /* Front entrance */
 .fi {
     animation: fadeIn 0.5s var(--spring) both;
