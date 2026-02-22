@@ -22,7 +22,7 @@ Consolidate all audio item creation into `createAudioItem()`. Add `data-def-role
 |------|--------|-------|
 | Chinese | DONE | Data attributes on dual-def items, simplified bottom-row cloning, CSS ordering. |
 | Japanese | DONE | No def audio — only added data-attr copying to bottom-row cloning and CSS order rules. |
-| MVJ | NOT STARTED | Most complex — 4 audio code paths, tategaki ordering, dual-def reversal. |
+| MVJ | DONE | Most complex — 4 audio code paths, tategaki ordering, dual-def reversal. |
 
 ### Phase 3: Settings system
 Add CSS-variable-driven settings for front/back positioning of elements. Implement `data-position` attributes and corresponding CSS rules.
@@ -112,6 +112,28 @@ Record what was done in each session so the next context window has a worked exa
 - All audio creation, cloning, playback, and keyboard handling unchanged
 
 **Gotchas:** None. No `[data-font="zh"]` needed — MVJ only has JP monolingual definitions, never Chinese.
+
+#### 2026-02-22 — MVJ card Phase 2
+
+**Files modified:** `mvj/back.html`, `mvj/css.css`
+
+**What changed in `back.html`:**
+- Tagged native dual path (`makeNativeDefItem`): Added `defRole` and `defLang` parameters. Function now sets `data-def-role` and `data-def-lang` on the item. Call sites changed from conditional insertion order to consistent order (Bi-Def first, Mono-Def second) with role/lang attributes determined by `window.__monoUnlocked`.
+- Tagged `[audio:]` dual path (`makeDefItem`): Same pattern — added `defRole` and `defLang` parameters, sets both data attributes. Call sites changed to consistent insertion order with ternary-driven attributes and audio element assignment.
+- Bottom-row cloning: Removed `defItems`/`otherItems` separation and `defItems[1], defItems[0]` reversal. Now queries all `.audio-row .audio-item` directly. Clone creation copies all `data-*` attributes from the original item via attribute iteration.
+- Simple paths (untagged single-def `[audio:]` and `[sound:]`): No changes — they already set `data-audio="def"` and `data-def-role` is correctly omitted for single-def items.
+
+**What changed in `css.css`:**
+- Added CSS `order` rules for `.audio-row-bottom` before the bottom audio row section (same as Chinese/Japanese cards).
+- Replaced single `.tategaki .audio-row-bottom .audio-item[data-audio="def"] { order: 1; }` rule with explicit ordering for word (0), sentence (1), primary/single def (2), secondary def (3). Tategaki rules (specificity 0-4-0) override non-tategaki rules (0-3-0).
+
+**What JS still does (unchanged):**
+- All playback logic (`playSingle`, `playAll`, `playGroup`, `__playLockedDefAudio`, `__autoPlayDefAudio`)
+- Toggle listeners, keyboard handlers
+- Untagged and single-def audio paths (no `data-def-role` needed)
+- Auto-play deferred via `setTimeout(fn, 0)`
+
+**Gotchas:** None.
 
 #### 2026-02-22 — Chinese card Phase 2
 
