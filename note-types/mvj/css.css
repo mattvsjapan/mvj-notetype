@@ -946,6 +946,9 @@ html.tategaki:has(.back) {
     .tategaki .card-inner {
         min-height: calc(100dvh - 40px);
     }
+    .tategaki .front {
+        padding-top: 0;
+    }
 }
 
 /* Audio column — rightmost panel (first in R→L flex) */
@@ -1024,7 +1027,8 @@ html.tategaki:has(.back) {
     flex-basis: 0;
     row-gap: 12px;
     column-gap: clamp(16px, 8vw, 40px);
-    margin: 0 12px 0 0;
+    margin: 0 12px 12px 0;
+    background: rgba(255, 0, 0, 0.25);
 }
 
 .tategaki .def-audio-row .audio-item {
@@ -1047,14 +1051,14 @@ html.tategaki:has(.back) {
 
 .tategaki .image-wrap {
     width: auto;
-    margin: 12px 12px 0 0;
+    margin: 0 12px 0 0;
 }
 
 .tategaki .image-wrap img {
     width: auto !important;
     min-width: auto;
     height: auto;
-    max-height: 250px;
+    max-height: min(250px, calc(100vh - 168px));
 }
 
 /* Sentence — right after audio buttons */
