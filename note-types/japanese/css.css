@@ -655,6 +655,13 @@ rt {
     text-align: left;
 }
 
+/* Audio item ordering — bottom row (mobile) */
+.audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 0; }
+.audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
+.audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 1; }
+.audio-row-bottom .audio-item[data-audio="word"] { order: 2; }
+.audio-row-bottom .audio-item[data-audio="sentence"] { order: 3; }
+
 /* Bottom audio row — mobile only duplicate */
 
 .audio-row-bottom {

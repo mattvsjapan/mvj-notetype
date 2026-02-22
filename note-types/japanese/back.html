@@ -164,6 +164,12 @@ function _renderBack() {
       (function(origItem) {
         var clone = document.createElement('div');
         clone.className = 'audio-item';
+        var attrs = origItem.attributes;
+        for (var ai = 0; ai < attrs.length; ai++) {
+          if (attrs[ai].name.indexOf('data-') === 0) {
+            clone.setAttribute(attrs[ai].name, attrs[ai].value);
+          }
+        }
         var origBtn = origItem.querySelector('.replay-button');
         if (!origBtn) return;
         var btn = document.createElement('a');

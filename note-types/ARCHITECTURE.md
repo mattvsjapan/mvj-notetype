@@ -21,7 +21,7 @@ Consolidate all audio item creation into `createAudioItem()`. Add `data-def-role
 | Card | Status | Notes |
 |------|--------|-------|
 | Chinese | DONE | Data attributes on dual-def items, simplified bottom-row cloning, CSS ordering. |
-| Japanese | NOT STARTED | Simpler — single def audio, basic bottom-row mirroring. |
+| Japanese | DONE | No def audio — only added data-attr copying to bottom-row cloning and CSS order rules. |
 | MVJ | NOT STARTED | Most complex — 4 audio code paths, tategaki ordering, dual-def reversal. |
 
 ### Phase 3: Settings system
@@ -135,6 +135,26 @@ Record what was done in each session so the next context window has a worked exa
 - Untagged and single-def audio paths (no `data-def-role` needed)
 
 **Gotchas:** None. No top-row ordering needed — DOM order is already correct for desktop.
+
+#### 2026-02-22 — Japanese card Phase 2
+
+**Files modified:** `japanese/back.html`, `japanese/css.css`
+
+**What changed in `back.html`:**
+- Bottom-row cloning (lines 165-171): Added `data-*` attribute copying loop after creating the clone div. Iterates `origItem.attributes` and copies any attribute whose name starts with `data-` to the clone. No other changes — Japanese has no definition audio, so no `data-def-role`/`data-def-lang` attributes to add to audio items.
+
+**What changed in `css.css`:**
+- Added CSS `order` rules for `.audio-row-bottom` before the bottom audio row section:
+  - `[data-audio="def"][data-def-role="secondary"]` → order 0
+  - `[data-audio="def"][data-def-role="primary"]` and `:not([data-def-role])` → order 1
+  - `[data-audio="word"]` → order 2
+  - `[data-audio="sentence"]` → order 3
+
+**What JS still does (unchanged):**
+- All audio extraction, button creation, playback logic, keyboard handlers
+- No `data-audio` attributes exist on Japanese audio items, so CSS order rules don't match anything yet
+
+**Gotchas:** None. Simplest Phase 2 migration — no definition audio means no tagging needed, just future-proofing the clone path and CSS.
 
 ---
 
