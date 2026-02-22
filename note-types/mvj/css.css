@@ -1086,6 +1086,14 @@ html.tategaki:has(.back) {
     height: 100%;
 }
 
+@media (hover: none) {
+    .tategaki .sentence rt {
+        transform: translate(-7px, 1px);
+        font-size: 0.57em;
+        letter-spacing: 0.1em;
+    }
+}
+
 /* Definition — placed right after audio buttons in R→L flow */
 .tategaki .def {
     margin: 0;
