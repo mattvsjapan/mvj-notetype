@@ -1045,15 +1045,17 @@ html.tategaki:has(.back) {
     column-gap: clamp(16px, 8vw, 40px);
     margin: 0 12px 12px 0;
     will-change: transform;
+    direction: rtl;
 }
 
 .tategaki .mid-audio-row .audio-item {
     gap: 6px;
+    direction: ltr;
 }
-.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: -2; }
-.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: -1; }
-.tategaki .mid-audio-row .audio-item[data-audio="word"] { order: 0; }
-.tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: 1; }
+.tategaki .mid-audio-row .audio-item[data-audio="word"] { order: -2; }
+.tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: -1; }
+.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: 0; }
+.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
 
 .tategaki .mid-audio-row .replay-button {
     width: 52px !important;
