@@ -17,6 +17,12 @@
 </div>
 
 <script>
+// Tategaki mode — read CSS variable and add class before any rendering
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--tategaki');
+    if (v && v.trim() === 'on') document.documentElement.classList.add('tategaki');
+})();
+
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
     var ci = document.querySelector('.card-inner');

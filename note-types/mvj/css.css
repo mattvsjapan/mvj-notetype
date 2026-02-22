@@ -40,6 +40,8 @@
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+    /* Options */
+    --tategaki: off;   /* "on" = vertical writing, "off" = horizontal (default) */
 }
 
 /* — Anki page background —
@@ -756,9 +758,15 @@ rt {
     }
 }
 
+/* Word column — wraps target-word, pitch-graph, image; invisible in normal mode */
+.word-column {
+    display: contents;
+}
+
 /* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
 
-.answer > [style*="--d"] {
+.answer > [style*="--d"],
+.word-column > [style*="--d"] {
     opacity: 0;
 }
 
@@ -778,8 +786,193 @@ rt {
     }
 }
 
+/* ================================================
+   TATEGAKI (vertical writing) mode
+   ================================================ */
+
+/* Card shrinks to fit content horizontally in vertical writing mode */
+.tategaki .card-inner {
+    max-width: none;
+    width: fit-content;
+    height: min(calc(100vh - 80px), 700px);
+}
+
+.tategaki .card-inner:not(:has(> .back)) {
+    display: flex;
+    flex-direction: column;
+}
+
+.tategaki .card-inner:has(> .back) {
+    overflow: visible;
+}
+
+/* Re-assert display:contents on FrontSide's inner card-inner */
+.tategaki .back > .card-inner {
+    display: contents;
+}
+
+/* Front — vertically center audio row, push to right */
+.tategaki .front {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 1;
+}
+
+.tategaki .front .audio-row {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0;
+}
+
+/* Back — hide the top audio row (audio-row-bottom takes over) */
+.tategaki .back .front .audio-row {
+    display: none;
+}
+
+/* Answer — flex layout: audio right, content left */
+.tategaki .answer {
+    writing-mode: vertical-rl;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: min(calc(100vh - 260px), 520px);
+    margin-top: 24px;
+    padding-bottom: 0;
+}
+
+@media (hover: none) {
+    .tategaki .card-inner {
+        min-height: calc(100dvh - 40px);
+    }
+    .tategaki .answer {
+        height: calc(100dvh - 180px);
+        margin-top: 0;
+    }
+}
+
+/* Audio column — rightmost panel (order: -1 = first in R→L flex) */
+.tategaki .audio-row-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    writing-mode: horizontal-tb;
+    order: -1;
+    gap: 12px;
+    margin: 0;
+    align-self: center;
+}
+
+.tategaki .audio-row-bottom .audio-item .replay-button {
+    width: 50px !important;
+    height: 50px !important;
+}
+
+.tategaki .audio-row-bottom .audio-item .replay-button svg {
+    width: 50px !important;
+    height: 50px !important;
+}
+
+.tategaki .audio-row-bottom .audio-label {
+    font-size: 9px;
+}
+
+/* Word column — horizontal stack of word, graph, image (like old-tategaki) */
+.tategaki .word-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    writing-mode: horizontal-tb;
+    align-self: flex-start;
+}
+
+.tategaki .target-word {
+    letter-spacing: 0;
+    margin: 0;
+    margin-bottom: 12px;
+}
+
+.tategaki .pitch-graph {
+    margin: 0;
+    margin-bottom: 14px;
+}
+
+.tategaki .image-wrap {
+    width: auto;
+    margin: 0;
+}
+
+.tategaki .image-wrap img {
+    width: auto !important;
+    min-width: auto;
+    height: auto;
+    max-height: 200px;
+}
+
+/* Sentence */
+.tategaki .sentence {
+    text-align: start;
+    margin: 0;
+}
+
+/* Definition */
+.tategaki .def {
+    margin: 0;
+}
+
+/* JP def section */
+.tategaki .jp-def-section {
+    margin: 0;
+    margin-block-start: 16px;
+}
+
+@media (hover: none) {
+    .tategaki .jp-def-section {
+        text-align: start;
+    }
+}
+
+.tategaki .jp-def-toggle {
+    writing-mode: horizontal-tb;
+}
+
+/* Divider — vertical in tategaki */
+.tategaki .divider {
+    width: 1px;
+    height: auto;
+    background: linear-gradient(180deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
+    margin: 0;
+}
+
+/* Disable entrance animations (translateY is wrong axis for vertical layout) */
+.tategaki .fi,
+.tategaki .ri {
+    animation: none;
+    opacity: 1;
+}
+
+.tategaki .answer > [style*="--d"],
+.tategaki .word-column > [style*="--d"] {
+    opacity: 1;
+}
+
+.tategaki .back .audio-item,
+.tategaki .back .audio-item .replay-button svg,
+.tategaki .back .audio-item .replay-button img,
+.tategaki .back .audio-label,
+.tategaki .back .audio-item.bi {
+    animation: none;
+}
+
+/* Full-width digits — helper for tategaki JS */
+.tategaki .hor {
+    writing-mode: horizontal-tb;
+    display: inline;
+}
+
 /* AnkiDroid: disable all back-side animations (WebView performance) */
-.android .answer > [style*="--d"] {
+.android .answer > [style*="--d"],
+.android .word-column > [style*="--d"] {
     opacity: 1;
 }
 

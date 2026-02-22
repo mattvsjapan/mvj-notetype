@@ -1,1350 +1,1404 @@
 <div class="card-inner">
-<div class="back">
-    {{FrontSide}}
-
-    {{#Definition Audio}}
-    <div id="def-audio-container" style="display:none">{{Definition Audio}}</div>
-    {{/Definition Audio}}
-
-    <script>
-    (function() {
-        // Clear stale state from previous card (Anki reuses the webview)
-        window.__defAudioRawHtml = null;
-        window.__defAudioNativeContainer = null;
-        window.__defAudioEls = [];
-        window.__monoUnlocked = false;
-        window.__autoPlayDefAudio = null;
-        window.__playLockedDefAudio = null;
-
-        var container = document.getElementById('def-audio-container');
-        if (!container) return;
-
-        // Tagged definition audio: defer to _renderBack()
-        if (container.innerHTML.indexOf('def-type="') !== -1) {
-            if (container.textContent.indexOf('[audio:') !== -1) {
-                window.__defAudioRawHtml = container.innerHTML;
-                container.remove();
-            } else {
-                window.__defAudioNativeContainer = container;
-            }
-            return;
-        }
-
-        // Check for [audio:] custom tags vs [sound:] native tags
-        if (container.textContent.indexOf('[audio:') !== -1) {
-            // [audio:] — JS playback path
-            var result = window.__extractAudio(container);
-            var filenames = result.filenames;
-            container.remove();
-            if (!filenames.length) return;
-
-            var SVG = window.__audioSVG;
-            var audioRow = document.querySelector('.audio-row');
-            var audios = [];
-            var btns = [];
-
-            var item = document.createElement('div');
-            item.className = 'audio-item bi';
-            item.setAttribute('data-audio', 'def');
-
-            for (var i = 0; i < filenames.length; i++) {
-                var audio = document.createElement('audio');
-                audio.preload = 'auto';
-                audio.src = filenames[i];
-                document.body.appendChild(audio);
-                audios.push(audio);
-                window.__defAudioEls.push(audio);
-
-                var btn = document.createElement('a');
-                btn.className = 'replay-button';
-                btn.href = '#';
-                btn.innerHTML = SVG;
-                item.appendChild(btn);
-                btns.push(btn);
-            }
-
-            var label = document.createElement('span');
-            label.className = 'audio-label';
-            label.textContent = 'Definition';
-            item.appendChild(label);
-            if (audioRow) audioRow.appendChild(item);
-
-            var animateBtn = window.__animateBtn;
-
-            function playSingle(idx) {
-                if (window.matchMedia('(hover: none)').matches) {
-                    window.__stopAllAudio();
-                    var fa = window.__freshPlay(audios[idx].src, btns[idx]);
-                    animateBtn(btns[idx]);
-                    window.__startPlaying(fa, btns[idx]);
-                } else {
-                    window.__stopAllAudio(audios[idx]);
-                    audios[idx].currentTime = 0;
-                    window.__safePlay(audios[idx]);
-                    animateBtn(btns[idx]);
-                    window.__startPlaying(audios[idx], btns[idx]);
-                }
-            }
-
-            function playAll() {
-                window.__stopAllAudio(audios[0]);
-                var idx = 0;
-                function playNext() {
-                    if (idx >= audios.length) return;
-                    var cur = idx++;
-                    audios[cur].currentTime = 0;
-                    audios[cur].onended = playNext;
-                    window.__safePlay(audios[cur]);
-                    animateBtn(btns[cur]);
-                    window.__startPlaying(audios[cur], btns[cur]);
-                }
-                playNext();
-            }
-
-            for (var j = 0; j < btns.length; j++) {
-                (function(idx) {
-                    window.__onTap(btns[idx], function() { playSingle(idx); });
-                })(j);
-            }
-
-            window.__playLockedDefAudio = playAll;
-            window.__autoPlayDefAudio = playAll;
-
-            var toggle = document.getElementById('jp-toggle');
-            if (toggle) {
-                toggle.addEventListener('change', function() {
-                    if (toggle.checked && !window.__monoUnlocked) playAll();
-                });
-            }
-        } else {
-            // [sound:] — adopt native elements
-            var nativeEls = Array.from(container.querySelectorAll('.replay-button, audio'));
-            var buttons = window.__adoptNativeAudio(nativeEls);
-            container.remove();
-            if (!buttons.length) return;
-
-            var audioRow = document.querySelector('.audio-row');
-            var item = document.createElement('div');
-            item.className = 'audio-item bi';
-            item.setAttribute('data-audio', 'def');
-            for (var i = 0; i < buttons.length; i++) {
-                item.appendChild(buttons[i]);
-            }
-            var label = document.createElement('span');
-            label.className = 'audio-label';
-            label.textContent = 'Definition';
-            item.appendChild(label);
-            if (audioRow) audioRow.appendChild(item);
-
-            window.__playLockedDefAudio = function() {
-                buttons[0].click();
-                window.__animateBtn(buttons[0]);
-            };
-
-            var toggle = document.getElementById('jp-toggle');
-            if (toggle) {
-                toggle.addEventListener('change', function() {
-                    if (toggle.checked && !window.__monoUnlocked) buttons[0].click();
-                });
-            }
-        }
-    })();
-    </script>
-    <div class="answer">
-        <h1 class="target-word" style="--d:0" id="target-word"></h1>
-        <div class="pitch-graph" style="--d:50" id="pitch-graph"></div>
-        <p class="sentence" style="--d:95" id="sentence"></p>
-        {{#Image}}
-        <div class="image-wrap" style="--d:135">{{Image}}</div>
-        {{/Image}}
-        <div class="audio-row-bottom" id="audio-row-bottom" style="--d:150"></div>
-        <p class="def" style="--d:170" id="def-bilingual"></p>
-        <div class="jp-def-section" style="--d:225" id="jp-def-section">
-            <input type="checkbox" id="jp-toggle" class="jp-def-input">
-            <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
-            <div class="jp-def-wrap">
-                <p class="jp-def" id="def-monolingual"></p>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-
-<div id="raw-word" style="display:none">{{Word}}</div>
-<div id="raw-sentence" style="display:none">{{Sentence}}</div>
-<div id="raw-definition" style="display:none">{{Definition}}</div>
-
-<script>
-(function() {
-// ── config.js ──
-const config = {
-  no_text: false, size_unit: 25, font_size: 24, text_dx: -12,
-  x_step: 50, circle_radius: 5.25, devoiced_circle_width: 1.5,
-  devoiced_circle_radius: 17, devoiced_stroke_disarray: "2 3",
-  devoiced_rectangle_padding: 5, stroke_width: 2.5, graph_height: 40,
-  graph_visible_height: 100, graph_horizontal_padding: 6,
-  graph_font: "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
-  convert_reading: 'katakana', stroke_dasharray: '4',
-};
-
-// ── kana.js ──
-const _hiragana = [
-  'が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど',
-  'ば','び','ぶ','べ','ぼ','ぱ','ぴ','ぷ','ぺ','ぽ','あ','い','う','え','お',
-  'か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と',
-  'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も',
-  'や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','ぁ','ぃ','ぅ','ぇ','ぉ',
-  'ゃ','ゅ','ょ','っ',
-];
-const _katakana = [
-  'ガ','ギ','グ','ゲ','ゴ','ザ','ジ','ズ','ゼ','ゾ','ダ','ヂ','ヅ','デ','ド',
-  'バ','ビ','ブ','ベ','ボ','パ','ピ','プ','ペ','ポ','ア','イ','ウ','エ','オ',
-  'カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','タ','チ','ツ','テ','ト',
-  'ナ','ニ','ヌ','ネ','ノ','ハ','ヒ','フ','ヘ','ホ','マ','ミ','ム','メ','モ',
-  'ヤ','ユ','ヨ','ラ','リ','ル','レ','ロ','ワ','ヲ','ン','ァ','ィ','ゥ','ェ','ォ',
-  'ャ','ュ','ョ','ッ',
-];
-const k2h = {}, h2k = {};
-_katakana.forEach((k, i) => { k2h[k] = _hiragana[i]; h2k[_hiragana[i]] = k; });
-
-function toHiragana(s) { return [...s].map(c => k2h[c] || c).join(''); }
-function toKatakana(s) { return [...s].map(c => h2k[c] || c).join(''); }
-
-const EQ_SOUNDS_HIRA = {
-  'ぢ':'じ','づ':'ず','を':'お','れい':'れー','めい':'めー','べい':'べー',
-  'けい':'けー','ぐう':'ぐー','ごう':'ごー','ずう':'ずー','づう':'ずー',
-  'づー':'ずー','ぞう':'ぞー','どう':'どー','どお':'どー','ぶう':'ぶー',
-  'ぼう':'ぼー','ぷう':'ぷー','ぽう':'ぽー','うう':'うー','おう':'おー',
-  'おお':'おー','くう':'くー','こう':'こー','すう':'すー','そう':'そー',
-  'つう':'つー','とう':'とー','とお':'とー','こお':'こー','ぬう':'ぬー',
-  'のう':'のー','ふう':'ふー','ほう':'ほー','ほお':'ほー','むう':'むー',
-  'もう':'もー','よう':'よー','るう':'るー','ろう':'ろー','ぅう':'ぅー',
-  'ぉう':'ぉー','ょう':'ょー','ゆう':'ゆー','いい':'いー','ちい':'ちー',
-  'せい':'せー','じい':'じー','かあ':'かー','ゅう':'ゅー','ぜい':'ぜー',
-  'きい':'きー','しい':'しー','にい':'にー','ひい':'ひー','みい':'みー',
-  'りい':'りー','ぎい':'ぎー','びい':'びー','ぴい':'ぴー',
-  'えい':'えー','てい':'てー','ねい':'ねー','へい':'へー',
-  'でい':'でー','げい':'げー','ぺい':'ぺー',
-  'つづ':'つず','じゃあ':'じゃー',
-};
-const EQUIVALENT_SOUNDS = {...EQ_SOUNDS_HIRA};
-for (const [k, v] of Object.entries(EQ_SOUNDS_HIRA)) {
-  EQUIVALENT_SOUNDS[toKatakana(k)] = toKatakana(v);
-}
-
-function unifyRepr(reading) {
-  for (const [k, v] of Object.entries(EQUIVALENT_SOUNDS)) {
-    reading = reading.replaceAll(k, v);
+  <div class="back">
+      {{FrontSide}}
+  
+      {{#Definition Audio}}
+      <div id="def-audio-container" style="display:none">{{Definition Audio}}</div>
+      {{/Definition Audio}}
+  
+      <script>
+      (function() {
+          // Clear stale state from previous card (Anki reuses the webview)
+          window.__defAudioRawHtml = null;
+          window.__defAudioNativeContainer = null;
+          window.__defAudioEls = [];
+          window.__monoUnlocked = false;
+          window.__autoPlayDefAudio = null;
+          window.__playLockedDefAudio = null;
+  
+          var container = document.getElementById('def-audio-container');
+          if (!container) return;
+  
+          // Tagged definition audio: defer to _renderBack()
+          if (container.innerHTML.indexOf('def-type="') !== -1) {
+              if (container.textContent.indexOf('[audio:') !== -1) {
+                  window.__defAudioRawHtml = container.innerHTML;
+                  container.remove();
+              } else {
+                  window.__defAudioNativeContainer = container;
+              }
+              return;
+          }
+  
+          // Check for [audio:] custom tags vs [sound:] native tags
+          if (container.textContent.indexOf('[audio:') !== -1) {
+              // [audio:] — JS playback path
+              var result = window.__extractAudio(container);
+              var filenames = result.filenames;
+              container.remove();
+              if (!filenames.length) return;
+  
+              var SVG = window.__audioSVG;
+              var audioRow = document.querySelector('.audio-row');
+              var audios = [];
+              var btns = [];
+  
+              var item = document.createElement('div');
+              item.className = 'audio-item bi';
+              item.setAttribute('data-audio', 'def');
+  
+              for (var i = 0; i < filenames.length; i++) {
+                  var audio = document.createElement('audio');
+                  audio.preload = 'auto';
+                  audio.src = filenames[i];
+                  document.body.appendChild(audio);
+                  audios.push(audio);
+                  window.__defAudioEls.push(audio);
+  
+                  var btn = document.createElement('a');
+                  btn.className = 'replay-button';
+                  btn.href = '#';
+                  btn.innerHTML = SVG;
+                  item.appendChild(btn);
+                  btns.push(btn);
+              }
+  
+              var label = document.createElement('span');
+              label.className = 'audio-label';
+              label.textContent = 'Definition';
+              item.appendChild(label);
+              if (audioRow) audioRow.appendChild(item);
+  
+              var animateBtn = window.__animateBtn;
+  
+              function playSingle(idx) {
+                  if (window.matchMedia('(hover: none)').matches) {
+                      window.__stopAllAudio();
+                      var fa = window.__freshPlay(audios[idx].src, btns[idx]);
+                      animateBtn(btns[idx]);
+                      window.__startPlaying(fa, btns[idx]);
+                  } else {
+                      window.__stopAllAudio(audios[idx]);
+                      audios[idx].currentTime = 0;
+                      window.__safePlay(audios[idx]);
+                      animateBtn(btns[idx]);
+                      window.__startPlaying(audios[idx], btns[idx]);
+                  }
+              }
+  
+              function playAll() {
+                  window.__stopAllAudio(audios[0]);
+                  var idx = 0;
+                  function playNext() {
+                      if (idx >= audios.length) return;
+                      var cur = idx++;
+                      audios[cur].currentTime = 0;
+                      audios[cur].onended = playNext;
+                      window.__safePlay(audios[cur]);
+                      animateBtn(btns[cur]);
+                      window.__startPlaying(audios[cur], btns[cur]);
+                  }
+                  playNext();
+              }
+  
+              for (var j = 0; j < btns.length; j++) {
+                  (function(idx) {
+                      window.__onTap(btns[idx], function() { playSingle(idx); });
+                  })(j);
+              }
+  
+              window.__playLockedDefAudio = playAll;
+              window.__autoPlayDefAudio = playAll;
+  
+              var toggle = document.getElementById('jp-toggle');
+              if (toggle) {
+                  toggle.addEventListener('change', function() {
+                      if (toggle.checked && !window.__monoUnlocked) playAll();
+                  });
+              }
+          } else {
+              // [sound:] — adopt native elements
+              var nativeEls = Array.from(container.querySelectorAll('.replay-button, audio'));
+              var buttons = window.__adoptNativeAudio(nativeEls);
+              container.remove();
+              if (!buttons.length) return;
+  
+              var audioRow = document.querySelector('.audio-row');
+              var item = document.createElement('div');
+              item.className = 'audio-item bi';
+              item.setAttribute('data-audio', 'def');
+              for (var i = 0; i < buttons.length; i++) {
+                  item.appendChild(buttons[i]);
+              }
+              var label = document.createElement('span');
+              label.className = 'audio-label';
+              label.textContent = 'Definition';
+              item.appendChild(label);
+              if (audioRow) audioRow.appendChild(item);
+  
+              window.__playLockedDefAudio = function() {
+                  buttons[0].click();
+                  window.__animateBtn(buttons[0]);
+              };
+  
+              var toggle = document.getElementById('jp-toggle');
+              if (toggle) {
+                  toggle.addEventListener('change', function() {
+                      if (toggle.checked && !window.__monoUnlocked) buttons[0].click();
+                  });
+              }
+          }
+      })();
+      </script>
+      <div class="answer">
+          <div class="word-column">
+              <h1 class="target-word" style="--d:0" id="target-word"></h1>
+              <div class="pitch-graph" style="--d:50" id="pitch-graph"></div>
+              {{#Image}}
+              <div class="image-wrap" style="--d:135">{{Image}}</div>
+              {{/Image}}
+          </div>
+          <p class="sentence" style="--d:95" id="sentence"></p>
+          <div class="audio-row-bottom" id="audio-row-bottom" style="--d:150"></div>
+          <p class="def" style="--d:170" id="def-bilingual"></p>
+          <div class="jp-def-section" style="--d:225" id="jp-def-section">
+              <input type="checkbox" id="jp-toggle" class="jp-def-input">
+              <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
+              <div class="jp-def-wrap">
+                  <p class="jp-def" id="def-monolingual"></p>
+              </div>
+          </div>
+      </div>
+  </div>
+  </div>
+  
+  <div id="raw-word" style="display:none">{{Word}}</div>
+  <div id="raw-sentence" style="display:none">{{Sentence}}</div>
+  <div id="raw-definition" style="display:none">{{Definition}}</div>
+  
+  <script>
+  (function() {
+  // ── config.js ──
+  const config = {
+    no_text: false, size_unit: 25, font_size: 24, text_dx: -12,
+    x_step: 50, circle_radius: 5.25, devoiced_circle_width: 1.5,
+    devoiced_circle_radius: 17, devoiced_stroke_disarray: "2 3",
+    devoiced_rectangle_padding: 5, stroke_width: 2.5, graph_height: 40,
+    graph_visible_height: 100, graph_horizontal_padding: 6,
+    graph_font: "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
+    convert_reading: 'katakana', stroke_dasharray: '4',
+  };
+  
+  // ── kana.js ──
+  const _hiragana = [
+    'が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど',
+    'ば','び','ぶ','べ','ぼ','ぱ','ぴ','ぷ','ぺ','ぽ','あ','い','う','え','お',
+    'か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と',
+    'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も',
+    'や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','ぁ','ぃ','ぅ','ぇ','ぉ',
+    'ゃ','ゅ','ょ','っ',
+  ];
+  const _katakana = [
+    'ガ','ギ','グ','ゲ','ゴ','ザ','ジ','ズ','ゼ','ゾ','ダ','ヂ','ヅ','デ','ド',
+    'バ','ビ','ブ','ベ','ボ','パ','ピ','プ','ペ','ポ','ア','イ','ウ','エ','オ',
+    'カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','タ','チ','ツ','テ','ト',
+    'ナ','ニ','ヌ','ネ','ノ','ハ','ヒ','フ','ヘ','ホ','マ','ミ','ム','メ','モ',
+    'ヤ','ユ','ヨ','ラ','リ','ル','レ','ロ','ワ','ヲ','ン','ァ','ィ','ゥ','ェ','ォ',
+    'ャ','ュ','ョ','ッ',
+  ];
+  const k2h = {}, h2k = {};
+  _katakana.forEach((k, i) => { k2h[k] = _hiragana[i]; h2k[_hiragana[i]] = k; });
+  
+  function toHiragana(s) { return [...s].map(c => k2h[c] || c).join(''); }
+  function toKatakana(s) { return [...s].map(c => h2k[c] || c).join(''); }
+  
+  const EQ_SOUNDS_HIRA = {
+    'ぢ':'じ','づ':'ず','を':'お','れい':'れー','めい':'めー','べい':'べー',
+    'けい':'けー','ぐう':'ぐー','ごう':'ごー','ずう':'ずー','づう':'ずー',
+    'づー':'ずー','ぞう':'ぞー','どう':'どー','どお':'どー','ぶう':'ぶー',
+    'ぼう':'ぼー','ぷう':'ぷー','ぽう':'ぽー','うう':'うー','おう':'おー',
+    'おお':'おー','くう':'くー','こう':'こー','すう':'すー','そう':'そー',
+    'つう':'つー','とう':'とー','とお':'とー','こお':'こー','ぬう':'ぬー',
+    'のう':'のー','ふう':'ふー','ほう':'ほー','ほお':'ほー','むう':'むー',
+    'もう':'もー','よう':'よー','るう':'るー','ろう':'ろー','ぅう':'ぅー',
+    'ぉう':'ぉー','ょう':'ょー','ゆう':'ゆー','いい':'いー','ちい':'ちー',
+    'せい':'せー','じい':'じー','かあ':'かー','ゅう':'ゅー','ぜい':'ぜー',
+    'きい':'きー','しい':'しー','にい':'にー','ひい':'ひー','みい':'みー',
+    'りい':'りー','ぎい':'ぎー','びい':'びー','ぴい':'ぴー',
+    'えい':'えー','てい':'てー','ねい':'ねー','へい':'へー',
+    'でい':'でー','げい':'げー','ぺい':'ぺー',
+    'つづ':'つず','じゃあ':'じゃー',
+  };
+  const EQUIVALENT_SOUNDS = {...EQ_SOUNDS_HIRA};
+  for (const [k, v] of Object.entries(EQ_SOUNDS_HIRA)) {
+    EQUIVALENT_SOUNDS[toKatakana(k)] = toKatakana(v);
   }
-  return reading;
-}
-function literalPronunciation(text) { return toKatakana(unifyRepr(text)); }
-
-// ── parse.js ──
-const GHOST_PARTICLE = '-';
-const DEVOICED_PREFIX = '*';
-const LITERAL_PREFIX = '\\';
-const HIGH_PREFIX = '^';
-const SENT_HIDDEN = ['|', GHOST_PARTICLE];
-const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
-
-function normalizeForParsing(expr) {
-  expr = expr.replace(/\//g, ';');
-  expr = expr.replace(/<br>/gi, ' . ');
-  expr = expr.replace(/<[^<>]+>/gi, '');
-  expr = expr.replace(/([。!?！？])/g, ' $1 .');
-  expr = expr.replace(/([「」|、､])/g, ' $1 ');
-  expr = expr.replace(/([^ ]), /g, ' $1 , ');
-  return expr;
-}
-
-function splitToSentences(expr) {
-  return expr.split(/[.\n]+/).map(s => s.trim()).filter(Boolean);
-}
-
-function splitToSections(sentence) {
-  return sentence.split(/[\t\s\u3000]+/).filter(Boolean);
-}
-
-function detachGhostParticle(text) {
-  return text.replace(/(-+)[\s\n.]*$/, ' $1');
-}
-
-function furiganaToReading(word) {
-  return word.split(' ').map(part => {
-    part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
-    return part.replace(/([^\[\]]*\[|])/g, '');
-  }).join('');
-}
-
-function filterKana(reading) {
-  return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\-\\\^]/g, '');
-}
-
-function kanaToMoraes(kana) {
-  return kana.match(/(?:[\*\\\^]{1,3})?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
-}
-
-function splitToMoras(reading) {
-  const kana = filterKana(reading);
-  const raw = kanaToMoraes(kana);
-  return raw.map(m => {
-    let devoiced = false, literal = false, high = false;
-    while (m.length > 0) {
-      if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
-      else if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
-      else if (m.startsWith(HIGH_PREFIX)) { high = true; m = m.slice(1); }
-      else break;
+  
+  function unifyRepr(reading) {
+    for (const [k, v] of Object.entries(EQUIVALENT_SOUNDS)) {
+      reading = reading.replaceAll(k, v);
     }
-    return { text: m, devoiced, literal, high };
-  });
-}
-
-function splitSection(raw) {
-  const m = raw.match(/^([^:]+)(:)?(.*)$/);
-  if (m) return { word: m[1], sep: m[2] || null, accent: m[3] || '' };
-  return { word: raw, sep: null, accent: '' };
-}
-
-function splitAccent(raw) {
-  if (!raw && raw !== '') raw = '';
-  let m = raw.match(/^(p)?([a-zA-Z])?(~)?(\d)?(~)?$/);
-  if (m) {
-    return {
-      is_particle: m[1] || null,
-      role: m[2] || m[1] || null,
-      allLow: !!(m[3] || m[5]),
-      pitch: m[4] || null,
-    };
+    return reading;
   }
-  m = raw.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
-  if (m) {
-    return { role: m[1], levels: m[2], keihan: true };
+  function literalPronunciation(text) { return toKatakana(unifyRepr(text)); }
+  
+  // ── parse.js ──
+  const GHOST_PARTICLE = '-';
+  const DEVOICED_PREFIX = '*';
+  const LITERAL_PREFIX = '\\';
+  const HIGH_PREFIX = '^';
+  const SENT_HIDDEN = ['|', GHOST_PARTICLE];
+  const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
+  
+  function normalizeForParsing(expr) {
+    expr = expr.replace(/\//g, ';');
+    expr = expr.replace(/<br>/gi, ' . ');
+    expr = expr.replace(/<[^<>]+>/gi, '');
+    expr = expr.replace(/([。!?！？])/g, ' $1 .');
+    expr = expr.replace(/([「」|、､])/g, ' $1 ');
+    expr = expr.replace(/([^ ]), /g, ' $1 , ');
+    return expr;
   }
-  return { role: null, pitch: null };
-}
-
-const SEPARATORS = [';', '|', ',', '、', '-', '「', '」'];
-
-function mergeFragments(sections) {
-  const result = [];
-  let pending = [];
-  for (const raw of sections) {
-    if (SEPARATORS.includes(raw)) {
-      result.push(...pending);
-      pending = [];
-      result.push(raw);
-      continue;
+  
+  function splitToSentences(expr) {
+    return expr.split(/[.\n]+/).map(s => s.trim()).filter(Boolean);
+  }
+  
+  function splitToSections(sentence) {
+    return sentence.split(/[\t\s\u3000]+/).filter(Boolean);
+  }
+  
+  function detachGhostParticle(text) {
+    return text.replace(/(-+)[\s\n.]*$/, ' $1');
+  }
+  
+  function furiganaToReading(word) {
+    return word.split(' ').map(part => {
+      part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
+      return part.replace(/([^\[\]]*\[|])/g, '');
+    }).join('');
+  }
+  
+  function filterKana(reading) {
+    return reading.replace(/[^\u3040-\u309F\u30A0-\u30FF\*\-\\\^]/g, '');
+  }
+  
+  function kanaToMoraes(kana) {
+    return kana.match(/(?:[\*\\\^]{1,3})?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g) || [];
+  }
+  
+  function splitToMoras(reading) {
+    const kana = filterKana(reading);
+    const raw = kanaToMoraes(kana);
+    return raw.map(m => {
+      let devoiced = false, literal = false, high = false;
+      while (m.length > 0) {
+        if (m.startsWith(DEVOICED_PREFIX)) { devoiced = true; m = m.slice(1); }
+        else if (m.startsWith(LITERAL_PREFIX)) { literal = true; m = m.slice(1); }
+        else if (m.startsWith(HIGH_PREFIX)) { high = true; m = m.slice(1); }
+        else break;
+      }
+      return { text: m, devoiced, literal, high };
+    });
+  }
+  
+  function splitSection(raw) {
+    const m = raw.match(/^([^:]+)(:)?(.*)$/);
+    if (m) return { word: m[1], sep: m[2] || null, accent: m[3] || '' };
+    return { word: raw, sep: null, accent: '' };
+  }
+  
+  function splitAccent(raw) {
+    if (!raw && raw !== '') raw = '';
+    let m = raw.match(/^(p)?([a-zA-Z])?(~)?(\d)?(~)?$/);
+    if (m) {
+      return {
+        is_particle: m[1] || null,
+        role: m[2] || m[1] || null,
+        allLow: !!(m[3] || m[5]),
+        pitch: m[4] || null,
+      };
     }
-    const { sep } = splitSection(raw);
-    if (sep == null) {
-      pending.push(raw);
-    } else {
-      if (pending.length) {
-        const merged = [...pending, raw.replace(/:.*$/, '')].join(' ');
-        const accent = raw.replace(/^[^:]*:/, '');
-        result.push(merged + ':' + accent);
+    m = raw.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
+    if (m) {
+      return { role: m[1], levels: m[2], keihan: true };
+    }
+    return { role: null, pitch: null };
+  }
+  
+  const SEPARATORS = [';', '|', ',', '、', '-', '「', '」'];
+  
+  function mergeFragments(sections) {
+    const result = [];
+    let pending = [];
+    for (const raw of sections) {
+      if (SEPARATORS.includes(raw)) {
+        result.push(...pending);
         pending = [];
-      } else {
         result.push(raw);
+        continue;
+      }
+      const { sep } = splitSection(raw);
+      if (sep == null) {
+        pending.push(raw);
+      } else {
+        if (pending.length) {
+          const merged = [...pending, raw.replace(/:.*$/, '')].join(' ');
+          const accent = raw.replace(/^[^:]*:/, '');
+          result.push(merged + ':' + accent);
+          pending = [];
+        } else {
+          result.push(raw);
+        }
       }
     }
+    result.push(...pending);
+    return result;
   }
-  result.push(...pending);
-  return result;
-}
-
-function splitMultiplePitchNotations(sequences) {
-  const result = [];
-  for (const seq of sequences) {
-    const alternatives = seq.map(raw => {
-      const sec = splitSection(raw);
-      if (sec.sep && sec.accent.includes(',')) {
-        return sec.accent.split(',').map(a => `${sec.word}:${a.trim()}`);
+  
+  function splitMultiplePitchNotations(sequences) {
+    const result = [];
+    for (const seq of sequences) {
+      const alternatives = seq.map(raw => {
+        const sec = splitSection(raw);
+        if (sec.sep && sec.accent.includes(',')) {
+          return sec.accent.split(',').map(a => `${sec.word}:${a.trim()}`);
+        }
+        return [raw];
+      });
+      let combos = [[]];
+      for (const alts of alternatives) {
+        combos = combos.flatMap(prev => alts.map(a => [...prev, a]));
       }
-      return [raw];
-    });
-    let combos = [[]];
-    for (const alts of alternatives) {
-      combos = combos.flatMap(prev => alts.map(a => [...prev, a]));
+      result.push(...combos);
     }
-    result.push(...combos);
+    return result;
   }
-  return result;
-}
-
-// ── section.js ──
-const RoleFromValue = {
-  'h':'heiban','a':'atamadaka','n':'nakadaka','o':'odaka','k':'kifuku',
-  'b':'black','w':'white','s':'setsubigo','e':'empty','p':'particle',
-  'H':'keihan_heiban','A':'keihan_atamadaka','N':'keihan_nakadaka',
-  'L':'keihan_low_heiban','M':'keihan_low_nakadaka','O':'keihan_low_odaka',
-  'K':'keihan_kifuku',
-};
-
-function isEmptyParticle(word) { return /^[|,、]$/.test(word); }
-
-function determineRoleKeihan(rawRole) {
-  const val = String(rawRole || 'H');
-  return RoleFromValue[val.toUpperCase()] || RoleFromValue[val.toLowerCase()] || 'keihan_heiban';
-}
-
-function determineLevelsKeihan(levels, moraes) {
-  const arr = [...String(levels).toLowerCase()];
-  while (arr.length < moraes.length) arr.push(arr[arr.length - 1]);
-  return arr;
-}
-
-function guessRoleFromPitchNum(moraes, pitchN) {
-  if (pitchN == null) return 'heiban';
-  const n = parseInt(pitchN);
-  if (n === 0) return 'heiban';
-  if (n === 1) return 'atamadaka';
-  if (n === moraes.length) return 'odaka';
-  if (n < moraes.length) return 'nakadaka';
-  return 'heiban';
-}
-
-function determineRoleTokyo(sd) {
-  if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
-  if (sd.sep == null) return 'particle';
-  if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
-  if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
-  return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
-}
-
-function determinePitchTokyo(sd) {
-  if (sd.accent.allLow) return -1;
-  if (sd.sep && sd.accent.pitch != null) return parseInt(sd.accent.pitch);
-  const role = sd.accent.role;
-  if (role === 'heiban' || role === 'setsubigo') return 0;
-  if (role === 'atamadaka') return 1;
-  if (role === 'nakadaka' || role === 'kifuku') return 2;
-  if (role === 'odaka') return sd.moraes.length;
-  if (role === 'particle') return null;
-  if (role === 'empty') return -1;
-  return 0;
-}
-
-function adjustKana(text) {
-  if (config.convert_reading === 'katakana') {
-    const literals = [];
-    text = text.replace(/\\(\*?)(.)/g, (_, star, ch) => {
-      literals.push(ch);
-      return star + '\uE000';
-    });
-    const devoiced = new Set();
-    let clean = '';
-    for (const ch of text) {
-      if (ch === DEVOICED_PREFIX) devoiced.add(clean.length);
-      else clean += ch;
+  
+  // ── section.js ──
+  const RoleFromValue = {
+    'h':'heiban','a':'atamadaka','n':'nakadaka','o':'odaka','k':'kifuku',
+    'b':'black','w':'white','s':'setsubigo','e':'empty','p':'particle',
+    'H':'keihan_heiban','A':'keihan_atamadaka','N':'keihan_nakadaka',
+    'L':'keihan_low_heiban','M':'keihan_low_nakadaka','O':'keihan_low_odaka',
+    'K':'keihan_kifuku',
+  };
+  
+  function isEmptyParticle(word) { return /^[|,、]$/.test(word); }
+  
+  function determineRoleKeihan(rawRole) {
+    const val = String(rawRole || 'H');
+    return RoleFromValue[val.toUpperCase()] || RoleFromValue[val.toLowerCase()] || 'keihan_heiban';
+  }
+  
+  function determineLevelsKeihan(levels, moraes) {
+    const arr = [...String(levels).toLowerCase()];
+    while (arr.length < moraes.length) arr.push(arr[arr.length - 1]);
+    return arr;
+  }
+  
+  function guessRoleFromPitchNum(moraes, pitchN) {
+    if (pitchN == null) return 'heiban';
+    const n = parseInt(pitchN);
+    if (n === 0) return 'heiban';
+    if (n === 1) return 'atamadaka';
+    if (n === moraes.length) return 'odaka';
+    if (n < moraes.length) return 'nakadaka';
+    return 'heiban';
+  }
+  
+  function determineRoleTokyo(sd) {
+    if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
+    if (sd.sep == null) return 'particle';
+    if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
+    if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
+    return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
+  }
+  
+  function determinePitchTokyo(sd) {
+    if (sd.accent.allLow) return -1;
+    if (sd.sep && sd.accent.pitch != null) return parseInt(sd.accent.pitch);
+    const role = sd.accent.role;
+    if (role === 'heiban' || role === 'setsubigo') return 0;
+    if (role === 'atamadaka') return 1;
+    if (role === 'nakadaka' || role === 'kifuku') return 2;
+    if (role === 'odaka') return sd.moraes.length;
+    if (role === 'particle') return null;
+    if (role === 'empty') return -1;
+    return 0;
+  }
+  
+  function adjustKana(text) {
+    if (config.convert_reading === 'katakana') {
+      const literals = [];
+      text = text.replace(/\\(\*?)(.)/g, (_, star, ch) => {
+        literals.push(ch);
+        return star + '\uE000';
+      });
+      const devoiced = new Set();
+      let clean = '';
+      for (const ch of text) {
+        if (ch === DEVOICED_PREFIX) devoiced.add(clean.length);
+        else clean += ch;
+      }
+      clean = literalPronunciation(clean);
+      text = '';
+      for (let i = 0; i < clean.length; i++) {
+        if (devoiced.has(i)) text += DEVOICED_PREFIX;
+        text += clean[i];
+      }
+      let j = 0;
+      text = text.replace(/\uE000/g, () => LITERAL_PREFIX + toKatakana(literals[j++]));
+      return text;
     }
-    clean = literalPronunciation(clean);
-    text = '';
-    for (let i = 0; i < clean.length; i++) {
-      if (devoiced.has(i)) text += DEVOICED_PREFIX;
-      text += clean[i];
-    }
-    let j = 0;
-    text = text.replace(/\uE000/g, () => LITERAL_PREFIX + toKatakana(literals[j++]));
+    if (config.convert_reading === 'hiragana') return toHiragana(text);
     return text;
   }
-  if (config.convert_reading === 'hiragana') return toHiragana(text);
-  return text;
-}
-
-function prepareMoras(word) {
-  let reading = furiganaToReading(word);
-  reading = adjustKana(reading);
-  return splitToMoras(reading);
-}
-
-class Section {
-  constructor(rawSection) {
-    this.raw = rawSection;
-    this._d = splitSection(rawSection);
-    this._d.moraes = prepareMoras(this._d.word || '');
-    this._d.accent = splitAccent(this._d.accent || '');
-    this._initAccent();
+  
+  function prepareMoras(word) {
+    let reading = furiganaToReading(word);
+    reading = adjustKana(reading);
+    return splitToMoras(reading);
   }
-
-  _initAccent() {
-    const a = this._d.accent;
-    if (a.keihan) {
-      a.role = determineRoleKeihan(a.role);
-      a.levels = determineLevelsKeihan(a.levels, this._d.moraes);
-    } else {
-      a.keihan = false;
-      a.role = determineRoleTokyo(this._d);
-      a.pitch = determinePitchTokyo(this._d);
+  
+  class Section {
+    constructor(rawSection) {
+      this.raw = rawSection;
+      this._d = splitSection(rawSection);
+      this._d.moraes = prepareMoras(this._d.word || '');
+      this._d.accent = splitAccent(this._d.accent || '');
+      this._initAccent();
     }
-  }
-
-  get isTape() { return this.raw === ';'; }
-  get isParticle() { return !!this._d.accent.is_particle; }
-
-  get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, '').replaceAll(HIGH_PREFIX, ''); }
-
-  get moraes() {
-    const m = this._d.moraes;
-    if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
-      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
-      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
-    }
-    return m;
-  }
-
-  get role() { return this._d.accent.role; }
-
-  get classname() {
-    if (this.isParticle) {
-      return [...new Set(['particle', this.role])].join(' ');
-    }
-    return this.role;
-  }
-
-  get pitch() { return this._d.accent.pitch; }
-  set pitch(v) { this._d.accent.pitch = v; }
-
-  get levels() { return this._d.accent.levels; }
-  set levels(v) { this._d.accent.levels = v; }
-
-  get isKeihan() { return !!this._d.accent.keihan; }
-}
-
-const H = 'h', L = 'l';
-
-function buildLevelsTokyo(section, lastLow) {
-  if (section.pitch == null) section.pitch = lastLow ? -1 : -2;
-  if (section.pitch === -1) return section.moraes.map(() => L);
-  if (section.pitch === -2) return section.moraes.map(() => H);
-  if (section.pitch === 1) return [H, ...section.moraes.slice(1).map(() => L)];
-
-  return section.moraes.map((_, i) => {
-    if (i === 0) return lastLow ? L : H;
-    return (i < section.pitch || section.pitch === 0) ? H : L;
-  });
-}
-
-function calcLastWordEndedLow(section, lastLow) {
-  if (section.role === 'empty' && !PITCH_BREAKS.includes(section.word)) return lastLow;
-  if (section.pitch === 1) return true;
-  if (section.pitch === 0 || section.pitch === -2) return false;
-  return section.moraes.length >= section.pitch;
-}
-
-function buildHighLow(sequence) {
-  let lastLow = true;
-  for (const section of sequence) {
-    if (section.isKeihan) {
-      lastLow = section.levels[section.levels.length - 1] === L;
-    } else {
-      section.levels = buildLevelsTokyo(section, lastLow);
-      for (let i = 0; i < section.moraes.length; i++) {
-        if (section.moraes[i].high) section.levels[i] = H;
-      }
-      lastLow = calcLastWordEndedLow(section, lastLow);
-    }
-  }
-  return sequence;
-}
-
-function parseSections(seq) { return seq.map(s => new Section(s)); }
-
-function filterEmptyMoraes(sequence) {
-  return sequence.filter(s =>
-    s.moraes.length || PITCH_BREAKS.includes(s.word) || s.isTape
-  );
-}
-
-// ── graph.js ──
-class Line {
-  constructor() { this.x1 = this.y1 = this.x2 = this.y2 = null; this._tape = false; }
-  start(x, y, tape = false) { this.x1 = x; this.y1 = y; this._tape = tape; return this; }
-  end(x, y) { this.x2 = x; this.y2 = y; return this; }
-  get isUnfinished() { return this.x1 != null && this.y1 != null; }
-  get isCompleted() { return this.x2 != null && this.y2 != null; }
-
-  adjustToRadius(r) {
-    const tan = config.graph_height / config.x_step;
-    const denom = Math.sqrt(1 + tan * tan);
-    const sin = tan / denom, cos = 1 / denom;
-    const oy = r * sin, ox = r * cos;
-    if (this.y1 === this.y2) { this.x1 += r; this.x2 -= r; }
-    else if (this.y1 > this.y2) { this.x1 += ox; this.y1 -= oy; this.x2 -= ox; this.y2 += oy; }
-    else { this.x1 += ox; this.y1 += oy; this.x2 -= ox; this.y2 -= oy; }
-    return this;
-  }
-
-  draw() {
-    let s = `<line stroke="black" stroke-width="${config.stroke_width}" x1="${this.x1.toFixed(3)}" y1="${this.y1.toFixed(3)}" x2="${this.x2.toFixed(3)}" y2="${this.y2.toFixed(3)}" />`;
-    if (this._tape) s = s.replace('<line', `<line stroke-dasharray="${config.stroke_dasharray}"`);
-    return s;
-  }
-}
-
-class Path {
-  constructor() { this.lines = []; }
-  get last() { return this.lines[this.lines.length - 1]; }
-  startAt(x, y) { this.lines.push(new Line().start(x, y)); }
-  goTo(x, y) { this.last.end(x, y); }
-  push(x, y) {
-    if (this.lines.length === 0) { this.startAt(x, y); }
-    else if (this.last.isCompleted) { this.startAt(this.last.x2, this.last.y2); this.goTo(x, y); }
-    else { this.goTo(x, y); }
-  }
-  draw() {
-    return this.lines
-      .filter(l => l.isCompleted)
-      .map(l => { l.adjustToRadius(config.circle_radius); return l.draw(); })
-      .join('');
-  }
-}
-
-function shouldConnect(section, prev) {
-  if (prev.isTape) return true;
-  if (section.role === 'empty' || prev.role === 'empty') return false;
-  return true;
-}
-
-function makeCircle(x, y) {
-  return `<circle fill="black" stroke="black" stroke-width="${config.stroke_width}" cx="${x}" cy="${y}" r="${config.circle_radius}"></circle>`;
-}
-
-function makeDevoicedCircle(mora, x, y) {
-  if (mora.text.length === 1) {
-    const cx = x + config.font_size / 2 + config.text_dx;
-    const cy = y + config.text_dx + Math.ceil(config.stroke_width);
-    return `<circle class="devoiced" cx="${cx}" cy="${cy}" stroke-width="${config.devoiced_circle_width}" r="${config.devoiced_circle_radius}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
-  }
-  const fs = config.font_size, r = config.devoiced_circle_radius;
-  const ry = y - config.font_size - Math.floor(config.stroke_width);
-  const pad = config.devoiced_rectangle_padding;
-  return `<rect class="devoiced" x="${x - fs - pad}" y="${ry}" width="${fs * 2 + pad * 2}" height="${r * 2}" rx="${r}" stroke-width="${config.devoiced_circle_width}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
-}
-
-function makeGroup(elements, cls) { return `<g class="${cls}">${elements.join('')}</g>`; }
-function makeSvg(contents, w, h, vh) {
-  return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
-}
-function makeText(mora, x, y, dx) {
-  const cls = mora.devoiced ? ' class="devoiced"' : '';
-  return `<text${cls} font-size="${config.font_size}px" fill="black" x="${x}" y="${y}" dx="${dx}">${mora.text}</text>`;
-}
-
-function calcSvgWidth(sequence, step) {
-  return sequence.reduce((sum, s) => sum + (s.role !== 'empty' ? s.moraes.length : 0), 0) * step
-    + config.graph_horizontal_padding * 2;
-}
-
-function makeGraph(sequence) {
-  sequence = filterEmptyMoraes(sequence);
-  if (!sequence.length) return null;
-
-  let xPos = config.size_unit + config.graph_horizontal_padding;
-  let yPos = config.size_unit;
-  const heightHigh = config.size_unit;
-  const heightLow = heightHigh + config.graph_height;
-  const xStep = config.x_step;
-  const heightKana = heightLow + xStep;
-
-  const circles = [], paths = [], text = [];
-
-  for (let i = 0; i < sequence.length; i++) {
-    const section = sequence[i];
-    if (section.role === 'empty' || section.isTape) continue;
-
-    const wordCircles = [], textMoraes = [];
-    const path = new Path();
-    const connector = new Line();
-
-    if (i > 0 && shouldConnect(section, sequence[i - 1])) {
-      connector.start(xPos - xStep, yPos, sequence[i - 1].isTape);
-    }
-
-    const moraes = section.moraes;
-    for (let j = 0; j < moraes.length; j++) {
-      const mora = moraes[j];
-      let moraLevel;
-      if (mora.text === 'っ' || mora.text === 'ッ') {
-        moraLevel = (j === 1 && section.levels[j - 1] === L) ? section.levels[j - 1] : section.levels[j];
+  
+    _initAccent() {
+      const a = this._d.accent;
+      if (a.keihan) {
+        a.role = determineRoleKeihan(a.role);
+        a.levels = determineLevelsKeihan(a.levels, this._d.moraes);
       } else {
-        moraLevel = section.levels[j];
+        a.keihan = false;
+        a.role = determineRoleTokyo(this._d);
+        a.pitch = determinePitchTokyo(this._d);
       }
-      yPos = moraLevel === H ? heightHigh : heightLow;
-      wordCircles.push(makeCircle(xPos, yPos));
-      path.push(xPos, yPos);
-
-      if (j === 0 && connector.isUnfinished) {
-        connector.end(xPos, yPos);
+    }
+  
+    get isTape() { return this.raw === ';'; }
+    get isParticle() { return !!this._d.accent.is_particle; }
+  
+    get word() { return this._d.word.replaceAll(DEVOICED_PREFIX, '').replaceAll(LITERAL_PREFIX, '').replaceAll(HIGH_PREFIX, ''); }
+  
+    get moraes() {
+      const m = this._d.moraes;
+      if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
+        if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+        if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
       }
-
-      if (mora.text !== GHOST_PARTICLE) {
-        if (mora.devoiced) {
-          textMoraes.push(makeDevoicedCircle(mora, xPos, heightKana));
+      return m;
+    }
+  
+    get role() { return this._d.accent.role; }
+  
+    get classname() {
+      if (this.isParticle) {
+        return [...new Set(['particle', this.role])].join(' ');
+      }
+      return this.role;
+    }
+  
+    get pitch() { return this._d.accent.pitch; }
+    set pitch(v) { this._d.accent.pitch = v; }
+  
+    get levels() { return this._d.accent.levels; }
+    set levels(v) { this._d.accent.levels = v; }
+  
+    get isKeihan() { return !!this._d.accent.keihan; }
+  }
+  
+  const H = 'h', L = 'l';
+  
+  function buildLevelsTokyo(section, lastLow) {
+    if (section.pitch == null) section.pitch = lastLow ? -1 : -2;
+    if (section.pitch === -1) return section.moraes.map(() => L);
+    if (section.pitch === -2) return section.moraes.map(() => H);
+    if (section.pitch === 1) return [H, ...section.moraes.slice(1).map(() => L)];
+  
+    return section.moraes.map((_, i) => {
+      if (i === 0) return lastLow ? L : H;
+      return (i < section.pitch || section.pitch === 0) ? H : L;
+    });
+  }
+  
+  function calcLastWordEndedLow(section, lastLow) {
+    if (section.role === 'empty' && !PITCH_BREAKS.includes(section.word)) return lastLow;
+    if (section.pitch === 1) return true;
+    if (section.pitch === 0 || section.pitch === -2) return false;
+    return section.moraes.length >= section.pitch;
+  }
+  
+  function buildHighLow(sequence) {
+    let lastLow = true;
+    for (const section of sequence) {
+      if (section.isKeihan) {
+        lastLow = section.levels[section.levels.length - 1] === L;
+      } else {
+        section.levels = buildLevelsTokyo(section, lastLow);
+        for (let i = 0; i < section.moraes.length; i++) {
+          if (section.moraes[i].high) section.levels[i] = H;
         }
-        textMoraes.push(makeText(mora, xPos, heightKana, config.text_dx * mora.text.length));
+        lastLow = calcLastWordEndedLow(section, lastLow);
       }
-
-      xPos += xStep;
     }
-
-    circles.push(makeGroup(wordCircles, section.classname));
-    paths.push(makeGroup([path.draw()], section.classname));
-    text.push(makeGroup(textMoraes, section.classname));
-
-    if (connector.isCompleted) {
-      paths.push(makeGroup([connector.adjustToRadius(config.circle_radius).draw()], 'connector'));
+    return sequence;
+  }
+  
+  function parseSections(seq) { return seq.map(s => new Section(s)); }
+  
+  function filterEmptyMoraes(sequence) {
+    return sequence.filter(s =>
+      s.moraes.length || PITCH_BREAKS.includes(s.word) || s.isTape
+    );
+  }
+  
+  // ── graph.js ──
+  class Line {
+    constructor() { this.x1 = this.y1 = this.x2 = this.y2 = null; this._tape = false; }
+    start(x, y, tape = false) { this.x1 = x; this.y1 = y; this._tape = tape; return this; }
+    end(x, y) { this.x2 = x; this.y2 = y; return this; }
+    get isUnfinished() { return this.x1 != null && this.y1 != null; }
+    get isCompleted() { return this.x2 != null && this.y2 != null; }
+  
+    adjustToRadius(r) {
+      const tan = config.graph_height / config.x_step;
+      const denom = Math.sqrt(1 + tan * tan);
+      const sin = tan / denom, cos = 1 / denom;
+      const oy = r * sin, ox = r * cos;
+      if (this.y1 === this.y2) { this.x1 += r; this.x2 -= r; }
+      else if (this.y1 > this.y2) { this.x1 += ox; this.y1 -= oy; this.x2 -= ox; this.y2 += oy; }
+      else { this.x1 += ox; this.y1 += oy; this.x2 -= ox; this.y2 -= oy; }
+      return this;
+    }
+  
+    draw() {
+      let s = `<line stroke="black" stroke-width="${config.stroke_width}" x1="${this.x1.toFixed(3)}" y1="${this.y1.toFixed(3)}" x2="${this.x2.toFixed(3)}" y2="${this.y2.toFixed(3)}" />`;
+      if (this._tape) s = s.replace('<line', `<line stroke-dasharray="${config.stroke_dasharray}"`);
+      return s;
     }
   }
-
-  const content = [makeGroup(paths, 'paths'), makeGroup(circles, 'circles')];
-  const svgWidth = calcSvgWidth(sequence, xStep);
-  const svgHeightText = heightKana + config.size_unit;
-  const svgHeightNoText = heightLow + config.size_unit;
-
-  let svgHeight, visibleHeight;
-  if (config.no_text) {
-    svgHeight = svgHeightNoText;
-    visibleHeight = Math.round((svgHeightNoText / svgHeightText) * config.graph_visible_height);
-  } else {
-    svgHeight = svgHeightText;
-    visibleHeight = config.graph_visible_height;
-    content.push(makeGroup(text, 'text'));
-  }
-
-  return makeSvg(content.join(''), svgWidth, svgHeight, visibleHeight);
-}
-
-// ── sentence.js ──
-function wordToRubyFragment(fragment) {
-  const re = /([^\[\]]+)\[([^\]]+)\]/g;
-  let result = '';
-  let lastIndex = 0;
-  let match;
-  while ((match = re.exec(fragment)) !== null) {
-    if (match.index > lastIndex) {
-      result += fragment.slice(lastIndex, match.index);
+  
+  class Path {
+    constructor() { this.lines = []; }
+    get last() { return this.lines[this.lines.length - 1]; }
+    startAt(x, y) { this.lines.push(new Line().start(x, y)); }
+    goTo(x, y) { this.last.end(x, y); }
+    push(x, y) {
+      if (this.lines.length === 0) { this.startAt(x, y); }
+      else if (this.last.isCompleted) { this.startAt(this.last.x2, this.last.y2); this.goTo(x, y); }
+      else { this.goTo(x, y); }
     }
-    result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
-    lastIndex = re.lastIndex;
-  }
-  if (lastIndex < fragment.length) {
-    result += fragment.slice(lastIndex);
-  }
-  return result;
-}
-
-function wordToRuby(word) {
-  word = word.replaceAll(DEVOICED_PREFIX, '');
-  word = word.replaceAll(LITERAL_PREFIX, '');
-  return word.split(' ').map(wordToRubyFragment).join('');
-}
-
-function makeColoredSentence(sequence) {
-  const spans = [];
-  for (const section of sequence) {
-    if (SENT_HIDDEN.includes(section.word) || /^-+$/.test(section.word) || section.isTape) continue;
-    spans.push(`<span class="${section.classname}">${wordToRuby(section.word)}</span>`);
-  }
-  return spans.join('');
-}
-
-// ── makeSequences glue ──
-function makeSequences(expr) {
-  expr = normalizeForParsing(expr);
-  let sentences = splitToSentences(expr);
-  sentences = sentences.map(detachGhostParticle);
-  let bySection = sentences.map(splitToSections);
-  bySection = bySection.map(mergeFragments);
-  bySection = splitMultiplePitchNotations(bySection);
-  let sequences = bySection.map(parseSections);
-  sequences = sequences.map(buildHighLow);
-  return sequences;
-}
-
-// ── parseDefinitions ──
-function parseDefinitions(html) {
-  const defs = {};
-  var CMT = '<' + '!--';
-  var END = '--' + '>';
-  const re = new RegExp(CMT + '\\s*def-type="(\\w+)".*?' + END + '([\\s\\S]*?)' + CMT + '\\s*def-end\\s*' + END, 'g');
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    defs[m[1]] = m[2].trim();
-  }
-  return defs;
-}
-
-// ── Render (deferred for Anki front→back transitions) ──
-function _renderBack() {
-  var wordRaw = document.getElementById('raw-word');
-  if (!wordRaw) return setTimeout(_renderBack, 10);
-
-  wordRaw = wordRaw.innerHTML.trim();
-  var sentRaw = document.getElementById('raw-sentence').textContent.trim();
-  var defHtml = document.getElementById('raw-definition').innerHTML;
-
-  var targetEl = document.getElementById('target-word');
-  var graphEl = document.getElementById('pitch-graph');
-  var sentEl = document.getElementById('sentence');
-  var defEl = document.getElementById('def-bilingual');
-  var jpDefSection = document.getElementById('jp-def-section');
-  var jpDefEl = document.getElementById('def-monolingual');
-
-  // Word → target word + pitch graph
-  if (wordRaw) {
-    var wordSeqs = makeSequences(wordRaw);
-
-    if (wordSeqs.length > 0) {
-      targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
-      if (wordRaw.indexOf(':') === -1) targetEl.classList.add('no-accent');
+    draw() {
+      return this.lines
+        .filter(l => l.isCompleted)
+        .map(l => { l.adjustToRadius(config.circle_radius); return l.draw(); })
+        .join('');
     }
-
-    if (wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
-      var svgs = [];
-      for (var s = 0; s < wordSeqs.length; s++) {
-        var svg = makeGraph(wordSeqs[s]);
-        if (svg) svgs.push(svg);
+  }
+  
+  function shouldConnect(section, prev) {
+    if (prev.isTape) return true;
+    if (section.role === 'empty' || prev.role === 'empty') return false;
+    return true;
+  }
+  
+  function makeCircle(x, y) {
+    return `<circle fill="black" stroke="black" stroke-width="${config.stroke_width}" cx="${x}" cy="${y}" r="${config.circle_radius}"></circle>`;
+  }
+  
+  function makeDevoicedCircle(mora, x, y) {
+    if (mora.text.length === 1) {
+      const cx = x + config.font_size / 2 + config.text_dx;
+      const cy = y + config.text_dx + Math.ceil(config.stroke_width);
+      return `<circle class="devoiced" cx="${cx}" cy="${cy}" stroke-width="${config.devoiced_circle_width}" r="${config.devoiced_circle_radius}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+    }
+    const fs = config.font_size, r = config.devoiced_circle_radius;
+    const ry = y - config.font_size - Math.floor(config.stroke_width);
+    const pad = config.devoiced_rectangle_padding;
+    return `<rect class="devoiced" x="${x - fs - pad}" y="${ry}" width="${fs * 2 + pad * 2}" height="${r * 2}" rx="${r}" stroke-width="${config.devoiced_circle_width}" stroke-dasharray="${config.devoiced_stroke_disarray}" />`;
+  }
+  
+  function makeGroup(elements, cls) { return `<g class="${cls}">${elements.join('')}</g>`; }
+  function makeSvg(contents, w, h, vh) {
+    return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
+  }
+  function makeText(mora, x, y, dx) {
+    const cls = mora.devoiced ? ' class="devoiced"' : '';
+    return `<text${cls} font-size="${config.font_size}px" fill="black" x="${x}" y="${y}" dx="${dx}">${mora.text}</text>`;
+  }
+  
+  function calcSvgWidth(sequence, step) {
+    return sequence.reduce((sum, s) => sum + (s.role !== 'empty' ? s.moraes.length : 0), 0) * step
+      + config.graph_horizontal_padding * 2;
+  }
+  
+  function makeGraph(sequence) {
+    sequence = filterEmptyMoraes(sequence);
+    if (!sequence.length) return null;
+  
+    let xPos = config.size_unit + config.graph_horizontal_padding;
+    let yPos = config.size_unit;
+    const heightHigh = config.size_unit;
+    const heightLow = heightHigh + config.graph_height;
+    const xStep = config.x_step;
+    const heightKana = heightLow + xStep;
+  
+    const circles = [], paths = [], text = [];
+  
+    for (let i = 0; i < sequence.length; i++) {
+      const section = sequence[i];
+      if (section.role === 'empty' || section.isTape) continue;
+  
+      const wordCircles = [], textMoraes = [];
+      const path = new Path();
+      const connector = new Line();
+  
+      if (i > 0 && shouldConnect(section, sequence[i - 1])) {
+        connector.start(xPos - xStep, yPos, sequence[i - 1].isTape);
       }
-      if (svgs.length > 0) {
-        graphEl.innerHTML = svgs.join('');
+  
+      const moraes = section.moraes;
+      for (let j = 0; j < moraes.length; j++) {
+        const mora = moraes[j];
+        let moraLevel;
+        if (mora.text === 'っ' || mora.text === 'ッ') {
+          moraLevel = (j === 1 && section.levels[j - 1] === L) ? section.levels[j - 1] : section.levels[j];
+        } else {
+          moraLevel = section.levels[j];
+        }
+        yPos = moraLevel === H ? heightHigh : heightLow;
+        wordCircles.push(makeCircle(xPos, yPos));
+        path.push(xPos, yPos);
+  
+        if (j === 0 && connector.isUnfinished) {
+          connector.end(xPos, yPos);
+        }
+  
+        if (mora.text !== GHOST_PARTICLE) {
+          if (mora.devoiced) {
+            textMoraes.push(makeDevoicedCircle(mora, xPos, heightKana));
+          }
+          textMoraes.push(makeText(mora, xPos, heightKana, config.text_dx * mora.text.length));
+        }
+  
+        xPos += xStep;
+      }
+  
+      circles.push(makeGroup(wordCircles, section.classname));
+      paths.push(makeGroup([path.draw()], section.classname));
+      text.push(makeGroup(textMoraes, section.classname));
+  
+      if (connector.isCompleted) {
+        paths.push(makeGroup([connector.adjustToRadius(config.circle_radius).draw()], 'connector'));
+      }
+    }
+  
+    const content = [makeGroup(paths, 'paths'), makeGroup(circles, 'circles')];
+    const svgWidth = calcSvgWidth(sequence, xStep);
+    const svgHeightText = heightKana + config.size_unit;
+    const svgHeightNoText = heightLow + config.size_unit;
+  
+    let svgHeight, visibleHeight;
+    if (config.no_text) {
+      svgHeight = svgHeightNoText;
+      visibleHeight = Math.round((svgHeightNoText / svgHeightText) * config.graph_visible_height);
+    } else {
+      svgHeight = svgHeightText;
+      visibleHeight = config.graph_visible_height;
+      content.push(makeGroup(text, 'text'));
+    }
+  
+    return makeSvg(content.join(''), svgWidth, svgHeight, visibleHeight);
+  }
+  
+  // ── sentence.js ──
+  function wordToRubyFragment(fragment) {
+    const re = /([^\[\]]+)\[([^\]]+)\]/g;
+    let result = '';
+    let lastIndex = 0;
+    let match;
+    while ((match = re.exec(fragment)) !== null) {
+      if (match.index > lastIndex) {
+        result += fragment.slice(lastIndex, match.index);
+      }
+      result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < fragment.length) {
+      result += fragment.slice(lastIndex);
+    }
+    return result;
+  }
+  
+  function wordToRuby(word) {
+    word = word.replaceAll(DEVOICED_PREFIX, '');
+    word = word.replaceAll(LITERAL_PREFIX, '');
+    return word.split(' ').map(wordToRubyFragment).join('');
+  }
+  
+  function makeColoredSentence(sequence) {
+    const spans = [];
+    for (const section of sequence) {
+      if (SENT_HIDDEN.includes(section.word) || /^-+$/.test(section.word) || section.isTape) continue;
+      spans.push(`<span class="${section.classname}">${wordToRuby(section.word)}</span>`);
+    }
+    return spans.join('');
+  }
+  
+  // ── makeSequences glue ──
+  function makeSequences(expr) {
+    expr = normalizeForParsing(expr);
+    let sentences = splitToSentences(expr);
+    sentences = sentences.map(detachGhostParticle);
+    let bySection = sentences.map(splitToSections);
+    bySection = bySection.map(mergeFragments);
+    bySection = splitMultiplePitchNotations(bySection);
+    let sequences = bySection.map(parseSections);
+    sequences = sequences.map(buildHighLow);
+    return sequences;
+  }
+  
+  // ── parseDefinitions ──
+  function parseDefinitions(html) {
+    const defs = {};
+    var CMT = '<' + '!--';
+    var END = '--' + '>';
+    const re = new RegExp(CMT + '\\s*def-type="(\\w+)".*?' + END + '([\\s\\S]*?)' + CMT + '\\s*def-end\\s*' + END, 'g');
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      defs[m[1]] = m[2].trim();
+    }
+    return defs;
+  }
+  
+  // ── Render (deferred for Anki front→back transitions) ──
+  function _renderBack() {
+    var wordRaw = document.getElementById('raw-word');
+    if (!wordRaw) return setTimeout(_renderBack, 10);
+  
+    wordRaw = wordRaw.innerHTML.trim();
+    var sentRaw = document.getElementById('raw-sentence').textContent.trim();
+    var defHtml = document.getElementById('raw-definition').innerHTML;
+  
+    var targetEl = document.getElementById('target-word');
+    var graphEl = document.getElementById('pitch-graph');
+    var sentEl = document.getElementById('sentence');
+    var defEl = document.getElementById('def-bilingual');
+    var jpDefSection = document.getElementById('jp-def-section');
+    var jpDefEl = document.getElementById('def-monolingual');
+  
+    // Word → target word + pitch graph
+    if (wordRaw) {
+      var wordSeqs = makeSequences(wordRaw);
+  
+      if (wordSeqs.length > 0) {
+        targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
+        if (wordRaw.indexOf(':') === -1) targetEl.classList.add('no-accent');
+      }
+  
+      if (wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
+        var svgs = [];
+        for (var s = 0; s < wordSeqs.length; s++) {
+          var svg = makeGraph(wordSeqs[s]);
+          if (svg) svgs.push(svg);
+        }
+        if (svgs.length > 0) {
+          graphEl.innerHTML = svgs.join('');
+        } else {
+          graphEl.style.display = 'none';
+        }
       } else {
         graphEl.style.display = 'none';
       }
     } else {
       graphEl.style.display = 'none';
     }
-  } else {
-    graphEl.style.display = 'none';
-  }
-
-  // Sentence → colored sentence
-  if (sentRaw) {
-    var sentSeqs = makeSequences(sentRaw);
-    if (sentSeqs.length > 0) {
-      var hasAccent = sentSeqs[0].some(function(s) {
-        return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
-      });
-      if (!hasAccent) sentEl.classList.add('no-accent');
-      sentEl.innerHTML = makeColoredSentence(sentSeqs[0]);
+  
+    // Sentence → colored sentence
+    if (sentRaw) {
+      var sentSeqs = makeSequences(sentRaw);
+      if (sentSeqs.length > 0) {
+        var hasAccent = sentSeqs[0].some(function(s) {
+          return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+        });
+        if (!hasAccent) sentEl.classList.add('no-accent');
+        sentEl.innerHTML = makeColoredSentence(sentSeqs[0]);
+      }
     }
-  }
-
-  // Definition → bilingual + monolingual
-  var defs = parseDefinitions(defHtml);
-  var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
-  var hasBi = !!defs.bilingual;
-  var hasMono = !!monoKey;
-
-  if (hasBi && !hasMono) {
-    defEl.innerHTML = defs.bilingual;
-    jpDefSection.style.display = 'none';
-  } else if (hasMono && !hasBi) {
-    defEl.innerHTML = defs[monoKey];
-    defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
-    defEl.style.lineHeight = '1.65';
-    jpDefSection.style.display = 'none';
-    window.__monoUnlocked = true;
-  } else if (hasBi && hasMono) {
-    if (defs.monolingual) {
-      defEl.innerHTML = defs.monolingual;
+  
+    // Definition → bilingual + monolingual
+    var defs = parseDefinitions(defHtml);
+    var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
+    var hasBi = !!defs.bilingual;
+    var hasMono = !!monoKey;
+  
+    if (hasBi && !hasMono) {
+      defEl.innerHTML = defs.bilingual;
+      jpDefSection.style.display = 'none';
+    } else if (hasMono && !hasBi) {
+      defEl.innerHTML = defs[monoKey];
       defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
       defEl.style.lineHeight = '1.65';
-      jpDefEl.innerHTML = defs.bilingual;
-      jpDefEl.className = 'def';
-      var toggleLabel = document.querySelector('.jp-def-toggle');
-      if (toggleLabel) toggleLabel.textContent = 'Bilingual';
+      jpDefSection.style.display = 'none';
       window.__monoUnlocked = true;
+    } else if (hasBi && hasMono) {
+      if (defs.monolingual) {
+        defEl.innerHTML = defs.monolingual;
+        defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
+        defEl.style.lineHeight = '1.65';
+        jpDefEl.innerHTML = defs.bilingual;
+        jpDefEl.className = 'def';
+        var toggleLabel = document.querySelector('.jp-def-toggle');
+        if (toggleLabel) toggleLabel.textContent = 'Bilingual';
+        window.__monoUnlocked = true;
+      } else {
+        defEl.innerHTML = defs.bilingual;
+        jpDefEl.innerHTML = defs.LOCKED_monolingual;
+      }
     } else {
-      defEl.innerHTML = defs.bilingual;
-      jpDefEl.innerHTML = defs.LOCKED_monolingual;
+      defEl.style.display = 'none';
+      jpDefSection.style.display = 'none';
     }
-  } else {
-    defEl.style.display = 'none';
-    jpDefSection.style.display = 'none';
-  }
-
-  // ── Tagged definition audio: native [sound:] elements ──
-  if (window.__defAudioNativeContainer) {
-    var nativeContainer = window.__defAudioNativeContainer;
-    window.__defAudioNativeContainer = null;
-
-    var nodes = Array.from(nativeContainer.childNodes);
-    var nativeGroups = {};
-    var curType = null;
-    for (var ni = 0; ni < nodes.length; ni++) {
-      var node = nodes[ni];
-      if (node.nodeType === 8) {
-        var typeMatch = node.textContent.match(/def-type="(\w+)"/);
-        if (typeMatch) {
-          curType = typeMatch[1];
-          nativeGroups[curType] = [];
-        } else if (node.textContent.indexOf('def-end') !== -1) {
-          curType = null;
-        }
-      } else if (curType && node.nodeType === 1) {
-        nativeGroups[curType].push(node);
-      }
-    }
-
-    var biBtns = nativeGroups.bilingual ? window.__adoptNativeAudio(nativeGroups.bilingual) : [];
-    var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
-    var monoBtns = nativeMonoKey ? window.__adoptNativeAudio(nativeGroups[nativeMonoKey]) : [];
-    var hasBiBtns = biBtns.length > 0;
-    var hasMonoBtns = monoBtns.length > 0;
-
-    if (hasBiBtns || hasMonoBtns) {
-      var audioRow = document.querySelector('.audio-row');
-
-      if (hasBiBtns && hasMonoBtns) {
-        var makeNativeDefItem = function(label, btns) {
-          var item = document.createElement('div');
-          item.className = 'audio-item bi';
-          item.setAttribute('data-audio', 'def');
-          for (var bk = 0; bk < btns.length; bk++) {
-            item.appendChild(btns[bk]);
+  
+    // ── Tagged definition audio: native [sound:] elements ──
+    if (window.__defAudioNativeContainer) {
+      var nativeContainer = window.__defAudioNativeContainer;
+      window.__defAudioNativeContainer = null;
+  
+      var nodes = Array.from(nativeContainer.childNodes);
+      var nativeGroups = {};
+      var curType = null;
+      for (var ni = 0; ni < nodes.length; ni++) {
+        var node = nodes[ni];
+        if (node.nodeType === 8) {
+          var typeMatch = node.textContent.match(/def-type="(\w+)"/);
+          if (typeMatch) {
+            curType = typeMatch[1];
+            nativeGroups[curType] = [];
+          } else if (node.textContent.indexOf('def-end') !== -1) {
+            curType = null;
           }
-          var lbl = document.createElement('span');
-          lbl.className = 'audio-label';
-          lbl.textContent = label;
-          item.appendChild(lbl);
-          if (audioRow) audioRow.appendChild(item);
-        };
-
-        if (window.__monoUnlocked) {
-          makeNativeDefItem('Mono-Def', monoBtns);
-          makeNativeDefItem('Bi-Def', biBtns);
-        } else {
-          makeNativeDefItem('Bi-Def', biBtns);
-          makeNativeDefItem('Mono-Def', monoBtns);
-        }
-
-        var primaryBtns = window.__monoUnlocked ? monoBtns : biBtns;
-        var secondaryBtns = window.__monoUnlocked ? biBtns : monoBtns;
-
-        window.__playLockedDefAudio = function() {
-          primaryBtns[0].click();
-          window.__animateBtn(primaryBtns[0]);
-        };
-
-        var defToggle = document.getElementById('jp-toggle');
-        if (defToggle) {
-          defToggle.addEventListener('change', function() {
-            if (defToggle.checked) secondaryBtns[0].click();
-          });
-        }
-      } else {
-        var singleBtns = hasBiBtns ? biBtns : monoBtns;
-        var singleType = hasBiBtns ? 'bilingual' : 'monolingual';
-
-        var singleItem = document.createElement('div');
-        singleItem.className = 'audio-item bi';
-        singleItem.setAttribute('data-audio', 'def');
-        for (var si = 0; si < singleBtns.length; si++) {
-          singleItem.appendChild(singleBtns[si]);
-        }
-        var singleLabel = document.createElement('span');
-        singleLabel.className = 'audio-label';
-        singleLabel.textContent = 'Definition';
-        singleItem.appendChild(singleLabel);
-        if (audioRow) audioRow.appendChild(singleItem);
-
-        window.__playLockedDefAudio = function() {
-          singleBtns[0].click();
-          window.__animateBtn(singleBtns[0]);
-        };
-
-        var singleShown = (singleType === 'bilingual' && !window.__monoUnlocked) ||
-                           (singleType === 'monolingual' && !!window.__monoUnlocked);
-        if (!singleShown) {
-          var defToggle = document.getElementById('jp-toggle');
-          if (defToggle) {
-            defToggle.addEventListener('change', function() {
-              if (defToggle.checked) singleBtns[0].click();
-            });
-          }
+        } else if (curType && node.nodeType === 1) {
+          nativeGroups[curType].push(node);
         }
       }
-    }
-
-    nativeContainer.remove();
-  }
-
-  // ── Tagged definition audio: [audio:] JS playback ──
-  if (window.__defAudioRawHtml) {
-    var audioDefs = parseDefinitions(window.__defAudioRawHtml);
-
-    var extractAudioFilenames = function(blockHtml) {
-      var tmp = document.createElement('div');
-      tmp.innerHTML = blockHtml;
-      return window.__extractAudio(tmp).filenames;
-    };
-
-    var biFilenames = audioDefs.bilingual ? extractAudioFilenames(audioDefs.bilingual) : [];
-    var audioMonoKey = audioDefs.monolingual ? 'monolingual' : (audioDefs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
-    var monoFilenames = audioMonoKey ? extractAudioFilenames(audioDefs[audioMonoKey]) : [];
-    var hasBiAudio = biFilenames.length > 0;
-    var hasMonoAudio = monoFilenames.length > 0;
-
-    if (hasBiAudio || hasMonoAudio) {
-      var primaryFilenames, secondaryFilenames, primaryType;
-
-      if (hasBiAudio && hasMonoAudio) {
-        if (window.__monoUnlocked) {
-          primaryFilenames = monoFilenames;
-          secondaryFilenames = biFilenames;
-          primaryType = 'monolingual';
-        } else {
-          primaryFilenames = biFilenames;
-          secondaryFilenames = monoFilenames;
-          primaryType = 'bilingual';
-        }
-      } else {
-        primaryFilenames = hasBiAudio ? biFilenames : monoFilenames;
-        secondaryFilenames = null;
-        primaryType = hasBiAudio ? 'bilingual' : 'monolingual';
-      }
-
-      var primaryAudios = [];
-      for (var pi = 0; pi < primaryFilenames.length; pi++) {
-        var pa = document.createElement('audio');
-        pa.preload = 'auto';
-        pa.src = primaryFilenames[pi];
-        document.body.appendChild(pa);
-        primaryAudios.push(pa);
-        window.__defAudioEls.push(pa);
-      }
-
-      var secondaryAudios = [];
-      if (secondaryFilenames) {
-        for (var sk = 0; sk < secondaryFilenames.length; sk++) {
-          var sa = document.createElement('audio');
-          sa.preload = 'auto';
-          sa.src = secondaryFilenames[sk];
-          document.body.appendChild(sa);
-          secondaryAudios.push(sa);
-          window.__defAudioEls.push(sa);
-        }
-      }
-
-      var SVG_DEF = window.__audioSVG;
-      var animateBtnDef = window.__animateBtn;
-
-      var playGroup = function(audioEls, btn) {
-        window.__stopAllAudio(audioEls[0]);
-        var idx = 0;
-        var playNext = function() {
-          if (idx >= audioEls.length) return;
-          var cur = idx++;
-          audioEls[cur].currentTime = 0;
-          audioEls[cur].onended = playNext;
-          window.__safePlay(audioEls[cur]);
-          if (btn) window.__startPlaying(audioEls[cur], btn);
-        };
-        playNext();
-      };
-
-      var audioRow = document.querySelector('.audio-row');
-
-      if (hasBiAudio && hasMonoAudio) {
-        var makeDefItem = function(label, filenames, audioEls) {
-          var item = document.createElement('div');
-          item.className = 'audio-item bi';
-          item.setAttribute('data-audio', 'def');
-          var btn = document.createElement('a');
-          btn.className = 'replay-button';
-          btn.href = '#';
-          btn.innerHTML = SVG_DEF;
-          item.appendChild(btn);
-          var lbl = document.createElement('span');
-          lbl.className = 'audio-label';
-          lbl.textContent = label;
-          item.appendChild(lbl);
-          if (audioRow) audioRow.appendChild(item);
-          var playFn = function() {
-            playGroup(audioEls, btn);
-            animateBtnDef(btn);
-          };
-          window.__onTap(btn, function() {
-            if (window.matchMedia('(hover: none)').matches) {
-              window.__stopAllAudio();
-              var fa = window.__freshPlay(audioEls[0].src, btn);
-              animateBtnDef(btn);
-              window.__startPlaying(fa, btn);
-            } else {
-              window.__stopAllAudio(audioEls[0]);
-              audioEls[0].currentTime = 0;
-              window.__safePlay(audioEls[0]);
-              animateBtnDef(btn);
-              window.__startPlaying(audioEls[0], btn);
+  
+      var biBtns = nativeGroups.bilingual ? window.__adoptNativeAudio(nativeGroups.bilingual) : [];
+      var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
+      var monoBtns = nativeMonoKey ? window.__adoptNativeAudio(nativeGroups[nativeMonoKey]) : [];
+      var hasBiBtns = biBtns.length > 0;
+      var hasMonoBtns = monoBtns.length > 0;
+  
+      if (hasBiBtns || hasMonoBtns) {
+        var audioRow = document.querySelector('.audio-row');
+  
+        if (hasBiBtns && hasMonoBtns) {
+          var makeNativeDefItem = function(label, btns) {
+            var item = document.createElement('div');
+            item.className = 'audio-item bi';
+            item.setAttribute('data-audio', 'def');
+            for (var bk = 0; bk < btns.length; bk++) {
+              item.appendChild(btns[bk]);
             }
-          });
-          return playFn;
-        };
-
-        var playBi, playMono;
-        if (window.__monoUnlocked) {
-          playMono = makeDefItem('Mono-Def', monoFilenames, primaryAudios);
-          playBi = makeDefItem('Bi-Def', biFilenames, secondaryAudios);
-        } else {
-          playBi = makeDefItem('Bi-Def', biFilenames, primaryAudios);
-          playMono = makeDefItem('Mono-Def', monoFilenames, secondaryAudios);
-        }
-
-        var playPrimary = window.__monoUnlocked ? playMono : playBi;
-        var playSecondary = window.__monoUnlocked ? playBi : playMono;
-
-        window.__playLockedDefAudio = playPrimary;
-
-        var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
-                           (primaryType === 'monolingual' && !!window.__monoUnlocked);
-        if (primaryShown) {
-          window.__autoPlayDefAudio = playPrimary;
-        }
-
-        var defToggle = document.getElementById('jp-toggle');
-        if (defToggle) {
-          defToggle.addEventListener('change', function() {
-            if (defToggle.checked) playSecondary();
-          });
-        }
-      } else {
-        var defItem = document.createElement('div');
-        defItem.className = 'audio-item bi';
-        defItem.setAttribute('data-audio', 'def');
-        var defBtn = document.createElement('a');
-        defBtn.className = 'replay-button';
-        defBtn.href = '#';
-        defBtn.innerHTML = SVG_DEF;
-        defItem.appendChild(defBtn);
-        var defLabel = document.createElement('span');
-        defLabel.className = 'audio-label';
-        defLabel.textContent = 'Definition';
-        defItem.appendChild(defLabel);
-        if (audioRow) audioRow.appendChild(defItem);
-
-        var playPrimary = function() {
-          playGroup(primaryAudios, defBtn);
-          animateBtnDef(defBtn);
-        };
-
-        window.__onTap(defBtn, function() {
-          if (window.matchMedia('(hover: none)').matches) {
-            window.__stopAllAudio();
-            var fa = window.__freshPlay(primaryAudios[0].src, defBtn);
-            animateBtnDef(defBtn);
-            window.__startPlaying(fa, defBtn);
+            var lbl = document.createElement('span');
+            lbl.className = 'audio-label';
+            lbl.textContent = label;
+            item.appendChild(lbl);
+            if (audioRow) audioRow.appendChild(item);
+          };
+  
+          if (window.__monoUnlocked) {
+            makeNativeDefItem('Mono-Def', monoBtns);
+            makeNativeDefItem('Bi-Def', biBtns);
           } else {
-            window.__stopAllAudio(primaryAudios[0]);
-            primaryAudios[0].currentTime = 0;
-            window.__safePlay(primaryAudios[0]);
-            animateBtnDef(defBtn);
-            window.__startPlaying(primaryAudios[0], defBtn);
+            makeNativeDefItem('Bi-Def', biBtns);
+            makeNativeDefItem('Mono-Def', monoBtns);
           }
-        });
-        window.__playLockedDefAudio = playPrimary;
-
-        var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
-                           (primaryType === 'monolingual' && !!window.__monoUnlocked);
-        if (primaryShown) {
-          window.__autoPlayDefAudio = playPrimary;
-        } else {
+  
+          var primaryBtns = window.__monoUnlocked ? monoBtns : biBtns;
+          var secondaryBtns = window.__monoUnlocked ? biBtns : monoBtns;
+  
+          window.__playLockedDefAudio = function() {
+            primaryBtns[0].click();
+            window.__animateBtn(primaryBtns[0]);
+          };
+  
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
-              if (defToggle.checked) playPrimary();
+              if (defToggle.checked) secondaryBtns[0].click();
             });
+          }
+        } else {
+          var singleBtns = hasBiBtns ? biBtns : monoBtns;
+          var singleType = hasBiBtns ? 'bilingual' : 'monolingual';
+  
+          var singleItem = document.createElement('div');
+          singleItem.className = 'audio-item bi';
+          singleItem.setAttribute('data-audio', 'def');
+          for (var si = 0; si < singleBtns.length; si++) {
+            singleItem.appendChild(singleBtns[si]);
+          }
+          var singleLabel = document.createElement('span');
+          singleLabel.className = 'audio-label';
+          singleLabel.textContent = 'Definition';
+          singleItem.appendChild(singleLabel);
+          if (audioRow) audioRow.appendChild(singleItem);
+  
+          window.__playLockedDefAudio = function() {
+            singleBtns[0].click();
+            window.__animateBtn(singleBtns[0]);
+          };
+  
+          var singleShown = (singleType === 'bilingual' && !window.__monoUnlocked) ||
+                             (singleType === 'monolingual' && !!window.__monoUnlocked);
+          if (!singleShown) {
+            var defToggle = document.getElementById('jp-toggle');
+            if (defToggle) {
+              defToggle.addEventListener('change', function() {
+                if (defToggle.checked) singleBtns[0].click();
+              });
+            }
           }
         }
       }
+  
+      nativeContainer.remove();
     }
-  }
-
-  // ── Mirror audio buttons to bottom row (mobile) ──
-  var bottomRow = document.getElementById('audio-row-bottom');
-  if (bottomRow) {
-    var SVG_BOTTOM = window.__audioSVG;
-    var animateBtnBottom = window.__animateBtn;
-    var topItemsRaw = document.querySelectorAll('.audio-row .audio-item');
-    var defItems = [], otherItems = [];
-    for (var si = 0; si < topItemsRaw.length; si++) {
-      if (topItemsRaw[si].getAttribute('data-audio') === 'def') defItems.push(topItemsRaw[si]);
-      else otherItems.push(topItemsRaw[si]);
-    }
-    // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
-    // Desired: secondary def, primary def, word, sentence
-    if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
-    var topItems = defItems.concat(otherItems);
-    for (var bi = 0; bi < topItems.length; bi++) {
-      (function(origItem) {
-        var clone = document.createElement('div');
-        clone.className = 'audio-item';
-        var origBtns = origItem.querySelectorAll('.replay-button');
-        for (var bj = 0; bj < origBtns.length; bj++) {
-          (function(origBtn) {
+  
+    // ── Tagged definition audio: [audio:] JS playback ──
+    if (window.__defAudioRawHtml) {
+      var audioDefs = parseDefinitions(window.__defAudioRawHtml);
+  
+      var extractAudioFilenames = function(blockHtml) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = blockHtml;
+        return window.__extractAudio(tmp).filenames;
+      };
+  
+      var biFilenames = audioDefs.bilingual ? extractAudioFilenames(audioDefs.bilingual) : [];
+      var audioMonoKey = audioDefs.monolingual ? 'monolingual' : (audioDefs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
+      var monoFilenames = audioMonoKey ? extractAudioFilenames(audioDefs[audioMonoKey]) : [];
+      var hasBiAudio = biFilenames.length > 0;
+      var hasMonoAudio = monoFilenames.length > 0;
+  
+      if (hasBiAudio || hasMonoAudio) {
+        var primaryFilenames, secondaryFilenames, primaryType;
+  
+        if (hasBiAudio && hasMonoAudio) {
+          if (window.__monoUnlocked) {
+            primaryFilenames = monoFilenames;
+            secondaryFilenames = biFilenames;
+            primaryType = 'monolingual';
+          } else {
+            primaryFilenames = biFilenames;
+            secondaryFilenames = monoFilenames;
+            primaryType = 'bilingual';
+          }
+        } else {
+          primaryFilenames = hasBiAudio ? biFilenames : monoFilenames;
+          secondaryFilenames = null;
+          primaryType = hasBiAudio ? 'bilingual' : 'monolingual';
+        }
+  
+        var primaryAudios = [];
+        for (var pi = 0; pi < primaryFilenames.length; pi++) {
+          var pa = document.createElement('audio');
+          pa.preload = 'auto';
+          pa.src = primaryFilenames[pi];
+          document.body.appendChild(pa);
+          primaryAudios.push(pa);
+          window.__defAudioEls.push(pa);
+        }
+  
+        var secondaryAudios = [];
+        if (secondaryFilenames) {
+          for (var sk = 0; sk < secondaryFilenames.length; sk++) {
+            var sa = document.createElement('audio');
+            sa.preload = 'auto';
+            sa.src = secondaryFilenames[sk];
+            document.body.appendChild(sa);
+            secondaryAudios.push(sa);
+            window.__defAudioEls.push(sa);
+          }
+        }
+  
+        var SVG_DEF = window.__audioSVG;
+        var animateBtnDef = window.__animateBtn;
+  
+        var playGroup = function(audioEls, btn) {
+          window.__stopAllAudio(audioEls[0]);
+          var idx = 0;
+          var playNext = function() {
+            if (idx >= audioEls.length) return;
+            var cur = idx++;
+            audioEls[cur].currentTime = 0;
+            audioEls[cur].onended = playNext;
+            window.__safePlay(audioEls[cur]);
+            if (btn) window.__startPlaying(audioEls[cur], btn);
+          };
+          playNext();
+        };
+  
+        var audioRow = document.querySelector('.audio-row');
+  
+        if (hasBiAudio && hasMonoAudio) {
+          var makeDefItem = function(label, filenames, audioEls) {
+            var item = document.createElement('div');
+            item.className = 'audio-item bi';
+            item.setAttribute('data-audio', 'def');
             var btn = document.createElement('a');
             btn.className = 'replay-button';
             btn.href = '#';
-            btn.innerHTML = SVG_BOTTOM;
-            clone.appendChild(btn);
+            btn.innerHTML = SVG_DEF;
+            item.appendChild(btn);
+            var lbl = document.createElement('span');
+            lbl.className = 'audio-label';
+            lbl.textContent = label;
+            item.appendChild(lbl);
+            if (audioRow) audioRow.appendChild(item);
+            var playFn = function() {
+              playGroup(audioEls, btn);
+              animateBtnDef(btn);
+            };
             window.__onTap(btn, function() {
-              if (origBtn._tapHandler) origBtn._tapHandler();
-              else origBtn.click();
-              animateBtnBottom(btn);
+              if (window.matchMedia('(hover: none)').matches) {
+                window.__stopAllAudio();
+                var fa = window.__freshPlay(audioEls[0].src, btn);
+                animateBtnDef(btn);
+                window.__startPlaying(fa, btn);
+              } else {
+                window.__stopAllAudio(audioEls[0]);
+                audioEls[0].currentTime = 0;
+                window.__safePlay(audioEls[0]);
+                animateBtnDef(btn);
+                window.__startPlaying(audioEls[0], btn);
+              }
             });
-            var obs = new MutationObserver(function() {
-              btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+            return playFn;
+          };
+  
+          var playBi, playMono;
+          if (window.__monoUnlocked) {
+            playMono = makeDefItem('Mono-Def', monoFilenames, primaryAudios);
+            playBi = makeDefItem('Bi-Def', biFilenames, secondaryAudios);
+          } else {
+            playBi = makeDefItem('Bi-Def', biFilenames, primaryAudios);
+            playMono = makeDefItem('Mono-Def', monoFilenames, secondaryAudios);
+          }
+  
+          var playPrimary = window.__monoUnlocked ? playMono : playBi;
+          var playSecondary = window.__monoUnlocked ? playBi : playMono;
+  
+          window.__playLockedDefAudio = playPrimary;
+  
+          var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
+                             (primaryType === 'monolingual' && !!window.__monoUnlocked);
+          if (primaryShown) {
+            window.__autoPlayDefAudio = playPrimary;
+          }
+  
+          var defToggle = document.getElementById('jp-toggle');
+          if (defToggle) {
+            defToggle.addEventListener('change', function() {
+              if (defToggle.checked) playSecondary();
             });
-            obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
-            window.__observers.push(obs);
-          })(origBtns[bj]);
+          }
+        } else {
+          var defItem = document.createElement('div');
+          defItem.className = 'audio-item bi';
+          defItem.setAttribute('data-audio', 'def');
+          var defBtn = document.createElement('a');
+          defBtn.className = 'replay-button';
+          defBtn.href = '#';
+          defBtn.innerHTML = SVG_DEF;
+          defItem.appendChild(defBtn);
+          var defLabel = document.createElement('span');
+          defLabel.className = 'audio-label';
+          defLabel.textContent = 'Definition';
+          defItem.appendChild(defLabel);
+          if (audioRow) audioRow.appendChild(defItem);
+  
+          var playPrimary = function() {
+            playGroup(primaryAudios, defBtn);
+            animateBtnDef(defBtn);
+          };
+  
+          window.__onTap(defBtn, function() {
+            if (window.matchMedia('(hover: none)').matches) {
+              window.__stopAllAudio();
+              var fa = window.__freshPlay(primaryAudios[0].src, defBtn);
+              animateBtnDef(defBtn);
+              window.__startPlaying(fa, defBtn);
+            } else {
+              window.__stopAllAudio(primaryAudios[0]);
+              primaryAudios[0].currentTime = 0;
+              window.__safePlay(primaryAudios[0]);
+              animateBtnDef(defBtn);
+              window.__startPlaying(primaryAudios[0], defBtn);
+            }
+          });
+          window.__playLockedDefAudio = playPrimary;
+  
+          var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
+                             (primaryType === 'monolingual' && !!window.__monoUnlocked);
+          if (primaryShown) {
+            window.__autoPlayDefAudio = playPrimary;
+          } else {
+            var defToggle = document.getElementById('jp-toggle');
+            if (defToggle) {
+              defToggle.addEventListener('change', function() {
+                if (defToggle.checked) playPrimary();
+              });
+            }
+          }
         }
-        var origLabel = origItem.querySelector('.audio-label');
-        if (origLabel) {
-          var lbl = document.createElement('span');
-          lbl.className = 'audio-label';
-          lbl.textContent = origLabel.textContent;
-          clone.appendChild(lbl);
-        }
-        bottomRow.appendChild(clone);
-      })(topItems[bi]);
+      }
     }
-  }
-
-  // ── Trigger reveal animations after content is ready ──
-  requestAnimationFrame(function() {
-    var els = document.querySelectorAll('.answer > [style*="--d"]');
-    for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
-  });
-
-  // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
-  if (window.__autoPlayDefAudio) {
-    setTimeout(function() {
-      if (window.__autoPlayDefAudio) window.__autoPlayDefAudio();
-    }, 0);
-  }
-}
-_renderBack();
-})();
-</script>
-
-<script>
-(function() {
-  var HANDLER_KEY = '__audioHandler';
-  var animateBtn = window.__animateBtn;
-  function play(item) {
-    if (!item) return;
-    window.__stopAllAudio();
-    var link = item.querySelector('.soundLink');
-    if (link) {
-      link.click();
-      var btn = item.querySelector('.replay-button');
-      if (btn) animateBtn(btn);
-      return;
+  
+    // ── Mirror audio buttons to bottom row (mobile) ──
+    var bottomRow = document.getElementById('audio-row-bottom');
+    if (bottomRow) {
+      var SVG_BOTTOM = window.__audioSVG;
+      var animateBtnBottom = window.__animateBtn;
+      var topItemsRaw = document.querySelectorAll('.audio-row .audio-item');
+      var defItems = [], otherItems = [];
+      for (var si = 0; si < topItemsRaw.length; si++) {
+        if (topItemsRaw[si].getAttribute('data-audio') === 'def') defItems.push(topItemsRaw[si]);
+        else otherItems.push(topItemsRaw[si]);
+      }
+      // If 2 def items, first=primary (visible), second=secondary (hidden toggle)
+      // Desired: secondary def, primary def, word, sentence
+      if (defItems.length === 2) defItems = [defItems[1], defItems[0]];
+      var topItems = defItems.concat(otherItems);
+      for (var bi = 0; bi < topItems.length; bi++) {
+        (function(origItem) {
+          var clone = document.createElement('div');
+          clone.className = 'audio-item';
+          var origBtns = origItem.querySelectorAll('.replay-button');
+          for (var bj = 0; bj < origBtns.length; bj++) {
+            (function(origBtn) {
+              var btn = document.createElement('a');
+              btn.className = 'replay-button';
+              btn.href = '#';
+              btn.innerHTML = SVG_BOTTOM;
+              clone.appendChild(btn);
+              window.__onTap(btn, function() {
+                if (origBtn._tapHandler) origBtn._tapHandler();
+                else origBtn.click();
+                animateBtnBottom(btn);
+              });
+              var obs = new MutationObserver(function() {
+                btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+              });
+              obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
+              window.__observers.push(obs);
+            })(origBtns[bj]);
+          }
+          var origLabel = origItem.querySelector('.audio-label');
+          if (origLabel) {
+            var lbl = document.createElement('span');
+            lbl.className = 'audio-label';
+            lbl.textContent = origLabel.textContent;
+            clone.appendChild(lbl);
+          }
+          bottomRow.appendChild(clone);
+        })(topItems[bi]);
+      }
     }
-    var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
-  }
-  function playAll() {
-    var items = document.querySelectorAll('.audio-row .audio-item');
-    var queue = [];
-    items.forEach(function(item) {
-      var audio = item._jsAudio || item.querySelector('audio');
-      var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+  
+    // ── Trigger reveal animations after content is ready ──
+    requestAnimationFrame(function() {
+      var els = document.querySelectorAll('.answer > [style*="--d"], .word-column > [style*="--d"]');
+      for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
     });
-    if (!queue.length) return false;
-    window.__stopAllAudio();
-    var k = 0;
-    function next() {
-      if (k >= queue.length) {
-        if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+  
+    // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
+    if (window.__autoPlayDefAudio) {
+      setTimeout(function() {
+        if (window.__autoPlayDefAudio) window.__autoPlayDefAudio();
+      }, 0);
+    }
+  }
+  _renderBack();
+  })();
+  </script>
+  
+  <script>
+  (function() {
+    var HANDLER_KEY = '__audioHandler';
+    var animateBtn = window.__animateBtn;
+    function play(item) {
+      if (!item) return;
+      window.__stopAllAudio();
+      var link = item.querySelector('.soundLink');
+      if (link) {
+        link.click();
+        var btn = item.querySelector('.replay-button');
+        if (btn) animateBtn(btn);
         return;
       }
-      var entry = queue[k++];
-      entry.audio.currentTime = 0;
-      window.__safePlay(entry.audio);
-      if (entry.btn) animateBtn(entry.btn);
-      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-      entry.audio.onended = next;
+      var audio = item.querySelector('audio');
+      if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
     }
-    next();
-    return true;
-  }
-  function handler(ev) {
-    var el = ev.target;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
-    var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
-    var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
-    switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
-      case ',':
-        ev.preventDefault(); ev.stopPropagation();
-        if (window.__playLockedDefAudio) window.__playLockedDefAudio();
-        else play(defItem);
-        break;
-      case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
-      case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
-    }
-  }
-  if (window[HANDLER_KEY]) {
-    window.removeEventListener('keydown', window[HANDLER_KEY], true);
-  }
-  window[HANDLER_KEY] = handler;
-  window.addEventListener('keydown', handler, { capture: true });
-})();
-</script>
-
-<script>
-(function() {
-  var HANDLER_KEY = '__jpDefHandler';
-  function animateToggle(label) {
-    label.style.color = 'var(--text-1)';
-    label.style.borderColor = 'rgba(255, 255, 255, 0.10)';
-    label.style.background = 'rgba(255, 255, 255, 0.04)';
-    setTimeout(function() {
-      label.style.color = '';
-      label.style.borderColor = '';
-      label.style.background = '';
-    }, 350);
-  }
-  function handler(ev) {
-    if (ev.code === 'KeyG' || ev.key === '.') {
-      var cb = document.getElementById('jp-toggle');
-      if (cb) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        cb.checked = !cb.checked;
-        cb.dispatchEvent(new Event('change'));
-        var label = document.querySelector('.jp-def-toggle');
-        if (label) animateToggle(label);
-      }
-    }
-  }
-  if (window[HANDLER_KEY]) {
-    window.removeEventListener('keydown', window[HANDLER_KEY], true);
-  }
-  window[HANDLER_KEY] = handler;
-  window.addEventListener('keydown', handler, { capture: true });
-
-  var jpToggle = document.getElementById('jp-toggle');
-  if (jpToggle) {
-    jpToggle.addEventListener('change', function() {
-      if (!jpToggle.checked) {
-        var els = window.__defAudioEls || [];
-        for (var i = 0; i < els.length; i++) {
-          els[i].pause();
-          els[i].currentTime = 0;
-          els[i].onended = null;
+    function playAll() {
+      var items = document.querySelectorAll('.audio-row .audio-item');
+      var queue = [];
+      items.forEach(function(item) {
+        var audio = item._jsAudio || item.querySelector('audio');
+        var btn = item.querySelector('.replay-button');
+        if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+      });
+      if (!queue.length) return false;
+      window.__stopAllAudio();
+      var k = 0;
+      function next() {
+        if (k >= queue.length) {
+          if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+          return;
         }
-        document.querySelectorAll('.audio-item[data-audio="def"] .replay-button.playing').forEach(function(b) {
-          b.classList.remove('playing');
-        });
+        var entry = queue[k++];
+        entry.audio.currentTime = 0;
+        window.__safePlay(entry.audio);
+        if (entry.btn) animateBtn(entry.btn);
+        if (entry.js) window.__startPlaying(entry.audio, entry.btn);
+        entry.audio.onended = next;
       }
-    });
-  }
-})();
-</script>
+      next();
+      return true;
+    }
+    function handler(ev) {
+      var el = ev.target;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
+      var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
+      var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
+      switch (ev.key.toLowerCase()) {
+        case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
+        case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
+        case ',':
+          ev.preventDefault(); ev.stopPropagation();
+          if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+          else play(defItem);
+          break;
+        case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
+        case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
+      }
+    }
+    if (window[HANDLER_KEY]) {
+      window.removeEventListener('keydown', window[HANDLER_KEY], true);
+    }
+    window[HANDLER_KEY] = handler;
+    window.addEventListener('keydown', handler, { capture: true });
+  })();
+  </script>
+  
+  <script>
+  (function() {
+    var HANDLER_KEY = '__jpDefHandler';
+    function animateToggle(label) {
+      label.style.color = 'var(--text-1)';
+      label.style.borderColor = 'rgba(255, 255, 255, 0.10)';
+      label.style.background = 'rgba(255, 255, 255, 0.04)';
+      setTimeout(function() {
+        label.style.color = '';
+        label.style.borderColor = '';
+        label.style.background = '';
+      }, 350);
+    }
+    function handler(ev) {
+      if (ev.code === 'KeyG' || ev.key === '.') {
+        var cb = document.getElementById('jp-toggle');
+        if (cb) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+          var label = document.querySelector('.jp-def-toggle');
+          if (label) animateToggle(label);
+        }
+      }
+    }
+    if (window[HANDLER_KEY]) {
+      window.removeEventListener('keydown', window[HANDLER_KEY], true);
+    }
+    window[HANDLER_KEY] = handler;
+    window.addEventListener('keydown', handler, { capture: true });
+  
+    var jpToggle = document.getElementById('jp-toggle');
+    if (jpToggle) {
+      jpToggle.addEventListener('change', function() {
+        if (!jpToggle.checked) {
+          var els = window.__defAudioEls || [];
+          for (var i = 0; i < els.length; i++) {
+            els[i].pause();
+            els[i].currentTime = 0;
+            els[i].onended = null;
+          }
+          document.querySelectorAll('.audio-item[data-audio="def"] .replay-button.playing').forEach(function(b) {
+            b.classList.remove('playing');
+          });
+        }
+      });
+    }
+  })();
+  </script>
+  
+  <script>
+  // Tategaki: convert ASCII digits to full-width and wrap bracketed digit content
+  (function() {
+      if (!document.documentElement.classList.contains('tategaki')) return;
+  
+      var SKIP = /^(script|style|noscript)$/i;
+      var BRACKET_DIGIT = /\[[^\]]*\d[^\]]*\]/g;
+      var DIGIT = /[0-9]/;
+      var TO_FW = function(ch) { return String.fromCharCode(ch.charCodeAt(0) + 0xFEE0); };
+  
+      function walk(root, regex, handler) {
+          var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+              acceptNode: function(n) {
+                  if (SKIP.test(n.parentNode.nodeName) || n.parentNode.closest('.hor'))
+                      return NodeFilter.FILTER_REJECT;
+                  return regex.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+              }
+          }, false);
+          var nodes = [];
+          while (walker.nextNode()) nodes.push(walker.currentNode);
+          nodes.forEach(function(n) { handler(n, regex); });
+      }
+  
+      function wrapBrackets(node, re) {
+          var txt = node.nodeValue;
+          var frag = document.createDocumentFragment();
+          var last = 0, m;
+          re.lastIndex = 0;
+          while ((m = re.exec(txt))) {
+              if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+              var span = document.createElement('span');
+              span.className = 'hor';
+              span.textContent = m[0];
+              frag.appendChild(span);
+              last = re.lastIndex;
+          }
+          if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+          node.parentNode.replaceChild(frag, node);
+      }
+  
+      function convertDigits(node) {
+          node.nodeValue = node.nodeValue.replace(/[0-9]/g, TO_FW);
+      }
+  
+      var answer = document.querySelector('.answer');
+      if (!answer) return;
+      walk(answer, BRACKET_DIGIT, wrapBrackets);
+      walk(answer, DIGIT, convertDigits);
+  })();
+  </script>
+  
