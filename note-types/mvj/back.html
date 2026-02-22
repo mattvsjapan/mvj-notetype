@@ -827,13 +827,13 @@
         if (svgs.length > 0) {
           graphEl.innerHTML = svgs.join('');
         } else {
-          graphEl.style.display = 'none';
+          graphEl.setAttribute('data-state', 'empty');
         }
       } else {
-        graphEl.style.display = 'none';
+        graphEl.setAttribute('data-state', 'empty');
       }
     } else {
-      graphEl.style.display = 'none';
+      graphEl.setAttribute('data-state', 'empty');
     }
   
     // Sentence → colored sentence
@@ -858,32 +858,33 @@
     var hasBi = !!defs.bilingual;
     var hasMono = !!monoKey;
   
+    var answerEl = document.querySelector('.answer');
+
     if (hasBi && !hasMono) {
       defEl.innerHTML = defs.bilingual;
-      jpDefSection.style.display = 'none';
+      answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
       defEl.innerHTML = defs[monoKey];
-      defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
-      defEl.style.lineHeight = '1.65';
-      jpDefSection.style.display = 'none';
+      defEl.setAttribute('data-font', 'jp');
+      answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
     } else if (hasBi && hasMono) {
       if (defs.monolingual) {
         defEl.innerHTML = defs.monolingual;
-        defEl.style.fontFamily = "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif";
-        defEl.style.lineHeight = '1.65';
+        defEl.setAttribute('data-font', 'jp');
         jpDefEl.innerHTML = defs.bilingual;
         jpDefEl.className = 'def';
         var toggleLabel = document.querySelector('.jp-def-toggle');
         if (toggleLabel) toggleLabel.textContent = 'Bilingual';
+        answerEl.setAttribute('data-def-layout', 'dual-mono');
         window.__monoUnlocked = true;
       } else {
         defEl.innerHTML = defs.bilingual;
         jpDefEl.innerHTML = defs.LOCKED_monolingual;
+        answerEl.setAttribute('data-def-layout', 'dual-bi');
       }
     } else {
-      defEl.style.display = 'none';
-      jpDefSection.style.display = 'none';
+      answerEl.setAttribute('data-def-layout', 'none');
     }
   
     // ── Tagged definition audio: native [sound:] elements ──

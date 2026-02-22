@@ -13,7 +13,7 @@ Replace all inline `style.display`, `style.fontFamily`, `style.lineHeight` with 
 |------|--------|-------|
 | Chinese | DONE | Simplest card, no tategaki. Completed first. |
 | Japanese | DONE | Similar to Chinese but has pitch graph. Completed second. |
-| MVJ | NOT STARTED | Most complex. Has tategaki. Do last. |
+| MVJ | DONE | Most complex. Has tategaki. Completed last. |
 
 ### Phase 2: Audio item factory and ordering
 Consolidate all audio item creation into `createAudioItem()`. Add `data-def-role` and `data-def-lang` attributes. Simplify bottom-row cloning to copy without reordering. Add CSS `order` rules.
@@ -83,6 +83,35 @@ Record what was done in each session so the next context window has a worked exa
 - Mirrors audio buttons to bottom row
 
 **Gotchas:** None. Simpler than Chinese — no font switching, no `data-def-layout`, no bilingual/monolingual toggle.
+
+#### 2026-02-22 — MVJ card Phase 1
+
+**Files modified:** `mvj/back.html`, `mvj/css.css`
+
+**What changed in `back.html`:**
+- Lines 830, 833, 836: `graphEl.style.display = 'none'` → `graphEl.setAttribute('data-state', 'empty')` in all three pitch graph empty paths (no SVGs produced, no accent data, no word data).
+- Lines 861–887: Replaced entire definition branching block. Added `var answerEl = document.querySelector('.answer')` and refactored all five cases:
+  - **bi-only**: Sets `data-def-layout="bi-only"` on answerEl. Removed `jpDefSection.style.display = 'none'` (CSS handles it).
+  - **mono-only**: Sets `data-def-layout="mono-only"` on answerEl, `data-font="jp"` on defEl. Removed `jpDefSection.style.display = 'none'` and inline font/lineHeight.
+  - **dual-mono**: Sets `data-def-layout="dual-mono"` on answerEl, `data-font="jp"` on defEl. Removed inline font/lineHeight.
+  - **dual-bi**: Sets `data-def-layout="dual-bi"` on answerEl. No font override needed.
+  - **none**: Sets `data-def-layout="none"` on answerEl. Removed `defEl.style.display = 'none'` and `jpDefSection.style.display = 'none'`.
+
+**What changed in `css.css`:**
+- Added data-attribute CSS block after `.jp-def::before` and before bottom audio row section:
+  - `[data-state="empty"] { display: none; }` — hides empty elements
+  - `[data-font="jp"]` — Japanese serif font with line-height 1.65
+  - `.answer[data-def-layout="none"]` — hides both `.def` and `.jp-def-section`
+  - `.answer[data-def-layout="bi-only"]` and `mono-only` — hides `.jp-def-section`
+
+**What JS still does (content-only, unchanged):**
+- Sets `innerHTML` on defEl and jpDefEl
+- Sets `jpDefEl.className = 'def'` in dual-mono case
+- Sets toggle label text to 'Bilingual' in dual-mono case
+- Sets `window.__monoUnlocked` flag
+- All audio creation, cloning, playback, and keyboard handling unchanged
+
+**Gotchas:** None. No `[data-font="zh"]` needed — MVJ only has JP monolingual definitions, never Chinese.
 
 ---
 

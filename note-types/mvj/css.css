@@ -733,6 +733,27 @@ rt {
     height: 3px;
 }
 
+/* Data-attribute driven visibility */
+[data-state="empty"] {
+    display: none;
+}
+
+[data-font="jp"] {
+    font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    line-height: 1.65;
+}
+
+/* Definition layout: hide sections based on data-def-layout */
+.answer[data-def-layout="none"] .def,
+.answer[data-def-layout="none"] .jp-def-section {
+    display: none;
+}
+
+.answer[data-def-layout="bi-only"] .jp-def-section,
+.answer[data-def-layout="mono-only"] .jp-def-section {
+    display: none;
+}
+
 /* Bottom audio row — mobile only duplicate */
 
 .audio-row-bottom {
