@@ -835,6 +835,10 @@
   
     // Definition → bilingual + monolingual
     var defs = parseDefinitions(defHtml);
+    // Plain definition without comment markers → treat as monolingual
+    if (!Object.keys(defs).length && defHtml.trim()) {
+      defs.monolingual = defHtml.trim();
+    }
     var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var hasBi = !!defs.bilingual;
     var hasMono = !!monoKey;

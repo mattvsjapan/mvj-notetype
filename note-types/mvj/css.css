@@ -41,7 +41,7 @@
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* Options */
-    --tategaki: off;   /* "on" = vertical writing, "off" = horizontal (default) */
+    --tategaki: on;   /* "on" = vertical writing, "off" = horizontal (default) */
 }
 
 /* — Anki page background —
@@ -795,9 +795,6 @@ rt {
     max-width: none;
     width: fit-content;
     height: min(calc(100vh - 80px), 700px);
-}
-
-.tategaki .card-inner:not(:has(> .back)) {
     display: flex;
     flex-direction: column;
 }
@@ -806,17 +803,32 @@ rt {
     overflow: visible;
 }
 
+.tategaki .back {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 0, 0, 0.3); /* DEBUG */
+}
+
 /* Re-assert display:contents on FrontSide's inner card-inner */
 .tategaki .back > .card-inner {
     display: contents;
 }
 
-/* Front — vertically center audio row, push to right */
-.tategaki .front {
+/* Front — vertically center audio row, push to right (only on front side) */
+.tategaki .card-inner:not(:has(> .back)) .front {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     flex: 1;
+}
+
+/* On back side, .front must stay display:contents — the :not(:has(> .back))
+   selector above also matches the inner .card-inner from {{FrontSide}},
+   so we override it here with equal specificity (0-4-0), winning by source order. */
+.tategaki .back .card-inner .front {
+    display: contents;
 }
 
 .tategaki .front .audio-row {
@@ -836,28 +848,26 @@ rt {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: min(calc(100vh - 260px), 520px);
-    margin-top: 24px;
+    flex: 1;
+    margin-top: 0;
     padding-bottom: 0;
+    min-height: 0;
+    outline: 3px solid lime; /* DEBUG */
 }
 
 @media (hover: none) {
     .tategaki .card-inner {
         min-height: calc(100dvh - 40px);
     }
-    .tategaki .answer {
-        height: calc(100dvh - 180px);
-        margin-top: 0;
-    }
 }
 
-/* Audio column — rightmost panel (order: -1 = first in R→L flex) */
+/* Audio column — rightmost panel (first in R→L flex) */
 .tategaki .audio-row-bottom {
     display: flex;
     flex-direction: column;
     align-items: center;
     writing-mode: horizontal-tb;
-    order: -1;
+    order: -4;
     gap: 12px;
     margin: 0;
     align-self: center;
@@ -877,13 +887,13 @@ rt {
     font-size: 9px;
 }
 
-/* Word column — horizontal stack of word, graph, image (like old-tategaki) */
+/* Word column — word+graph at top, image at bottom */
 .tategaki .word-column {
     display: flex;
     flex-direction: column;
     align-items: center;
     writing-mode: horizontal-tb;
-    align-self: flex-start;
+    align-self: stretch;
 }
 
 .tategaki .target-word {
@@ -900,6 +910,7 @@ rt {
 .tategaki .image-wrap {
     width: auto;
     margin: 0;
+    margin-top: auto;
 }
 
 .tategaki .image-wrap img {
@@ -909,21 +920,25 @@ rt {
     max-height: 200px;
 }
 
-/* Sentence */
+/* Sentence — right after audio buttons */
 .tategaki .sentence {
     text-align: start;
     margin: 0;
+    order: -2;
 }
 
-/* Definition */
+/* Definition — placed right after audio buttons in R→L flow */
 .tategaki .def {
     margin: 0;
+    order: -2;
+    outline: 3px solid yellow; /* DEBUG */
 }
 
-/* JP def section */
+/* JP def section — follows definition */
 .tategaki .jp-def-section {
     margin: 0;
     margin-block-start: 16px;
+    order: -1;
 }
 
 @media (hover: none) {
