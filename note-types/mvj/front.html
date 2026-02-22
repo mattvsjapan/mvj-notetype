@@ -23,6 +23,30 @@
     if (v && v.trim() === 'on') document.documentElement.classList.add('tategaki');
 })();
 
+// Route Web Audio through media channel (audible even with mute switch)
+if (navigator.audioSession) navigator.audioSession.type = 'playback';
+
+// Create AudioContext eagerly — Anki's WKWebView sets
+// mediaTypesRequiringUserActionForPlayback=[] which allows
+// AudioContext to reach 'running' without a gesture.
+if (!window.__audioCtx) {
+    window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+if (window.__audioCtx.state === 'suspended') {
+    window.__audioCtx.resume()['catch'](function() {});
+}
+
+// Safety net: if AudioContext is still suspended after page load,
+// resume it on the next user gesture.
+if (!window.__audioCtxTouchHandler) {
+    window.__audioCtxTouchHandler = function() {
+        if (window.__audioCtx && window.__audioCtx.state !== 'running') {
+            window.__audioCtx.resume()['catch'](function() {});
+        }
+    };
+    document.addEventListener('touchend', window.__audioCtxTouchHandler, { capture: true });
+}
+
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
     var ci = document.querySelector('.card-inner');
@@ -166,9 +190,8 @@ window.__adoptNativeAudio = function(elements) {
                 window.__onTap(b, function() {
                     if (window.matchMedia('(hover: none)').matches) {
                         window.__stopAllAudio();
-                        var fa = window.__freshPlay(audio.src, b);
                         window.__animateBtn(b);
-                        window.__startPlaying(fa, b);
+                        window.__playMobile(audio.src, b);
                     } else {
                         window.__stopAllAudio(audio);
                         audio.currentTime = 0;
@@ -185,6 +208,11 @@ window.__adoptNativeAudio = function(elements) {
 };
 
 window.__stopAllAudio = function(except) {
+    window.__webAudioGen = (window.__webAudioGen || 0) + 1;
+    if (window.__webAudioSource) {
+        try { window.__webAudioSource.stop(); } catch(e) {}
+        window.__webAudioSource = null;
+    }
     window.__autoPlayDefAudio = null;
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
@@ -248,14 +276,38 @@ window.__freshPlay = function(src, btn) {
     return a;
 };
 
-if (window.matchMedia('(hover: none)').matches && !window.__audioUnlocked) {
-    document.addEventListener('touchend', function() {
-        window.__audioUnlocked = true;
-        var s = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-        s.play()['catch'](function() {});
-    }, { capture: true, once: true });
-}
 window.__stopDefAudio = window.__stopAllAudio;
+
+window.__webAudioPlay = function(src, btn, gen) {
+    return fetch(src)
+        .then(function(r) { return r.arrayBuffer(); })
+        .then(function(buf) { return window.__audioCtx.decodeAudioData(buf); })
+        .then(function(audioBuf) {
+            if (gen !== undefined && gen !== window.__webAudioGen) return;
+            return new Promise(function(resolve) {
+                var source = window.__audioCtx.createBufferSource();
+                source.buffer = audioBuf;
+                source.connect(window.__audioCtx.destination);
+                source.start();
+                window.__webAudioSource = source;
+                if (btn) { btn.classList.add('playing'); btn._currentAudio = source; }
+                source.onended = function() {
+                    if (window.__webAudioSource === source) window.__webAudioSource = null;
+                    if (btn && btn._currentAudio === source) btn.classList.remove('playing');
+                    resolve();
+                };
+            });
+        });
+};
+
+window.__playMobile = function(src, btn) {
+    if (window.__audioCtx && window.__audioCtx.state === 'running') {
+        return window.__webAudioPlay(src, btn, window.__webAudioGen);
+    }
+    var fa = window.__freshPlay(src, btn);
+    window.__startPlaying(fa, btn);
+    return new Promise(function(resolve) { fa.onended = resolve; });
+};
 </script>
 
 <script>
@@ -285,9 +337,8 @@ window.__stopDefAudio = window.__stopAllAudio;
       window.__onTap(btn, function() {
         if (window.matchMedia('(hover: none)').matches) {
           window.__stopAllAudio();
-          var fa = window.__freshPlay(audio.src, btn);
           animateBtn(btn);
-          window.__startPlaying(fa, btn);
+          window.__playMobile(audio.src, btn);
         } else {
           window.__stopAllAudio(audio);
           audio.currentTime = 0;
@@ -312,9 +363,8 @@ window.__stopDefAudio = window.__stopAllAudio;
     window.__onTap(btn, function() {
       if (window.matchMedia('(hover: none)').matches) {
         window.__stopAllAudio();
-        var fa = window.__freshPlay(nativeAudio.src, btn);
         animateBtn(btn);
-        window.__startPlaying(fa, btn);
+        window.__playMobile(nativeAudio.src, btn);
       } else {
         window.__stopAllAudio(nativeAudio);
         nativeAudio.currentTime = 0;
@@ -340,17 +390,32 @@ window.__stopDefAudio = window.__stopAllAudio;
     if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
   });
   if (!queue.length) return;
+  var isMobile = window.matchMedia('(hover: none)').matches;
   var i = 0;
-  function playNext() {
-    if (i >= queue.length) return;
-    var entry = queue[i++];
-    entry.audio.currentTime = 0;
-    window.__safePlay(entry.audio);
-    if (entry.btn) animateBtn(entry.btn);
-    if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-    entry.audio.onended = playNext;
+  if (isMobile) {
+    setTimeout(function() {
+      var gen = window.__webAudioGen;
+      (function playNext() {
+        if (i >= queue.length || gen !== window.__webAudioGen) return;
+        var entry = queue[i++];
+        if (entry.btn) animateBtn(entry.btn);
+        window.__playMobile(entry.audio.src, entry.btn)
+            .then(function() { if (gen === window.__webAudioGen) playNext(); })
+            ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
+      })();
+    }, 0);
+  } else {
+    function playNext() {
+      if (i >= queue.length) return;
+      var entry = queue[i++];
+      entry.audio.currentTime = 0;
+      window.__safePlay(entry.audio);
+      if (entry.btn) animateBtn(entry.btn);
+      if (entry.js) window.__startPlaying(entry.audio, entry.btn);
+      entry.audio.onended = playNext;
+    }
+    setTimeout(playNext, 0);
   }
-  setTimeout(playNext, 0);
 })();
 </script>
 

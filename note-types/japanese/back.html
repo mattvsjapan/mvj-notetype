@@ -68,9 +68,8 @@
       window.__onTap(btn, function() {
         if (window.matchMedia('(hover: none)').matches) {
           window.__stopAllAudio();
-          var fa = window.__freshPlay(audio.src, btn);
           animateBtn(btn);
-          window.__startPlaying(fa, btn);
+          window.__playMobile(audio.src, btn);
         } else {
           window.__stopAllAudio(audio);
           audio.currentTime = 0;
@@ -211,17 +210,30 @@ _renderBack();
     }
     if (!queue.length) return false;
     window.__stopAllAudio();
-    var k = 0;
-    function next() {
-      if (k >= queue.length) return;
-      var entry = queue[k++];
-      entry.audio.currentTime = 0;
-      window.__safePlay(entry.audio);
-      if (entry.btn) animateBtn(entry.btn);
-      window.__startPlaying(entry.audio, entry.btn);
-      entry.audio.onended = next;
+    if (window.matchMedia('(hover: none)').matches) {
+      var gen = window.__webAudioGen;
+      var k = 0;
+      (function next() {
+        if (k >= queue.length || gen !== window.__webAudioGen) return;
+        var entry = queue[k++];
+        if (entry.btn) animateBtn(entry.btn);
+        window.__playMobile(entry.audio.src, entry.btn)
+            .then(function() { if (gen === window.__webAudioGen) next(); })
+            ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+      })();
+    } else {
+      var k = 0;
+      function next() {
+        if (k >= queue.length) return;
+        var entry = queue[k++];
+        entry.audio.currentTime = 0;
+        window.__safePlay(entry.audio);
+        if (entry.btn) animateBtn(entry.btn);
+        window.__startPlaying(entry.audio, entry.btn);
+        entry.audio.onended = next;
+      }
+      next();
     }
-    next();
     return true;
   }
   function handler(ev) {
