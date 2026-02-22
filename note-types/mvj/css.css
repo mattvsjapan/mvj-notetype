@@ -822,6 +822,13 @@ html:not(.tategaki) .answer .jp-def-section {
     order: 1;
 }
 
+/* Non-tategaki: tighten Japanese text line-height */
+html:not(.tategaki) .sentence,
+html:not(.tategaki) .jp-def,
+html:not(.tategaki) [data-font="jp"] {
+    line-height: 1.55;
+}
+
 /* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
 
 .answer > [style*="--d"],
