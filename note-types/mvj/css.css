@@ -1138,7 +1138,7 @@ html.tategaki:has(.back) {
 @media (hover: none) {
     .tategaki .sentence rt {
         transform: translate(-7px, 1px);
-        font-size: 0.47em;
+        font-size: 0.4em;
         letter-spacing: 0.1em;
     }
 }
