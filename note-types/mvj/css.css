@@ -614,7 +614,7 @@ rt {
     font-family: var(--jp);
     font-size: 23px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.65;
     color: var(--text-1);
     text-align: center;
     margin: 0 0 20px;
@@ -728,7 +728,7 @@ rt {
     font-family: var(--jp);
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.65;
     color: var(--text-1);
     margin: 0;
     padding-top: 0;
