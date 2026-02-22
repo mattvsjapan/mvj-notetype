@@ -1034,6 +1034,8 @@ html.tategaki:has(.back) {
 .tategaki .def-audio-row .audio-item {
     gap: 6px;
 }
+.tategaki .def-audio-row .audio-item[data-def-role="primary"] { order: 0; }
+.tategaki .def-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
 
 .tategaki .def-audio-row .replay-button {
     width: 52px !important;

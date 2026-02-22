@@ -1211,47 +1211,56 @@
         defAudioRow.className = 'def-audio-row';
         defAudioRow.style.cssText = '--d:80';
       }
+      function cloneItemToRow(origItem, targetRow) {
+        var clone = document.createElement('div');
+        clone.className = 'audio-item';
+        var attrs = origItem.attributes;
+        for (var ai = 0; ai < attrs.length; ai++) {
+          if (attrs[ai].name.indexOf('data-') === 0) {
+            clone.setAttribute(attrs[ai].name, attrs[ai].value);
+          }
+        }
+        var origBtns = origItem.querySelectorAll('.replay-button');
+        for (var bj = 0; bj < origBtns.length; bj++) {
+          (function(origBtn) {
+            var btn = document.createElement('a');
+            btn.className = 'replay-button';
+            btn.href = '#';
+            btn.innerHTML = SVG_BOTTOM;
+            clone.appendChild(btn);
+            window.__onTap(btn, function() {
+              if (origBtn._tapHandler) origBtn._tapHandler();
+              else origBtn.click();
+              animateBtnBottom(btn);
+            });
+            var obs = new MutationObserver(function() {
+              btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+            });
+            obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
+            window.__observers.push(obs);
+          })(origBtns[bj]);
+        }
+        var origLabel = origItem.querySelector('.audio-label');
+        if (origLabel) {
+          var lbl = document.createElement('span');
+          lbl.className = 'audio-label';
+          lbl.textContent = origLabel.textContent;
+          clone.appendChild(lbl);
+        }
+        targetRow.appendChild(clone);
+      }
       var topItems = document.querySelectorAll('.audio-row .audio-item');
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
           var isDef = origItem.getAttribute('data-audio') === 'def';
-          var targetRow = (isTategaki && isDef && defAudioRow) ? defAudioRow : bottomRow;
-          var clone = document.createElement('div');
-          clone.className = 'audio-item';
-          var attrs = origItem.attributes;
-          for (var ai = 0; ai < attrs.length; ai++) {
-            if (attrs[ai].name.indexOf('data-') === 0) {
-              clone.setAttribute(attrs[ai].name, attrs[ai].value);
+          if (isTategaki && isDef && defAudioRow) {
+            cloneItemToRow(origItem, defAudioRow);
+            if (window.matchMedia('(hover: none)').matches) {
+              cloneItemToRow(origItem, bottomRow);
             }
+          } else {
+            cloneItemToRow(origItem, bottomRow);
           }
-          var origBtns = origItem.querySelectorAll('.replay-button');
-          for (var bj = 0; bj < origBtns.length; bj++) {
-            (function(origBtn) {
-              var btn = document.createElement('a');
-              btn.className = 'replay-button';
-              btn.href = '#';
-              btn.innerHTML = SVG_BOTTOM;
-              clone.appendChild(btn);
-              window.__onTap(btn, function() {
-                if (origBtn._tapHandler) origBtn._tapHandler();
-                else origBtn.click();
-                animateBtnBottom(btn);
-              });
-              var obs = new MutationObserver(function() {
-                btn.classList.toggle('playing', origBtn.classList.contains('playing'));
-              });
-              obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
-              window.__observers.push(obs);
-            })(origBtns[bj]);
-          }
-          var origLabel = origItem.querySelector('.audio-label');
-          if (origLabel) {
-            var lbl = document.createElement('span');
-            lbl.className = 'audio-label';
-            lbl.textContent = origLabel.textContent;
-            clone.appendChild(lbl);
-          }
-          targetRow.appendChild(clone);
         })(topItems[bi]);
       }
       if (isTategaki) {
