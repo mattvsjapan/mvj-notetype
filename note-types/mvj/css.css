@@ -947,7 +947,7 @@ html.tategaki:has(.back) {
         min-height: calc(100dvh - 40px);
     }
     .tategaki .front {
-        padding-top: 0;
+        padding-top: 0 !important;
     }
 }
 
