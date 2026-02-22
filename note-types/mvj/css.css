@@ -868,8 +868,13 @@ html:not(.tategaki) .answer .jp-def-section {
    ================================================ */
 
 /* Card shrinks to fit content horizontally in vertical writing mode */
+html.tategaki:has(.back) {
+    direction: rtl;
+}
+
 .tategaki .card-inner {
     writing-mode: vertical-rl;
+    direction: ltr;
     max-width: none;
     padding: 44px;
     height: min(calc(100vh - 80px), 668px);
@@ -884,6 +889,11 @@ html:not(.tategaki) .answer .jp-def-section {
 .tategaki .card-inner:has(> .back) {
     overflow: visible;
     animation: tategakiExpand 200ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
+}
+
+/* Extend grain pseudo into overflow to create scroll-end spacing */
+.tategaki .card-inner:has(> .back)::before {
+    left: -20px;
 }
 
 .tategaki .back {
@@ -1005,10 +1015,15 @@ html:not(.tategaki) .answer .jp-def-section {
 
 /* Tategaki: def audio row inside word column (between pitch graph and image) */
 .tategaki .def-audio-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(16px, 8vw, 40px);
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(auto-fit, minmax(76px, auto));
+    place-content: center;
+    place-items: center;
+    flex-grow: 1;
+    flex-basis: 0;
+    row-gap: 12px;
+    column-gap: clamp(16px, 8vw, 40px);
     margin: 0 12px 0 0;
 }
 
