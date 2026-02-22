@@ -73,8 +73,8 @@ html {
 }
 
 @media (hover: none) {
-    html { min-height: 100dvh; }
-    .card { padding: 20px; min-height: auto; }
+    html { height: 100dvh; overflow: hidden; }
+    .card { padding: 20px; min-height: auto; height: 100dvh; overflow-y: auto; }
     .card-inner {
         min-height: calc(100vh - 40px);
         min-height: calc(100dvh - 40px);

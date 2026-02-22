@@ -29,10 +29,12 @@
     if (!ci) return;
     var isBack = !!document.querySelector('.back');
     var fr = !isBack && document.querySelector('.front');
-    document.documentElement.style.overflow = isBack ? '' : 'hidden';
     function lock() {
         var h = window.innerHeight;
-        ci.style.minHeight = (h - 40) + 'px';
+        if (isBack) {
+            document.body.style.height = h + 'px';
+            ci.style.minHeight = (h - 40) + 'px';
+        }
         if (fr) fr.style.paddingTop = Math.round((h - 120) * 0.52) + 'px';
     }
     if (window.innerHeight > 100) {
