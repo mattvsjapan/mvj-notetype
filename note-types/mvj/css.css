@@ -600,7 +600,15 @@ html:not(.tategaki) .back {
 }
 
 .back .audio-row:not(:has([data-side="front"])) {
-    order: 1;
+    display: none;
+}
+
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 4vw, 20px);
+    margin-bottom: 24px;
 }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
@@ -760,7 +768,7 @@ rt {
     font-weight: 400;
     line-height: 1.45;
     color: var(--text-1);
-    margin: 0 0 16px;
+    margin: 0;
     text-align: left;
 }
 
@@ -1006,6 +1014,11 @@ rt {
 .answer[data-def-text="off"] .def,
 .answer[data-def-text="off"] .jp-def-section {
     display: none;
+}
+
+/* Gap between def and jp-def-section — only when both are visible */
+.answer:not([data-def-layout="bi-only"]):not([data-def-layout="mono-only"]) .def {
+    margin-bottom: 16px;
 }
 
 /* Audio item ordering — bottom row (mobile) */
