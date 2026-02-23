@@ -1321,9 +1321,12 @@
               if (!tw || !wc || !wpg) return;
               var size = parseFloat(getComputedStyle(tw).fontSize);
               var maxH = wc.clientHeight * 0.45;
-              while (size > 16 && wpg.scrollHeight > maxH + 1) {
-                size -= 2;
-                tw.style.fontSize = size + 'px';
+              var curH = wpg.scrollHeight;
+              if (curH <= maxH + 1) return;
+              var target = Math.max(16, Math.floor(size * maxH / curH / 2) * 2);
+              tw.style.fontSize = target + 'px';
+              if (target > 16 && wpg.scrollHeight > maxH + 1) {
+                tw.style.fontSize = (target - 2) + 'px';
               }
             });
           });
