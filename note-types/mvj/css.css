@@ -908,6 +908,7 @@ rt {
 
 .front-content .sentence rt {
     color: var(--text-2);
+    visibility: hidden;
 }
 
 .front-content .image-wrap {
@@ -933,6 +934,7 @@ rt {
 }
 .back .front-content .sentence rt {
     color: inherit;
+    visibility: visible;
 }
 
 /* When word is in front zone, pitch graph becomes first item in back zone */
