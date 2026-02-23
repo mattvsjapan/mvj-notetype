@@ -18,7 +18,10 @@
   
           var container = document.getElementById('def-audio-container');
           if (!container) return;
-  
+
+          var _defAudioOff = getComputedStyle(document.documentElement)
+              .getPropertyValue('--definition-audio').trim() === 'off';
+
           // Tagged definition audio: defer to _renderBack()
           if (container.innerHTML.indexOf('def-type="') !== -1) {
               if (container.textContent.indexOf('[audio:') !== -1) {
@@ -36,7 +39,7 @@
               var result = window.__extractAudio(container);
               var filenames = result.filenames;
               container.remove();
-              if (!filenames.length) return;
+              if (!filenames.length || _defAudioOff) return;
   
               var SVG = window.__audioSVG;
               var audioRow = document.querySelector('.audio-row');
@@ -133,6 +136,7 @@
               }
           } else {
               // [sound:] — adopt native elements
+              if (_defAudioOff) { container.remove(); return; }
               var nativeEls = Array.from(container.querySelectorAll('.replay-button, audio'));
               var buttons = window.__adoptNativeAudio(nativeEls);
               container.remove();
@@ -804,6 +808,24 @@
     return defs;
   }
   
+  function applyDefModeFilter(defs, mode) {
+      if (mode === 'bilingual') {
+          delete defs.monolingual;
+          delete defs.LOCKED_monolingual;
+      } else if (mode === 'monolingual') {
+          delete defs.bilingual;
+          if (defs.LOCKED_monolingual) {
+              defs.monolingual = defs.LOCKED_monolingual;
+              delete defs.LOCKED_monolingual;
+          }
+      } else if (mode === 'unlocked') {
+          if (defs.LOCKED_monolingual) {
+              defs.monolingual = defs.LOCKED_monolingual;
+              delete defs.LOCKED_monolingual;
+          }
+      }
+  }
+
   // ── Render (deferred for Anki front→back transitions) ──
   function _renderBack() {
     if (!document.querySelector('.answer')) return setTimeout(_renderBack, 10);
@@ -827,6 +849,10 @@
     var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
     if (!wordOn) graphOn = false;
+
+    var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
+    var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
+    var defMode = _rootStyle.getPropertyValue('--definition-mode').trim() || 'all';
 
     var wordSide = _rootStyle.getPropertyValue('--word').trim() || 'back';
     var sentSide = _rootStyle.getPropertyValue('--sentence').trim() || 'back';
@@ -933,6 +959,7 @@
     if (!Object.keys(defs).length && defHtml.trim()) {
       defs.monolingual = defHtml.trim();
     }
+    applyDefModeFilter(defs, defMode);
     var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var hasBi = !!defs.bilingual;
     var hasMono = !!monoKey;
@@ -965,12 +992,16 @@
     } else {
       answerEl.setAttribute('data-def-layout', 'none');
     }
-  
+
+    if (!defText) {
+      answerEl.setAttribute('data-def-text', 'off');
+    }
+
     // ── Tagged definition audio: native [sound:] elements ──
-    if (window.__defAudioNativeContainer) {
+    if (window.__defAudioNativeContainer && defAudio) {
       var nativeContainer = window.__defAudioNativeContainer;
       window.__defAudioNativeContainer = null;
-  
+
       var nodes = Array.from(nativeContainer.childNodes);
       var nativeGroups = {};
       var curType = null;
@@ -988,7 +1019,8 @@
           nativeGroups[curType].push(node);
         }
       }
-  
+      applyDefModeFilter(nativeGroups, defMode);
+
       var biBtns = nativeGroups.bilingual ? window.__adoptNativeAudio(nativeGroups.bilingual) : [];
       var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
       var monoBtns = nativeMonoKey ? window.__adoptNativeAudio(nativeGroups[nativeMonoKey]) : [];
@@ -1072,11 +1104,15 @@
       }
   
       nativeContainer.remove();
+    } else if (window.__defAudioNativeContainer) {
+      window.__defAudioNativeContainer.remove();
+      window.__defAudioNativeContainer = null;
     }
-  
+
     // ── Tagged definition audio: [audio:] JS playback ──
-    if (window.__defAudioRawHtml) {
+    if (window.__defAudioRawHtml && defAudio) {
       var audioDefs = parseDefinitions(window.__defAudioRawHtml);
+      applyDefModeFilter(audioDefs, defMode);
   
       var extractAudioFilenames = function(blockHtml) {
         var tmp = document.createElement('div');
@@ -1277,8 +1313,10 @@
           }
         }
       }
+    } else if (window.__defAudioRawHtml) {
+      window.__defAudioRawHtml = null;
     }
-  
+
     // ── Mirror audio buttons to bottom row (mobile) ──
     var bottomRow = document.getElementById('audio-row-bottom');
     if (bottomRow) {

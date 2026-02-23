@@ -11,19 +11,24 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: on;               /* on | off                  */
+    --tategaki: off;               /* on | off                  */
 
     /* Content — front, back, or off                          */
-    --word: back;                  /* front | back | off        */
-    --sentence: back;              /* front | back | off        */
+    --word: front;                  /* front | back | off        */
+    --sentence: front;              /* front | back | off        */
     --pitch-graph: on;             /* on | off (always on back) */
 
     /* Media */
-    --image: back;                 /* front | back              */
+    --image: front;                 /* front | back              */
 
     /* Audio buttons */
-    --word-audio: front;           /* front | back              */
-    --sentence-audio: front;       /* front | back              */
+    --word-audio: back;           /* back | back              */
+    --sentence-audio: back;       /* back | back              */
+
+    /* Definitions */
+    --definition-text: on;        /* on | off                                  */
+    --definition-audio: on;       /* on | off                                  */
+    --definition-mode: all;       /* all | bilingual | monolingual | unlocked  */
 
     /* ═══════════════════════════════════════════════════════ */
 
@@ -977,6 +982,11 @@ rt {
 
 .answer[data-def-layout="bi-only"] .jp-def-section,
 .answer[data-def-layout="mono-only"] .jp-def-section {
+    display: none;
+}
+
+.answer[data-def-text="off"] .def,
+.answer[data-def-text="off"] .jp-def-section {
     display: none;
 }
 
