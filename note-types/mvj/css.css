@@ -1050,7 +1050,11 @@ html.tategaki:has(.back) {
         min-height: 0;
     }
     .tategaki .front {
-        padding-top: 0;
+        box-sizing: border-box;
+        padding-top: calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52);
+    }
+    .android.tategaki .front {
+        padding-top: calc((100dvh - 120px) * 0.52);
     }
 }
 
@@ -1058,6 +1062,9 @@ html.tategaki:has(.back) {
 @media (hover: none) and (min-width: 768px) {
     .tategaki .card-inner {
         height: min(668px, calc(100dvh - max(40px, var(--bottom-inset, 0px) + 20px)));
+    }
+    .tategaki .front {
+        padding-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
 }
 

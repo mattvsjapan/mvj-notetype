@@ -65,6 +65,9 @@ if (!window.__audioCtxTouchHandler) {
                 document.body.style.height = (h - bi) + 'px';
                 var tateInset = Math.max(40, rawBi + (isTablet ? 20 : 7));
                 ci.style.height = Math.min(h - tateInset, isTablet ? 668 : Infinity) + 'px';
+            } else if (fr) {
+                var tateCardH = isTablet ? Math.min(h - Math.max(40, rawBi + 20), 668) : h;
+                fr.style.paddingTop = Math.round((tateCardH - bi - 120) * 0.52) + 'px';
             }
         } else {
             if (isBack) {
