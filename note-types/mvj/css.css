@@ -1051,10 +1051,16 @@ html.tategaki:has(.back) {
     }
     .tategaki .front {
         box-sizing: border-box;
-        padding-top: calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52);
+        padding-top: min(
+            calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52),
+            calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px) - 88px - 260px)
+        );
     }
     .android.tategaki .front {
-        padding-top: calc((100dvh - 120px) * 0.52);
+        padding-top: min(
+            calc((100dvh - 120px) * 0.52),
+            calc(100dvh - 388px)
+        );
     }
 }
 
