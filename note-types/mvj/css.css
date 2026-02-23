@@ -1075,6 +1075,7 @@ html.tategaki:has(.back) {
 
 .tategaki .pitch-graph svg {
     max-width: 100%;
+    height: auto;
 }
 
 .tategaki .word-pitch-group {
