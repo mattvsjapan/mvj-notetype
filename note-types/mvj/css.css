@@ -22,8 +22,8 @@
     --image: front;                 /* front | back              */
 
     /* Audio buttons */
-    --word-audio: back;           /* back | back              */
-    --sentence-audio: back;       /* back | back              */
+    --word-audio: back;           /* front | back              */
+    --sentence-audio: back;       /* front | back              */
 
     /* Definitions */
     --definition-text: on;        /* on | off                                  */
@@ -516,6 +516,21 @@ span.empty { display: none; }
     }
 }
 
+/* Front: move audio below content when content is on front */
+html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) {
+    display: flex;
+    flex-direction: column;
+}
+
+html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .audio-row {
+    order: 1;
+    padding-top: 16px;
+}
+
+html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .front-content {
+    margin-top: 0;
+}
+
 /* ================================================
    BACK — compact audio controls + answer section
    ================================================ */
@@ -588,6 +603,10 @@ html:not(.tategaki) .back {
 
 .back .audio-row:not(:has([data-side="front"])) {
     order: 1;
+}
+
+html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
+    order: -1;
 }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::before {
