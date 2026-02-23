@@ -91,7 +91,7 @@ html {
     }
 
     .card-inner {
-        min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px);
+        min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px + 1px);
     }
 
     .front {

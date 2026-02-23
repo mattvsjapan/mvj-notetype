@@ -60,7 +60,7 @@ if (!window.__audioCtxTouchHandler) {
                 ci.style.minHeight = '650px';
             } else {
                 document.body.style.height = (h - bi) + 'px';
-                ci.style.minHeight = (h - 40 - bi) + 'px';
+                ci.style.minHeight = (h - 40 - bi + 1) + 'px';
             }
         }
         if (fr) fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
