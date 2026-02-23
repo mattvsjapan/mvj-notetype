@@ -153,6 +153,12 @@ html {
     line-height: 0;
 }
 
+@media (hover: none) {
+    .pitch-graph {
+        margin: 0 0 5px;
+    }
+}
+
 /* Pitch accent colors (SVG) */
 
 .atamadaka circle,
@@ -611,7 +617,7 @@ rt {
 
 @media (hover: none) {
     .sentence rt {
-        transform: translateY(8px);
+        transform: translateY(7px);
     }
 }
 
@@ -659,7 +665,16 @@ rt {
 }
 
 .def.no-accent span { color: var(--text-1) !important; }
-.def rt { color: inherit; }
+.def rt {
+    color: inherit;
+    transform: translateY(-1px);
+}
+
+@media (hover: none) {
+    .def rt {
+        transform: translateY(7px);
+    }
+}
 
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 0; }
