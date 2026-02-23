@@ -394,7 +394,7 @@ window.__playMobile = function(src, btn) {
         var out = [];
         for (var i = 0; i < tokens.length; i++) {
             var t = tokens[i];
-            if (/^[;|\.\-]+$/.test(t)) continue;
+            if (/^[;|\.\/／\-]+$/.test(t)) continue;
             if (t === ',' || t === '\u3001' || t === '\u300C' || t === '\u300D') { out.push(t); continue; }
             t = t.replace(/:[a-zA-Z0-9~,]*$/, '');
             t = t.replace(/[\*\\\^]/g, '');
