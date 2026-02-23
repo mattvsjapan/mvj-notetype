@@ -86,22 +86,25 @@ html {
     .card {
         padding: 20px;
         min-height: auto;
-        height: 100dvh;
+        height: calc(100dvh - var(--bottom-inset, 0px) + 35px);
         overflow-y: auto;
     }
 
     .card-inner {
-        min-height: calc(100vh - 40px);
-        min-height: calc(100dvh - 40px);
+        min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px);
     }
 
     .front {
-        padding-top: calc((100dvh - 120px) * 0.52);
+        padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
     }
+
 }
 
 /* iPad / large touch screens — cap card height to phone-like size */
 @media (hover: none) and (min-width: 768px) {
+    .card {
+        padding-bottom: calc(20px + var(--bottom-inset, 0px));
+    }
     .card-inner {
         min-height: 650px;
     }
