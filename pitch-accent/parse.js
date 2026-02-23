@@ -6,9 +6,9 @@ const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
 function normalizeForParsing(expr) {
-  expr = expr.replace(/\//g, ';');
-  expr = expr.replace(/<br>/gi, ' . ');
+  expr = expr.replace(/<br\s*\/?>/gi, ' . ');
   expr = expr.replace(/<[^<>]+>/gi, '');
+  expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
   expr = expr.replace(/([。!?！？])/g, ' $1 .');
   expr = expr.replace(/([「」|、､])/g, ' $1 ');
   expr = expr.replace(/([^ ]), /g, ' $1 , ');

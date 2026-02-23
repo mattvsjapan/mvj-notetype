@@ -269,9 +269,9 @@
   
   function normalizeForParsing(expr) {
     expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
-    expr = expr.replace(/\//g, ';');
-    expr = expr.replace(/<br>/gi, ' . ');
+    expr = expr.replace(/<br\s*\/?>/gi, ' . ');
     expr = expr.replace(/<[^<>]+>/gi, '');
+    expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
     expr = expr.replace(/([。!?！？])/g, ' $1 .');
     expr = expr.replace(/([「」|、､])/g, ' $1 ');
     expr = expr.replace(/([^ ]), /g, ' $1 , ');
@@ -1315,9 +1315,11 @@
           requestAnimationFrame(function() {
             var tw = document.querySelector('.target-word');
             var wc = document.querySelector('.word-column');
-            if (!tw || !wc) return;
+            var wpg = document.querySelector('.word-pitch-group');
+            if (!tw || !wc || !wpg) return;
             var size = parseFloat(getComputedStyle(tw).fontSize);
-            while (size > 16 && wc.scrollHeight > wc.clientHeight + 1) {
+            var maxH = wc.clientHeight * 0.45;
+            while (size > 16 && wpg.scrollHeight > maxH + 1) {
               size -= 2;
               tw.style.fontSize = size + 'px';
             }
