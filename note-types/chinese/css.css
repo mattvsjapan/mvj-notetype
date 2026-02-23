@@ -566,7 +566,7 @@ rt {
     font-family: 'Source Hans', var(--zh);
     font-size: 23px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.7;
     color: var(--text-1);
     text-align: center;
     margin: 0 0 20px;
@@ -589,7 +589,7 @@ rt {
 .def {
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.45;
+    line-height: 1.35;
     color: var(--text-1);
     margin: 0;
     text-align: left;
@@ -676,7 +676,7 @@ rt {
     font-family: var(--zh);
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.7;
     color: var(--text-1);
     margin: 0;
     padding-top: 0;
@@ -700,13 +700,14 @@ rt {
 /* Font overrides — language-specific */
 [data-font="jp"] {
     font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-    line-height: 1.65;
+    line-height: 1.5;
 }
 
 [data-font="zh"] {
     font-family: 'Noto Serif TC', 'MOE', serif;
-    line-height: 1.65;
+    line-height: 1.5;
 }
+
 
 /* Definition layout: hide sections based on data-def-layout */
 .answer[data-def-layout="none"] .def,
