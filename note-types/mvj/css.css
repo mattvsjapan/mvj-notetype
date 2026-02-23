@@ -14,21 +14,24 @@
     --tategaki: off;               /* on | off                            */
 
     /* Word */
-    --word: front;                 /* front | back | off                  */
+    --word: back;                 /* front | back | off                  */
     --word-audio: back;            /* front | back | off                  */
+    --word-pitch-color: on;        /* on | off                            */
     --pitch-graph: back;           /* front | back | off                  */
 
     /* Sentence */
     --sentence: front;             /* front | back | off                  */
     --sentence-audio: back;        /* front | back | off                  */
+    --sentence-pitch-color: on;    /* on | off                            */
 
     /* Image */
-    --image: front;                /* front | back | off                  */
+    --image: back;                /* front | back | off                  */
 
     /* Definitions */
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
+    --definition-pitch-color: on;  /* on | off                            */
 
     /* ═══════════════════════════════════════════════════════ */
 
@@ -324,6 +327,11 @@ html {
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
 .def .particle, .jp-def .particle { color: inherit; }
+.target-word.no-pitch-color span { color: var(--text-1) !important; }
+.target-word.no-pitch-color rt { color: var(--text-1) !important; }
+.sentence.no-pitch-color span { color: var(--text-1) !important; }
+.sentence.no-pitch-color rt { color: var(--text-1) !important; }
+.def.no-pitch-color span, .jp-def.no-pitch-color span { color: var(--text-1) !important; }
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }

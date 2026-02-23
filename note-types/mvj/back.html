@@ -856,6 +856,10 @@
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
     var defMode = _rootStyle.getPropertyValue('--definition-mode').trim() || 'all';
 
+    var wordPitchColor = _rootStyle.getPropertyValue('--word-pitch-color').trim() !== 'off';
+    var sentPitchColor = _rootStyle.getPropertyValue('--sentence-pitch-color').trim() !== 'off';
+    var defPitchColor = _rootStyle.getPropertyValue('--definition-pitch-color').trim() !== 'off';
+
     var wordSide = _rootStyle.getPropertyValue('--word').trim() || 'back';
     var sentSide = _rootStyle.getPropertyValue('--sentence').trim() || 'back';
     var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back';
@@ -876,6 +880,7 @@
       if (wordSeqs.length > 0) {
         wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
         if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
+        if (!wordPitchColor) wordTarget.classList.add('no-pitch-color');
       }
 
       if (wordIsOnFront) {
@@ -927,6 +932,7 @@
           return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
         });
         if (!hasAccent) sentTarget.classList.add('no-accent');
+        if (!sentPitchColor) sentTarget.classList.add('no-pitch-color');
         sentTarget.innerHTML = makeColoredSentence(sentSeqs[0]);
       }
 
@@ -1008,6 +1014,11 @@
 
     if (!defText) {
       answerEl.setAttribute('data-def-text', 'off');
+    }
+
+    if (!defPitchColor) {
+      defEl.classList.add('no-pitch-color');
+      jpDefEl.classList.add('no-pitch-color');
     }
 
     // ── Tagged definition audio: native [sound:] elements ──
