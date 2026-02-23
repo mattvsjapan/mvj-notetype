@@ -497,6 +497,14 @@ span.empty { display: none; }
     to   { opacity: 1; }
 }
 
+@keyframes frontFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes colorReveal {
+    from { color: var(--text-1); }
+}
+
 @keyframes labelSettle {
     from { font-size: 10px; }
 }
@@ -978,6 +986,17 @@ rt {
     margin-bottom: 24px;
 }
 
+/* Animate front-content children on the front side only */
+:not(.back) > .card-inner > .front .front-content .target-word[data-side="front"] {
+    animation: frontFadeIn 0.35s ease both;
+}
+:not(.back) > .card-inner > .front .front-content .sentence[data-side="front"] {
+    animation: frontFadeIn 0.35s ease 80ms both;
+}
+:not(.back) > .card-inner > .front .front-content .image-wrap[data-side="front"] {
+    animation: frontFadeIn 0.35s ease 160ms both;
+}
+
 /* Collapse empty front-content children */
 .front-content .target-word:empty,
 .front-content .pitch-graph:empty,
@@ -990,6 +1009,9 @@ rt {
 .back .front-content .target-word {
     color: inherit;
 }
+.back .front-content .target-word span {
+    animation: colorReveal 0.35s ease both;
+}
 .back .front-content .target-word rt {
     color: inherit;
     visibility: visible;
@@ -997,6 +1019,9 @@ rt {
 }
 .back .front-content .sentence {
     color: inherit;
+}
+.back .front-content .sentence span {
+    animation: colorReveal 0.35s ease both;
 }
 .back .front-content .sentence rt {
     color: inherit;
