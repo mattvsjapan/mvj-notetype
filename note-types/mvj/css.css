@@ -890,13 +890,18 @@ rt {
 :not(.back) > .card-inner > .front [data-side="back"] {
     display: none;
 }
-
+:not(.back) > .card-inner > .front .audio-row:not(:has(.audio-item:not([data-side="back"]))) {
+    display: none;
+}
 /* Front-content base layout */
 .front-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-top: 24px;
+}
+:not(.back) > .card-inner > .front:not(:has(.audio-item:not([data-side="back"]))) > .front-content {
+    margin-top: 0;
 }
 
 .front-content .target-word {
