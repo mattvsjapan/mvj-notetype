@@ -610,6 +610,11 @@ html:not(.tategaki) .back {
     gap: clamp(8px, 4vw, 20px);
     margin-bottom: 24px;
 }
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
+.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
     order: -1;
