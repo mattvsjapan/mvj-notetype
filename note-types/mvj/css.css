@@ -580,6 +580,13 @@ html:not(.tategaki) .back {
     order: 1;
 }
 
+html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::before {
+    content: '';
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
+    margin-bottom: 20px;
+}
+
 /* Hide Anki's auto-injected answer separator */
 .back > hr { display: none; }
 
@@ -1407,7 +1414,7 @@ html:not(.tategaki) .divider {
 .tategaki .divider {
     width: 1px;
     height: 100%;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.30) 25%, rgba(255, 255, 255, 0.30) 75%, transparent);
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
     margin: 0 8px;
     order: -2;
 }
