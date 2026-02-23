@@ -32,6 +32,7 @@ if (!window.__audioCtxTouchHandler) {
 
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
+    if (document.documentElement.classList.contains('android')) return;
     var ci = document.querySelector('.card-inner');
     if (!ci) return;
     var isBack = !!document.querySelector('.back');

@@ -205,10 +205,8 @@ function _renderBack() {
   }
 
   // ── Trigger reveal animations after content is ready ──
-  requestAnimationFrame(function() {
-    var els = document.querySelectorAll('.answer > [style*="--d"]');
-    for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
-  });
+  var riEls = document.querySelectorAll('.answer > [style*="--d"]');
+  for (var ri = 0; ri < riEls.length; ri++) riEls[ri].classList.add('ri');
 }
 _renderBack();
 })();
