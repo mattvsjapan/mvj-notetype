@@ -810,7 +810,7 @@
   function _renderBack() {
     var wordRaw = document.getElementById('raw-word');
     if (!wordRaw) return setTimeout(_renderBack, 10);
-  
+
     wordRaw = wordRaw.innerHTML.trim();
     var sentRaw = document.getElementById('raw-sentence').textContent.trim();
     var defHtml = document.getElementById('raw-definition').innerHTML;
@@ -1312,27 +1312,32 @@
             else wordCol.appendChild(midAudioRow);
           }
           // Shrink target word font size if word-column overflows
+          // Double-rAF: defer past first paint to avoid layout thrashing before initial render
           requestAnimationFrame(function() {
-            var tw = document.querySelector('.target-word');
-            var wc = document.querySelector('.word-column');
-            var wpg = document.querySelector('.word-pitch-group');
-            if (!tw || !wc || !wpg) return;
-            var size = parseFloat(getComputedStyle(tw).fontSize);
-            var maxH = wc.clientHeight * 0.45;
-            while (size > 16 && wpg.scrollHeight > maxH + 1) {
-              size -= 2;
-              tw.style.fontSize = size + 'px';
-            }
+            requestAnimationFrame(function() {
+              var tw = document.querySelector('.target-word');
+              var wc = document.querySelector('.word-column');
+              var wpg = document.querySelector('.word-pitch-group');
+              if (!tw || !wc || !wpg) return;
+              var size = parseFloat(getComputedStyle(tw).fontSize);
+              var maxH = wc.clientHeight * 0.45;
+              while (size > 16 && wpg.scrollHeight > maxH + 1) {
+                size -= 2;
+                tw.style.fontSize = size + 'px';
+              }
+            });
           });
         }
       }
     }
   
     // ── Trigger reveal animations after content is ready ──
-    requestAnimationFrame(function() {
-      var els = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');
-      for (var i = 0; i < els.length; i++) els[i].classList.add('ri');
-    });
+    var riEls = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');
+    for (var ri = 0; ri < riEls.length; ri++) riEls[ri].classList.add('ri');
+    if (isTategaki) {
+      var ciEl = document.querySelector('.card-inner');
+      if (ciEl) ciEl.classList.add('tate-expand');
+    }
   
     // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
     if (window.__autoPlayDefAudio) {

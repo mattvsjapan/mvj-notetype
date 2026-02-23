@@ -927,12 +927,12 @@ html:not(.tategaki) [data-font="jp"] {
 }
 
 @keyframes tategakiExpand {
-    from { clip-path: inset(0 50% 0 50%); }
+    from { clip-path: inset(0 30% 0 30%); }
     to   { clip-path: inset(0); }
 }
 
 @keyframes tategakiReveal {
-    from { opacity: 0; transform: translate(-24px, 0) scale(0.92); }
+    from { opacity: 0; transform: translate(-16px, 0) scale(0.95); }
     to   { opacity: 1; transform: translate(0, 0) scale(1); }
 }
 
@@ -975,7 +975,11 @@ html.tategaki:has(.back) {
 
 .tategaki .card-inner:has(> .back) {
     overflow: visible;
-    animation: tategakiExpand 200ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
+    clip-path: inset(0 30% 0 30%);
+}
+.tategaki .card-inner.tate-expand {
+    clip-path: none;
+    animation: tategakiExpand 100ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
 }
 
 /* Extend grain pseudo into overflow to create scroll-end spacing;
@@ -1278,19 +1282,19 @@ html:not(.tategaki) .divider {
 }
 
 .tategaki .ri {
-    animation: tategakiReveal 0.5s var(--spring) both;
-    animation-delay: calc(var(--d, 0) * 1ms);
+    animation: tategakiReveal 280ms var(--spring) both;
+    animation-delay: calc(var(--d, 0) * 0.5ms);
 }
 
 /* Tategaki audio buttons: stagger in like front-side .fi */
 .tategaki .audio-row-bottom.ri          { animation: none; opacity: 1; }
 .tategaki .audio-row-bottom .audio-item {
     opacity: 0;
-    animation: tategakiReveal 0.5s var(--spring) both;
+    animation: tategakiReveal 280ms var(--spring) both;
 }
 .tategaki .audio-row-bottom .audio-item[data-audio="word"]     { animation-delay: 0ms; }
-.tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { animation-delay: 70ms; }
-.tategaki .audio-row-bottom .audio-item[data-audio="def"]      { animation-delay: 140ms; }
+.tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { animation-delay: 35ms; }
+.tategaki .audio-row-bottom .audio-item[data-audio="def"]      { animation-delay: 70ms; }
 
 /* Front .fi — slide in from left like back-side elements */
 .tategaki .fi {
