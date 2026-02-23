@@ -25,13 +25,13 @@ Consolidate all audio item creation into `createAudioItem()`. Add `data-def-role
 | MVJ | DONE | Most complex — 4 audio code paths, tategaki ordering, dual-def reversal. |
 
 ### Phase 3: Settings system
-Add CSS-variable-driven settings for front/back positioning of elements. Implement `data-position` attributes and corresponding CSS rules.
+Add CSS-variable-driven settings for content on/off toggles and front/back positioning. Users edit CSS variables in `:root` to customize their cards. Front shows plain white text + furigana; back shows full pitch accent coloring. Split into two sessions: Session 1 (on/off flags) and Session 2 (front positioning + audio placement).
 
 | Card | Status | Notes |
 |------|--------|-------|
 | Chinese | NOT STARTED | |
 | Japanese | NOT STARTED | |
-| MVJ | NOT STARTED | Must also work with tategaki layout. |
+| MVJ | NOT STARTED | Session 1: on/off flags. Session 2: front positioning. Must work with tategaki. |
 
 ### Work log
 Record what was done in each session so the next context window has a worked example.
@@ -454,50 +454,270 @@ The key difference from the current code: **no reordering, no separating defs fr
 
 User-configurable settings live as CSS custom properties in `:root`. JS reads them and stamps the appropriate data attributes. CSS rules respond to those attributes.
 
-### How to add a new setting
+### The 3-touch pattern
 
-1. **Define the CSS variable** in `:root`:
-   ```css
-   --sentence-position: back;  /* "front" | "back" | "hidden" */
-   ```
+Each setting follows the same implementation pattern:
 
-2. **Read it in JS** and set a data attribute:
-   ```js
-   var pos = getComputedStyle(document.documentElement)
-       .getPropertyValue('--sentence-position').trim();
-   sentenceEl.setAttribute('data-position', pos || 'back');
-   ```
+1. **Define the CSS variable** in `:root`
+2. **Read it in JS** and set a `data-*` attribute
+3. **Write CSS rules** that respond to the attribute
 
-3. **Write CSS rules** for each value:
-   ```css
-   .front [data-position="back"],
-   .front [data-position="hidden"] { display: none; }
-   .back [data-position="front"],
-   .back [data-position="hidden"] { display: none; }
-   ```
-
-This pattern ensures:
-- Users edit only CSS (`:root` variables) to change settings
+This ensures:
+- Users edit only CSS (`:root` variables) to change behavior
 - JS only translates variables into attributes (no layout logic)
 - CSS handles all visual consequences
-- New layout modes (tategaki, future modes) just add their own CSS rules for the same attributes
-- An AI implementing a new setting touches exactly three places: the CSS variable, the JS reader, and the CSS rules
+- Tategaki and future modes just add their own CSS rules for the same attributes
 
-### Current settings
+### Settings catalog
 
-| Variable | Values | Card(s) | Description |
+| Variable | Values | Default | Description |
 |----------|--------|---------|-------------|
-| `--tategaki` | `on`, `off` | MVJ | Vertical writing mode |
+| `--tategaki` | `on`, `off` | `off` | Vertical writing mode |
+| `--word` | `front`, `back`, `off` | `back` | Target word placement or hidden |
+| `--sentence` | `front`, `back`, `off` | `back` | Sentence placement or hidden |
+| `--pitch-graph` | `on`, `off` | `on` | Pitch accent graph (always on back) |
+| `--image` | `front`, `back` | `back` | Image placement |
+| `--word-audio` | `front`, `back` | `front` | Word audio button placement |
+| `--sentence-audio` | `front`, `back` | `front` | Sentence audio button placement |
 
-### Planned settings (examples)
+### Setting interactions
 
-| Variable | Values | Description |
-|----------|--------|-------------|
-| `--sentence-position` | `front`, `back`, `hidden` | Where the sentence appears |
-| `--definition-position` | `front`, `back`, `hidden` | Where the definition appears |
-| `--image-position` | `front`, `back`, `hidden` | Where the image appears |
-| `--pitch-graph` | `on`, `off` | Show/hide pitch graph |
-| `--autoplay-def` | `on`, `off` | Auto-play definition audio on reveal |
+- `--word: off` forces `--pitch-graph: off` (nothing to graph).
+- `--pitch-graph` is always on the back, independent of `--word` position.
+- Content on the front is rendered as plain white text + furigana only (no pitch accent coloring). This is intentional — pitch accent recall is part of the test, so accent colors are only revealed on the back.
+- Content on the back always gets full pitch accent coloring regardless of the front setting.
+- When content is positioned on the front, it appears on **both** sides — plain text on the front, colorized in `.answer` on the back.
+- `.front-content` is hidden on the back via CSS to prevent duplication.
+
+### CSS settings block
+
+Located at the very top of `:root` in `css.css`, before design tokens:
+
+```css
+:root,
+:root[class*=night-mode] {
+    /* ═══════════════════════════════════════════════════════
+       ⚙  SETTINGS — Change these to customize your cards.
+       ═══════════════════════════════════════════════════════ */
+
+    /* Layout */
+    --tategaki: off;              /* on | off                  */
+
+    /* Content — front, back, or off                          */
+    --word: back;                 /* front | back | off        */
+    --sentence: back;             /* front | back | off        */
+    --pitch-graph: on;            /* on | off (always on back) */
+
+    /* Media */
+    --image: back;                /* front | back              */
+
+    /* Audio buttons */
+    --word-audio: front;          /* front | back              */
+    --sentence-audio: front;      /* front | back              */
+
+    /* ═══════════════════════════════════════════════════════ */
+
+    /* Design tokens below — edit only if you know CSS        */
+    --canvas: #0c0d12;
+    ...
+}
+```
+
+### What users see
+
+| Setting | Front | Back |
+|---------|-------|------|
+| `--word: front` | plain word + furigana | colorized word + pitch graph |
+| `--word: back` | — | colorized word + pitch graph |
+| `--word: off` | — | — (pitch graph forced off) |
+| `--sentence: front` | plain sentence + furigana | colorized sentence |
+| `--sentence: back` | — | colorized sentence |
+| `--sentence: off` | — | — |
+| `--pitch-graph: on` | — | pitch graph |
+| `--pitch-graph: off` | — | — |
+| `--image: front` | image | image |
+| `--image: back` | — | image |
+| `--word-audio: front` | word audio button | word audio button |
+| `--word-audio: back` | — | word audio button |
+| `--sentence-audio: front` | sentence audio button | sentence audio button |
+| `--sentence-audio: back` | — | sentence audio button |
+
+Any combination of these settings is valid, including in tategaki mode.
+
+---
+
+## Phase 3 Design: Front/Back Content Positioning
+
+### The core problem
+
+Currently, front.html contains only audio buttons. All content (word, sentence, image) lives in back.html. For elements to appear on the front, their markup and rendering logic must be available in front.html.
+
+The key insight: `{{FrontSide}}` carries front.html content into the back, so anything in front.html is available on both sides. But back.html content is never available on the front.
+
+### Two content zones
+
+The solution uses two independent content zones. Each zone has its own rendering and the back-side zone always renders everything. CSS hides the front zone on the back to prevent duplication.
+
+#### front.html (after Phase 3)
+
+```
+.card-inner > .front
+  .audio-row                    ← existing (word audio, sentence audio)
+  .front-content                ← NEW
+    .target-word                  (plain white text + furigana, no accent colors)
+    .sentence                     (plain white text + furigana, no accent colors)
+    .image-wrap                   ({{Image}})
+  #raw-word        [hidden]     ← NEW: {{Word}} raw Mustache data for JS
+  #raw-sentence    [hidden]     ← NEW: {{Sentence}} raw Mustache data for JS
+  #raw-image       [hidden]     ← NEW: {{Image}} raw Mustache data for JS
+```
+
+The raw data containers (`#raw-word`, etc.) provide Mustache field values to front-side JS. They are always `display: none`. The front-content children are populated by JS only when their setting is `front`.
+
+#### back.html (after Phase 3)
+
+**No structural changes.** `.answer` continues to render all content with full pitch accent coloring:
+
+```
+.card-inner > .back
+  {{FrontSide}}                 ← includes .front with .audio-row + .front-content
+  .answer                       ← UNCHANGED
+    .word-column
+      .target-word                (colorized + furigana)
+      .pitch-graph                (SVG)
+      .image-wrap
+    .sentence                     (colorized + furigana)
+    .audio-row-bottom
+    .def
+    .jp-def-section
+```
+
+### Rendering contract
+
+#### Front-side rendering (front.html)
+
+The front-side renderer is intentionally simple — ~15-20 lines of JS:
+
+1. Read settings via `getComputedStyle`
+2. For content with setting = `front`: parse bracket notation (`食[た]べる＼`) into `<ruby>` tags. Strip pitch notation markers (`＼`, `{`, `}`, accents). Plain white text only — **no pitch accent parsing, no colorization, no pitch library**.
+3. For content with setting = `back` or `off`: leave container empty
+4. Stamp `data-side` on `.front-content` children and audio items
+5. Skip autoplay for audio items with `data-side="back"`
+6. Guard all front-content logic with `if (document.querySelector('.back')) return;`
+
+#### Back-side rendering (back.html)
+
+`_renderBack()` gains three on/off checks. No position-awareness needed — the back always renders everything:
+
+- `--word: off` → `data-show="off"` on `.target-word`, skip pitch graph generation
+- `--sentence: off` → `data-show="off"` on `.sentence`
+- `--pitch-graph: off` → `data-state="empty"` on `.pitch-graph`, skip SVG generation
+
+Everything else in `_renderBack()` is unchanged.
+
+### CSS rules (Phase 3 additions)
+
+```css
+/* Front: hide back-only content and audio */
+.front [data-side="back"]               { display: none; }
+.front .audio-item[data-side="back"]    { display: none; }
+
+/* Back: hide front-content entirely (answer has colorized versions) */
+.back .front-content                     { display: none; }
+
+/* Disabled elements (on/off toggle) */
+[data-show="off"]                        { display: none; }
+```
+
+### Data attributes (Phase 3 additions)
+
+| Attribute | Set on | Values | Set by |
+|-----------|--------|--------|--------|
+| `data-side` | `.front-content` children, `.audio-item` | `front`, `back` | front.html JS |
+| `data-show` | `.target-word`, `.sentence` in `.answer` | `off` (or absent) | back.html `_renderBack()` |
+
+These complement the existing `data-state="empty"` (used for pitch graph) and `data-def-layout` attributes.
+
+---
+
+## Phase 3 Implementation Checklist
+
+Phase 3 is split into two sessions. Session 1 is back-side only (on/off flags). Session 2 adds front positioning. Each session is independently testable.
+
+### Session 1: On/off flags + CSS settings block
+
+Back-side only. No front.html changes. Users can turn elements off but cannot reposition them to the front yet.
+
+**css.css:**
+- [ ] Restructure `:root` — move `--tategaki` into a settings header block at the top, add `--word`, `--sentence`, `--pitch-graph`, `--image`, `--word-audio`, `--sentence-audio` with defaults and comments
+- [ ] Add `[data-show="off"] { display: none; }` rule
+- [ ] Verify `[data-state="empty"] { display: none; }` already exists (for pitch graph)
+
+**back.html — `_renderBack()`:**
+- [ ] Add `setting()` helper at top of render function
+- [ ] Read `--word`, `--sentence`, `--pitch-graph`
+- [ ] `--word: off` → stamp `data-show="off"` on `.target-word` in `.answer`, skip word rendering
+- [ ] `--word: off` → force skip pitch graph generation (same as the existing empty-word-data code path)
+- [ ] `--sentence: off` → stamp `data-show="off"` on `.sentence` in `.answer`, skip sentence rendering
+- [ ] `--pitch-graph: off` → stamp `data-state="empty"` on `.pitch-graph`, skip SVG generation
+
+**Testing Session 1:**
+- [ ] Default settings (everything on/back) → card looks identical to pre-Phase-3
+- [ ] `--word: off` → hides word and pitch graph on back
+- [ ] `--sentence: off` → hides sentence on back
+- [ ] `--pitch-graph: off` → hides pitch graph, word still visible
+- [ ] `--word: off` + `--pitch-graph: on` → both hidden (word: off cascades)
+- [ ] All above in tategaki mode
+- [ ] All above on mobile
+
+### Session 2: Front positioning + audio placement
+
+Adds `.front-content` zone, furigana renderer, `data-side` stamping, and audio positioning.
+
+**front.html — markup:**
+- [ ] Add `.front-content` container inside `.front`, after `.audio-row`, with empty `.target-word`, `.sentence`, `.image-wrap`
+- [ ] Add hidden raw data containers: `#raw-word` with `{{Word}}`, `#raw-sentence` with `{{Sentence}}`, `#raw-image` with `{{Image}}` (Mustache-conditional with `{{#Field}}...{{/Field}}`)
+
+**front.html — JS:**
+- [ ] Add `setting()` helper function (reads CSS variable, returns trimmed value or fallback)
+- [ ] Add simple furigana renderer: parse `食[た]べる＼` → `<ruby>食<rt>た</rt></ruby>べる`, stripping pitch markers. Plain white text, no accent colors. ~15-20 lines.
+- [ ] Add front-content population script (guarded with `if (document.querySelector('.back')) return`):
+  - [ ] Read `--word`, `--sentence`, `--image` settings
+  - [ ] If `--word: front` → render word into `.front-content .target-word` via furigana renderer
+  - [ ] If `--sentence: front` → render sentence into `.front-content .sentence` via furigana renderer
+  - [ ] If `--image: front` → populate `.front-content .image-wrap` from `#raw-image`
+  - [ ] Stamp `data-side` on each `.front-content` child based on setting
+- [ ] Audio item `data-side` stamping:
+  - [ ] Read `--word-audio`, `--sentence-audio` settings
+  - [ ] Stamp `data-side` on `.audio-item[data-audio="word"]`
+  - [ ] Stamp `data-side` on `.audio-item[data-audio="sentence"]`
+- [ ] Autoplay script: skip items with `data-side="back"`
+- [ ] Height-locking: verify `.front-content` content doesn't break mobile padding/height calculations
+
+**css.css:**
+- [ ] `.front-content` base layout rules (spacing, font sizing for plain word/sentence)
+- [ ] `.front [data-side="back"] { display: none; }`
+- [ ] `.back .front-content { display: none; }`
+- [ ] `.front .audio-item[data-side="back"] { display: none; }`
+- [ ] `.front-content` styling for tategaki mode
+- [ ] `.front-content` mobile responsive rules
+
+**back.html:**
+- [ ] No structural changes needed beyond Session 1. `.answer` always renders everything regardless of position settings.
+
+**Testing Session 2:**
+- [ ] Default settings → card identical to pre-Phase-3 (and post-Session-1)
+- [ ] `--word: front` → plain word on front, colorized word + pitch graph on back
+- [ ] `--sentence: front` → plain sentence on front, colorized on back
+- [ ] `--image: front` → image on front and back
+- [ ] `--word-audio: back` → no word audio on front, visible on back
+- [ ] `--sentence-audio: back` → no sentence audio on front, visible on back
+- [ ] Mixed: `--word: front` + `--sentence: back` + `--image: front`
+- [ ] `--word: off` still works (from Session 1)
+- [ ] All above in tategaki mode
+- [ ] All above on mobile (height locking, bottom audio row)
+- [ ] Front autoplay respects `data-side` (skips back-only audio items)
+- [ ] Keyboard shortcuts still work on both sides
 
 ---
 
