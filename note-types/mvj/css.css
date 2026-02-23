@@ -122,8 +122,8 @@ html {
         padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
     }
 
-    .front-content {
-        margin-top: 16px;
+    .card-inner:has(> .back) {
+        padding-top: 20px;
     }
 
     /* AnkiDroid: revert iOS-only bottom-inset and bounce scroll adjustments */
@@ -473,7 +473,7 @@ span.empty { display: none; }
 }
 
 @keyframes rowSettle {
-    from { padding: 48px 0; gap: 40px; }
+    from { padding: 48px 0 0; gap: 40px; }
 }
 
 @keyframes btnSettle {
@@ -498,12 +498,13 @@ span.empty { display: none; }
    ================================================ */
 
 .front .audio-row {
-    padding: 48px 0;
+    padding: 48px 0 0;
+    margin-bottom: 48px;
 }
 
 @media (hover: none) {
     .front .audio-row {
-        padding-bottom: 0;
+        margin-bottom: 16px;
     }
     .front .audio-item .replay-button {
         width: 68px !important;
@@ -524,11 +525,11 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
 
 html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .audio-row {
     order: 1;
-    padding-top: 16px;
+    padding-top: 0;
 }
 
 html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .front-content {
-    margin-top: 0;
+    margin-bottom: 0;
 }
 
 /* ================================================
@@ -537,6 +538,7 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
 
 .back .audio-row {
     padding: 4px 0 0;
+    margin-bottom: 24px;
     gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
 }
@@ -575,10 +577,6 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
 @media (hover: none) {
     .back .audio-row {
         display: none;
-    }
-
-    .back > .answer {
-        margin-top: -20px;
     }
 
     .back .audio-row,
@@ -639,14 +637,8 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 24px;
+    margin-top: 0;
     padding-bottom: 8px;
-}
-
-@media (hover: none) {
-    .answer {
-        margin-top: 0;
-    }
 }
 
 /* Target word — Japanese serif for kanji with ruby furigana */
@@ -768,7 +760,7 @@ rt {
     font-weight: 400;
     line-height: 1.45;
     color: var(--text-1);
-    margin: 0;
+    margin: 0 0 16px;
     text-align: left;
 }
 
@@ -800,7 +792,7 @@ rt {
 /* Japanese definition — pure CSS toggle */
 
 .jp-def-section {
-    margin-top: 16px;
+    margin-top: 0;
     text-align: left;
 }
 
@@ -904,7 +896,7 @@ rt {
 /* Front-content on back: visible when it has front-zone items */
 .back .front-content {
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
 /* Hide front-content children not designated for front */
@@ -933,9 +925,6 @@ rt {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 24px;
-}
-:not(.back) > .card-inner > .front:not(:has(.audio-item[data-side="front"])) > .front-content {
     margin-top: 0;
 }
 
@@ -965,7 +954,7 @@ rt {
 }
 
 .front-content .image-wrap {
-    margin-bottom: 0;
+    margin-bottom: 24px;
 }
 
 /* Collapse empty front-content children */
