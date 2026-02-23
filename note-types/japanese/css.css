@@ -621,13 +621,16 @@ rt {
     font-family: var(--jp);
     font-size: 23px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.55;
     color: var(--text-1);
     text-align: center;
     margin: 0 0 20px;
 }
 
-.sentence.no-accent .particle {
+.sentence .particle {
+    color: inherit;
+}
+.def .particle {
     color: inherit;
 }
 
@@ -649,11 +652,14 @@ rt {
     font-family: var(--jp);
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.85;
+    line-height: 1.55;
     color: var(--text-1);
     margin: 0;
     text-align: left;
 }
+
+.def.no-accent span { color: var(--text-1) !important; }
+.def rt { color: inherit; }
 
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 0; }

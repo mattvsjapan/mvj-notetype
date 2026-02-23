@@ -148,8 +148,19 @@ function _renderBack() {
   }
 
   // Definition — Japanese only
+  function colorizeText(raw, el) {
+    if (!raw) return '';
+    if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
+    var lines = raw.split(/<br\s*\/?>/gi);
+    var colored = lines.map(function(line) {
+      var seqs = makeSequences(line);
+      if (seqs.length === 0) return line;
+      return seqs.map(makeColoredSentence).join('');
+    });
+    return colored.join('<br>');
+  }
   if (defHtml && defHtml.trim()) {
-    defEl.innerHTML = defHtml;
+    defEl.innerHTML = colorizeText(defHtml, defEl) || defHtml;
   } else {
     defEl.setAttribute('data-state', 'empty');
   }

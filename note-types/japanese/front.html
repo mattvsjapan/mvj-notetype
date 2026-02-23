@@ -367,6 +367,7 @@ const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
 function normalizeForParsing(expr) {
+  expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
   expr = expr.replace(/\//g, ';');
   expr = expr.replace(/<br>/gi, ' . ');
   expr = expr.replace(/<[^<>]+>/gi, '');
@@ -524,8 +525,14 @@ function guessRoleFromPitchNum(moraes, pitchN) {
 }
 
 function determineRoleTokyo(sd) {
-  if (sd.moraes.length === 0 || isEmptyParticle(sd.word)) return 'empty';
+  if (isEmptyParticle(sd.word)) return 'empty';
+  if (sd.moraes.length === 0 && sd.sep == null) return 'empty';
   if (sd.sep == null) return 'particle';
+  if (sd.moraes.length === 0) {
+    if (sd.accent.role != null) return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
+    if (sd.accent.pitch != null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
+    return 'empty';
+  }
   if (sd.accent.role == null && sd.accent.pitch == null) return 'particle';
   if (sd.accent.role == null) return guessRoleFromPitchNum(sd.moraes, sd.accent.pitch);
   return RoleFromValue[sd.accent.role.toLowerCase()] || 'heiban';
@@ -844,13 +851,17 @@ function wordToRubyFragment(fragment) {
     if (match.index > lastIndex) {
       result += fragment.slice(lastIndex, match.index);
     }
-    result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(match[2])) {
+      result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    } else {
+      result += match[0];
+    }
     lastIndex = re.lastIndex;
   }
   if (lastIndex < fragment.length) {
     result += fragment.slice(lastIndex);
   }
-  return result;
+  return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
 }
 
 function wordToRuby(word) {
