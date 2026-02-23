@@ -25,6 +25,7 @@
     {{/Image}}
     <div class="front-content">
         <h1 class="target-word" id="front-word"></h1>
+        <div class="pitch-graph" id="front-pitch-graph"></div>
         <p class="sentence" id="front-sentence"></p>
         <div class="image-wrap" id="front-image"></div>
     </div>
@@ -374,7 +375,10 @@ window.__playMobile = function(src, btn) {
     if (frontSent) frontSent.setAttribute('data-side',
         sentSide === 'front' ? 'front' : (sentSide === 'off' ? 'off' : 'back'));
     if (frontImage) frontImage.setAttribute('data-side',
-        imageSide === 'front' ? 'front' : 'back');
+        imageSide === 'front' ? 'front' : (imageSide === 'off' ? 'off' : 'back'));
+
+    var frontGraph = document.getElementById('front-pitch-graph');
+    if (frontGraph) frontGraph.setAttribute('data-side', 'back');
 
     // ── Stamp data-side on audio items (both front and back) ──
     var wordAI = document.querySelector('.audio-row .audio-item[data-audio="word"]');
@@ -516,7 +520,7 @@ window.__playMobile = function(src, btn) {
 // Autoplay audio items in sequence (front side only)
 (function() {
   if (document.querySelector('.back')) return;
-  var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="back"])');
+  var items = document.querySelectorAll('.audio-row .audio-item[data-side="front"]');
   var queue = [];
   var animateBtn = window.__animateBtn;
   items.forEach(function(item) {
@@ -560,7 +564,7 @@ window.__playMobile = function(src, btn) {
   }
   function playAll() {
     var isBack = !!document.querySelector('.back');
-    var items = document.querySelectorAll('.audio-row .audio-item' + (isBack ? '' : ':not([data-side="back"])'));
+    var items = document.querySelectorAll('.audio-row .audio-item' + (isBack ? '' : '[data-side="front"]'));
     var queue = [];
     items.forEach(function(item) {
       var audio = item._jsAudio || item.querySelector('audio');
@@ -586,7 +590,7 @@ window.__playMobile = function(src, btn) {
     var el = ev.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
     var isBack = !!document.querySelector('.back');
-    var sf = isBack ? '' : ':not([data-side="back"])';
+    var sf = isBack ? '' : '[data-side="front"]';
     var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]' + sf);
     var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]' + sf);
     switch (ev.key.toLowerCase()) {

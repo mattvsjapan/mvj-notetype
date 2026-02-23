@@ -11,24 +11,24 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: off;               /* on | off                  */
+    --tategaki: off;               /* on | off                            */
 
-    /* Content — front, back, or off                          */
-    --word: front;                  /* front | back | off        */
-    --sentence: front;              /* front | back | off        */
-    --pitch-graph: on;             /* on | off (always on back) */
+    /* Word */
+    --word: front;                 /* front | back | off                  */
+    --word-audio: back;            /* front | back | off                  */
+    --pitch-graph: back;           /* front | back | off                  */
 
-    /* Media */
-    --image: front;                 /* front | back              */
+    /* Sentence */
+    --sentence: front;             /* front | back | off                  */
+    --sentence-audio: back;        /* front | back | off                  */
 
-    /* Audio buttons */
-    --word-audio: back;           /* front | back              */
-    --sentence-audio: back;       /* front | back              */
+    /* Image */
+    --image: front;                /* front | back | off                  */
 
     /* Definitions */
-    --definition-text: on;        /* on | off                                  */
-    --definition-audio: on;       /* on | off                                  */
-    --definition-mode: all;       /* all | bilingual | monolingual | unlocked  */
+    --definition-text: on;         /* on | off                            */
+    --definition-audio: on;        /* on | off                            */
+    --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
 
     /* ═══════════════════════════════════════════════════════ */
 
@@ -899,6 +899,8 @@ rt {
     display: none;
 }
 
+.audio-item[data-side="off"] { display: none; }
+
 /* Front-content on back: visible when it has front-zone items */
 .back .front-content {
     margin-top: 0;
@@ -919,10 +921,11 @@ rt {
 /* Front only: hide back-designated content and audio items.
    Scoped via :not(.back) > .card-inner so it doesn't apply on the back
    where .front has display:contents but is still in the DOM tree. */
-:not(.back) > .card-inner > .front [data-side="back"] {
+:not(.back) > .card-inner > .front [data-side="back"],
+:not(.back) > .card-inner > .front [data-side="off"] {
     display: none;
 }
-:not(.back) > .card-inner > .front .audio-row:not(:has(.audio-item:not([data-side="back"]))) {
+:not(.back) > .card-inner > .front .audio-row:not(:has(.audio-item[data-side="front"])) {
     display: none;
 }
 /* Front-content base layout */
@@ -932,7 +935,7 @@ rt {
     align-items: center;
     margin-top: 24px;
 }
-:not(.back) > .card-inner > .front:not(:has(.audio-item:not([data-side="back"]))) > .front-content {
+:not(.back) > .card-inner > .front:not(:has(.audio-item[data-side="front"])) > .front-content {
     margin-top: 0;
 }
 
@@ -955,12 +958,19 @@ rt {
     visibility: hidden;
 }
 
+.front-content .pitch-graph {
+    margin: 0 0 8px;
+    line-height: 0;
+    text-align: center;
+}
+
 .front-content .image-wrap {
     margin-bottom: 0;
 }
 
 /* Collapse empty front-content children */
 .front-content .target-word:empty,
+.front-content .pitch-graph:empty,
 .front-content .sentence:empty,
 .front-content .image-wrap:empty {
     display: none;

@@ -847,7 +847,9 @@
     var _rootStyle = getComputedStyle(document.documentElement);
     var wordOn = _rootStyle.getPropertyValue('--word').trim() !== 'off';
     var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
-    var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
+    var graphSide = _rootStyle.getPropertyValue('--pitch-graph').trim() || 'back';
+    if (graphSide === 'on') graphSide = 'back';  // legacy normalization
+    var graphOn = graphSide !== 'off';
     if (!wordOn) graphOn = false;
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
@@ -889,6 +891,14 @@
         }
         if (svgs.length > 0) {
           graphEl.innerHTML = svgs.join('');
+          if (graphSide === 'front') {
+            var frontGraphEl = document.getElementById('front-pitch-graph');
+            if (frontGraphEl) {
+              frontGraphEl.innerHTML = graphEl.innerHTML;
+              frontGraphEl.setAttribute('data-side', 'front');
+              graphEl.setAttribute('data-show', 'off');
+            }
+          }
         } else {
           graphEl.setAttribute('data-state', 'empty');
         }
@@ -928,7 +938,7 @@
       if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
     }
 
-    // Image → hide answer copy when image is on front
+    // Image → hide answer copy when image is on front or off
     if (imageSide === 'front') {
       var frontImageEl = document.getElementById('front-image');
       var rawImageEl = document.getElementById('raw-image');
@@ -937,6 +947,9 @@
       } else if (frontImageEl) {
         frontImageEl.setAttribute('data-side', 'back');
       }
+      var answerImage = document.querySelector('.answer .image-wrap');
+      if (answerImage) answerImage.setAttribute('data-show', 'off');
+    } else if (imageSide === 'off') {
       var answerImage = document.querySelector('.answer .image-wrap');
       if (answerImage) answerImage.setAttribute('data-show', 'off');
     }
@@ -1464,7 +1477,7 @@
       if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
     }
     function playAll() {
-      var items = document.querySelectorAll('.audio-row .audio-item');
+      var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var queue = [];
       items.forEach(function(item) {
         var audio = item._jsAudio || item.querySelector('audio');
@@ -1492,8 +1505,8 @@
     function handler(ev) {
       var el = ev.target;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-      var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]');
-      var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
+      var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]:not([data-side="off"])');
+      var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]:not([data-side="off"])');
       var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
       switch (ev.key.toLowerCase()) {
         case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
