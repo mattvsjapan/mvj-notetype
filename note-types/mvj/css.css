@@ -80,6 +80,10 @@ html {
         overflow: hidden;
     }
 
+    #content {
+        margin: 0;
+    }
+
     .card {
         padding: 20px;
         min-height: auto;
@@ -93,6 +97,17 @@ html {
 
     .front {
         padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
+    }
+
+    /* AnkiDroid: revert iOS-only bottom-inset and bounce scroll adjustments */
+    .android .card {
+        height: 100dvh;
+    }
+    .android .card-inner {
+        min-height: calc(100dvh - 40px);
+    }
+    .android .front {
+        padding-top: calc((100dvh - 120px) * 0.52);
     }
 
 }
