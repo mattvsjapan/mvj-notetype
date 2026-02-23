@@ -646,7 +646,7 @@ ruby {
 rt {
     font-family: var(--jp);
     font-weight: 400;
-    color: var(--text-2);
+    color: var(--text-1);
 }
 
 .target-word rt {
@@ -917,7 +917,7 @@ rt {
 }
 
 .front-content .target-word rt {
-    color: var(--text-2);
+    color: var(--text-1);
 }
 
 .front-content .sentence {
@@ -926,7 +926,7 @@ rt {
 }
 
 .front-content .sentence rt {
-    color: var(--text-2);
+    color: var(--text-1);
     visibility: hidden;
 }
 
