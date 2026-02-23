@@ -153,6 +153,10 @@ html {
     line-height: 0;
 }
 
+.pitch-graph svg {
+    max-width: 100%;
+}
+
 @media (hover: none) {
     .pitch-graph {
         margin: 0 0 5px;

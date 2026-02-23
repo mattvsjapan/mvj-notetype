@@ -155,6 +155,10 @@ html {
     line-height: 0;
 }
 
+.pitch-graph svg {
+    max-width: 100%;
+}
+
 @media (hover: none) {
     .pitch-graph {
         margin: 0 0 5px;
@@ -1069,11 +1073,16 @@ html.tategaki:has(.back) {
     margin: 0;
 }
 
+.tategaki .pitch-graph svg {
+    max-width: 100%;
+}
+
 .tategaki .word-pitch-group {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-right: 12px;
+    max-width: 391px;
 }
 
 /* Tategaki: mid audio row inside word column (between pitch graph and image) */
@@ -1137,6 +1146,12 @@ html.tategaki:has(.back) {
         height: clamp(140px, 45vw, 220px);
         max-height: none;
         object-fit: cover;
+    }
+    .tategaki .word-pitch-group {
+        max-width: none;
+    }
+    .tategaki .pitch-graph svg {
+        max-width: 95vw;
     }
 }
 
