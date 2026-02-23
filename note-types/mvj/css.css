@@ -585,6 +585,8 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
     margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeIn 0.5s var(--spring) both;
 }
 
 /* Hide Anki's auto-injected answer separator */
