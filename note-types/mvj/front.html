@@ -53,13 +53,21 @@ if (!window.__audioCtxTouchHandler) {
     if (!ci) return;
     var isBack = !!document.querySelector('.back');
     var fr = !isBack && document.querySelector('.front');
+    var isTablet = window.innerWidth >= 768;
+    var biVal = getComputedStyle(document.documentElement).getPropertyValue('--bottom-inset');
     function lock() {
         var h = window.innerHeight;
+        var bi = Math.max((parseInt(biVal) || 0) - 35, 0);
         if (isBack) {
-            document.body.style.height = h + 'px';
-            ci.style.minHeight = (h - 40) + 'px';
+            if (isTablet) {
+                document.body.style.height = (h - bi) + 'px';
+                ci.style.minHeight = '650px';
+            } else {
+                document.body.style.height = (h - bi) + 'px';
+                ci.style.minHeight = (h - 40 - bi + 1) + 'px';
+            }
         }
-        if (fr) fr.style.paddingTop = Math.round((h - 120) * 0.52) + 'px';
+        if (fr) fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
     }
     if (window.innerHeight > 100) {
         lock();
