@@ -955,6 +955,7 @@ rt {
 
 .front-content .target-word rt {
     color: var(--text-1);
+    visibility: hidden;
 }
 
 .front-content .sentence {
@@ -991,6 +992,7 @@ rt {
 }
 .back .front-content .target-word rt {
     color: inherit;
+    visibility: visible;
     animation: rtFadeIn 0.25s ease both;
 }
 .back .front-content .sentence {
