@@ -100,6 +100,16 @@ html {
     }
 }
 
+/* iPad / large touch screens — cap card height to phone-like size */
+@media (hover: none) and (min-width: 768px) {
+    .card-inner {
+        min-height: 650px;
+    }
+    .front {
+        padding-top: 354px;
+    }
+}
+
 /* — Base — */
 
 .card-inner {
