@@ -1036,16 +1036,24 @@ html.tategaki:has(.back) {
         overflow-y: hidden;
         overscroll-behavior-y: none;
         touch-action: pan-x;
+        padding-bottom: 20px;
     }
     .tategaki #content {
         margin: 0;
     }
     .tategaki .card-inner {
-        min-height: calc(100vh - 40px);
-        min-height: calc(100dvh - 40px);
+        height: calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px));
+        min-height: 0;
     }
     .tategaki .front {
         padding-top: 0;
+    }
+}
+
+/* iPad tategaki — cap card height like desktop */
+@media (hover: none) and (min-width: 768px) {
+    .tategaki .card-inner {
+        height: min(668px, calc(100dvh - max(40px, var(--bottom-inset, 0px) + 20px)));
     }
 }
 
