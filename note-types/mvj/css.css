@@ -646,7 +646,6 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
     display: flex;
     flex-direction: column;
     margin-top: 0;
-    padding-bottom: 8px;
 }
 
 /* Target word — Japanese serif for kanji with ruby furigana */
@@ -1016,9 +1015,16 @@ rt {
     display: none;
 }
 
-/* Gap between def and jp-def-section — only when both are visible */
-.answer:not([data-def-layout="bi-only"]):not([data-def-layout="mono-only"]) .def {
+/* Gap between def and jp-def-section — only in dual modes, direct child only */
+.answer[data-def-layout="dual-bi"] > .def,
+.answer[data-def-layout="dual-mono"] > .def {
     margin-bottom: 16px;
+}
+
+/* Drop audio-row-bottom margin when definitions are hidden (last visible element) */
+.back .answer[data-def-layout="none"] .audio-row-bottom,
+.back .answer[data-def-text="off"] .audio-row-bottom {
+    margin-bottom: 0;
 }
 
 /* Audio item ordering — bottom row (mobile) */
