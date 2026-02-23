@@ -1311,6 +1311,17 @@
             if (imageWrap) wordCol.insertBefore(midAudioRow, imageWrap);
             else wordCol.appendChild(midAudioRow);
           }
+          // Shrink target word font size if word-column overflows
+          requestAnimationFrame(function() {
+            var tw = document.querySelector('.target-word');
+            var wc = document.querySelector('.word-column');
+            if (!tw || !wc) return;
+            var size = parseFloat(getComputedStyle(tw).fontSize);
+            while (size > 16 && wc.scrollHeight > wc.clientHeight + 1) {
+              size -= 2;
+              tw.style.fontSize = size + 'px';
+            }
+          });
         }
       }
     }
