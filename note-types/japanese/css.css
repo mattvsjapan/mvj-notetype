@@ -155,6 +155,7 @@ html {
 
 .pitch-graph svg {
     max-width: 100%;
+    height: auto;
 }
 
 @media (hover: none) {
