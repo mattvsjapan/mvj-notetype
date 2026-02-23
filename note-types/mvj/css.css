@@ -1083,6 +1083,7 @@ html.tategaki:has(.back) {
     display: flex;
     flex-direction: column;
     align-items: center;
+    align-self: stretch;
     margin-right: 12px;
     max-width: 391px;
 }
