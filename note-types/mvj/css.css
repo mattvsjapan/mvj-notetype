@@ -1059,6 +1059,7 @@ html.tategaki:has(.back) {
     order: 0;
     gap: 0;
     height: 100%;
+    outline: 2px solid yellow;
 }
 
 .tategaki .word-column > * {
@@ -1083,8 +1084,9 @@ html.tategaki:has(.back) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 391px;
+    max-width: 391px;
     margin-right: 12px;
+    outline: 2px solid red;
 }
 
 /* Tategaki: mid audio row inside word column (between pitch graph and image) */
@@ -1101,6 +1103,7 @@ html.tategaki:has(.back) {
     margin: 0 12px 12px 0;
     will-change: transform;
     direction: rtl;
+    outline: 2px solid lime;
 }
 
 .tategaki .mid-audio-row .audio-item {
@@ -1129,6 +1132,7 @@ html.tategaki:has(.back) {
 .tategaki .image-wrap {
     width: 391px;
     margin: 0 12px 0 0;
+    outline: 2px solid cyan;
 }
 
 .tategaki .image-wrap img {
@@ -1148,9 +1152,6 @@ html.tategaki:has(.back) {
         height: clamp(140px, 45vw, 220px);
         max-height: none;
         object-fit: cover;
-    }
-    .tategaki .word-pitch-group {
-        width: clamp(249px, 80vw, 391px);
     }
     .tategaki .pitch-graph svg {
         max-width: clamp(249px, 80vw, 391px);
