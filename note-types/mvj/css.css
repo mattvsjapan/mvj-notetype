@@ -1083,9 +1083,8 @@ html.tategaki:has(.back) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    align-self: stretch;
+    width: 391px;
     margin-right: 12px;
-    max-width: 391px;
 }
 
 /* Tategaki: mid audio row inside word column (between pitch graph and image) */
@@ -1151,10 +1150,10 @@ html.tategaki:has(.back) {
         object-fit: cover;
     }
     .tategaki .word-pitch-group {
-        max-width: none;
+        width: clamp(249px, 80vw, 391px);
     }
     .tategaki .pitch-graph svg {
-        max-width: 95vw;
+        max-width: clamp(249px, 80vw, 391px);
     }
 }
 
