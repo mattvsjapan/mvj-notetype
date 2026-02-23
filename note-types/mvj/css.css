@@ -851,8 +851,20 @@ rt {
     display: none;
 }
 
-/* Front-content: hide on back (answer has colorized versions) */
+/* Front-content on back: visible when it has front-zone items */
 .back .front-content {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+/* Hide front-content children not designated for front */
+.back .front-content [data-side="back"],
+.back .front-content [data-side="off"] {
+    display: none;
+}
+
+/* Collapse entire front-content when nothing is on front */
+.back .front-content:not(:has([data-side="front"])) {
     display: none;
 }
 
@@ -898,6 +910,25 @@ rt {
 .front-content .sentence:empty,
 .front-content .image-wrap:empty {
     display: none;
+}
+
+/* Back-side: upgrade front-content from plain white to colorized */
+.back .front-content .target-word {
+    color: inherit;
+}
+.back .front-content .target-word rt {
+    color: inherit;
+}
+.back .front-content .sentence {
+    color: inherit;
+}
+.back .front-content .sentence rt {
+    color: inherit;
+}
+
+/* When word is in front zone, pitch graph becomes first item in back zone */
+.answer[data-word-zone="front"] .pitch-graph {
+    order: -1;
 }
 
 [data-font="jp"] {

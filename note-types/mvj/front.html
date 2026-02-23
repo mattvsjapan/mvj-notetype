@@ -350,10 +350,8 @@ window.__playMobile = function(src, btn) {
 </script>
 
 <script>
-// Front-content: populate word/sentence/image and stamp data-side
+// Front-content: stamp data-side (both sides), populate (front only)
 (function() {
-    if (document.querySelector('.back')) return;
-
     var _rs = getComputedStyle(document.documentElement);
     function setting(name, fallback) {
         var v = _rs.getPropertyValue(name);
@@ -365,6 +363,27 @@ window.__playMobile = function(src, btn) {
     var imageSide = setting('--image', 'back');
     var wordAudioSide = setting('--word-audio', 'front');
     var sentAudioSide = setting('--sentence-audio', 'front');
+
+    // ── Stamp data-side on front-content elements (both front and back) ──
+    var frontWord = document.getElementById('front-word');
+    var frontSent = document.getElementById('front-sentence');
+    var frontImage = document.getElementById('front-image');
+
+    if (frontWord) frontWord.setAttribute('data-side',
+        wordSide === 'front' ? 'front' : (wordSide === 'off' ? 'off' : 'back'));
+    if (frontSent) frontSent.setAttribute('data-side',
+        sentSide === 'front' ? 'front' : (sentSide === 'off' ? 'off' : 'back'));
+    if (frontImage) frontImage.setAttribute('data-side',
+        imageSide === 'front' ? 'front' : 'back');
+
+    // ── Stamp data-side on audio items (both front and back) ──
+    var wordAI = document.querySelector('.audio-row .audio-item[data-audio="word"]');
+    var sentAI = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
+    if (wordAI) wordAI.setAttribute('data-side', wordAudioSide);
+    if (sentAI) sentAI.setAttribute('data-side', sentAudioSide);
+
+    // ── Everything below is front-only ──
+    if (document.querySelector('.back')) return;
 
     // ── plainRuby: bracket notation → <ruby>, no accent colors ──
     function plainRuby(raw) {
@@ -388,46 +407,26 @@ window.__playMobile = function(src, btn) {
         return out.join('');
     }
 
-    // ── Populate front-content children ──
-    var frontWord = document.getElementById('front-word');
-    var frontSent = document.getElementById('front-sentence');
-    var frontImage = document.getElementById('front-image');
-
+    // ── Populate front-content children (front only) ──
     if (wordSide === 'front') {
         var rw = document.getElementById('raw-word');
         var html = rw ? plainRuby(rw.textContent.trim()) : '';
-        if (html) { frontWord.innerHTML = html; frontWord.setAttribute('data-side', 'front'); }
+        if (html) { frontWord.innerHTML = html; }
         else { frontWord.setAttribute('data-side', 'back'); }
-    } else {
-        frontWord.setAttribute('data-side', wordSide === 'off' ? 'off' : 'back');
     }
 
     if (sentSide === 'front') {
         var rs = document.getElementById('raw-sentence');
         var html = rs ? plainRuby(rs.textContent.trim()) : '';
-        if (html) { frontSent.innerHTML = html; frontSent.setAttribute('data-side', 'front'); }
+        if (html) { frontSent.innerHTML = html; }
         else { frontSent.setAttribute('data-side', 'back'); }
-    } else {
-        frontSent.setAttribute('data-side', sentSide === 'off' ? 'off' : 'back');
     }
 
     if (imageSide === 'front') {
         var ri = document.getElementById('raw-image');
-        if (ri && ri.innerHTML.trim()) {
-            frontImage.innerHTML = ri.innerHTML;
-            frontImage.setAttribute('data-side', 'front');
-        } else {
-            frontImage.setAttribute('data-side', 'back');
-        }
-    } else {
-        frontImage.setAttribute('data-side', 'back');
+        if (ri && ri.innerHTML.trim()) { frontImage.innerHTML = ri.innerHTML; }
+        else { frontImage.setAttribute('data-side', 'back'); }
     }
-
-    // ── Stamp data-side on audio items ──
-    var wordAI = document.querySelector('.audio-row .audio-item[data-audio="word"]');
-    var sentAI = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
-    if (wordAI) wordAI.setAttribute('data-side', wordAudioSide);
-    if (sentAI) sentAI.setAttribute('data-side', sentAudioSide);
 
     // ── Adjust front padding for added content (mobile only) ──
     if (window.matchMedia('(hover: none)').matches) {

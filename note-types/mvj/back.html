@@ -828,16 +828,31 @@
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
     if (!wordOn) graphOn = false;
 
+    var wordSide = _rootStyle.getPropertyValue('--word').trim() || 'back';
+    var sentSide = _rootStyle.getPropertyValue('--sentence').trim() || 'back';
+    var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back';
+    var answerEl = document.querySelector('.answer');
+    var wordIsOnFront = (wordSide === 'front');
+    var sentIsOnFront = (sentSide === 'front');
+
     // Word → target word + pitch graph
     if (!wordOn) {
       targetEl.setAttribute('data-show', 'off');
       graphEl.setAttribute('data-state', 'empty');
     } else if (wordRaw) {
       var wordSeqs = makeSequences(wordRaw);
+      var wordTarget = wordIsOnFront
+          ? document.getElementById('front-word')
+          : targetEl;
 
       if (wordSeqs.length > 0) {
-        targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
-        if (wordRaw.indexOf(':') === -1) targetEl.classList.add('no-accent');
+        wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
+        if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
+      }
+
+      if (wordIsOnFront) {
+        targetEl.setAttribute('data-show', 'off');
+        answerEl.setAttribute('data-word-zone', 'front');
       }
 
       if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
@@ -855,6 +870,10 @@
         graphEl.setAttribute('data-state', 'empty');
       }
     } else {
+      if (wordIsOnFront) {
+        var frontWordEl = document.getElementById('front-word');
+        if (frontWordEl) frontWordEl.setAttribute('data-side', 'back');
+      }
       graphEl.setAttribute('data-state', 'empty');
     }
   
@@ -863,15 +882,39 @@
       sentEl.setAttribute('data-show', 'off');
     } else if (sentRaw) {
       var sentSeqs = makeSequences(sentRaw);
+      var sentTarget = sentIsOnFront
+          ? document.getElementById('front-sentence')
+          : sentEl;
+
       if (sentSeqs.length > 0) {
         var hasAccent = sentSeqs[0].some(function(s) {
           return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
         });
-        if (!hasAccent) sentEl.classList.add('no-accent');
-        sentEl.innerHTML = makeColoredSentence(sentSeqs[0]);
+        if (!hasAccent) sentTarget.classList.add('no-accent');
+        sentTarget.innerHTML = makeColoredSentence(sentSeqs[0]);
       }
+
+      if (sentIsOnFront) {
+        sentEl.setAttribute('data-show', 'off');
+      }
+    } else if (sentIsOnFront) {
+      var frontSentEl = document.getElementById('front-sentence');
+      if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
     }
-  
+
+    // Image → hide answer copy when image is on front
+    if (imageSide === 'front') {
+      var frontImageEl = document.getElementById('front-image');
+      var rawImageEl = document.getElementById('raw-image');
+      if (frontImageEl && rawImageEl && rawImageEl.innerHTML.trim()) {
+        frontImageEl.innerHTML = rawImageEl.innerHTML;
+      } else if (frontImageEl) {
+        frontImageEl.setAttribute('data-side', 'back');
+      }
+      var answerImage = document.querySelector('.answer .image-wrap');
+      if (answerImage) answerImage.setAttribute('data-show', 'off');
+    }
+
     // Definition → bilingual + monolingual
     var isTategaki = document.documentElement.classList.contains('tategaki');
     function colorizeText(raw, el) {
