@@ -41,7 +41,7 @@
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* Options */
-    --tategaki: on;   /* "on" = vertical writing, "off" = horizontal (default) */
+    --tategaki: off;   /* "on" = vertical writing, "off" = horizontal (default) */
 }
 
 /* — Anki page background —
@@ -153,6 +153,12 @@ html {
     text-align: center;
     margin: 0 0 14px;
     line-height: 0;
+}
+
+@media (hover: none) {
+    .pitch-graph {
+        margin: 0 0 5px;
+    }
 }
 
 /* Pitch accent colors (SVG) */
@@ -652,6 +658,13 @@ rt {
 
 .def rt, .jp-def rt {
     color: inherit;
+    transform: translateY(-1px);
+}
+
+@media (hover: none) {
+    .def rt, .jp-def rt {
+        transform: translateY(10px);
+    }
 }
 
 .tategaki .def rt,
@@ -664,7 +677,7 @@ rt {
     .tategaki .def rt,
     .tategaki .jp-def rt {
         font-size: 0.47em;
-        transform: translate(-7px, 1px);
+        transform: translate(-8px, 1px);
     }
 }
 
@@ -783,11 +796,11 @@ rt {
 }
 
 /* Audio item ordering — bottom row (mobile) */
-.audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
-.audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
+.audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 0; }
 .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-.audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-.audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+.audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 1; }
+.audio-row-bottom .audio-item[data-audio="word"] { order: 2; }
+.audio-row-bottom .audio-item[data-audio="sentence"] { order: 3; }
 
 /* Bottom audio row — mobile only duplicate */
 
