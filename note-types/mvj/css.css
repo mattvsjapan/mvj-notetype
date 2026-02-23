@@ -6,6 +6,27 @@
 
 :root,
 :root[class*=night-mode] {
+    /* ═══════════════════════════════════════════════════════
+       ⚙  SETTINGS — Change these to customize your cards.
+       ═══════════════════════════════════════════════════════ */
+
+    /* Layout */
+    --tategaki: on;               /* on | off                  */
+
+    /* Content — front, back, or off                          */
+    --word: back;                  /* front | back | off        */
+    --sentence: back;              /* front | back | off        */
+    --pitch-graph: on;             /* on | off (always on back) */
+
+    /* Media */
+    --image: back;                 /* front | back              */
+
+    /* Audio buttons */
+    --word-audio: front;           /* front | back              */
+    --sentence-audio: front;       /* front | back              */
+
+    /* ═══════════════════════════════════════════════════════ */
+
     /* Override Anki's --canvas so the Qt toolbar matches */
     --canvas: #0c0d12;
 
@@ -39,9 +60,6 @@
     /* Motion */
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    /* Options */
-    --tategaki: on;   /* "on" = vertical writing, "off" = horizontal (default) */
 }
 
 /* — Anki page background —
@@ -97,6 +115,10 @@ html {
 
     .front {
         padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
+    }
+
+    .front-content {
+        margin-top: 16px;
     }
 
     /* AnkiDroid: revert iOS-only bottom-inset and bounce scroll adjustments */
@@ -825,6 +847,59 @@ rt {
     display: none;
 }
 
+[data-show="off"] {
+    display: none;
+}
+
+/* Front-content: hide on back (answer has colorized versions) */
+.back .front-content {
+    display: none;
+}
+
+/* Front only: hide back-designated content and audio items.
+   Scoped via :not(.back) > .card-inner so it doesn't apply on the back
+   where .front has display:contents but is still in the DOM tree. */
+:not(.back) > .card-inner > .front [data-side="back"] {
+    display: none;
+}
+
+/* Front-content base layout */
+.front-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.front-content .target-word {
+    color: var(--text-1);
+    margin: 0 0 12px;
+}
+
+.front-content .target-word rt {
+    color: var(--text-2);
+}
+
+.front-content .sentence {
+    color: var(--text-1);
+    margin: 0 0 16px;
+}
+
+.front-content .sentence rt {
+    color: var(--text-2);
+}
+
+.front-content .image-wrap {
+    margin-bottom: 0;
+}
+
+/* Collapse empty front-content children */
+.front-content .target-word:empty,
+.front-content .sentence:empty,
+.front-content .image-wrap:empty {
+    display: none;
+}
+
 [data-font="jp"] {
     font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
     line-height: 1.65;
@@ -1012,6 +1087,13 @@ html.tategaki:has(.back) {
    so we override it here with equal specificity (0-4-0), winning by source order. */
 .tategaki .back .card-inner .front {
     display: contents;
+}
+
+.tategaki .front-content {
+    writing-mode: horizontal-tb;
+    text-align: center;
+    margin-top: 0;
+    padding: 0 20px;
 }
 
 .tategaki .front .audio-row {

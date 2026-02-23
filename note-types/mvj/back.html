@@ -189,8 +189,6 @@
   </div>
   </div>
   
-  <div id="raw-word" style="display:none">{{Word}}</div>
-  <div id="raw-sentence" style="display:none">{{Sentence}}</div>
   <div id="raw-definition" style="display:none">{{Definition}}</div>
   
   <script>
@@ -808,11 +806,12 @@
   
   // ── Render (deferred for Anki front→back transitions) ──
   function _renderBack() {
-    var wordRaw = document.getElementById('raw-word');
-    if (!wordRaw) return setTimeout(_renderBack, 10);
+    if (!document.querySelector('.answer')) return setTimeout(_renderBack, 10);
 
-    wordRaw = wordRaw.innerHTML.trim();
-    var sentRaw = document.getElementById('raw-sentence').textContent.trim();
+    var wordEl = document.getElementById('raw-word');
+    var wordRaw = wordEl ? wordEl.innerHTML.trim() : '';
+    var sentEl = document.getElementById('raw-sentence');
+    var sentRaw = sentEl ? sentEl.textContent.trim() : '';
     var defHtml = document.getElementById('raw-definition').innerHTML;
   
     var targetEl = document.getElementById('target-word');
@@ -821,17 +820,27 @@
     var defEl = document.getElementById('def-bilingual');
     var jpDefSection = document.getElementById('jp-def-section');
     var jpDefEl = document.getElementById('def-monolingual');
-  
+
+    // ── Settings ──
+    var _rootStyle = getComputedStyle(document.documentElement);
+    var wordOn = _rootStyle.getPropertyValue('--word').trim() !== 'off';
+    var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
+    var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
+    if (!wordOn) graphOn = false;
+
     // Word → target word + pitch graph
-    if (wordRaw) {
+    if (!wordOn) {
+      targetEl.setAttribute('data-show', 'off');
+      graphEl.setAttribute('data-state', 'empty');
+    } else if (wordRaw) {
       var wordSeqs = makeSequences(wordRaw);
-  
+
       if (wordSeqs.length > 0) {
         targetEl.innerHTML = makeColoredSentence(wordSeqs[0]);
         if (wordRaw.indexOf(':') === -1) targetEl.classList.add('no-accent');
       }
-  
-      if (wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
+
+      if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
         var svgs = [];
         for (var s = 0; s < wordSeqs.length; s++) {
           var svg = makeGraph(wordSeqs[s]);
@@ -850,7 +859,9 @@
     }
   
     // Sentence → colored sentence
-    if (sentRaw) {
+    if (!sentOn) {
+      sentEl.setAttribute('data-show', 'off');
+    } else if (sentRaw) {
       var sentSeqs = makeSequences(sentRaw);
       if (sentSeqs.length > 0) {
         var hasAccent = sentSeqs[0].some(function(s) {
