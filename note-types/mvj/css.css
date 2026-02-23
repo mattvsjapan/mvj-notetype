@@ -479,6 +479,11 @@ span.empty { display: none; }
     from { gap: 10px; }
 }
 
+@keyframes rtFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 @keyframes labelSettle {
     from { font-size: 10px; }
 }
@@ -942,6 +947,7 @@ rt {
 }
 .back .front-content .target-word rt {
     color: inherit;
+    animation: rtFadeIn 0.25s ease both;
 }
 .back .front-content .sentence {
     color: inherit;
@@ -949,6 +955,7 @@ rt {
 .back .front-content .sentence rt {
     color: inherit;
     visibility: visible;
+    animation: rtFadeIn 0.25s ease both;
 }
 
 /* When word is in front zone, pitch graph becomes first item in back zone */
