@@ -571,6 +571,15 @@ span.empty { display: none; }
 .back > .card-inner::after { display: none; }
 .back .front { display: contents; }
 
+html:not(.tategaki) .back {
+    display: flex;
+    flex-direction: column;
+}
+
+.back .audio-row:not(:has([data-side="front"])) {
+    order: 1;
+}
+
 /* Hide Anki's auto-injected answer separator */
 .back > hr { display: none; }
 
