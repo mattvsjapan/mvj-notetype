@@ -66,6 +66,7 @@
       btn.innerHTML = SVG;
       item.appendChild(btn);
       window.__onTap(btn, function() {
+        if (btn.classList.contains('playing')) { window.__stopAllAudio(); return; }
         if (window.matchMedia('(hover: none)').matches) {
           window.__stopAllAudio();
           animateBtn(btn);
@@ -257,7 +258,11 @@ _renderBack();
     var el = ev.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
     switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); playAll(); break;
+      case 'n':
+        ev.preventDefault(); ev.stopPropagation();
+        if (document.querySelector('.replay-button.playing')) window.__stopAllAudio();
+        else playAll();
+        break;
       case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
     }
   }

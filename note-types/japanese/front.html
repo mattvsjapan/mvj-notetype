@@ -171,6 +171,7 @@ window.__adoptNativeAudio = function(elements) {
             if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 window.__onTap(b, function() {
+                    if (b.classList.contains('playing')) { window.__stopAllAudio(); return; }
                     if (window.matchMedia('(hover: none)').matches) {
                         window.__stopAllAudio();
                         window.__animateBtn(b);

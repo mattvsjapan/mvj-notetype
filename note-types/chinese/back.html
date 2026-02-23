@@ -72,6 +72,7 @@
             var animateBtn = window.__animateBtn;
 
             function playSingle(idx) {
+                if (btns[idx].classList.contains('playing')) { window.__stopAllAudio(); return; }
                 if (window.matchMedia('(hover: none)').matches) {
                     window.__stopAllAudio();
                     animateBtn(btns[idx]);
@@ -575,6 +576,7 @@ function _renderBack() {
             animateBtnDef(btn);
           };
           window.__onTap(btn, function() {
+            if (btn.classList.contains('playing')) { window.__stopAllAudio(); return; }
             if (window.matchMedia('(hover: none)').matches) {
               window.__stopAllAudio();
               animateBtnDef(btn);
@@ -636,6 +638,7 @@ function _renderBack() {
         };
 
         window.__onTap(defBtn, function() {
+          if (defBtn.classList.contains('playing')) { window.__stopAllAudio(); return; }
           if (window.matchMedia('(hover: none)').matches) {
             window.__stopAllAudio();
             animateBtnDef(defBtn);
@@ -737,6 +740,7 @@ _renderBack();
   var animateBtn = window.__animateBtn;
   function play(item) {
     if (!item) return;
+    if (item.querySelector('.replay-button.playing')) { window.__stopAllAudio(); return; }
     window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
@@ -785,7 +789,8 @@ _renderBack();
       case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
       case ',':
         ev.preventDefault(); ev.stopPropagation();
-        if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+        if (document.querySelector('.audio-item[data-audio="def"] .replay-button.playing')) { window.__stopAllAudio(); }
+        else if (window.__playLockedDefAudio) window.__playLockedDefAudio();
         else play(defItem);
         break;
       case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;

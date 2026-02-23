@@ -184,6 +184,7 @@ window.__adoptNativeAudio = function(elements) {
             if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 window.__onTap(b, function() {
+                    if (b.classList.contains('playing')) { window.__stopAllAudio(); return; }
                     if (window.matchMedia('(hover: none)').matches) {
                         window.__stopAllAudio();
                         window.__animateBtn(b);
@@ -331,6 +332,7 @@ window.__playMobile = function(src, btn) {
       btn.innerHTML = SVG;
       item.insertBefore(btn, item.firstChild);
       window.__onTap(btn, function() {
+        if (btn.classList.contains('playing')) { window.__stopAllAudio(); return; }
         if (window.matchMedia('(hover: none)').matches) {
           window.__stopAllAudio();
           animateBtn(btn);
@@ -357,6 +359,7 @@ window.__playMobile = function(src, btn) {
     btn.innerHTML = SVG;
     item.insertBefore(btn, item.firstChild);
     window.__onTap(btn, function() {
+      if (btn.classList.contains('playing')) { window.__stopAllAudio(); return; }
       if (window.matchMedia('(hover: none)').matches) {
         window.__stopAllAudio();
         animateBtn(btn);
@@ -407,6 +410,7 @@ window.__playMobile = function(src, btn) {
   var animateBtn = window.__animateBtn;
   function play(item) {
     if (!item) return;
+    if (item.querySelector('.replay-button.playing')) { window.__stopAllAudio(); return; }
     window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
