@@ -483,9 +483,22 @@ function clearLastMargin(el) {
     // needs its margin to separate from the audio row.
     var fc = document.querySelector('.front-content');
     if (fc && fc.classList.contains('debug-last')) {
-        fc.classList.remove('debug-last');
-        fc.style.marginBottom = '';
-        clearLastMargin(fc);
+        // In tategaki the audio row sits to the LEFT of front-content,
+        // which is the visual terminal position. clearLastMargin can't
+        // detect this (both children share order:0, DOM tiebreak picks
+        // front-content). Move the marker to the audio row instead.
+        var ar = document.querySelector('.front > .audio-row');
+        if (document.documentElement.classList.contains('tategaki')
+            && ar && getComputedStyle(ar).display !== 'none') {
+            fc.classList.remove('debug-last');
+            fc.style.marginBottom = '';
+            ar.style.marginBottom = '0';
+            ar.classList.add('debug-last');
+        } else {
+            fc.classList.remove('debug-last');
+            fc.style.marginBottom = '';
+            clearLastMargin(fc);
+        }
     }
 
     // ── Adjust front padding for added content (mobile only) ──

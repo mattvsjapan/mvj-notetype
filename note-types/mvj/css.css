@@ -222,12 +222,14 @@ html:not(.tategaki)[data-color-scheme="white"] .back:has(.front-content [data-si
 [data-debug="on"] .answer > *,
 [data-debug="on"] .front-content > *,
 [data-debug="on"] .word-column > *,
+[data-debug="on"] .front > .audio-row,
 [data-debug="on"] .back .audio-row {
     outline: 2px solid rgba(0, 150, 255, 0.6);
     background-color: rgba(0, 150, 255, 0.06);
 }
 [data-debug="on"] .answer,
 [data-debug="on"] .front-content,
+[data-debug="on"] .front,
 [data-debug="on"] .back {
     outline: 2px dashed rgba(255, 150, 0, 0.6);
     background-color: rgba(255, 150, 0, 0.08);
