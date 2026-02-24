@@ -12,7 +12,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: blue;          /* blue | black | red | purple         */
+    --color-scheme: blue;          /* blue | black | red | purple | white */
 
     /* Word */
     --word: back;                 /* front | back | off                  */
@@ -113,6 +113,24 @@
     --accent-glow: rgba(155, 120, 200, 0.22);
 }
 
+:root[data-color-scheme="white"] {
+    --canvas: #f5f0e8;
+    --bg: #f5f0e8;
+    --bg-card: #fdfbf6;
+    --bg-surface: #ece7df;
+    --bg-surface-hover: #e2ddd5;
+    --bg-overlay: rgba(245, 240, 232, 0.96);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-light: rgba(0, 0, 0, 0.05);
+    --text-1: rgba(0, 0, 0, 0.85);
+    --text-2: rgba(0, 0, 0, 0.45);
+    --text-3: rgba(0, 0, 0, 0.28);
+    --accent: #7d6145;
+    --accent-text: #5a4230;
+    --accent-soft: rgba(125, 97, 69, 0.08);
+    --accent-glow: rgba(125, 97, 69, 0.14);
+}
+
 :root[data-color-scheme="black"] .card-inner {
     background: rgba(20, 20, 20, 0.58);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
@@ -135,6 +153,68 @@
         0 1px 3px rgba(10,6,16,0.40),
         0 4px 12px rgba(10,6,16,0.28),
         0 16px 36px rgba(10,6,16,0.16);
+}
+
+:root[data-color-scheme="white"] .card-inner {
+    background: rgba(253, 251, 246, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.60),
+        0 1px 3px rgba(0,0,0,0.05),
+        0 4px 12px rgba(0,0,0,0.04),
+        0 16px 36px rgba(0,0,0,0.025);
+}
+
+/* — White scheme: flip dark-mode shimmer to light-mode — */
+
+:root[data-color-scheme="white"] .card-inner::after {
+    background: radial-gradient(300px 250px at 50% 120px, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+}
+
+:root[data-color-scheme="white"].tategaki .card-inner::after {
+    background: radial-gradient(300px 250px at 50% 50%, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+}
+
+:root[data-color-scheme="white"] .replay-button svg circle,
+:root[data-color-scheme="white"] .replay-button .replayCircle {
+    stroke: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-color-scheme="white"] .connector line { stroke: rgba(0, 0, 0, 0.15); }
+:root[data-color-scheme="white"] .particle circle { fill: none; stroke: rgba(0, 0, 0, 0.20); }
+:root[data-color-scheme="white"] .particle line { stroke: rgba(0, 0, 0, 0.20); }
+:root[data-color-scheme="white"] .particle text { fill: rgba(0, 0, 0, 0.20); }
+:root[data-color-scheme="white"] .particle { color: rgba(0, 0, 0, 0.20); }
+:root[data-color-scheme="white"] .sentence .particle { color: inherit; }
+:root[data-color-scheme="white"] .def .particle,
+:root[data-color-scheme="white"] .jp-def .particle { color: inherit; }
+
+:root[data-color-scheme="white"] .image-wrap::after {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06),
+               inset 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+:root[data-color-scheme="white"] .jp-def-toggle {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+@media (hover: hover) {
+    :root[data-color-scheme="white"] .jp-def-toggle:hover {
+        color: var(--text-1);
+        border-color: rgba(0, 0, 0, 0.12);
+        background: rgba(0, 0, 0, 0.03);
+    }
+}
+
+:root[data-color-scheme="white"] .divider {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
+}
+
+:root[data-color-scheme="white"] .tategaki .divider {
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
+}
+
+html:not(.tategaki)[data-color-scheme="white"] .back:has(.front-content [data-side="front"]) .answer::before {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 25%, rgba(0, 0, 0, 0.15) 75%, transparent);
 }
 
 /* — Anki page background —

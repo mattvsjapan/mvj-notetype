@@ -1546,9 +1546,10 @@
   (function() {
     var HANDLER_KEY = '__jpDefHandler';
     function animateToggle(label) {
+      var isLight = document.documentElement.getAttribute('data-color-scheme') === 'white';
       label.style.color = 'var(--text-1)';
-      label.style.borderColor = 'rgba(255, 255, 255, 0.10)';
-      label.style.background = 'rgba(255, 255, 255, 0.04)';
+      label.style.borderColor = isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.10)';
+      label.style.background = isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)';
       setTimeout(function() {
         label.style.color = '';
         label.style.borderColor = '';
