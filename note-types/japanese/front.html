@@ -105,24 +105,36 @@ window.__animateBtn = function(btn) {
     }, 350);
 };
 
-window.__onTap = function(btn, handler) {
+window.__onTap = function(btn, handler, dblHandler) {
     btn._hasHandler = true;
     btn._tapHandler = handler;
+    btn._dblHandler = dblHandler || null;
     if (btn._onTapBound) return;
     btn._onTapBound = true;
     var moved;
+    var DBL_MS = 350;
+    function dispatch(ev) {
+        var now = Date.now();
+        if (btn._dblHandler && btn._lastDispatch && now - btn._lastDispatch < DBL_MS) {
+            btn._lastDispatch = 0;
+            btn._dblHandler(ev);
+        } else {
+            btn._lastDispatch = now;
+            btn._tapHandler(ev);
+        }
+    }
     btn.addEventListener('touchstart', function() { moved = false; }, { passive: true });
     btn.addEventListener('touchmove', function() { moved = true; }, { passive: true });
     btn.addEventListener('touchend', function(ev) {
         if (moved) return;
         ev.preventDefault();
         btn._lastTapTime = Date.now();
-        btn._tapHandler(ev);
+        dispatch(ev);
     });
     btn.addEventListener('click', function(ev) {
         ev.preventDefault();
         if (btn._lastTapTime && Date.now() - btn._lastTapTime < 400) return;
-        btn._tapHandler(ev);
+        dispatch(ev);
     });
 };
 
@@ -180,7 +192,6 @@ window.__adoptNativeAudio = function(elements) {
             if (window.__defAudioEls) window.__defAudioEls.push(el);
             (function(audio, b) {
                 window.__onTap(b, function() {
-                    if (b.classList.contains('playing')) { window.__stopAllAudio(); return; }
                     if (window.matchMedia('(hover: none)').matches) {
                         window.__stopAllAudio();
                         window.__animateBtn(b);
@@ -192,7 +203,7 @@ window.__adoptNativeAudio = function(elements) {
                         window.__animateBtn(b);
                         window.__startPlaying(audio, b);
                     }
-                });
+                }, function() { window.__stopAllAudio(); });
             })(el, btn);
             buttons.push(btn);
         }

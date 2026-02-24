@@ -72,7 +72,6 @@
             var animateBtn = window.__animateBtn;
 
             function playSingle(idx) {
-                if (btns[idx].classList.contains('playing')) { window.__stopAllAudio(); return; }
                 if (window.matchMedia('(hover: none)').matches) {
                     window.__stopAllAudio();
                     animateBtn(btns[idx]);
@@ -118,7 +117,7 @@
 
             for (var j = 0; j < btns.length; j++) {
                 (function(idx) {
-                    window.__onTap(btns[idx], function() { playSingle(idx); });
+                    window.__onTap(btns[idx], function() { playSingle(idx); }, function() { window.__stopAllAudio(); });
                 })(j);
             }
 
@@ -576,7 +575,6 @@ function _renderBack() {
             animateBtnDef(btn);
           };
           window.__onTap(btn, function() {
-            if (btn.classList.contains('playing')) { window.__stopAllAudio(); return; }
             if (window.matchMedia('(hover: none)').matches) {
               window.__stopAllAudio();
               animateBtnDef(btn);
@@ -588,7 +586,7 @@ function _renderBack() {
               animateBtnDef(btn);
               window.__startPlaying(audioEls[0], btn);
             }
-          });
+          }, function() { window.__stopAllAudio(); });
           return playFn;
         };
 
@@ -638,7 +636,6 @@ function _renderBack() {
         };
 
         window.__onTap(defBtn, function() {
-          if (defBtn.classList.contains('playing')) { window.__stopAllAudio(); return; }
           if (window.matchMedia('(hover: none)').matches) {
             window.__stopAllAudio();
             animateBtnDef(defBtn);
@@ -650,7 +647,7 @@ function _renderBack() {
             animateBtnDef(defBtn);
             window.__startPlaying(primaryAudios[0], defBtn);
           }
-        });
+        }, function() { window.__stopAllAudio(); });
         window.__playLockedDefAudio = playPrimary;
 
         var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
@@ -704,7 +701,7 @@ function _renderBack() {
               if (origBtn._tapHandler) origBtn._tapHandler();
               else origBtn.click();
               animateBtnBottom(btn);
-            });
+            }, function() { if (origBtn._dblHandler) origBtn._dblHandler(); });
             var obs = new MutationObserver(function() {
               btn.classList.toggle('playing', origBtn.classList.contains('playing'));
             });
@@ -736,9 +733,14 @@ _renderBack();
 (function() {
   var HANDLER_KEY = '__audioHandler';
   var animateBtn = window.__animateBtn;
+  var _lastKey = null, _lastKeyTime = 0, _DBL_MS = 350;
+  function isDbl(key) {
+    var now = Date.now();
+    if (_lastKey === key && now - _lastKeyTime < _DBL_MS) { _lastKey = null; _lastKeyTime = 0; return true; }
+    _lastKey = key; _lastKeyTime = now; return false;
+  }
   function play(item) {
     if (!item) return;
-    if (item.querySelector('.replay-button.playing')) { window.__stopAllAudio(); return; }
     window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
@@ -783,11 +785,11 @@ _renderBack();
     var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
     var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
     switch (ev.key.toLowerCase()) {
-      case 'n': ev.preventDefault(); ev.stopPropagation(); play(wordItem); break;
-      case 'h': ev.preventDefault(); ev.stopPropagation(); play(sentItem); break;
+      case 'n': ev.preventDefault(); ev.stopPropagation(); if (isDbl('n')) window.__stopAllAudio(); else play(wordItem); break;
+      case 'h': ev.preventDefault(); ev.stopPropagation(); if (isDbl('h')) window.__stopAllAudio(); else play(sentItem); break;
       case ',':
         ev.preventDefault(); ev.stopPropagation();
-        if (document.querySelector('.audio-item[data-audio="def"] .replay-button.playing')) { window.__stopAllAudio(); }
+        if (isDbl(',')) { window.__stopAllAudio(); }
         else if (window.__playLockedDefAudio) window.__playLockedDefAudio();
         else play(defItem);
         break;
