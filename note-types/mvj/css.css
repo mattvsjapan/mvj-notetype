@@ -1687,7 +1687,7 @@ html.tategaki:has(.back) {
 
 .tategaki .jp-def-toggle {
     writing-mode: vertical-rl;
-    padding: 14px 0 14px 6px;
+    padding: 14px 3px;
 }
 
 .tategaki .jp-def-toggle::after {
