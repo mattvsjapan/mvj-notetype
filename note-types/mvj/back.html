@@ -945,7 +945,7 @@
         var dividerEl = document.querySelector('.answer .divider');
         if (answerImage && answerEl) {
           answerEl.insertBefore(answerImage, dividerEl);
-          answerImage.style.order = '-2';
+          answerImage.style.order = dividerEl ? getComputedStyle(dividerEl).order : '-2';
           answerImage.style.height = 'fit-content';
           answerImage.style.flex = '0 0 auto';
         }
