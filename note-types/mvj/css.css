@@ -803,16 +803,6 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
     order: -1;
 }
 
-html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::before {
-    content: '';
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
-    margin-bottom: 20px;
-    order: -2;
-    opacity: 0;
-    animation: fadeIn 0.5s var(--spring) both;
-}
-
 /* Hide Anki's auto-injected answer separator */
 .back > hr { display: none; }
 
@@ -1682,9 +1672,14 @@ html.tategaki:has(.back) {
     transform: rotate(180deg);
 }
 
-/* Divider — tategaki only */
+/* Divider */
 html:not(.tategaki) .divider {
     display: none;
+}
+
+html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
+    display: block;
+    order: -2;
 }
 
 .tategaki .divider {
