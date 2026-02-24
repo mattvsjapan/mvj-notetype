@@ -1388,7 +1388,7 @@ html.tategaki:has(.back) {
     writing-mode: horizontal-tb;
     text-align: center;
     margin-top: 0;
-    padding: 0 20px;
+    padding-left: 20px;
 }
 
 /* Front side: front-content uses vertical-rl so sentence (and other children)
@@ -1548,7 +1548,7 @@ html.tategaki:has(.back) {
     flex-direction: column;
     align-items: center;
     max-width: 391px;
-    margin-right: 12px;
+    margin-left: 12px;
 
 }
 
@@ -1563,7 +1563,7 @@ html.tategaki:has(.back) {
     flex-basis: 0;
     row-gap: 12px;
     column-gap: clamp(16px, 8vw, 40px);
-    margin: 0 12px 12px 0;
+    margin: 0 0 12px 12px;
     will-change: transform;
     direction: rtl;
 
@@ -1594,7 +1594,7 @@ html.tategaki:has(.back) {
 
 .tategaki .image-wrap {
     width: 391px;
-    margin: 0 12px 0 0;
+    margin-left: 12px;
 
 }
 
@@ -1661,7 +1661,7 @@ html.tategaki:has(.back) {
 
 .tategaki .jp-def-toggle {
     writing-mode: vertical-rl;
-    padding: 14px 6px;
+    padding: 14px 0 14px 6px;
 }
 
 .tategaki .jp-def-toggle::after {
@@ -1686,7 +1686,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     width: 1px;
     height: 100%;
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
-    margin: 0 8px;
+    margin-left: 8px;
     order: -2;
 }
 
