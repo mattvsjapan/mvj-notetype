@@ -1381,6 +1381,7 @@
         targetRow.appendChild(clone);
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item');
+      var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
           var isDef = origItem.getAttribute('data-audio') === 'def';
@@ -1393,6 +1394,8 @@
             } else if (window.matchMedia('(hover: none)').matches) {
               cloneItemToRow(origItem, midAudioRow);
               cloneItemToRow(origItem, bottomRow);
+            } else if (!hasAnyFrontAudio) {
+              cloneItemToRow(origItem, midAudioRow);
             } else {
               cloneItemToRow(origItem, bottomRow);
             }

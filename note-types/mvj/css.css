@@ -1488,6 +1488,11 @@ html.tategaki:has(.back) {
     }
 }
 
+/* Hide empty audio column in tategaki (all audio routed to mid-audio-row) */
+.tategaki .audio-row-bottom:empty {
+    display: none;
+}
+
 /* Audio column — directly left of sentence (mirrors front layout) */
 .tategaki .audio-row-bottom {
     display: flex;
