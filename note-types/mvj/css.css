@@ -807,18 +807,18 @@ html:not(.tategaki) .back {
     display: none;
 }
 
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom {
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: clamp(8px, 4vw, 20px);
     margin-bottom: 20px;
 }
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-.back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
     order: -1;
@@ -1530,6 +1530,11 @@ html.tategaki:has(.back) {
     .tategaki .audio-row-bottom {
         justify-content: flex-end;
     }
+}
+
+/* Hide empty audio column in tategaki (all audio routed to mid-audio-row) */
+.tategaki .audio-row-bottom:empty {
+    display: none;
 }
 
 /* Word column — word+graph at top, image at bottom */
