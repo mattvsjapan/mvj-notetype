@@ -385,7 +385,7 @@ function clearLastMargin(el) {
     for (var i = items.length - 1; i >= 0; i--) {
         if (getComputedStyle(items[i]).display !== 'none') {
             items[i].style.marginBottom = '0';
-            items[i].style.outline = '2px solid red';
+            items[i].classList.add('debug-last');
             return;
         }
     }
@@ -471,7 +471,7 @@ function clearLastMargin(el) {
         else { frontImage.setAttribute('data-side', 'back'); }
     }
 
-    clearLastMargin(document.querySelector('.front-content'));
+    clearLastMargin(document.querySelector('.front'));
 
     // ── Adjust front padding for added content (mobile only) ──
     if (window.matchMedia('(hover: none)').matches) {

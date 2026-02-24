@@ -1,12 +1,14 @@
 /* ── DEBUG: layout spacing visualization ── */
 .answer > *,
 .front-content > *,
-.word-column > * {
+.word-column > *,
+.back .audio-row {
     outline: 2px solid rgba(0, 150, 255, 0.6);
     background-color: rgba(0, 150, 255, 0.06);
 }
 .answer,
-.front-content {
+.front-content,
+.back {
     outline: 2px dashed rgba(255, 150, 0, 0.6);
     background-color: rgba(255, 150, 0, 0.08);
 }
@@ -29,12 +31,12 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: on;               /* on | off                            */
+    --tategaki: o;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
 
     /* Word */
     --word: back;                 /* front | back | off                  */
-    --word-audio: back;            /* front | back | off                  */
+    --word-audio: front;            /* front | back | off                  */
     --word-pitch-color: on;        /* on | off                            */
     --pitch-graph: on;              /* on | off                            */
 
@@ -44,10 +46,10 @@
     --sentence-pitch-color: on;    /* on | off                            */
 
     /* Image */
-    --image: back;                /* front | back | off                  */
+    --image: on;                /* front | back | off                  */
 
     /* Definitions */
-    --definition-text: on;         /* on | off                            */
+    --definition-text: off;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
