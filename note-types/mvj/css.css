@@ -1327,9 +1327,6 @@ html:not(.tategaki) [data-font="jp"] {
     to   { opacity: 1; transform: translate(0, 0) scale(1); }
 }
 
-@keyframes tategakiGapSettle {
-    from { gap: clamp(16px, 8vw, 40px); }
-}
 
 @keyframes tategakiBtnSettle {
     from { transform: scale(1.04); }
@@ -1419,8 +1416,11 @@ html.tategaki:has(.back) {
     align-self: stretch;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 0;
 }
+
+.tategaki .front-content .target-word { margin-left: 16px; }
+.tategaki .front-content .image-wrap { margin-left: 16px; }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */
@@ -1443,7 +1443,7 @@ html.tategaki:has(.back) {
 .tategaki .answer {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 0;
     height: 100%;
     margin-top: 0;
     padding-bottom: 0;
@@ -1502,7 +1502,7 @@ html.tategaki:has(.back) {
     writing-mode: horizontal-tb;
     order: -3;
     gap: clamp(12px, 6.15vw, 31px);
-    margin: 0 0 0 8px;
+    margin: 0 0 0 24px;
 }
 
 .tategaki .audio-row-bottom .audio-item { flex: 0 0 auto; }
@@ -1548,7 +1548,7 @@ html.tategaki:has(.back) {
     order: 0;
     gap: 0;
     height: 100%;
-
+    margin-left: 16px;
 }
 
 .tategaki .word-column > * {
@@ -1650,7 +1650,7 @@ html.tategaki:has(.back) {
 /* Sentence — right after audio buttons */
 .tategaki .sentence {
     text-align: start;
-    margin: 0;
+    margin: 0 0 0 16px;
     order: -3;
     height: 100%;
 }
@@ -1665,7 +1665,7 @@ html.tategaki:has(.back) {
 
 /* Definition — placed right after audio buttons in R→L flow */
 .tategaki .def {
-    margin: 0;
+    margin: 0 0 0 16px;
     order: -2;
     height: 100%;
     line-height: 1.65;
@@ -1673,7 +1673,7 @@ html.tategaki:has(.back) {
 
 /* JP def section — follows definition */
 .tategaki .jp-def-section {
-    margin: 0;
+    margin: 0 0 0 16px;
     margin-block-start: 0;
     order: -1;
     height: 100%;
@@ -1712,7 +1712,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     width: 1px;
     height: 100%;
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
-    margin: 0 0 0 8px;
+    margin: 0 0 0 24px;
     order: -2;
 }
 
