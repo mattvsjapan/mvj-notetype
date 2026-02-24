@@ -1385,23 +1385,20 @@
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]') ||
           !!document.querySelector('.answer[data-sentence-zone="front"]');
       var isMobile = window.matchMedia('(hover: none)').matches;
-      if (isTategaki && !hasFrontContent) {
+      var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
+      if (isTategaki && !hasFrontContent && hasAnyFrontAudio) {
         bottomRow.setAttribute('data-zone', 'front');
       }
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
-          var isDef = origItem.getAttribute('data-audio') === 'def';
           if (isTategaki && midAudioRow) {
-            if (hasFrontContent || isDef) {
-              cloneItemToRow(origItem, midAudioRow);
-              if (isMobile) {
-                cloneItemToRow(origItem, bottomRow);
-              }
-            } else {
+            var isFront = !hasFrontContent && origItem.getAttribute('data-side') === 'front';
+            if (isFront) {
               cloneItemToRow(origItem, bottomRow);
-              if (isMobile) {
-                cloneItemToRow(origItem, midAudioRow);
-              }
+              if (isMobile) cloneItemToRow(origItem, midAudioRow);
+            } else {
+              cloneItemToRow(origItem, midAudioRow);
+              if (isMobile) cloneItemToRow(origItem, bottomRow);
             }
           } else {
             cloneItemToRow(origItem, bottomRow);
