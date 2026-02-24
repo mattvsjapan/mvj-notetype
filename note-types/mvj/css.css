@@ -1431,7 +1431,7 @@ html.tategaki:has(.back) {
 .tategaki .front .audio-row {
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
-    padding: 24px 0;
+    padding: 0;
 }
 
 /* Back — hide the top audio row (audio-row-bottom takes over) */
