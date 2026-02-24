@@ -483,6 +483,8 @@ function clearLastMargin(el) {
     // needs its margin to separate from the audio row.
     var fc = document.querySelector('.front-content');
     if (fc && fc.classList.contains('debug-last')) {
+        fc.classList.remove('debug-last');
+        fc.style.marginBottom = '';
         clearLastMargin(fc);
     }
 
