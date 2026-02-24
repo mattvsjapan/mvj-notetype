@@ -1439,6 +1439,11 @@
       }
     }
   
+    // Clear stale debug-last markings left over from front-side rendering
+    document.querySelectorAll('.debug-last').forEach(function(el) {
+        el.classList.remove('debug-last');
+        el.style.marginBottom = '';
+    });
     clearLastMargin(document.querySelector('.answer'));
 
     // ── Trigger reveal animations after content is ready ──

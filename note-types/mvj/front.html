@@ -44,6 +44,12 @@
     if (v) document.documentElement.setAttribute('data-color-scheme', v.trim() || 'blue');
 })();
 
+// Debug mode — read CSS variable and set data attribute
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--debug');
+    if (v) document.documentElement.setAttribute('data-debug', v.trim() || 'off');
+})();
+
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
@@ -471,8 +477,14 @@ function clearLastMargin(el) {
         else { frontImage.setAttribute('data-side', 'back'); }
     }
 
-    clearLastMargin(document.querySelector('.front-content'));
     clearLastMargin(document.querySelector('.front'));
+    // Only clear inside .front-content when it is itself the last visible
+    // child of .front (no audio row below it); otherwise the sentence
+    // needs its margin to separate from the audio row.
+    var fc = document.querySelector('.front-content');
+    if (fc && fc.classList.contains('debug-last')) {
+        clearLastMargin(fc);
+    }
 
     // ── Adjust front padding for added content (mobile only) ──
     if (window.matchMedia('(hover: none)').matches) {
