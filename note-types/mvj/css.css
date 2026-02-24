@@ -1503,6 +1503,7 @@ html.tategaki:has(.back) {
     order: -3;
     gap: clamp(12px, 6.15vw, 31px);
     margin: 0 0 0 24px;
+    height: 100%;
 }
 
 .tategaki .audio-row-bottom .audio-item { flex: 0 0 auto; }
