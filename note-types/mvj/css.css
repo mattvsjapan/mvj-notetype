@@ -1435,7 +1435,7 @@ html.tategaki:has(.back) {
     justify-content: space-between;
 }
 
-.tategaki .front-content .target-word { margin-left: 16px; }
+.tategaki .front-content .target-word { margin-left: 16px; text-align: start; }
 .tategaki .front-content .image-wrap { margin-left: 16px; }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
