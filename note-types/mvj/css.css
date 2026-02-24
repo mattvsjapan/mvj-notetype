@@ -1437,6 +1437,7 @@ html.tategaki:has(.back) {
    for the back's .answer layout, but front-content should use HTML order. */
 .tategaki .front-content .sentence {
     order: 0;
+    margin-left: 0;
 }
 
 .tategaki .front .audio-row {

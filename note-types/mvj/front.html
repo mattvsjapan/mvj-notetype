@@ -418,21 +418,52 @@ function clearLastMargin(el) {
             items.push(child);
         }
     }
-    items.sort(function(a, b) {
-        return (parseInt(getComputedStyle(a).order) || 0) - (parseInt(getComputedStyle(b).order) || 0);
+    items = items.filter(function(item) {
+        return getComputedStyle(item).display !== 'none';
     });
-    // Block-end margin depends on writing mode:
-    //   horizontal-tb → marginBottom (physical bottom)
-    //   vertical-rl   → marginLeft  (physical left)
-    var prop = (getComputedStyle(el).writingMode === 'vertical-rl')
-        ? 'marginLeft' : 'marginBottom';
+    if (!items.length) return;
+
     var isTategaki = document.documentElement.classList.contains('tategaki');
-    for (var i = items.length - 1; i >= 0; i--) {
-        if (getComputedStyle(items[i]).display !== 'none') {
-            items[i].style[prop] = '0';
-            if (isTategaki) items[i].style.marginBottom = '0';
-            items[i].classList.add('debug-last');
-            return;
+    var isVertical = getComputedStyle(el).writingMode === 'vertical-rl';
+
+    // Use bounding rects to find the item at the physical block-end edge,
+    // instead of CSS order — handles wrapping flex and variable-width children.
+    //   vertical-rl  → leftmost item  (smallest rect.left)  → clear marginLeft
+    //   horizontal-tb → bottommost item (largest rect.bottom) → clear marginBottom
+    var blockProp = isVertical ? 'marginLeft' : 'marginBottom';
+    var blockEndItem = null;
+    var blockEndVal = isVertical ? Infinity : -Infinity;
+    for (var i = 0; i < items.length; i++) {
+        var rect = items[i].getBoundingClientRect();
+        var val = isVertical ? rect.left : rect.bottom;
+        if (isVertical ? (val < blockEndVal) : (val > blockEndVal)) {
+            blockEndVal = val;
+            blockEndItem = items[i];
+        }
+    }
+    if (blockEndItem) {
+        blockEndItem.style[blockProp] = '0';
+        blockEndItem.classList.add('debug-last');
+    }
+
+    // In tategaki vertical containers, also clear marginBottom on the
+    // bottommost item (cross-axis / flex-wrap end) — may differ from
+    // the leftmost item when children have different widths or wrap.
+    if (isTategaki && isVertical) {
+        var maxBottom = -Infinity;
+        var bottomItem = null;
+        for (var i = 0; i < items.length; i++) {
+            var rect = items[i].getBoundingClientRect();
+            if (rect.bottom > maxBottom) {
+                maxBottom = rect.bottom;
+                bottomItem = items[i];
+            }
+        }
+        if (bottomItem) {
+            bottomItem.style.marginBottom = '0';
+            if (bottomItem !== blockEndItem) {
+                bottomItem.classList.add('debug-last');
+            }
         }
     }
 }
