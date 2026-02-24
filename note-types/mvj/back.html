@@ -865,6 +865,7 @@
     var answerEl = document.querySelector('.answer');
     var wordIsOnFront = (wordSide === 'front');
     var sentIsOnFront = (sentSide === 'front');
+    var isTategaki = document.documentElement.classList.contains('tategaki');
 
     // Word → target word + pitch graph
     if (!wordOn) {
@@ -922,7 +923,7 @@
       sentEl.setAttribute('data-show', 'off');
     } else if (sentRaw) {
       var sentSeqs = makeSequences(sentRaw);
-      var sentTarget = sentIsOnFront
+      var sentTarget = (sentIsOnFront && !isTategaki)
           ? document.getElementById('front-sentence')
           : sentEl;
 
@@ -935,8 +936,12 @@
         sentTarget.innerHTML = makeColoredSentence(sentSeqs[0]);
       }
 
-      if (sentIsOnFront) {
+      if (sentIsOnFront && !isTategaki) {
         sentEl.setAttribute('data-show', 'off');
+      }
+      if (sentIsOnFront && isTategaki) {
+        var frontSentEl = document.getElementById('front-sentence');
+        if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
       }
     } else if (sentIsOnFront) {
       var frontSentEl = document.getElementById('front-sentence');
@@ -960,7 +965,6 @@
     }
 
     // Definition → bilingual + monolingual
-    var isTategaki = document.documentElement.classList.contains('tategaki');
     function colorizeText(raw, el) {
       if (!raw) return '';
       if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
