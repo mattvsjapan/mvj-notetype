@@ -23,7 +23,7 @@
 
     /* Sentence */
     --sentence: back;             /* front | back | off                  */
-    --sentence-audio: back;        /* front | back | off                  */
+    --sentence-audio: off;        /* front | back | off                  */
     --sentence-pitch-color: on;    /* on | off                            */
 
     /* Image */
@@ -1437,7 +1437,6 @@ html.tategaki:has(.back) {
    for the back's .answer layout, but front-content should use HTML order. */
 .tategaki .front-content .sentence {
     order: 0;
-    margin-left: 0;
 }
 
 .tategaki .front .audio-row {
@@ -1570,7 +1569,7 @@ html.tategaki:has(.back) {
 
 .tategaki .target-word {
     letter-spacing: 0;
-    margin: 0;
+    margin: 0 0 12px 0;
 }
 
 .tategaki .pitch-graph {
@@ -1587,7 +1586,6 @@ html.tategaki:has(.back) {
     flex-direction: column;
     align-items: center;
     max-width: 391px;
-    gap: 12px;
     margin-left: 12px;
 }
 
