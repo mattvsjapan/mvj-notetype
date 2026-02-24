@@ -1382,7 +1382,8 @@
         targetRow.appendChild(clone);
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item');
-      var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
+      var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]') ||
+          !!document.querySelector('.answer[data-sentence-zone="front"]');
       var isMobile = window.matchMedia('(hover: none)').matches;
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
