@@ -471,6 +471,7 @@ function clearLastMargin(el) {
         else { frontImage.setAttribute('data-side', 'back'); }
     }
 
+    clearLastMargin(document.querySelector('.front-content'));
     clearLastMargin(document.querySelector('.front'));
 
     // ── Adjust front padding for added content (mobile only) ──
