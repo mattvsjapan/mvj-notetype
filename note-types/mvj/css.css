@@ -1559,7 +1559,7 @@ html.tategaki:has(.back) {
     align-content: flex-end;
     justify-content: space-between;
     order: 0;
-    gap: 0;
+    gap: 12px;
     height: 100%;
     margin-left: 16px;
 }
@@ -1602,7 +1602,7 @@ html.tategaki:has(.back) {
     flex-basis: 0;
     row-gap: 12px;
     column-gap: clamp(16px, 8vw, 40px);
-    margin: 0 0 12px 12px;
+    margin: 0 0 0 12px;
     will-change: transform;
     direction: rtl;
 
