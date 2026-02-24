@@ -370,12 +370,23 @@ window.__playMobile = function(src, btn) {
 <script>
 function clearLastMargin(el) {
     if (!el) return;
-    var kids = el.children;
-    for (var i = kids.length - 1; i >= 0; i--) {
-        if (getComputedStyle(kids[i]).display !== 'none') {
-            kids[i].style.marginBottom = '0';
-            kids[i].classList.add('debug-last');
-            break;
+    var items = [];
+    for (var i = 0; i < el.children.length; i++) {
+        var child = el.children[i];
+        if (getComputedStyle(child).display === 'contents') {
+            for (var j = 0; j < child.children.length; j++) items.push(child.children[j]);
+        } else {
+            items.push(child);
+        }
+    }
+    items.sort(function(a, b) {
+        return (parseInt(getComputedStyle(a).order) || 0) - (parseInt(getComputedStyle(b).order) || 0);
+    });
+    for (var i = items.length - 1; i >= 0; i--) {
+        if (getComputedStyle(items[i]).display !== 'none') {
+            items[i].style.marginBottom = '0';
+            items[i].style.outline = '2px solid red';
+            return;
         }
     }
 }
