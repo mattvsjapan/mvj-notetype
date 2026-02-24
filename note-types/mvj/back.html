@@ -847,7 +847,6 @@
     var wordOn = _rootStyle.getPropertyValue('--word').trim() !== 'off';
     var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
-    if (!wordOn) graphOn = false;
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
@@ -866,11 +865,11 @@
     var isTategaki = document.documentElement.classList.contains('tategaki');
 
     // Word → target word + pitch graph
+    var wordSeqs = wordRaw ? makeSequences(wordRaw) : [];
+
     if (!wordOn) {
       targetEl.setAttribute('data-show', 'off');
-      graphEl.setAttribute('data-state', 'empty');
     } else if (wordRaw) {
-      var wordSeqs = makeSequences(wordRaw);
       var wordTarget = wordIsOnFront
           ? document.getElementById('front-word')
           : targetEl;
@@ -885,26 +884,25 @@
         targetEl.setAttribute('data-show', 'off');
         answerEl.setAttribute('data-word-zone', 'front');
       }
-
-      if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
-        var svgs = [];
-        for (var s = 0; s < wordSeqs.length; s++) {
-          var svg = makeGraph(wordSeqs[s]);
-          if (svg) svgs.push(svg);
-        }
-        if (svgs.length > 0) {
-          graphEl.innerHTML = svgs.join('');
-        } else {
-          graphEl.setAttribute('data-state', 'empty');
-        }
-      } else {
-        graphEl.setAttribute('data-state', 'empty');
-      }
     } else {
       if (wordIsOnFront) {
         var frontWordEl = document.getElementById('front-word');
         if (frontWordEl) frontWordEl.setAttribute('data-side', 'back');
       }
+    }
+
+    if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
+      var svgs = [];
+      for (var s = 0; s < wordSeqs.length; s++) {
+        var svg = makeGraph(wordSeqs[s]);
+        if (svg) svgs.push(svg);
+      }
+      if (svgs.length > 0) {
+        graphEl.innerHTML = svgs.join('');
+      } else {
+        graphEl.setAttribute('data-state', 'empty');
+      }
+    } else {
       graphEl.setAttribute('data-state', 'empty');
     }
   
