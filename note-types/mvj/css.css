@@ -1394,6 +1394,13 @@ html.tategaki:has(.back) {
     padding: 0 20px;
 }
 
+/* Front side: front-content uses vertical-rl so sentence (and other children)
+   flow vertically by default; individual items opt out with horizontal-tb. */
+.tategaki .card-inner:not(:has(> .back)) .front-content {
+    writing-mode: vertical-rl;
+    align-self: stretch;
+}
+
 .tategaki .front .audio-row {
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
