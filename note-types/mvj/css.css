@@ -1723,10 +1723,6 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     order: -4;
 }
 
-/* Audio with front items stays right of divider even when sentence is on back */
-.tategaki .answer:not([data-sentence-zone="front"]) .audio-row-bottom:has([data-side="front"]) {
-    order: -5;
-}
 
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
 .tategaki .answer > [style*="--d"],
