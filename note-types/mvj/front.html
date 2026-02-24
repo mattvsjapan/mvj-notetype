@@ -36,6 +36,7 @@
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--tategaki');
     if (v && v.trim() === 'on') document.documentElement.classList.add('tategaki');
+    else if (v) document.documentElement.classList.remove('tategaki');
 })();
 
 // Color scheme — read CSS variable and set data attribute
