@@ -1430,6 +1430,11 @@ html.tategaki:has(.back) {
     height: 100%;
 }
 
+/* Word + image on front, no sentence → push to opposite ends */
+.tategaki .front-content:has(.target-word[data-side="front"]):has(.image-wrap[data-side="front"]):not(:has(.sentence[data-side="front"])) {
+    justify-content: space-between;
+}
+
 .tategaki .front-content .target-word { margin-left: 16px; }
 .tategaki .front-content .image-wrap { margin-left: 16px; }
 
