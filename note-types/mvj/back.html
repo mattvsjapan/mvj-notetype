@@ -1468,6 +1468,15 @@
       }
     }
   
+    // Hide empty audio-row-bottom so clearLastMargin targets the real last element
+    if (bottomRow && !bottomRow.children.length) bottomRow.style.display = 'none';
+
+    // Hide word-column when all its content is off/on-front (0-dimension placeholder eats margin)
+    var wcEl = document.querySelector('.answer .word-column');
+    if (wcEl && isTategaki && wcEl.getBoundingClientRect().width === 0) {
+        wcEl.style.display = 'none';
+    }
+
     // Clear stale debug-last markings left over from front-side rendering
     document.querySelectorAll('.debug-last').forEach(function(el) {
         el.classList.remove('debug-last');

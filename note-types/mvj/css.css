@@ -11,15 +11,15 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: on;               /* on | off                            */
+    --tategaki: o;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: on;                  /* on | off                            */
 
     /* Word */
     --word: front;                 /* front | back | off                  */
-    --word-audio: back;            /* front | back | off                  */
+    --word-audio: off;            /* front | back | off                  */
     --word-pitch-color: on;        /* on | off                            */
-    --pitch-graph: on;              /* on | off                            */
+    --pitch-graph: off;              /* on | off                            */
 
     /* Sentence */
     --sentence: back;             /* front | back | off                  */
@@ -31,7 +31,7 @@
 
     /* Definitions */
     --definition-text: off;         /* on | off                            */
-    --definition-audio: on;        /* on | off                            */
+    --definition-audio: off;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
 
@@ -1502,11 +1502,6 @@ html.tategaki:has(.back) {
     .tategaki .front {
         padding-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
-}
-
-/* Hide empty audio column in tategaki (all audio routed to mid-audio-row) */
-.tategaki .audio-row-bottom:empty {
-    display: none;
 }
 
 /* Audio column — directly left of sentence (mirrors front layout) */

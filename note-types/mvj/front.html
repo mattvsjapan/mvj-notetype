@@ -418,12 +418,15 @@ function clearLastMargin(el) {
             items.push(child);
         }
     }
+    var isVertical = getComputedStyle(el).writingMode === 'vertical-rl';
     items = items.filter(function(item) {
-        return getComputedStyle(item).display !== 'none';
+        if (getComputedStyle(item).display === 'none') return false;
+        var r = item.getBoundingClientRect();
+        // Skip zero-dimension elements (empty placeholders)
+        if (isVertical ? r.width === 0 : r.height === 0) return false;
+        return true;
     });
     if (!items.length) return;
-
-    var isVertical = getComputedStyle(el).writingMode === 'vertical-rl';
 
     // Use bounding rects to find the item at the physical block-end edge,
     // instead of CSS order — handles wrapping flex and variable-width children.
