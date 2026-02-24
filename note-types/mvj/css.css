@@ -1717,6 +1717,12 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     order: -2;
 }
 
+/* Sentence on back: divider moves right of sentence+audio so it separates
+   front-content from back content (sentence/audio stay at order:-3) */
+.tategaki .answer:not([data-sentence-zone="front"]) .divider {
+    order: -4;
+}
+
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
 .tategaki .answer > [style*="--d"],
 .tategaki .word-column [style*="--d"] {

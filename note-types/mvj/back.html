@@ -930,6 +930,7 @@
       if (sentIsOnFront && isTategaki) {
         var frontSentEl = document.getElementById('front-sentence');
         if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
+        answerEl.setAttribute('data-sentence-zone', 'front');
       }
     } else if (sentIsOnFront) {
       var frontSentEl = document.getElementById('front-sentence');
