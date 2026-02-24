@@ -928,9 +928,14 @@
         sentEl.setAttribute('data-show', 'off');
       }
       if (sentIsOnFront && isTategaki) {
+        // Copy colored sentence to front-content so it wraps with word/image
         var frontSentEl = document.getElementById('front-sentence');
-        if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
-        answerEl.setAttribute('data-sentence-zone', 'front');
+        if (frontSentEl && sentEl.innerHTML) {
+          frontSentEl.innerHTML = sentEl.innerHTML;
+          if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
+          if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
+        }
+        sentEl.setAttribute('data-show', 'off');
       }
     } else if (sentIsOnFront) {
       var frontSentEl = document.getElementById('front-sentence');
@@ -939,31 +944,15 @@
 
     // Image → hide answer copy when image is on front or off
     if (imageSide === 'front') {
-      if (isTategaki) {
-        // Move image out of word-column into answer at order -2
-        var answerImage = document.querySelector('.answer .image-wrap');
-        var dividerEl = document.querySelector('.answer .divider');
-        if (answerImage && answerEl) {
-          answerEl.insertBefore(answerImage, dividerEl);
-          answerImage.style.order = dividerEl ? getComputedStyle(dividerEl).order : '-2';
-          answerImage.style.height = 'fit-content';
-          answerImage.style.flex = '0 0 auto';
-        }
-        // Hide front-image so front-content collapses
-        var frontImageEl = document.getElementById('front-image');
-        if (frontImageEl) frontImageEl.setAttribute('data-side', 'back');
-      } else {
-        // Non-tategaki: populate front-image from raw-image
-        var frontImageEl = document.getElementById('front-image');
-        var rawImageEl = document.getElementById('raw-image');
-        if (frontImageEl && rawImageEl && rawImageEl.innerHTML.trim()) {
-          frontImageEl.innerHTML = rawImageEl.innerHTML;
-        } else if (frontImageEl) {
-          frontImageEl.setAttribute('data-side', 'back');
-        }
-        var answerImage = document.querySelector('.answer .image-wrap');
-        if (answerImage) answerImage.setAttribute('data-show', 'off');
+      var frontImageEl = document.getElementById('front-image');
+      var rawImageEl = document.getElementById('raw-image');
+      if (frontImageEl && rawImageEl && rawImageEl.innerHTML.trim()) {
+        frontImageEl.innerHTML = rawImageEl.innerHTML;
+      } else if (frontImageEl) {
+        frontImageEl.setAttribute('data-side', 'back');
       }
+      var answerImage = document.querySelector('.answer .image-wrap');
+      if (answerImage) answerImage.setAttribute('data-show', 'off');
     } else if (imageSide === 'off') {
       var answerImage = document.querySelector('.answer .image-wrap');
       if (answerImage) answerImage.setAttribute('data-show', 'off');

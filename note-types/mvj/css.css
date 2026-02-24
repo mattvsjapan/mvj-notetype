@@ -1419,6 +1419,17 @@ html.tategaki:has(.back) {
     gap: 0;
 }
 
+/* Back side: same vertical-rl flex layout so items wrap into columns
+   the same way as on the front (e.g. word+image stack when alone,
+   but separate into columns when sentence is also present). */
+.tategaki .back .front-content {
+    writing-mode: vertical-rl;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0;
+    height: 100%;
+}
+
 .tategaki .front-content .target-word { margin-left: 16px; }
 .tategaki .front-content .image-wrap { margin-left: 16px; }
 
