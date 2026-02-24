@@ -742,7 +742,7 @@ rt {
         justify-content: center;
         gap: clamp(8px, 4vw, 20px);
         margin-top: 0;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
 
     .audio-row-bottom .audio-item {

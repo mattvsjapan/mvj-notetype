@@ -670,7 +670,7 @@ html:not(.tategaki) .back {
     align-items: center;
     justify-content: center;
     gap: clamp(8px, 4vw, 20px);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
@@ -1133,7 +1133,7 @@ rt {
         justify-content: center;
         gap: clamp(8px, 4vw, 20px);
         margin-top: 0;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
 
     .audio-row-bottom .audio-item {
