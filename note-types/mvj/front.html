@@ -423,7 +423,6 @@ function clearLastMargin(el) {
     });
     if (!items.length) return;
 
-    var isTategaki = document.documentElement.classList.contains('tategaki');
     var isVertical = getComputedStyle(el).writingMode === 'vertical-rl';
 
     // Use bounding rects to find the item at the physical block-end edge,
@@ -444,27 +443,6 @@ function clearLastMargin(el) {
     if (blockEndItem) {
         blockEndItem.style[blockProp] = '0';
         blockEndItem.classList.add('debug-last');
-    }
-
-    // In tategaki vertical containers, also clear marginBottom on the
-    // bottommost item (cross-axis / flex-wrap end) — may differ from
-    // the leftmost item when children have different widths or wrap.
-    if (isTategaki && isVertical) {
-        var maxBottom = -Infinity;
-        var bottomItem = null;
-        for (var i = 0; i < items.length; i++) {
-            var rect = items[i].getBoundingClientRect();
-            if (rect.bottom > maxBottom) {
-                maxBottom = rect.bottom;
-                bottomItem = items[i];
-            }
-        }
-        if (bottomItem) {
-            bottomItem.style.marginBottom = '0';
-            if (bottomItem !== blockEndItem) {
-                bottomItem.classList.add('debug-last');
-            }
-        }
     }
 }
 </script>
