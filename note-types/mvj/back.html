@@ -1451,6 +1451,8 @@
       }
     }
   
+    clearLastMargin(document.querySelector('.answer'));
+
     // ── Trigger reveal animations after content is ready ──
     var riEls = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');
     for (var ri = 0; ri < riEls.length; ri++) riEls[ri].classList.add('ri');

@@ -1,3 +1,21 @@
+/* ── DEBUG: layout spacing visualization ── */
+.answer > *,
+.front-content > *,
+.word-column > * {
+    outline: 2px solid rgba(0, 150, 255, 0.6);
+    background-color: rgba(0, 150, 255, 0.06);
+}
+.answer,
+.front-content {
+    outline: 2px dashed rgba(255, 150, 0, 0.6);
+    background-color: rgba(255, 150, 0, 0.08);
+}
+.debug-last {
+    outline: 3px solid rgba(255, 0, 80, 0.8) !important;
+    background-color: rgba(255, 0, 80, 0.12) !important;
+}
+/* ── END DEBUG ── */
+
 /* Fonts — add .woff2 files to Anki media folder (prefix _ prevents cleanup) */
 @font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900; }
 @font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
@@ -1206,12 +1224,6 @@ rt {
 .answer[data-def-layout="dual-bi"] > .def,
 .answer[data-def-layout="dual-mono"] > .def {
     margin-bottom: 16px;
-}
-
-/* Drop audio-row-bottom margin when definitions are hidden (last visible element) */
-.back .answer[data-def-layout="none"] .audio-row-bottom,
-.back .answer[data-def-text="off"] .audio-row-bottom {
-    margin-bottom: 0;
 }
 
 /* Audio item ordering — bottom row (mobile) */
