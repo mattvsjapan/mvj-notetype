@@ -13,7 +13,7 @@
     /* Layout */
     --tategaki: on;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
-    --debug: on;                  /* on | off                            */
+    --debug: o;                  /* on | off                            */
 
     /* Word */
     --word: front;                 /* front | back | off                  */
@@ -1502,7 +1502,7 @@ html.tategaki:has(.back) {
     writing-mode: horizontal-tb;
     order: -3;
     gap: clamp(12px, 6.15vw, 31px);
-    margin: 0;
+    margin: 0 0 0 8px;
 }
 
 .tategaki .audio-row-bottom .audio-item { flex: 0 0 auto; }
