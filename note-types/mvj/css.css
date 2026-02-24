@@ -12,6 +12,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
+    --color-scheme: blue;          /* blue | black | red                  */
 
     /* Word */
     --word: back;                 /* front | back | off                  */
@@ -43,6 +44,7 @@
     --bg-card: #15161c;
     --bg-surface: #1e1f27;
     --bg-surface-hover: #26272f;
+    --bg-overlay: rgba(12, 13, 18, 0.96);
 
     /* Borders */
     --border: rgba(255, 255, 255, 0.06);
@@ -70,30 +72,74 @@
     --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* — Color scheme overrides — */
+
+:root[data-color-scheme="black"] {
+    --canvas: #0a0a0a;
+    --bg: #0a0a0a;
+    --bg-card: #141414;
+    --bg-surface: #1c1c1c;
+    --bg-surface-hover: #242424;
+    --bg-overlay: rgba(10, 10, 10, 0.96);
+    --accent: #b0956e;
+    --accent-text: #c9b08a;
+    --accent-soft: rgba(176, 149, 110, 0.12);
+    --accent-glow: rgba(176, 149, 110, 0.22);
+}
+
+:root[data-color-scheme="red"] {
+    --canvas: #100808;
+    --bg: #100808;
+    --bg-card: #1a1010;
+    --bg-surface: #231818;
+    --bg-surface-hover: #2b1f1f;
+    --bg-overlay: rgba(16, 8, 8, 0.96);
+    --accent: #c8564a;
+    --accent-text: #db7e6e;
+    --accent-soft: rgba(200, 86, 74, 0.12);
+    --accent-glow: rgba(200, 86, 74, 0.22);
+}
+
+:root[data-color-scheme="black"] .card-inner {
+    background: rgba(20, 20, 20, 0.58);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+        0 1px 3px rgba(0,0,0,0.40),
+        0 4px 12px rgba(0,0,0,0.28),
+        0 16px 36px rgba(0,0,0,0.16);
+}
+
+:root[data-color-scheme="red"] .card-inner {
+    background: rgba(26, 16, 16, 0.58);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+        0 1px 3px rgba(16,4,4,0.40),
+        0 4px 12px rgba(16,4,4,0.28),
+        0 16px 36px rgba(16,4,4,0.16);
+}
+
 /* — Anki page background —
    html:  covers the Qt widget gap (Desktop) and viewport edge cases
    .card: targets <body> in all Anki clients (Desktop, Mobile, AnkiDroid)
    --canvas override: syncs Anki Desktop's toolbar to our background */
 
 body {
-    background-color: #0c0d12 !important;
+    background-color: var(--bg) !important;
 }
 
 html {
     background:
         url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E") repeat,
-        linear-gradient(rgba(12, 13, 18, 0.96), rgba(12, 13, 18, 0.96)),
+        linear-gradient(var(--bg-overlay), var(--bg-overlay)),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Ccircle cx='60' cy='0' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3C/svg%3E") repeat !important;
-    background-color: #0c0d12 !important;
+    background-color: var(--bg) !important;
     min-height: 100vh;
 }
 
 .card {
     background:
         url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E") repeat,
-        linear-gradient(rgba(12, 13, 18, 0.96), rgba(12, 13, 18, 0.96)),
+        linear-gradient(var(--bg-overlay), var(--bg-overlay)),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Ccircle cx='60' cy='0' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='0' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='30' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='30' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='60' cy='60' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='0' cy='90' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='59' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='51' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='43' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='35' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='27' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='19' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3Ccircle cx='120' cy='90' r='11' stroke-width='2' stroke='cadetblue' fill='white'/%3E%3C/svg%3E") repeat !important;
-    background-color: #0c0d12 !important;
+    background-color: var(--bg) !important;
     margin: 0;
     padding: 40px 20px;
     box-sizing: border-box;

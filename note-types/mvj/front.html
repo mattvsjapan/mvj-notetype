@@ -38,6 +38,12 @@
     if (v && v.trim() === 'on') document.documentElement.classList.add('tategaki');
 })();
 
+// Color scheme — read CSS variable and set data attribute
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--color-scheme');
+    if (v) document.documentElement.setAttribute('data-color-scheme', v.trim() || 'blue');
+})();
+
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
