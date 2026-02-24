@@ -45,7 +45,7 @@
 
     /* —— Mode 1 ——————————————————————————————————————————— */
     --mode-1-tag: 京阪_揺れ;
-    --mode-1-color-scheme: blue;          /* blue | black | red | purple | white */
+    --mode-1-color-scheme: purple;          /* blue | black | red | purple | white */
 
     /* —— Mode 2 ——————————————————————————————————————————— */
     /* --mode-2-tag: listening;                               */
@@ -1418,6 +1418,7 @@ html.tategaki:has(.back) {
     align-self: stretch;
     flex-direction: row;
     flex-wrap: wrap;
+    gap: 16px;
 }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3

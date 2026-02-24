@@ -421,9 +421,14 @@ function clearLastMargin(el) {
     items.sort(function(a, b) {
         return (parseInt(getComputedStyle(a).order) || 0) - (parseInt(getComputedStyle(b).order) || 0);
     });
+    // Block-end margin depends on writing mode:
+    //   horizontal-tb → marginBottom (physical bottom)
+    //   vertical-rl   → marginLeft  (physical left)
+    var prop = (getComputedStyle(el).writingMode === 'vertical-rl')
+        ? 'marginLeft' : 'marginBottom';
     for (var i = items.length - 1; i >= 0; i--) {
         if (getComputedStyle(items[i]).display !== 'none') {
-            items[i].style.marginBottom = '0';
+            items[i].style[prop] = '0';
             items[i].classList.add('debug-last');
             return;
         }
@@ -531,6 +536,11 @@ function clearLastMargin(el) {
             fc.classList.remove('debug-last');
             fc.style.marginBottom = '';
             clearLastMargin(fc);
+            // In vertical-rl, the container's padding-left is block-end
+            // padding. Zero it so the last element sits flush.
+            if (getComputedStyle(fc).writingMode === 'vertical-rl') {
+                fc.style.paddingLeft = '0';
+            }
         }
     }
 
