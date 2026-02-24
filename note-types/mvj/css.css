@@ -1401,6 +1401,12 @@ html.tategaki:has(.back) {
     align-self: stretch;
 }
 
+/* Reset flex order inside front-content — .tategaki .sentence sets order:-3
+   for the back's .answer layout, but front-content should use HTML order. */
+.tategaki .front-content .sentence {
+    order: 0;
+}
+
 .tategaki .front .audio-row {
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
