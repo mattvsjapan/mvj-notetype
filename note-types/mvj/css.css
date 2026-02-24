@@ -1702,7 +1702,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     width: 1px;
     height: 100%;
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
-    margin-left: 8px;
+    margin: 0 0 0 8px;
     order: -2;
 }
 
