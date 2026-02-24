@@ -11,12 +11,12 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: off;               /* on | off                            */
+    --tategaki: on;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: on;                  /* on | off                            */
 
     /* Word */
-    --word: back;                 /* front | back | off                  */
+    --word: front;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
     --word-pitch-color: on;        /* on | off                            */
     --pitch-graph: on;              /* on | off                            */
@@ -1399,11 +1399,6 @@ html.tategaki:has(.back) {
     align-self: stretch;
     flex-direction: row;
     flex-wrap: wrap;
-}
-
-/* Word stays horizontal inside front-content */
-.tategaki .front-content .target-word {
-    writing-mode: horizontal-tb;
 }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
