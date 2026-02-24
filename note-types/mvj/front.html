@@ -30,6 +30,39 @@
     </div>
 </div>
 
+<div id="raw-tags" style="display:none">{{Tags}}</div>
+
+<script>
+// Mode system — apply tag-based settings overrides
+(function() {
+    var tagsEl = document.getElementById('raw-tags');
+    if (!tagsEl) return;
+    var tags = tagsEl.textContent.trim().split(/\s+/).filter(Boolean);
+    if (!tags.length) return;
+
+    var root = document.documentElement;
+    var rs = getComputedStyle(root);
+    var settings = [
+        'tategaki', 'color-scheme',
+        'word', 'word-audio', 'word-pitch-color', 'pitch-graph',
+        'sentence', 'sentence-audio', 'sentence-pitch-color',
+        'image',
+        'definition-text', 'definition-audio', 'definition-mode', 'definition-pitch-color'
+    ];
+
+    for (var i = 1; i <= 20; i++) {
+        var modeTag = rs.getPropertyValue('--mode-' + i + '-tag').trim();
+        if (!modeTag) break;
+        if (tags.indexOf(modeTag) === -1) continue;
+
+        for (var j = 0; j < settings.length; j++) {
+            var val = rs.getPropertyValue('--mode-' + i + '-' + settings[j]).trim();
+            if (val) root.style.setProperty('--' + settings[j], val);
+        }
+    }
+})();
+</script>
+
 <script>
 // Tategaki mode — read CSS variable and add class before any rendering
 (function() {

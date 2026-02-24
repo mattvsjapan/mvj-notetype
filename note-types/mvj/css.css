@@ -35,6 +35,23 @@
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
 
+    /* ═══════════════════════════════════════════════════════
+       ⚙  MODES — Tag-based settings overrides.
+       Add a tag to a card to apply that mode's settings.
+       Only list settings you want to override (rest inherit
+       from defaults above). Modes apply in order; if a card
+       matches multiple modes, later modes win on conflicts.
+       ═══════════════════════════════════════════════════════ */
+
+    /* —— Mode 1 ——————————————————————————————————————————— */
+    --mode-1-tag: 京阪_揺れ;
+    --mode-1-color-scheme: blue;          /* blue | black | red | purple | white */
+
+    /* —— Mode 2 ——————————————————————————————————————————— */
+    /* --mode-2-tag: listening;                               */
+    /* --mode-2-word: off;                                    */
+    /* --mode-2-sentence-audio: front;                        */
+
     /* ═══════════════════════════════════════════════════════ */
 
     /* Override Anki's --canvas so the Qt toolbar matches */
