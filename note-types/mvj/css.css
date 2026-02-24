@@ -1406,7 +1406,7 @@ html.tategaki:has(.back) {
     writing-mode: horizontal-tb;
     text-align: center;
     margin-top: 0;
-    padding-left: 20px;
+
 }
 
 /* Front side: front-content uses vertical-rl so sentence (and other children)

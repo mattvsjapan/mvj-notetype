@@ -541,11 +541,6 @@ function clearLastMargin(el) {
             fc.classList.remove('debug-last');
             fc.style.marginBottom = '';
             clearLastMargin(fc);
-            // In vertical-rl, the container's padding-left is block-end
-            // padding. Zero it so the last element sits flush.
-            if (getComputedStyle(fc).writingMode === 'vertical-rl') {
-                fc.style.paddingLeft = '0';
-            }
         }
     }
 
