@@ -1573,7 +1573,7 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .pitch-graph {
-    margin: 0;
+    margin: -10px;
 }
 
 .tategaki .pitch-graph svg {
@@ -1593,7 +1593,7 @@ html.tategaki:has(.back) {
 .tategaki .mid-audio-row {
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(auto-fit, minmax(76px, auto));
+    grid-template-rows: repeat(1, minmax(76px, auto));
     place-content: center;
     place-items: center;
     flex-grow: 1;

@@ -1384,9 +1384,9 @@
           lbl.textContent = origLabel.textContent;
           clone.appendChild(lbl);
         }
-        targetRow.appendChild(clone);
+        if (origBtns.length > 0) targetRow.appendChild(clone);
       }
-      var topItems = document.querySelectorAll('.audio-row .audio-item');
+      var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
       var isMobile = window.matchMedia('(hover: none)').matches;
       var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
@@ -1423,6 +1423,27 @@
             var imageWrap = wordCol.querySelector('.image-wrap');
             if (imageWrap) wordCol.insertBefore(midAudioRow, imageWrap);
             else wordCol.appendChild(midAudioRow);
+          }
+          if (midAudioRow && typeof ResizeObserver !== 'undefined') {
+            var rowH = 76, rowGap = 12;
+            var gridObs = new ResizeObserver(function(entries) {
+              var h = entries[0].contentBoxSize
+                ? entries[0].contentBoxSize[0].blockSize
+                : entries[0].contentRect.height;
+              var maxRows = Math.max(1, Math.floor((h + rowGap) / (rowH + rowGap)));
+              var n = midAudioRow.children.length;
+              var rows = Math.min(maxRows, n);
+              if (rows < n) {
+                // Prefer even columns: find largest divisor of n that fits
+                // (for n=3, divisors are 1 and 3, so this always picks all-vertical or all-horizontal)
+                for (var r = rows; r >= 1; r--) {
+                  if (n % r === 0) { rows = r; break; }
+                }
+              }
+              midAudioRow.style.gridTemplateRows = 'repeat(' + rows + ', minmax(' + rowH + 'px, auto))';
+            });
+            gridObs.observe(midAudioRow);
+            window.__observers.push(gridObs);
           }
           // Shrink target word font size if word-column overflows
           // Double-rAF: defer past first paint to avoid layout thrashing before initial render
