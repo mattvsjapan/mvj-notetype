@@ -1423,6 +1423,17 @@
             var imageWrap = wordCol.querySelector('.image-wrap');
             if (imageWrap) wordCol.insertBefore(midAudioRow, imageWrap);
             else wordCol.appendChild(midAudioRow);
+            // Top-align mid-audio-row when it's the only visible content in word-column
+            var wpgVisible = Array.prototype.some.call(wpGroup.children, function(c) {
+              return getComputedStyle(c).display !== 'none';
+            });
+            var imgVisible = imageWrap && getComputedStyle(imageWrap).display !== 'none';
+            if (!wpgVisible) wpGroup.style.display = 'none';
+            if (!wpgVisible && !imgVisible) {
+              midAudioRow.style.alignSelf = 'start';
+              midAudioRow.style.placeContent = 'start center';
+              midAudioRow.style.placeItems = 'start center';
+            }
           }
           if (midAudioRow && typeof ResizeObserver !== 'undefined') {
             var rowH = 76, rowGap = 12;
