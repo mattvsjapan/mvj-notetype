@@ -36,7 +36,7 @@
     --word: back;                 /* front | back | off                  */
     --word-audio: back;            /* front | back | off                  */
     --word-pitch-color: on;        /* on | off                            */
-    --pitch-graph: front;           /* front | back | off                  */
+    --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
     --sentence: front;             /* front | back | off                  */
@@ -1141,12 +1141,6 @@ rt {
     visibility: hidden;
 }
 
-.front-content .pitch-graph {
-    margin: 0 0 8px;
-    line-height: 0;
-    text-align: center;
-}
-
 .front-content .image-wrap {
     margin-bottom: 24px;
 }
@@ -1164,7 +1158,6 @@ rt {
 
 /* Collapse empty front-content children */
 .front-content .target-word:empty,
-.front-content .pitch-graph:empty,
 .front-content .sentence:empty,
 .front-content .image-wrap:empty {
     display: none;
@@ -1415,9 +1408,8 @@ html.tategaki:has(.back) {
     flex-wrap: wrap;
 }
 
-/* Word and pitch graph stay horizontal inside front-content */
-.tategaki .front-content .target-word,
-.tategaki .front-content .pitch-graph {
+/* Word stays horizontal inside front-content */
+.tategaki .front-content .target-word {
     writing-mode: horizontal-tb;
 }
 

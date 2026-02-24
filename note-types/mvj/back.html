@@ -846,9 +846,7 @@
     var _rootStyle = getComputedStyle(document.documentElement);
     var wordOn = _rootStyle.getPropertyValue('--word').trim() !== 'off';
     var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
-    var graphSide = _rootStyle.getPropertyValue('--pitch-graph').trim() || 'back';
-    if (graphSide === 'on') graphSide = 'back';  // legacy normalization
-    var graphOn = graphSide !== 'off';
+    var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
     if (!wordOn) graphOn = false;
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
@@ -896,14 +894,6 @@
         }
         if (svgs.length > 0) {
           graphEl.innerHTML = svgs.join('');
-          if (graphSide === 'front') {
-            var frontGraphEl = document.getElementById('front-pitch-graph');
-            if (frontGraphEl) {
-              frontGraphEl.innerHTML = graphEl.innerHTML;
-              frontGraphEl.setAttribute('data-side', 'front');
-              graphEl.setAttribute('data-show', 'off');
-            }
-          }
         } else {
           graphEl.setAttribute('data-state', 'empty');
         }

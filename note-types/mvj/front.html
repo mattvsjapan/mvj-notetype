@@ -25,7 +25,6 @@
     {{/Image}}
     <div class="front-content">
         <h1 class="target-word" id="front-word"></h1>
-        <div class="pitch-graph" id="front-pitch-graph"></div>
         <p class="sentence" id="front-sentence"></p>
         <div class="image-wrap" id="front-image"></div>
     </div>
@@ -408,9 +407,6 @@ function clearLastMargin(el) {
         sentSide === 'front' ? 'front' : (sentSide === 'off' ? 'off' : 'back'));
     if (frontImage) frontImage.setAttribute('data-side',
         imageSide === 'front' ? 'front' : (imageSide === 'off' ? 'off' : 'back'));
-
-    var frontGraph = document.getElementById('front-pitch-graph');
-    if (frontGraph) frontGraph.setAttribute('data-side', 'back');
 
     // ── Stamp data-side on audio items (both front and back) ──
     var wordAI = document.querySelector('.audio-row .audio-item[data-audio="word"]');
