@@ -1611,7 +1611,7 @@ html.tategaki:has(.back) {
 .tategaki .image-wrap {
     width: 391px;
     margin-left: 12px;
-
+    margin-bottom: 0;
 }
 
 .tategaki .image-wrap img {
