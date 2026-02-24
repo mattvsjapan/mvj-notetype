@@ -255,6 +255,7 @@ html:not(.tategaki)[data-color-scheme="white"] .back:has(.front-content [data-si
     outline: 3px solid rgba(255, 0, 80, 0.8) !important;
     background-color: rgba(255, 0, 80, 0.12) !important;
 }
+
 /* ── END DEBUG ── */
 
 /* — Anki page background —
@@ -1578,7 +1579,7 @@ html.tategaki:has(.back) {
     flex-basis: 0;
     row-gap: 12px;
     column-gap: clamp(16px, 8vw, 40px);
-    margin: 0 0 12px 12px;
+    margin: 0 0 0 12px;
     will-change: transform;
     direction: rtl;
 
