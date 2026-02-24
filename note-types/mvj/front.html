@@ -534,9 +534,6 @@ function clearLastMargin(el) {
             fc.style.marginBottom = '';
             ar.style.marginBottom = '0';
             ar.classList.add('debug-last');
-            clearLastMargin(fc);
-            var innerLast = fc.querySelector('.debug-last');
-            if (innerLast) innerLast.classList.remove('debug-last');
         } else {
             fc.classList.remove('debug-last');
             fc.style.marginBottom = '';
