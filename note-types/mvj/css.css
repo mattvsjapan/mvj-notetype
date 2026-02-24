@@ -1596,7 +1596,7 @@ html.tategaki:has(.back) {
     grid-auto-flow: column;
     grid-template-rows: repeat(1, minmax(76px, auto));
     place-content: center;
-    place-items: center;
+    place-items: start center;
     flex-grow: 1;
     flex-basis: 0;
     row-gap: 12px;
