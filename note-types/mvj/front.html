@@ -426,9 +426,11 @@ function clearLastMargin(el) {
     //   vertical-rl   → marginLeft  (physical left)
     var prop = (getComputedStyle(el).writingMode === 'vertical-rl')
         ? 'marginLeft' : 'marginBottom';
+    var isTategaki = document.documentElement.classList.contains('tategaki');
     for (var i = items.length - 1; i >= 0; i--) {
         if (getComputedStyle(items[i]).display !== 'none') {
             items[i].style[prop] = '0';
+            if (isTategaki) items[i].style.marginBottom = '0';
             items[i].classList.add('debug-last');
             return;
         }
