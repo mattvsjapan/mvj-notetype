@@ -1387,8 +1387,7 @@
         targetRow.appendChild(clone);
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item');
-      var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]') ||
-          !!document.querySelector('.answer[data-sentence-zone="front"]');
+      var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
       var isMobile = window.matchMedia('(hover: none)').matches;
       var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
       if (isTategaki && !hasFrontContent && hasAnyFrontAudio) {

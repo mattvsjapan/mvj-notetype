@@ -1725,12 +1725,6 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     height: 100%;
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.50) 25%, rgba(255, 255, 255, 0.50) 75%, transparent);
     margin: 0 0 0 24px;
-    order: -2;
-}
-
-/* Sentence on back: divider moves right of sentence so it separates
-   front-content from back content (sentence stays at order:-3) */
-.tategaki .answer:not([data-sentence-zone="front"]) .divider {
     order: -4;
 }
 
