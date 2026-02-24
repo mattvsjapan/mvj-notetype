@@ -1717,10 +1717,15 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     order: -2;
 }
 
-/* Sentence on back: divider moves right of sentence+audio so it separates
-   front-content from back content (sentence/audio stay at order:-3) */
+/* Sentence on back: divider moves right of sentence so it separates
+   front-content from back content (sentence stays at order:-3) */
 .tategaki .answer:not([data-sentence-zone="front"]) .divider {
     order: -4;
+}
+
+/* Audio with front items stays right of divider even when sentence is on back */
+.tategaki .answer:not([data-sentence-zone="front"]) .audio-row-bottom:has([data-side="front"]) {
+    order: -5;
 }
 
 /* Children start hidden, .ri triggers staggered reveal (right-to-left) */
