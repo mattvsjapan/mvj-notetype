@@ -1388,7 +1388,6 @@
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
-      var isMobile = window.matchMedia('(hover: none)').matches;
       var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
       if (isTategaki && !hasFrontContent && hasAnyFrontAudio) {
         bottomRow.setAttribute('data-zone', 'front');
@@ -1399,10 +1398,8 @@
             var isFront = !hasFrontContent && origItem.getAttribute('data-side') === 'front';
             if (isFront) {
               cloneItemToRow(origItem, bottomRow);
-              if (isMobile) cloneItemToRow(origItem, midAudioRow);
             } else {
               cloneItemToRow(origItem, midAudioRow);
-              if (isMobile) cloneItemToRow(origItem, bottomRow);
             }
           } else {
             cloneItemToRow(origItem, bottomRow);
