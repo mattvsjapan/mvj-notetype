@@ -17,7 +17,7 @@
 
     /* Word */
     --word: front;                 /* front | back | off                  */
-    --word-audio: off;            /* front | back | off                  */
+    --word-audio: front;            /* front | back | off                  */
     --word-pitch-color: on;        /* on | off                            */
     --pitch-graph: off;              /* on | off                            */
 
@@ -1409,6 +1409,7 @@ html.tategaki:has(.back) {
    flex-direction:row in v-rl = top→bottom; align-items:flex-start = right. */
 .tategaki .card-inner:not(:has(> .back)) .front {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     height: 100%;
 }
@@ -1479,6 +1480,7 @@ html.tategaki:has(.back) {
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
     padding: 0;
+    order: 1;
 }
 
 /* Back — hide the top audio row (audio-row-bottom takes over) */
