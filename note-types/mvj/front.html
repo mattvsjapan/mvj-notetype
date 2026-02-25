@@ -107,6 +107,31 @@ if (!window.__audioCtxTouchHandler) {
     document.addEventListener('touchend', window.__audioCtxTouchHandler, { capture: true });
 }
 
+// Resume AudioContext after iOS app background/foreground switch.
+// iOS suspends the WebView's audio session when backgrounded;
+// the context moves to 'suspended' or the non-standard 'interrupted'
+// state and does not auto-resume.
+if (!window.__audioCtxVisHandler) {
+    window.__audioCtxVisHandler = function() {
+        if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
+        if (window.__audioCtx.state !== 'running') {
+            window.__audioCtx.resume()['catch'](function() {});
+        } else {
+            // Context may claim 'running' while stalled (WebKit bug #263627).
+            var t = window.__audioCtx.currentTime;
+            setTimeout(function() {
+                if (window.__audioCtx && window.__audioCtx.state === 'running'
+                    && window.__audioCtx.currentTime === t) {
+                    window.__audioCtx.suspend().then(function() {
+                        return window.__audioCtx.resume();
+                    })['catch'](function() {});
+                }
+            }, 200);
+        }
+    };
+    document.addEventListener('visibilitychange', window.__audioCtxVisHandler);
+}
+
 (function() {
     if (!window.matchMedia('(hover: none)').matches) return;
     var ci = document.querySelector('.card-inner');
