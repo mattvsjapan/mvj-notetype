@@ -568,9 +568,6 @@ html {
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
 
-/* Hidden elements */
-span.empty { display: none; }
-
 /* — Replay button (targets Anki's generated .replay-button) — */
 
 .replay-button {
@@ -953,6 +950,10 @@ rt {
 
 .image-wrap br {
     display: none;
+}
+
+.image-wrap:has(> svg) {
+    width: auto;
 }
 
 /* Sentence-level furigana */
@@ -1769,6 +1770,10 @@ html.tategaki:has(.back) {
     width: 391px;
     margin-left: 0;
     margin-bottom: 0;
+}
+
+.tategaki .image-wrap:has(> svg) {
+    width: auto;
 }
 
 .tategaki .image-wrap img {

@@ -296,9 +296,6 @@ html {
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
 
-/* Hidden elements */
-span.empty { display: none; }
-
 /* — Replay button (targets Anki's generated .replay-button) — */
 
 .replay-button {

@@ -164,6 +164,3 @@ circle.devoiced,
 rect.devoiced {
   fill: none !important;
 }
-
-/* Hidden elements */
-span.empty { display: none; }
