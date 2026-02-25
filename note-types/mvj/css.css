@@ -1438,6 +1438,17 @@ html.tategaki:has(.back) {
 .tategaki .front-content .target-word { margin-left: 16px; text-align: start; }
 .tategaki .front-content .image-wrap { margin-left: 16px; }
 
+/* Fully collapse furigana on the front in tategaki — visibility:hidden still
+   reserves ruby-annotation space, which throws off vertical margins. */
+.tategaki .front-content .target-word rt,
+.tategaki .front-content .sentence rt {
+    display: none;
+}
+.tategaki.back .front-content .target-word rt,
+.tategaki.back .front-content .sentence rt {
+    display: revert;
+}
+
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */
 .tategaki .front-content .sentence {
