@@ -48,9 +48,17 @@
     --mode-1-color-scheme: purple;          /* blue | black | red | purple | white */
 
     /* —— Mode 2 ——————————————————————————————————————————— */
-    /* --mode-2-tag: listening;                               */
-    /* --mode-2-word: off;                                    */
-    /* --mode-2-sentence-audio: front;                        */
+    --mode-2-tag: tate;
+    --mode-2-tategaki: on;               /* on | off                            */
+
+    /* —— Mode 3 ——————————————————————————————————————————— */
+    --mode-3-tag: yoko;
+    --mode-3-tategaki: off;               /* on | off                            */
+
+    /* —— Mode 4 ——————————————————————————————————————————— */
+    --mode-4-tag: debug;
+    --mode-4-debug: on;                  /* on | off                            */
+
 
     /* ═══════════════════════════════════════════════════════ */
 
@@ -309,7 +317,7 @@ html {
         min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px + 1px);
     }
 
-    .front {
+    html:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
         padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
     }
 
@@ -324,7 +332,7 @@ html {
     .android .card-inner {
         min-height: calc(100dvh - 40px);
     }
-    .android .front {
+    .android:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
         padding-top: calc((100dvh - 120px) * 0.52);
     }
 
@@ -338,7 +346,7 @@ html {
     .card-inner {
         min-height: 650px;
     }
-    .front {
+    html:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
         padding-top: 354px;
     }
 }
@@ -1503,12 +1511,14 @@ html.tategaki:has(.back) {
     }
     .tategaki .front {
         box-sizing: border-box;
+    }
+    .tategaki .front:not(:has(.front-content [data-side="front"])) {
         padding-top: min(
             calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52),
             calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px) - 88px - 260px)
         );
     }
-    .android.tategaki .front {
+    .android.tategaki .front:not(:has(.front-content [data-side="front"])) {
         padding-top: min(
             calc((100dvh - 120px) * 0.52),
             calc(100dvh - 388px)
@@ -1521,7 +1531,7 @@ html.tategaki:has(.back) {
     .tategaki .card-inner {
         height: min(668px, calc(100dvh - max(40px, var(--bottom-inset, 0px) + 20px)));
     }
-    .tategaki .front {
+    .tategaki .front:not(:has(.front-content [data-side="front"])) {
         padding-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
 }

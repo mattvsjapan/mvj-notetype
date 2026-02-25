@@ -150,12 +150,6 @@ if (!window.__audioCtxVisHandler) {
                 document.body.style.height = (h - bi) + 'px';
                 var tateInset = Math.max(40, rawBi + (isTablet ? 20 : 7));
                 ci.style.height = Math.min(h - tateInset, isTablet ? 668 : Infinity) + 'px';
-            } else if (fr) {
-                var tateCardH = isTablet ? Math.min(h - Math.max(40, rawBi + 20), 668) : h;
-                var padIdeal = Math.round((tateCardH - bi - 120) * 0.52);
-                var frH = parseFloat(getComputedStyle(fr).height);
-                var padMax = Math.round(frH - 260);
-                fr.style.paddingTop = Math.max(0, Math.min(padIdeal, padMax)) + 'px';
             }
         } else {
             if (isBack) {
@@ -167,7 +161,9 @@ if (!window.__audioCtxVisHandler) {
                     ci.style.minHeight = (h - 40 - bi + 1) + 'px';
                 }
             }
-            if (fr) fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
+            if (fr && !fr.querySelector('.front-content [data-side="front"]')) {
+                fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
+            }
         }
     }
     if (window.innerHeight > 100) {
@@ -596,17 +592,24 @@ function clearLastMargin(el) {
     }
 
     // ── Adjust front padding for added content (mobile only) ──
+    // lock() sets paddingTop before data-side is stamped; clear it now if
+    // front-content has visible items (padding is only for audio-only fronts).
     if (window.matchMedia('(hover: none)').matches) {
         var fc = document.querySelector('.front-content');
         var fr = document.querySelector('.front');
         if (fc && fr && fr.style.paddingTop) {
-            var contentH = fc.offsetHeight;
-            if (contentH > 0) {
-                var curPad = parseInt(fr.style.paddingTop) || 0;
-                fr.style.paddingTop = Math.max(0, curPad - contentH) + 'px';
+            if (fr.querySelector('.front-content [data-side="front"]')) {
+                fr.style.paddingTop = '';
+            } else {
+                var contentH = fc.offsetHeight;
+                if (contentH > 0) {
+                    var curPad = parseInt(fr.style.paddingTop) || 0;
+                    fr.style.paddingTop = Math.max(0, curPad - contentH) + 'px';
+                }
             }
         }
     }
+
 })();
 </script>
 
