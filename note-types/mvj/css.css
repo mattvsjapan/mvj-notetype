@@ -914,9 +914,10 @@ rt {
 }
 
 .target-word rt {
-    font-size: 0.33em;
-    letter-spacing: 0.06em;
-    transform: translateY(2px);
+    font-size: 0.35em;
+    font-weight: 700;
+    letter-spacing: 0;
+    transform: translateY(0px);
     color: inherit;
 }
 
