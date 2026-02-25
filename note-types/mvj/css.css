@@ -18,14 +18,14 @@
     /* Word */
     --word: front;                 /* front | back | off                  */
     --word-audio: back;            /* front | back | off                  */
-    --word-furigana: back;         /* front | back | off                  */
+    --word-furigana: front;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence: back;             /* front | back | off                  */
+    --sentence: front;             /* front | back | off                  */
     --sentence-audio: back;        /* front | back | off                  */
-    --sentence-furigana: back;     /* front | back | off                  */
+    --sentence-furigana: front;     /* front | back | off                  */
     --sentence-pitch-color: back;  /* front | back | off                  */
 
     /* Image */
@@ -52,7 +52,8 @@
     --mode-1-tag: _jp::sentence;
     --mode-1-deck: 1. 🇯🇵::📖 例文, 1. 🇯🇵::💬 語録;
     --mode-1-tategaki: on;               /* on | off                            */
-    --mode-1-sentence: front;             /* front | back | off                  */
+    --mode-1-word-furigana: back;             /* front | back | off                  */
+    --mode-1-sentence-furigana: back;             /* front | back | off                  */
     --mode-1-word: back;                 /* front | back | off                  */
 
     /* —— Mode 2: image ——————————————————————————————————————————— */
@@ -915,7 +916,7 @@ rt {
 
 .target-word rt {
     font-size: 0.35em;
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: 0;
     transform: translateY(0px);
     color: inherit;
@@ -1541,6 +1542,9 @@ html.tategaki:has(.back) {
 .tategaki .front-content .sentence.furigana-front rt { display: revert; }
 .tategaki .front-content .target-word rt[data-split],
 .tategaki .front-content .sentence rt[data-split] { display: revert; }
+
+/* Tighten vertical spacing on escaped bracket sequences like \[0] */
+.tategaki .tcy { margin-top: -0.25em; margin-bottom: -0.1em; }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */

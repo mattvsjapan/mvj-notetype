@@ -578,7 +578,8 @@ function clearLastMargin(el) {
                 return /[\u3040-\u309F\u30A0-\u30FFa-zA-Z]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
-            out.push(t.replace(/\u2045/g, '[').replace(/\u2046/g, ']'));
+            out.push(t.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
+                       .replace(/\[(\d+)\]/g, '<span class="tcy">[$1]</span>'));
         }
         return out.join('');
     }
@@ -605,7 +606,8 @@ function clearLastMargin(el) {
                 return /[\u3040-\u309F\u30A0-\u30FFa-zA-Z]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
-            return word.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
+            return word.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
+                       .replace(/\[(\d+)\]/g, '<span class="tcy">[$1]</span>');
         }
         function accentClass(accent) {
             if (!accent) return '';
