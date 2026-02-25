@@ -1393,6 +1393,7 @@ html.tategaki:has(.back) {
     align-items: flex-start;
     height: 100%;
     writing-mode: horizontal-tb;
+    will-change: transform;
 }
 
 /* On back side, .front must stay display:contents — the :not(:has(> .back))
