@@ -575,7 +575,7 @@ function clearLastMargin(el) {
                     if (!front) return b;
                     return '<ruby>' + b + '<rt data-split>' + front + '</rt></ruby>';
                 }
-                return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
+                return /[\u3040-\u309F\u30A0-\u30FFa-zA-Z]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
             out.push(t.replace(/\u2045/g, '[').replace(/\u2046/g, ']'));
@@ -602,7 +602,7 @@ function clearLastMargin(el) {
                     if (!front) return b;
                     return '<ruby>' + b + '<rt data-split>' + front + '</rt></ruby>';
                 }
-                return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
+                return /[\u3040-\u309F\u30A0-\u30FFa-zA-Z]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
             return word.replace(/\u2045/g, '[').replace(/\u2046/g, ']');

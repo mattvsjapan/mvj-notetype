@@ -761,7 +761,7 @@
         reading = reading.split('|')[1];
         if (!reading) { result += match[1]; lastIndex = re.lastIndex; continue; }
       }
-      if (/[\u3040-\u309F\u30A0-\u30FF]/.test(reading)) {
+      if (/[\u3040-\u309F\u30A0-\u30FFa-zA-Z]/.test(reading)) {
         result += `<ruby>${match[1]}<rt>${reading}</rt></ruby>`;
       } else {
         result += match[1];
