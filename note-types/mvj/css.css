@@ -16,23 +16,23 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word: back;                 /* front | back | off                  */
-    --word-audio: front;            /* front | back | off                  */
-    --word-pitch-color: o;        /* on | off                            */
+    --word: front;                 /* front | back | off                  */
+    --word-audio: back;            /* front | back | off                  */
+    --word-pitch-color: on;        /* on | off                            */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence: back;             /* front | back | off                  */
-    --sentence-audio: front;        /* front | back | off                  */
-    --sentence-pitch-color: off;    /* on | off                            */
+    --sentence: front;             /* front | back | off                  */
+    --sentence-audio: back;        /* front | back | off                  */
+    --sentence-pitch-color: on;    /* on | off                            */
 
     /* Image */
     --image: back;                /* front | back | off                  */
 
     /* Definitions */
-    --definition-text: off;         /* on | off                            */
-    --definition-audio: on;        /* on | off                            */
-    --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
+    --definition-text: on;         /* on | off                            */
+    --definition-audio: off;        /* on | off                            */
+    --definition-mode: monolingual;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
 
     /* ═══════════════════════════════════════════════════════
@@ -1182,10 +1182,10 @@ rt {
     animation: frontFadeIn 0.35s ease 160ms both;
 }
 
-/* Collapse empty front-content children */
-.front-content .target-word:empty,
-.front-content .sentence:empty,
-.front-content .image-wrap:empty {
+/* Collapse empty children so margins don't create dead space */
+.target-word:empty,
+.sentence:empty,
+.image-wrap:empty {
     display: none;
 }
 
@@ -1468,8 +1468,8 @@ html.tategaki:has(.back) {
 .tategaki .front-content .sentence rt {
     display: none;
 }
-.tategaki.back .front-content .target-word rt,
-.tategaki.back .front-content .sentence rt {
+.tategaki .back .front-content .target-word rt,
+.tategaki .back .front-content .sentence rt {
     display: revert;
 }
 
