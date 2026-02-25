@@ -45,7 +45,7 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels',
         'word', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
         'image',
@@ -106,6 +106,12 @@
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--debug');
     if (v) document.documentElement.setAttribute('data-debug', v.trim() || 'off');
+})();
+
+// Audio labels — read CSS variable and set data attribute
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--audio-labels');
+    if (v) document.documentElement.setAttribute('data-audio-labels', v.trim() || 'on');
 })();
 
 // Route Web Audio through media channel (audible even with mute switch)

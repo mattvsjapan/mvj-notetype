@@ -14,6 +14,7 @@
     --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: off;                  /* on | off                            */
+    --audio-labels: on;            /* on | off                            */
 
     /* Word */
     --word: front;                 /* front | back | off                  */
@@ -687,6 +688,10 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     color: var(--text-3);
     text-transform: uppercase;
     white-space: nowrap;
+}
+
+[data-audio-labels="off"] .audio-label {
+    display: none;
 }
 
 /* Playing state — keeps accent colors while audio is playing */
