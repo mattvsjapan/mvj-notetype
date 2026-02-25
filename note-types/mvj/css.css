@@ -48,16 +48,20 @@
     --mode-1-color-scheme: purple;          /* blue | black | red | purple | white */
 
     /* —— Mode 2 ——————————————————————————————————————————— */
-    --mode-2-tag: tate;
-    --mode-2-tategaki: on;               /* on | off                            */
+    --mode-2-tag: white;
+    --mode-2-color-scheme: white;          /* blue | black | red | purple | white */
 
     /* —— Mode 3 ——————————————————————————————————————————— */
-    --mode-3-tag: yoko;
-    --mode-3-tategaki: off;               /* on | off                            */
+    --mode-3-tag: tate;
+    --mode-3-tategaki: on;               /* on | off                            */
 
     /* —— Mode 4 ——————————————————————————————————————————— */
-    --mode-4-tag: debug;
-    --mode-4-debug: on;                  /* on | off                            */
+    --mode-4-tag: yoko;
+    --mode-4-tategaki: off;               /* on | off                            */
+
+    /* —— Mode 5 ——————————————————————————————————————————— */
+    --mode-5-tag: debug;
+    --mode-5-debug: on;                  /* on | off                            */
 
 
     /* ═══════════════════════════════════════════════════════ */
