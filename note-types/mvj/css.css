@@ -1580,7 +1580,23 @@ html.tategaki:has(.back) {
 
 @media (hover: none) {
     .tategaki .audio-row-bottom {
-        justify-content: flex-end;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        padding-top: min(
+            calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52),
+            calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px) - 88px - 260px)
+        );
+    }
+    .android.tategaki .audio-row-bottom {
+        padding-top: min(
+            calc((100dvh - 120px) * 0.52),
+            calc(100dvh - 388px)
+        );
+    }
+}
+@media (hover: none) and (min-width: 768px) {
+    .tategaki .audio-row-bottom {
+        padding-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
 }
 
