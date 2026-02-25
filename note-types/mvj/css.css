@@ -1515,14 +1515,14 @@ html.tategaki:has(.back) {
     .tategaki .front {
         box-sizing: border-box;
     }
-    .tategaki .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: min(
+    .tategaki .front .audio-row {
+        margin-top: min(
             calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52),
             calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px) - 88px - 260px)
         );
     }
-    .android.tategaki .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: min(
+    .android.tategaki .front .audio-row {
+        margin-top: min(
             calc((100dvh - 120px) * 0.52),
             calc(100dvh - 388px)
         );
@@ -1534,8 +1534,8 @@ html.tategaki:has(.back) {
     .tategaki .card-inner {
         height: min(668px, calc(100dvh - max(40px, var(--bottom-inset, 0px) + 20px)));
     }
-    .tategaki .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
+    .tategaki .front .audio-row {
+        margin-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
 }
 
