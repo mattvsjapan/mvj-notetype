@@ -535,7 +535,7 @@ function clearLastMargin(el) {
             var t = tokens[i];
             if (/^[;|\.\/／\-]+$/.test(t)) continue;
             if (t === ',' || t === '\u3001' || t === '\u300C' || t === '\u300D') { out.push(t); continue; }
-            t = t.replace(/:[a-zA-Z0-9~,]*$/, '');
+            t = t.replace(/:[a-zA-Z0-9~,\-]*$/, '');
             t = t.replace(/[\*\\\^]/g, '');
             t = t.replace(/([^\[\]]+)\[([^\]]+)\]/g, function(_, b, r) {
                 return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
