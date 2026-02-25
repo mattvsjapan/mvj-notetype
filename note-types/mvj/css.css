@@ -1609,6 +1609,7 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .target-word {
+    font-size: 56px;
     letter-spacing: 0;
     margin: 0 0 12px 0;
 }
@@ -1684,6 +1685,9 @@ html.tategaki:has(.back) {
 }
 
 @media (hover: none) {
+    .tategaki .word-pitch-group {
+        width: calc(100vw - 56px);
+    }
     .tategaki .image-wrap {
         width: clamp(249px, 80vw, 391px);
     }
