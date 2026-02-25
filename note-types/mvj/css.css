@@ -12,7 +12,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: blue;          /* blue | black | red | purple | white */
+    --color-scheme: white;          /* blue | black | red | purple | white */
     --debug: off;                  /* on | off                            */
 
     /* Word */
@@ -147,18 +147,18 @@
     --canvas: #f5f0e8;
     --bg: #f5f0e8;
     --bg-card: #fdfbf6;
-    --bg-surface: #ece7df;
-    --bg-surface-hover: #e2ddd5;
+    --bg-surface: #e7e2da;
+    --bg-surface-hover: #ddd8d0;
     --bg-overlay: rgba(245, 240, 232, 0.96);
-    --border: rgba(0, 0, 0, 0.08);
-    --border-light: rgba(0, 0, 0, 0.05);
+    --border: rgba(0, 0, 0, 0.11);
+    --border-light: rgba(0, 0, 0, 0.07);
     --text-1: rgba(0, 0, 0, 0.85);
     --text-2: rgba(0, 0, 0, 0.45);
     --text-3: rgba(0, 0, 0, 0.28);
     --accent: #7d6145;
     --accent-text: #5a4230;
-    --accent-soft: rgba(125, 97, 69, 0.08);
-    --accent-glow: rgba(125, 97, 69, 0.14);
+    --accent-soft: rgba(125, 97, 69, 0.12);
+    --accent-glow: rgba(125, 97, 69, 0.20);
 }
 
 :root[data-color-scheme="black"] .card-inner {
@@ -205,14 +205,14 @@
 
 :root[data-color-scheme="white"] .replay-button svg circle,
 :root[data-color-scheme="white"] .replay-button .replayCircle {
-    stroke: rgba(0, 0, 0, 0.08);
+    stroke: rgba(0, 0, 0, 0.14);
 }
 
-:root[data-color-scheme="white"] .connector line { stroke: rgba(0, 0, 0, 0.15); }
-:root[data-color-scheme="white"] .particle circle { fill: none; stroke: rgba(0, 0, 0, 0.20); }
-:root[data-color-scheme="white"] .particle line { stroke: rgba(0, 0, 0, 0.20); }
-:root[data-color-scheme="white"] .particle text { fill: rgba(0, 0, 0, 0.20); }
-:root[data-color-scheme="white"] .particle { color: rgba(0, 0, 0, 0.20); }
+:root[data-color-scheme="white"] .connector line { stroke: #8a8a8a; }
+:root[data-color-scheme="white"] .particle circle { fill: none; stroke: #8a8a8a; }
+:root[data-color-scheme="white"] .particle line { stroke: #8a8a8a; }
+:root[data-color-scheme="white"] .particle text { fill: #8a8a8a; }
+:root[data-color-scheme="white"] .particle { color: #8a8a8a; }
 :root[data-color-scheme="white"] .sentence .particle { color: inherit; }
 :root[data-color-scheme="white"] .def .particle,
 :root[data-color-scheme="white"] .jp-def .particle { color: inherit; }
@@ -441,24 +441,24 @@ html {
 /* Pitch accent colors (SVG) */
 
 .atamadaka circle,
-.atamadaka line { fill: #E60000; stroke: #E60000; }
-.atamadaka text { fill: #E60000; }
+.atamadaka line { fill: #d94040; stroke: #d94040; }
+.atamadaka text { fill: #d94040; }
 
 .heiban circle,
-.heiban line { fill: #005CE6; stroke: #005CE6; }
-.heiban text { fill: #005CE6; }
+.heiban line { fill: #3350e8; stroke: #3350e8; }
+.heiban text { fill: #3350e8; }
 
 .nakadaka circle,
-.nakadaka line { fill: #E68A00; stroke: #E68A00; }
-.nakadaka text { fill: #E68A00; }
+.nakadaka line { fill: #e89b33; stroke: #e89b33; }
+.nakadaka text { fill: #e89b33; }
 
 .kifuku circle,
-.kifuku line { fill: #AC00E6; stroke: #AC00E6; }
-.kifuku text { fill: #AC00E6; }
+.kifuku line { fill: #9b40d9; stroke: #9b40d9; }
+.kifuku text { fill: #9b40d9; }
 
 .odaka circle,
-.odaka line { fill: #00802B; stroke: #00802B; }
-.odaka text { fill: #00802B; }
+.odaka line { fill: #2db852; stroke: #2db852; }
+.odaka text { fill: #2db852; }
 
 /* Keihan pitch accent colors (SVG) */
 
@@ -489,10 +489,10 @@ html {
 .keihan_odaka text,
 .keihan_low_odaka text { fill: #658065; }
 
-.connector line { stroke: rgba(255, 255, 255, 0.25); }
-.particle circle { fill: none; stroke: rgba(255, 255, 255, 0.3); }
-.particle line { stroke: rgba(255, 255, 255, 0.3); }
-.particle text { fill: rgba(255, 255, 255, 0.3); }
+.connector line { stroke: #8a8a8a; }
+.particle circle { fill: none; stroke: #8a8a8a; }
+.particle line { stroke: #8a8a8a; }
+.particle text { fill: #8a8a8a; }
 
 /* Text should not have stroke */
 .atamadaka text,
@@ -512,11 +512,11 @@ html {
 
 /* Pitch accent colors (HTML spans) */
 
-.atamadaka { color: #E60000; }
-.heiban { color: #005CE6; }
-.nakadaka { color: #E68A00; }
-.kifuku { color: #AC00E6; }
-.odaka { color: #00802B; }
+.atamadaka { color: #d94040; }
+.heiban { color: #3350e8; }
+.nakadaka { color: #e89b33; }
+.kifuku { color: #9b40d9; }
+.odaka { color: #2db852; }
 .keihan_heiban { color: #3bb2ed; }
 .keihan_low_heiban { color: #096999; }
 .keihan_atamadaka { color: #f76d94; }
@@ -524,7 +524,7 @@ html {
 .keihan_low_nakadaka { color: #876333; }
 .keihan_odaka,
 .keihan_low_odaka { color: #658065; }
-.particle { color: rgba(255, 255, 255, 0.3); }
+.particle { color: #8a8a8a; }
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
 .def .particle, .jp-def .particle { color: inherit; }
