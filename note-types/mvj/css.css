@@ -47,7 +47,7 @@
 
     /* —— Mode 1: sentence ——————————————————————————————————————————— */
     --mode-1-tag: _jp::sentence;
-    --mode-1-deck: temp;
+    --mode-1-deck: 1. 🇯🇵::📖 例文, 1. 🇯🇵::💬 語録;
     --mode-1-tategaki: on;               /* on | off                            */
     --mode-1-sentence: front;             /* front | back | off                  */
     --mode-1-word: back;                 /* front | back | off                  */
@@ -65,8 +65,8 @@
     --mode-3-sentence: front;             /* front | back | off                  */
     --mode-3-color-scheme: black;          /* blue | black | red | purple | white */
 
-    /* —— Mode 4: kansai ——————————————————————————————————————————— */
-    --mode-4-tag: _jp::kansai;
+    /* —— Mode 4: keihan ——————————————————————————————————————————— */
+    --mode-4-tag: _jp::keihan;
     --mode-4-deck: 1. 🇯🇵::📚 雑学;
     --mode-4-color-scheme: purple;          /* blue | black | red | purple | white */
 
