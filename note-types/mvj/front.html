@@ -31,14 +31,16 @@
 </div>
 
 <div id="raw-tags" style="display:none">{{Tags}}</div>
+<div id="raw-deck" style="display:none">{{Deck}}</div>
 
 <script>
-// Mode system — apply tag-based settings overrides
+// Mode system — apply tag/deck-based settings overrides
 (function() {
     var tagsEl = document.getElementById('raw-tags');
-    if (!tagsEl) return;
-    var tags = tagsEl.textContent.trim().split(/\s+/).filter(Boolean);
-    if (!tags.length) return;
+    var tags = tagsEl ? tagsEl.textContent.trim().split(/\s+/).filter(Boolean) : [];
+
+    var deckEl = document.getElementById('raw-deck');
+    var deck = deckEl ? deckEl.textContent.trim() : '';
 
     var root = document.documentElement;
     var rs = getComputedStyle(root);
@@ -52,8 +54,12 @@
 
     for (var i = 1; i <= 20; i++) {
         var modeTag = rs.getPropertyValue('--mode-' + i + '-tag').trim();
-        if (!modeTag) break;
-        if (tags.indexOf(modeTag) === -1) continue;
+        var modeDeck = rs.getPropertyValue('--mode-' + i + '-deck').trim();
+        if (!modeTag && !modeDeck) break;
+
+        var tagMatch = modeTag && tags.indexOf(modeTag) !== -1;
+        var deckMatch = modeDeck && (deck === modeDeck || deck.indexOf(modeDeck + '::') === 0);
+        if (!tagMatch && !deckMatch) continue;
 
         for (var j = 0; j < settings.length; j++) {
             var val = rs.getPropertyValue('--mode-' + i + '-' + settings[j]).trim();
