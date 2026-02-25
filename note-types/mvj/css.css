@@ -1493,46 +1493,29 @@ html.tategaki:has(.back) {
 }
 
 /* Tategaki: image-only front — stack image above audio */
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) {
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) {
     writing-mode: horizontal-tb;
     flex-direction: column;
     align-items: center;
     gap: 16px;
 }
 
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content {
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content {
     writing-mode: horizontal-tb;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
     height: auto;
     align-self: auto;
 }
 
-.tategaki .back .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content {
-    height: 100%;
-}
-
-.tategaki .back .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content .image-wrap {
-    margin-left: 16px;
-}
-
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content .image-wrap {
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content .image-wrap {
     margin-left: 0;
 }
 
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row,
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row-bottom {
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row {
     flex: 1;
-    margin: 0;
-    padding: 0;
-    height: auto;
-    justify-content: center;
-    order: 1;
+    margin-top: 0;
 }
 
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row .audio-item,
-.tategaki .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row-bottom .audio-item {
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row .audio-item {
     flex: 0 0 auto;
 }
 

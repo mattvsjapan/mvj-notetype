@@ -1388,18 +1388,14 @@
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
-      var hasImageOnlyFront = hasFrontContent
-          && !!document.querySelector('.front-content .image-wrap[data-side="front"]')
-          && !document.querySelector('.front-content .target-word[data-side="front"]')
-          && !document.querySelector('.front-content .sentence[data-side="front"]');
       var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
-      if (isTategaki && (!hasFrontContent || hasImageOnlyFront) && hasAnyFrontAudio) {
+      if (isTategaki && !hasFrontContent && hasAnyFrontAudio) {
         bottomRow.setAttribute('data-zone', 'front');
       }
       for (var bi = 0; bi < topItems.length; bi++) {
         (function(origItem) {
           if (isTategaki && midAudioRow) {
-            var isFront = (!hasFrontContent || hasImageOnlyFront) && origItem.getAttribute('data-side') === 'front';
+            var isFront = !hasFrontContent && origItem.getAttribute('data-side') === 'front';
             if (isFront) {
               cloneItemToRow(origItem, bottomRow);
             } else {
@@ -1479,12 +1475,6 @@
       }
     }
   
-    // Image-only front: move audio into front-content so they stack together
-    if (isTategaki && hasImageOnlyFront && bottomRow && bottomRow.children.length) {
-      var fc = document.querySelector('.front-content');
-      if (fc) fc.appendChild(bottomRow);
-    }
-
     // Hide empty audio-row-bottom so clearLastMargin targets the real last element
     if (bottomRow && !bottomRow.children.length) bottomRow.style.display = 'none';
 
