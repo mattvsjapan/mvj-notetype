@@ -1361,6 +1361,15 @@ html.tategaki:has(.back) {
     background: radial-gradient(300px 250px at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
 }
 
+/* Hide front card for one frame so JS can populate content before paint */
+.tategaki .card-inner:not(:has(> .back)) {
+    animation: tateFrontReveal 0s 16ms both;
+}
+@keyframes tateFrontReveal {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 .tategaki .card-inner:has(> .back) {
     overflow: visible;
     clip-path: inset(0 30% 0 30%);
@@ -1386,14 +1395,13 @@ html.tategaki:has(.back) {
     display: contents;
 }
 
-/* Front — vertically center audio row, push to right (only on front side) */
+/* Front — .front stays in inherited vertical-rl to avoid orthogonal flow
+   sizing collapse when audio-row is hidden and front-content starts empty.
+   flex-direction:row in v-rl = top→bottom; align-items:flex-start = right. */
 .tategaki .card-inner:not(:has(> .back)) .front {
     display: flex;
-    justify-content: flex-end;
     align-items: flex-start;
     height: 100%;
-    writing-mode: horizontal-tb;
-    will-change: transform;
 }
 
 /* On back side, .front must stay display:contents — the :not(:has(> .back))
@@ -1457,6 +1465,7 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .front .audio-row {
+    writing-mode: horizontal-tb;
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
     padding: 0;
