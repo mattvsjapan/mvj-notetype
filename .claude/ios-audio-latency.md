@@ -100,8 +100,7 @@ DESKTOP:
 
 ## Anki-Specific Context
 
-- Anki iOS uses WKWebView with `mediaTypesRequiringUserAction = []` (allows HTMLAudioElement autoplay without gesture)
-- This does NOT apply to AudioContext — still needs gesture to resume
+- Anki iOS uses WKWebView with `mediaTypesRequiringUserAction = []` — this permissive autoplay policy extends to both HTMLAudioElement and AudioContext, so `resume()` succeeds at page load without a user gesture
 - WKWebView runs audio in a separate process with its own AVAudioSession, ignoring the host app's settings ([WebKit Bug #167788](https://bugs.webkit.org/show_bug.cgi?id=167788))
 - The `window` object persists across card transitions (Anki updates DOM in-place, doesn't navigate)
 - `performance.now()` values increase across cards (confirms same page context)

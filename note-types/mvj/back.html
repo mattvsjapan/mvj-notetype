@@ -1531,12 +1531,31 @@
       if (ciEl) ciEl.classList.add('tate-expand');
     }
   
-    // ── Auto-play definition audio (deferred to avoid AnkiDroid [sound:] conflict) ──
-    if (window.__autoPlayDefAudio) {
-      setTimeout(function() {
-        if (window.__autoPlayDefAudio) window.__autoPlayDefAudio();
-      }, 0);
-    }
+    // ── Auto-play back-side audio (word/sentence set to "back", then definition) ──
+    setTimeout(function() {
+      var items = document.querySelectorAll('.audio-row .audio-item[data-side="back"]');
+      var queue = [];
+      var animateBtn = window.__animateBtn;
+      items.forEach(function(item) {
+        var audio = item._jsAudio || item.querySelector('audio');
+        var btn = item.querySelector('.replay-button');
+        if (audio) queue.push({ audio: audio, btn: btn });
+      });
+      var gen = window.__webAudioGen;
+      var i = 0;
+      (function playNext() {
+        if (gen !== window.__webAudioGen) return;
+        if (i < queue.length) {
+          var entry = queue[i++];
+          if (entry.btn) animateBtn(entry.btn);
+          window.__playMobile(entry.audio.src, entry.btn)
+            .then(function() { if (gen === window.__webAudioGen) playNext(); })
+            ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
+        } else if (window.__autoPlayDefAudio) {
+          window.__autoPlayDefAudio();
+        }
+      })();
+    }, 0);
   }
   _renderBack();
   })();
