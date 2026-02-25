@@ -7,7 +7,12 @@ function wordToRubyFragment(fragment) {
     if (match.index > lastIndex) {
       result += fragment.slice(lastIndex, match.index);
     }
-    result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    var reading = match[2];
+    if (reading.indexOf('|') !== -1) {
+      reading = reading.split('|')[1];
+      if (!reading) { result += match[1]; lastIndex = re.lastIndex; continue; }
+    }
+    result += `<ruby>${match[1]}<rt>${reading}</rt></ruby>`;
     lastIndex = re.lastIndex;
   }
   if (lastIndex < fragment.length) {

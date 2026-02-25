@@ -1211,6 +1211,19 @@ rt {
 .sentence.furigana-off rt,
 .def.furigana-off rt, .jp-def.furigana-off rt { display: none !important; }
 
+/* Split furigana: always visible on front */
+.front-content .target-word rt[data-split],
+.front-content .sentence rt[data-split] {
+    visibility: visible;
+}
+
+/* Override furigana-off for split furigana */
+.target-word.furigana-off rt[data-split],
+.sentence.furigana-off rt[data-split] {
+    display: inline !important;
+    visibility: visible !important;
+}
+
 .front-content .image-wrap {
     margin-bottom: 24px;
 }
@@ -1525,6 +1538,8 @@ html.tategaki:has(.back) {
 }
 .tategaki .front-content .target-word.furigana-front rt,
 .tategaki .front-content .sentence.furigana-front rt { display: revert; }
+.tategaki .front-content .target-word rt[data-split],
+.tategaki .front-content .sentence rt[data-split] { display: revert; }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */

@@ -570,6 +570,11 @@ function clearLastMargin(el) {
             t = t.replace(/:[a-zA-Z0-9~,\-]*$/, '');
             t = t.replace(/[\*\\\^]/g, '');
             t = t.replace(/([^\[\]]+)\[([^\]]+)\]/g, function(_, b, r) {
+                if (r.indexOf('|') !== -1) {
+                    var front = r.split('|')[0];
+                    if (!front) return b;
+                    return '<ruby>' + b + '<rt data-split>' + front + '</rt></ruby>';
+                }
                 return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
@@ -592,6 +597,11 @@ function clearLastMargin(el) {
         function toHtml(word) {
             word = word.replace(/[\*\\\^]/g, '');
             word = word.replace(/([^\[\]]+)\[([^\]]+)\]/g, function(_, b, r) {
+                if (r.indexOf('|') !== -1) {
+                    var front = r.split('|')[0];
+                    if (!front) return b;
+                    return '<ruby>' + b + '<rt data-split>' + front + '</rt></ruby>';
+                }
                 return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });

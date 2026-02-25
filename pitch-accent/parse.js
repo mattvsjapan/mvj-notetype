@@ -6,6 +6,8 @@ const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
 function normalizeForParsing(expr) {
+  // Strip split furigana before | gets treated as a separator
+  expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
   expr = expr.replace(/<br\s*\/?>/gi, ' . ');
   expr = expr.replace(/<[^<>]+>/gi, '');
   expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
@@ -29,6 +31,8 @@ function detachGhostParticle(text) {
 
 function furiganaToReading(word) {
   return word.split(' ').map(part => {
+    // Split furigana: [front|back] → use back reading for pitch parsing
+    part = part.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
     // Move prefix markers (^, *) from before kanji[reading] into the reading
     part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
     return part.replace(/([^\[\]]*\[|])/g, '');

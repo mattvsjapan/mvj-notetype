@@ -88,6 +88,36 @@
 </script>
 
 <script>
+// Override front-side wordToRubyFragment to use back reading (no data-split)
+wordToRubyFragment = function(fragment) {
+  var re = /([^\[\]]+)\[([^\]]+)\]/g;
+  var result = '';
+  var lastIndex = 0;
+  var match;
+  while ((match = re.exec(fragment)) !== null) {
+    if (match.index > lastIndex) {
+      result += fragment.slice(lastIndex, match.index);
+    }
+    var reading = match[2];
+    if (reading.indexOf('|') !== -1) {
+      reading = reading.split('|')[1];
+      if (!reading) { result += match[1]; lastIndex = re.lastIndex; continue; }
+    }
+    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(reading)) {
+      result += '<ruby>' + match[1] + '<rt>' + reading + '</rt></ruby>';
+    } else {
+      result += match[0];
+    }
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < fragment.length) {
+    result += fragment.slice(lastIndex);
+  }
+  return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
+};
+</script>
+
+<script>
 (function() {
 
 // ── Render (deferred for Anki front→back transitions) ──

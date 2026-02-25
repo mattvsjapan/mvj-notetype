@@ -587,6 +587,11 @@ rt {
     opacity: 0;
 }
 
+/* Split furigana: always visible on front */
+.front .target-word rt[data-split] {
+    opacity: 1;
+}
+
 .front .target-word span {
     color: var(--text-1) !important;
 }

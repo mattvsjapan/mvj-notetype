@@ -414,6 +414,8 @@ const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
 function normalizeForParsing(expr) {
   expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+  // Strip split furigana before | gets treated as a separator
+  expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
   expr = expr.replace(/<br\s*\/?>/gi, ' . ');
   expr = expr.replace(/<[^<>]+>/gi, '');
   expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
@@ -437,6 +439,7 @@ function detachGhostParticle(text) {
 
 function furiganaToReading(word) {
   return word.split(' ').map(part => {
+    part = part.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
     part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
     return part.replace(/([^\[\]]*\[|])/g, '');
   }).join('');
@@ -897,8 +900,16 @@ function wordToRubyFragment(fragment) {
     if (match.index > lastIndex) {
       result += fragment.slice(lastIndex, match.index);
     }
-    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(match[2])) {
-      result += `<ruby>${match[1]}<rt>${match[2]}</rt></ruby>`;
+    var reading = match[2];
+    if (reading.indexOf('|') !== -1) {
+      reading = reading.split('|')[0];
+      if (!reading) { result += match[1]; lastIndex = re.lastIndex; continue; }
+      result += `<ruby>${match[1]}<rt data-split>${reading}</rt></ruby>`;
+      lastIndex = re.lastIndex;
+      continue;
+    }
+    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(reading)) {
+      result += `<ruby>${match[1]}<rt>${reading}</rt></ruby>`;
     } else {
       result += match[0];
     }
