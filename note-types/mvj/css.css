@@ -1426,6 +1426,7 @@ html.tategaki:has(.back) {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0;
+    height: 100%;
 }
 
 /* Back side: same vertical-rl flex layout so items wrap into columns
