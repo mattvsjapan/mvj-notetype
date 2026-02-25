@@ -41,8 +41,8 @@
        OR the card's deck starts with --mode-N-deck (prefix
        match: "Mining" matches "Mining::Vocab::N2").
        Only list settings you want to override (rest inherit
-       from defaults above). Modes apply in order; if a card
-       matches multiple modes, later modes win on conflicts.
+       from defaults above). Lower modes beat higher modes,
+       and tag matches unconditionally beat deck matches.
        ═══════════════════════════════════════════════════════ */
 
     /* —— Mode 1: sentence ——————————————————————————————————————————— */
@@ -67,7 +67,7 @@
 
     /* —— Mode 4: kansai ——————————————————————————————————————————— */
     --mode-4-tag: _jp::kansai;
-    --mode-4-deck: ;
+    --mode-4-deck: 1. 🇯🇵::📚 雑学;
     --mode-4-color-scheme: purple;          /* blue | black | red | purple | white */
 
     /* —— Mode 5: furigana ——————————————————————————————————————————— */

@@ -52,19 +52,38 @@
         'definition-text', 'definition-audio', 'definition-mode', 'definition-pitch-color'
     ];
 
+    // Find last defined mode
+    var lastMode = 0;
     for (var i = 1; i <= 20; i++) {
-        var modeTag = rs.getPropertyValue('--mode-' + i + '-tag').trim();
-        var modeDeck = rs.getPropertyValue('--mode-' + i + '-deck').trim();
-        if (!modeTag && !modeDeck) break;
+        if (!rs.getPropertyValue('--mode-' + i + '-tag').trim()
+            && !rs.getPropertyValue('--mode-' + i + '-deck').trim()) break;
+        lastMode = i;
+    }
 
-        var tagMatch = modeTag && tags.indexOf(modeTag) !== -1;
-        var deckMatch = modeDeck && (deck === modeDeck || deck.indexOf(modeDeck + '::') === 0);
-        if (!tagMatch && !deckMatch) continue;
-
+    function applyMode(n) {
         for (var j = 0; j < settings.length; j++) {
-            var val = rs.getPropertyValue('--mode-' + i + '-' + settings[j]).trim();
+            var val = rs.getPropertyValue('--mode-' + n + '-' + settings[j]).trim();
             if (val) root.style.setProperty('--' + settings[j], val);
         }
+    }
+
+    // Deck matches: high→low so lower numbers take precedence
+    for (var i = lastMode; i >= 1; i--) {
+        var modeDeck = rs.getPropertyValue('--mode-' + i + '-deck').trim();
+        if (!modeDeck) continue;
+        var decks = modeDeck.split(',');
+        var matched = false;
+        for (var k = 0; k < decks.length; k++) {
+            var d = decks[k].trim();
+            if (d && (deck === d || deck.indexOf(d + '::') === 0)) { matched = true; break; }
+        }
+        if (matched) applyMode(i);
+    }
+
+    // Tag matches: high→low so lower numbers take precedence; tags beat decks
+    for (var i = lastMode; i >= 1; i--) {
+        var modeTag = rs.getPropertyValue('--mode-' + i + '-tag').trim();
+        if (modeTag && tags.indexOf(modeTag) !== -1) applyMode(i);
     }
 })();
 </script>
