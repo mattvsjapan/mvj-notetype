@@ -12,7 +12,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: white;          /* blue | black | red | purple | white */
+    --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: off;                  /* on | off                            */
 
     /* Word */
@@ -31,8 +31,8 @@
 
     /* Definitions */
     --definition-text: on;         /* on | off                            */
-    --definition-audio: off;        /* on | off                            */
-    --definition-mode: monolingual;        /* all | bilingual | monolingual | unlocked */
+    --definition-audio: on;        /* on | off                            */
+    --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
 
     /* ═══════════════════════════════════════════════════════
@@ -43,25 +43,41 @@
        matches multiple modes, later modes win on conflicts.
        ═══════════════════════════════════════════════════════ */
 
-    /* —— Mode 1 ——————————————————————————————————————————— */
-    --mode-1-tag: 京阪_揺れ;
-    --mode-1-color-scheme: purple;          /* blue | black | red | purple | white */
+    /* —— Mode 1: sentence ——————————————————————————————————————————— */
+    --mode-1-tag: _jp::sentence;
+    --mode-1-tategaki: on;               /* on | off                            */
+    --mode-1-sentence: front;             /* front | back | off                  */
+    --mode-1-word: back;                 /* front | back | off                  */
 
-    /* —— Mode 2 ——————————————————————————————————————————— */
-    --mode-2-tag: white;
-    --mode-2-color-scheme: white;          /* blue | black | red | purple | white */
+    /* —— Mode 2: image ——————————————————————————————————————————— */
+    --mode-2-tag: _jp::image;
+    --mode-2-image: front;               /* on | off                            */
+    --mode-2-word: back;                 /* front | back | off                  */
 
-    /* —— Mode 3 ——————————————————————————————————————————— */
-    --mode-3-tag: tate;
-    --mode-3-tategaki: on;               /* on | off                            */
+    /* —— Mode 3: knowledge ——————————————————————————————————————————— */
+    --mode-3-tag: _jp::knowledge;
+    --mode-3-word: back;                 /* front | back | off                  */
+    --mode-3-sentence: front;             /* front | back | off                  */
+    --mode-3-color-scheme: black;          /* blue | black | red | purple | white */
 
-    /* —— Mode 4 ——————————————————————————————————————————— */
-    --mode-4-tag: yoko;
-    --mode-4-tategaki: off;               /* on | off                            */
+    /* —— Mode 4: kansai ——————————————————————————————————————————— */
+    --mode-4-tag: _jp::kansai;
+    --mode-4-color-scheme: purple;          /* blue | black | red | purple | white */
 
-    /* —— Mode 5 ——————————————————————————————————————————— */
-    --mode-5-tag: debug;
-    --mode-5-debug: on;                  /* on | off                            */
+    /* —— Mode 5: furigana ——————————————————————————————————————————— */
+    --mode-5-tag: _jp::furigana;
+
+    /* —— Mode 6 ——————————————————————————————————————————— */
+    --mode-6-tag: _jp::tate;
+    --mode-6-tategaki: on;               /* on | off                            */
+
+    /* —— Mode 7 ——————————————————————————————————————————— */
+    --mode-7-tag: _jp::yoko;
+    --mode-7-tategaki: off;               /* on | off                            */
+
+    /* —— Mode 8 ——————————————————————————————————————————— */
+    --mode-8-tag: _jp::debug;
+    --mode-8-debug: on;                  /* on | off                            */
 
 
     /* ═══════════════════════════════════════════════════════ */
