@@ -13,7 +13,7 @@
     /* Layout */
     --tategaki: on;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
-    --debug: on;                  /* on | off                            */
+    --debug: off;                  /* on | off                            */
 
     /* Word */
     --word: front;                 /* front | back | off                  */
@@ -321,7 +321,8 @@ html {
         padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
     }
 
-    .card-inner:has(> .back) {
+    .card-inner:has(> .back),
+    html:not(.tategaki) .card-inner:has(.front-content [data-side="front"]) {
         padding-top: 20px;
     }
 
