@@ -11,7 +11,7 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: on;               /* on | off                            */
+    --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: off;                  /* on | off                            */
 
@@ -22,7 +22,7 @@
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence: front;             /* front | back | off                  */
+    --sentence: back;             /* front | back | off                  */
     --sentence-audio: back;        /* front | back | off                  */
     --sentence-pitch-color: on;    /* on | off                            */
 
@@ -886,7 +886,7 @@ rt {
 }
 
 .target-word rt {
-    font-size: 0.34em;
+    font-size: 0.33em;
     letter-spacing: 0.06em;
     transform: translateY(2px);
     color: inherit;
