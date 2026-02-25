@@ -11,7 +11,7 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --tategaki: o;               /* on | off                            */
+    --tategaki: on;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: on;                  /* on | off                            */
 
@@ -27,7 +27,7 @@
     --sentence-pitch-color: on;    /* on | off                            */
 
     /* Image */
-    --image: front;                /* front | back | off                  */
+    --image: back;                /* front | back | off                  */
 
     /* Definitions */
     --definition-text: off;         /* on | off                            */

@@ -472,6 +472,23 @@ function clearLastMargin(el) {
         blockEndItem.style[blockProp] = '0';
         blockEndItem.classList.add('debug-last');
     }
+
+    // In vertical-rl, also clear inline-end (marginBottom) on the bottommost
+    // item — same logic but for the inline axis.
+    if (isVertical) {
+        var inlineEndItem = null;
+        var inlineEndVal = -Infinity;
+        for (var i = 0; i < items.length; i++) {
+            var rect = items[i].getBoundingClientRect();
+            if (rect.bottom > inlineEndVal) {
+                inlineEndVal = rect.bottom;
+                inlineEndItem = items[i];
+            }
+        }
+        if (inlineEndItem) {
+            inlineEndItem.style.marginBottom = '0';
+        }
+    }
 }
 </script>
 
