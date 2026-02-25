@@ -63,15 +63,15 @@
 
     /* —— Mode 3: knowledge ——————————————————————————————————————————— */
     --mode-3-tag: _jp::knowledge;
-    --mode-3-deck: ;
+    --mode-3-deck: 1. 🇯🇵::📚 雑学;
     --mode-3-word: back;                 /* front | back | off                  */
     --mode-3-sentence: front;             /* front | back | off                  */
     --mode-3-color-scheme: black;          /* blue | black | red | purple | white */
 
     /* —— Mode 4: keihan ——————————————————————————————————————————— */
     --mode-4-tag: _jp::keihan;
-    --mode-4-deck: 1. 🇯🇵::📚 雑学;
-    --mode-4-color-scheme: purple;          /* blue | black | red | purple | white */
+    --mode-4-deck: ;
+    --mode-4-color-scheme: red;          /* blue | black | red | purple | white */
 
     /* —— Mode 5: furigana ——————————————————————————————————————————— */
     --mode-5-tag: _jp::furigana;
