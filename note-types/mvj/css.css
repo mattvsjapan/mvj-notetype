@@ -864,7 +864,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
 
 .target-word {
     font-family: var(--jp-kyokasho);
-    font-size: 64px;
+    font-size: 45px;
     font-weight: 600;
     letter-spacing: 0.04em;
     line-height: 1.2;
@@ -1652,7 +1652,6 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .target-word {
-    font-size: 56px;
     letter-spacing: 0;
     margin: 0 0 12px 0;
 }
