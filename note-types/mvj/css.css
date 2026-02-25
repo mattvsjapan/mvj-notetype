@@ -16,22 +16,22 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word: front;                 /* front | back | off                  */
+    --word: back;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
-    --word-pitch-color: on;        /* on | off                            */
-    --pitch-graph: off;              /* on | off                            */
+    --word-pitch-color: o;        /* on | off                            */
+    --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
     --sentence: back;             /* front | back | off                  */
-    --sentence-audio: off;        /* front | back | off                  */
-    --sentence-pitch-color: on;    /* on | off                            */
+    --sentence-audio: front;        /* front | back | off                  */
+    --sentence-pitch-color: off;    /* on | off                            */
 
     /* Image */
     --image: back;                /* front | back | off                  */
 
     /* Definitions */
     --definition-text: off;         /* on | off                            */
-    --definition-audio: off;        /* on | off                            */
+    --definition-audio: on;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-pitch-color: on;  /* on | off                            */
 
@@ -239,7 +239,7 @@
     background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
 }
 
-:root[data-color-scheme="white"] .tategaki .divider {
+:root[data-color-scheme="white"].tategaki .divider {
     background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
 }
 
@@ -1515,6 +1515,7 @@ html.tategaki:has(.back) {
     .tategaki .card-inner {
         height: calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px));
         min-height: 0;
+        padding: clamp(20px, 6vw, 44px);
     }
     .tategaki .front {
         box-sizing: border-box;
