@@ -1492,6 +1492,33 @@ html.tategaki:has(.back) {
     display: none;
 }
 
+/* Tategaki: image-only front — stack image above audio */
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) {
+    writing-mode: horizontal-tb;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content {
+    writing-mode: horizontal-tb;
+    height: auto;
+    align-self: auto;
+}
+
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content .image-wrap {
+    margin-left: 0;
+}
+
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row {
+    flex: 1;
+    margin-top: 0;
+}
+
+.tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row .audio-item {
+    flex: 0 0 auto;
+}
+
 /* Answer — flex layout: audio right, content left */
 .tategaki .answer {
     display: flex;
