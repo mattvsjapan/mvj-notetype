@@ -46,10 +46,10 @@
     var rs = getComputedStyle(root);
     var settings = [
         'tategaki', 'color-scheme', 'debug',
-        'word', 'word-audio', 'word-pitch-color', 'pitch-graph',
-        'sentence', 'sentence-audio', 'sentence-pitch-color',
+        'word', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
+        'sentence', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
         'image',
-        'definition-text', 'definition-audio', 'definition-mode', 'definition-pitch-color'
+        'definition-text', 'definition-audio', 'definition-mode', 'definition-furigana', 'definition-pitch-color'
     ];
 
     // Find last defined mode
@@ -527,6 +527,13 @@ function clearLastMargin(el) {
     var imageSide = setting('--image', 'back');
     var wordAudioSide = setting('--word-audio', 'front');
     var sentAudioSide = setting('--sentence-audio', 'front');
+    var wordFurigana = setting('--word-furigana', 'back');
+    var sentFurigana = setting('--sentence-furigana', 'back');
+    var wordPC = setting('--word-pitch-color', 'back');
+    var sentPC = setting('--sentence-pitch-color', 'back');
+    // Backwards compat: treat 'on' or any unknown value as 'back'
+    wordPC = (wordPC === 'front') ? 'front' : (wordPC === 'off') ? 'off' : 'back';
+    sentPC = (sentPC === 'front') ? 'front' : (sentPC === 'off') ? 'off' : 'back';
 
     // ── Stamp data-side on front-content elements (both front and back) ──
     var frontWord = document.getElementById('front-word');
@@ -571,19 +578,86 @@ function clearLastMargin(el) {
         return out.join('');
     }
 
+    // ── coloredRuby: bracket notation → <ruby> with accent-color spans ──
+    function coloredRuby(raw) {
+        if (!raw) return '';
+        raw = raw.replace(/<[^>]+>/g, ' ');
+        raw = raw.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+        var tokens = raw.split(/[\s\t\u3000]+/).filter(Boolean);
+        var roleMap = {
+            h: 'heiban', a: 'atamadaka', n: 'nakadaka', o: 'odaka', k: 'kifuku',
+            H: 'keihan_heiban', A: 'keihan_atamadaka', N: 'keihan_nakadaka',
+            L: 'keihan_low_heiban', M: 'keihan_low_nakadaka', O: 'keihan_low_odaka'
+        };
+        function toHtml(word) {
+            word = word.replace(/[\*\\\^]/g, '');
+            word = word.replace(/([^\[\]]+)\[([^\]]+)\]/g, function(_, b, r) {
+                return /[\u3040-\u309F\u30A0-\u30FF]/.test(r)
+                    ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
+            });
+            return word.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
+        }
+        function accentClass(accent) {
+            if (!accent) return '';
+            var km = accent.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
+            if (km) return roleMap[km[1]] || '';
+            var tm = accent.match(/^p?([a-zA-Z])?~?(\d)?~?$/);
+            if (!tm) return '';
+            if (tm[1] && roleMap[tm[1]]) return roleMap[tm[1]];
+            if (tm[2] !== undefined) {
+                var n = parseInt(tm[2]);
+                return n === 0 ? 'heiban' : n === 1 ? 'atamadaka' : 'nakadaka';
+            }
+            if (tm[1] === 'p') return 'particle';
+            return '';
+        }
+        var SEPS = [',', '\u3001', '\u300C', '\u300D'];
+        var out = [], pending = [];
+        for (var i = 0; i < tokens.length; i++) {
+            var t = tokens[i];
+            if (/^[;|\.\/／\-]+$/.test(t)) continue;
+            if (SEPS.indexOf(t) !== -1) {
+                if (pending.length) { out.push(pending.join('')); pending = []; }
+                out.push(t);
+                continue;
+            }
+            var colonIdx = t.indexOf(':');
+            var cls = '';
+            var wordPart = t;
+            if (colonIdx !== -1) {
+                wordPart = t.substring(0, colonIdx);
+                cls = accentClass(t.substring(colonIdx + 1).split(',')[0]);
+            }
+            var html = toHtml(wordPart);
+            if (colonIdx === -1) {
+                pending.push(html);
+            } else {
+                var merged = pending.join('') + html;
+                pending = [];
+                out.push(cls ? '<span class="' + cls + '">' + merged + '</span>' : merged);
+            }
+        }
+        if (pending.length) out.push(pending.join(''));
+        return out.join('');
+    }
+
     // ── Populate front-content children (front only) ──
     if (wordSide === 'front') {
         var rw = document.getElementById('raw-word');
-        var html = rw ? plainRuby(rw.textContent.trim()) : '';
-        if (html) { frontWord.innerHTML = html; }
-        else { frontWord.setAttribute('data-side', 'back'); }
+        var html = rw ? (wordPC === 'front' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
+        if (html) {
+            frontWord.innerHTML = html;
+            if (wordPC === 'front') frontWord.classList.add('pitch-color-front');
+        } else { frontWord.setAttribute('data-side', 'back'); }
     }
 
     if (sentSide === 'front') {
         var rs = document.getElementById('raw-sentence');
-        var html = rs ? plainRuby(rs.textContent.trim()) : '';
-        if (html) { frontSent.innerHTML = html; }
-        else { frontSent.setAttribute('data-side', 'back'); }
+        var html = rs ? (sentPC === 'front' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
+        if (html) {
+            frontSent.innerHTML = html;
+            if (sentPC === 'front') frontSent.classList.add('pitch-color-front');
+        } else { frontSent.setAttribute('data-side', 'back'); }
     }
 
     if (imageSide === 'front') {
@@ -591,6 +665,9 @@ function clearLastMargin(el) {
         if (ri && ri.innerHTML.trim()) { frontImage.innerHTML = ri.innerHTML; }
         else { frontImage.setAttribute('data-side', 'back'); }
     }
+
+    if (wordFurigana !== 'back') frontWord.classList.add('furigana-' + wordFurigana);
+    if (sentFurigana !== 'back') frontSent.classList.add('furigana-' + sentFurigana);
 
     clearLastMargin(document.querySelector('.front'));
     // Only clear inside .front-content when it is itself the last visible

@@ -18,13 +18,15 @@
     /* Word */
     --word: front;                 /* front | back | off                  */
     --word-audio: back;            /* front | back | off                  */
-    --word-pitch-color: on;        /* on | off                            */
+    --word-furigana: back;         /* front | back | off                  */
+    --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
     --sentence: back;             /* front | back | off                  */
     --sentence-audio: back;        /* front | back | off                  */
-    --sentence-pitch-color: on;    /* on | off                            */
+    --sentence-furigana: back;     /* front | back | off                  */
+    --sentence-pitch-color: back;  /* front | back | off                  */
 
     /* Image */
     --image: back;                /* front | back | off                  */
@@ -33,7 +35,8 @@
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
-    --definition-pitch-color: on;  /* on | off                            */
+    --definition-furigana: back;   /* front | back | off                  */
+    --definition-pitch-color: back;/* front | back | off                  */
 
     /* ═══════════════════════════════════════════════════════
        ⚙  MODES — Tag & deck-based settings overrides.
@@ -73,6 +76,8 @@
     /* —— Mode 5: furigana ——————————————————————————————————————————— */
     --mode-5-tag: _jp::furigana;
     --mode-5-deck: ;
+    --mode-5-word-furigana: front;
+    --mode-5-sentence-furigana: front;
 
     /* —— Mode 6 ——————————————————————————————————————————— */
     --mode-6-tag: _jp::tate;
@@ -1193,6 +1198,18 @@ rt {
     visibility: hidden;
 }
 
+/* furigana-front: show rt on front side (override default hiding) */
+.front-content .target-word.furigana-front rt { visibility: visible; color: inherit; }
+.front-content .sentence.furigana-front rt { visibility: visible; color: inherit; }
+/* Suppress fade-in animation when furigana was already visible on front */
+.back .front-content .target-word.furigana-front rt { animation: none; }
+.back .front-content .sentence.furigana-front rt { animation: none; }
+
+/* furigana-off: hide rt everywhere, including back-side reveal */
+.target-word.furigana-off rt,
+.sentence.furigana-off rt,
+.def.furigana-off rt, .jp-def.furigana-off rt { display: none !important; }
+
 .front-content .image-wrap {
     margin-bottom: 24px;
 }
@@ -1238,6 +1255,13 @@ rt {
     visibility: visible;
     animation: rtFadeIn 0.25s ease both;
 }
+
+/* pitch-color-front: allow accent colors on front side */
+.front-content .target-word.pitch-color-front { color: inherit; }
+.front-content .sentence.pitch-color-front { color: inherit; }
+/* Suppress color-reveal animation (colors were already visible on front) */
+.back .front-content .target-word.pitch-color-front span,
+.back .front-content .sentence.pitch-color-front span { animation: none; }
 
 /* When word is in front zone, pitch graph becomes first item in back zone */
 .answer[data-word-zone="front"] .pitch-graph {
@@ -1498,6 +1522,8 @@ html.tategaki:has(.back) {
 .tategaki .back .front-content .sentence rt {
     display: revert;
 }
+.tategaki .front-content .target-word.furigana-front rt,
+.tategaki .front-content .sentence.furigana-front rt { display: revert; }
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */

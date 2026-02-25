@@ -852,9 +852,16 @@
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
     var defMode = _rootStyle.getPropertyValue('--definition-mode').trim() || 'all';
 
-    var wordPitchColor = _rootStyle.getPropertyValue('--word-pitch-color').trim() !== 'off';
-    var sentPitchColor = _rootStyle.getPropertyValue('--sentence-pitch-color').trim() !== 'off';
-    var defPitchColor = _rootStyle.getPropertyValue('--definition-pitch-color').trim() !== 'off';
+    var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
+    var wordPitchColor = (rawWPC === 'front') ? 'front' : (rawWPC === 'off') ? 'off' : 'back';
+    var rawSPC = _rootStyle.getPropertyValue('--sentence-pitch-color').trim();
+    var sentPitchColor = (rawSPC === 'front') ? 'front' : (rawSPC === 'off') ? 'off' : 'back';
+    var rawDPC = _rootStyle.getPropertyValue('--definition-pitch-color').trim();
+    var defPitchColor = (rawDPC === 'front') ? 'front' : (rawDPC === 'off') ? 'off' : 'back';
+
+    var wordFurigana = _rootStyle.getPropertyValue('--word-furigana').trim() || 'back';
+    var sentFurigana = _rootStyle.getPropertyValue('--sentence-furigana').trim() || 'back';
+    var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'back';
 
     var wordSide = _rootStyle.getPropertyValue('--word').trim() || 'back';
     var sentSide = _rootStyle.getPropertyValue('--sentence').trim() || 'back';
@@ -877,7 +884,8 @@
       if (wordSeqs.length > 0) {
         wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
         if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
-        if (!wordPitchColor) wordTarget.classList.add('no-pitch-color');
+        if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
+        if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
       }
 
       if (wordIsOnFront) {
@@ -920,7 +928,8 @@
           return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
         });
         if (!hasAccent) sentTarget.classList.add('no-accent');
-        if (!sentPitchColor) sentTarget.classList.add('no-pitch-color');
+        if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
+        if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
         sentTarget.innerHTML = makeColoredSentence(sentSeqs[0]);
       }
 
@@ -934,6 +943,8 @@
           frontSentEl.innerHTML = sentEl.innerHTML;
           if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
           if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
+          if (sentFurigana !== 'back') frontSentEl.classList.add('furigana-' + sentFurigana);
+          if (sentPitchColor === 'front') frontSentEl.classList.add('pitch-color-front');
         }
         sentEl.setAttribute('data-show', 'off');
       }
@@ -1013,9 +1024,13 @@
       answerEl.setAttribute('data-def-text', 'off');
     }
 
-    if (!defPitchColor) {
+    if (defPitchColor === 'off') {
       defEl.classList.add('no-pitch-color');
       jpDefEl.classList.add('no-pitch-color');
+    }
+    if (defFurigana === 'off') {
+      defEl.classList.add('furigana-off');
+      jpDefEl.classList.add('furigana-off');
     }
 
     // ── Tagged definition audio: native [sound:] elements ──
