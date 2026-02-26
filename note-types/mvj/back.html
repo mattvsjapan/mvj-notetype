@@ -278,6 +278,8 @@
     });
     // Space after escaped ] → preserve space
     expr = expr.replace(/\u2046 +/g, '\u2046&nbsp;');
+    // Protect digit-only brackets from furigana regex (not valid readings)
+    expr = expr.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
     // Strip split furigana before | gets treated as a separator
     expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
     expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');

@@ -1,4 +1,5 @@
 function wordToRubyFragment(fragment) {
+  fragment = fragment.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
   const re = /([^\[\]]+)\[([^\]]+)\]/g;
   let result = '';
   let lastIndex = 0;

@@ -567,6 +567,7 @@ function clearLastMargin(el) {
         if (!raw) return '';
         raw = raw.replace(/<[^>]+>/g, ' ');
         raw = raw.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+        raw = raw.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
         var tokens = raw.split(/[\s\t\u3000]+/).filter(Boolean);
         var out = [];
         for (var i = 0; i < tokens.length; i++) {
@@ -595,6 +596,7 @@ function clearLastMargin(el) {
         if (!raw) return '';
         raw = raw.replace(/<[^>]+>/g, ' ');
         raw = raw.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+        raw = raw.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
         var tokens = raw.split(/[\s\t\u3000]+/).filter(Boolean);
         var roleMap = {
             h: 'heiban', a: 'atamadaka', n: 'nakadaka', o: 'odaka', k: 'kifuku',
