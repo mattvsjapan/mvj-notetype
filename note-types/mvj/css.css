@@ -1810,7 +1810,7 @@ html.tategaki:has(.back) {
 
 @media (hover: none) {
     .tategaki .word-pitch-group {
-        width: calc(100vw - 56px);
+        max-width: 100%;
     }
     .tategaki .image-wrap {
         width: clamp(249px, 80vw, 391px);
