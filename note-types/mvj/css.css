@@ -1560,9 +1560,6 @@ html.tategaki:has(.back) {
   vertical-align: baseline;
 }
 
-.tategaki .pitch-num {
-}
-
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */
 .tategaki .front-content .sentence {
