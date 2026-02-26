@@ -269,6 +269,8 @@
   const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
   
   function normalizeForParsing(expr) {
+    expr = expr.replace(/<br\s*\/?>/gi, ' . ');
+    expr = expr.replace(/<[^<>]+>/gi, '');
     expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
     // Space before [ → literal bracket group, preserve space
     expr = expr.replace(/ +(\[[^\]]*\])/g, function(m, b) {
@@ -278,8 +280,6 @@
     expr = expr.replace(/\u2046 +/g, '\u2046&nbsp;');
     // Strip split furigana before | gets treated as a separator
     expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
-    expr = expr.replace(/<br\s*\/?>/gi, ' . ');
-    expr = expr.replace(/<[^<>]+>/gi, '');
     expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
     expr = expr.replace(/([。!?！？])/g, ' $1 .');
     expr = expr.replace(/([「」|、､])/g, ' $1 ');
@@ -778,7 +778,7 @@
       result += fragment.slice(lastIndex);
     }
     return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
-                 .replace(/\[(\d+)\]/g, '<span class="tcy">[$1]</span>');
+                 .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
   }
 
   function wordToRuby(word) {

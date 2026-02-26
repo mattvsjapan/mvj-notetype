@@ -1548,8 +1548,20 @@ html.tategaki:has(.back) {
 .tategaki .front-content .target-word rt[data-split],
 .tategaki .front-content .sentence rt[data-split] { display: revert; }
 
-/* Tighten vertical spacing on escaped bracket sequences like \[0] */
-.tategaki .tcy { margin-top: -0.25em; margin-bottom: -0.1em; }
+@font-face {
+  font-family: "PitchNum";
+  src: url("_pitch_num.woff2") format("woff2");
+}
+
+.pitch-num {
+  font-family: "Hiragino Mincho ProN", "PitchNum";
+  font-feature-settings: "nalt" 9;
+  font-size: 0.85em;
+  vertical-align: middle;
+}
+
+.tategaki .pitch-num {
+}
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */

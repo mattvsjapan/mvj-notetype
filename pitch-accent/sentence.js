@@ -18,7 +18,8 @@ function wordToRubyFragment(fragment) {
   if (lastIndex < fragment.length) {
     result += fragment.slice(lastIndex);
   }
-  return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
+  return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
+               .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
 }
 
 function wordToRuby(word) {

@@ -585,7 +585,7 @@ function clearLastMargin(el) {
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
             out.push(t.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
-                       .replace(/\[(\d+)\]/g, '<span class="tcy">[$1]</span>'));
+                       .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>'));
         }
         return out.join('');
     }
@@ -613,7 +613,7 @@ function clearLastMargin(el) {
                     ? '<ruby>' + b + '<rt>' + r + '</rt></ruby>' : b;
             });
             return word.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
-                       .replace(/\[(\d+)\]/g, '<span class="tcy">[$1]</span>');
+                       .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
         }
         function accentClass(accent) {
             if (!accent) return '';
