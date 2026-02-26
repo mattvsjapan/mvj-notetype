@@ -1946,6 +1946,17 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     animation: none;
 }
 
+/* Center ASCII hyphens vertically in CJK text */
+.hc {
+    position: relative;
+    top: -0.1em;
+}
+
+.tategaki .hc {
+    top: 0;
+    left: 0.15em;
+}
+
 /* Full-width digits — helper for tategaki JS */
 .tategaki .hor {
     writing-mode: horizontal-tb;

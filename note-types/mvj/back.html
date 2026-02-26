@@ -1705,3 +1705,36 @@
       walk(answer, DIGIT, convertDigits);
   })();
   </script>
+
+<script>
+// Center ASCII hyphens vertically (Latin baseline sits too low next to CJK glyphs)
+(function() {
+    var SKIP = /^(script|style|noscript|ruby|rt)$/i;
+    var containers = document.querySelectorAll('.sentence, .def, .jp-def, .target-word');
+    for (var ci = 0; ci < containers.length; ci++) {
+        var walker = document.createTreeWalker(containers[ci], NodeFilter.SHOW_TEXT, {
+            acceptNode: function(n) {
+                if (SKIP.test(n.parentNode.nodeName) || n.parentNode.classList.contains('hc'))
+                    return NodeFilter.FILTER_REJECT;
+                return n.nodeValue.indexOf('-') !== -1 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+            }
+        }, false);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        for (var ni = 0; ni < nodes.length; ni++) {
+            var parts = nodes[ni].nodeValue.split('-');
+            var frag = document.createDocumentFragment();
+            for (var pi = 0; pi < parts.length; pi++) {
+                if (pi > 0) {
+                    var span = document.createElement('span');
+                    span.className = 'hc';
+                    span.textContent = '-';
+                    frag.appendChild(span);
+                }
+                if (parts[pi]) frag.appendChild(document.createTextNode(parts[pi]));
+            }
+            nodes[ni].parentNode.replaceChild(frag, nodes[ni]);
+        }
+    }
+})();
+</script>
