@@ -5,18 +5,24 @@ const HIGH_PREFIX = '^';
 const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
-function normalizeForParsing(expr) {
-  expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
-  // Space before [ → literal bracket group, preserve space
-  expr = expr.replace(/ +(\[[^\]]*\])/g, function(m, b) {
+function escapeBrackets(text) {
+  text = text.replace(/\\ /g, '&nbsp;');
+  text = text.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+  text = text.replace(/ +(\[[^\]]*\])/g, function(m, b) {
       return '&nbsp;\u2045' + b.slice(1, -1) + '\u2046';
   });
-  // Space after escaped ] → preserve space
-  expr = expr.replace(/\u2046 +/g, '\u2046&nbsp;');
-  // Strip split furigana before | gets treated as a separator
-  expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
+  text = text.replace(/\u2046 +/g, '\u2046&nbsp;');
+  return text;
+}
+
+function normalizeForParsing(expr) {
   expr = expr.replace(/<br\s*\/?>/gi, ' . ');
   expr = expr.replace(/<[^<>]+>/gi, '');
+  expr = escapeBrackets(expr);
+  // Protect digit-only brackets from furigana regex (not valid readings)
+  expr = expr.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
+  // Strip split furigana before | gets treated as a separator
+  expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
   expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
   expr = expr.replace(/([。!?！？])/g, ' $1 .');
   expr = expr.replace(/([「」|、､])/g, ' $1 ');
