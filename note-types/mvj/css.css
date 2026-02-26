@@ -1957,6 +1957,12 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     left: 0.15em;
 }
 
+@media (hover: none) {
+    .tategaki .hc {
+        left: 0.21em;
+    }
+}
+
 /* Full-width digits — helper for tategaki JS */
 .tategaki .hor {
     writing-mode: horizontal-tb;
