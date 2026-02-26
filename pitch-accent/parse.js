@@ -6,6 +6,13 @@ const SENT_HIDDEN = ['|', GHOST_PARTICLE];
 const PITCH_BREAKS = [...SENT_HIDDEN, ',', '、'];
 
 function normalizeForParsing(expr) {
+  expr = expr.replace(/\\\[/g, '\u2045').replace(/\\\]/g, '\u2046');
+  // Space before [ → literal bracket group, preserve space
+  expr = expr.replace(/ +(\[[^\]]*\])/g, function(m, b) {
+      return '&nbsp;\u2045' + b.slice(1, -1) + '\u2046';
+  });
+  // Space after escaped ] → preserve space
+  expr = expr.replace(/\u2046 +/g, '\u2046&nbsp;');
   // Strip split furigana before | gets treated as a separator
   expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
   expr = expr.replace(/<br\s*\/?>/gi, ' . ');

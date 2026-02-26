@@ -18,7 +18,7 @@ function wordToRubyFragment(fragment) {
   if (lastIndex < fragment.length) {
     result += fragment.slice(lastIndex);
   }
-  return result;
+  return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']');
 }
 
 function wordToRuby(word) {
