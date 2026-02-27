@@ -343,6 +343,7 @@ class SettingsDialog(QDialog):
         left_inner = QWidget()
         self._left_layout = QVBoxLayout(left_inner)
         self._left_layout.setContentsMargins(0, 0, 0, 0)
+        self._left_layout.setSpacing(2)
 
         # Mode list
         self._mode_list = QListWidget()
