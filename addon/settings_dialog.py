@@ -394,7 +394,8 @@ class SettingsDialog(QDialog):
         self._init_preview(preview_layout)
 
         splitter.addWidget(preview_container)
-        splitter.setSizes([550, 650])
+        splitter.setStretchFactor(0, 0)  # left: don't stretch
+        splitter.setStretchFactor(1, 1)  # right: take remaining space
 
         outer.addWidget(splitter, 1)
 
@@ -415,6 +416,15 @@ class SettingsDialog(QDialog):
 
         # --- Populate mode list & detail panel ---
         self._rebuild_mode_list()
+
+        # Measure ideal left width from a mode view before building defaults
+        if self._modes:
+            tmp = self._build_mode_view(self._modes[0])
+            scrollbar_w = self._detail_scroll.verticalScrollBar().sizeHint().width()
+            left_w = tmp.sizeHint().width() + scrollbar_w + 2
+            tmp.deleteLater()
+            splitter.setSizes([left_w, self.width() - left_w])
+
         self._rebuild_detail_panel()
         self._update_button_states()
 
