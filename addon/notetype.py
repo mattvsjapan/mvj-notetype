@@ -1,6 +1,7 @@
 """Download and install/update the 🇯🇵 MvJ note type from GitHub."""
 
 import os
+import re
 import urllib.request
 from urllib.error import HTTPError, URLError
 
@@ -34,6 +35,24 @@ _FIELDS = [
     "Translation",
     "Context",
 ]
+
+
+# Matches the entire SETTINGS + MODES region: from the ⚙ SETTINGS banner
+# through the standalone ═══ closing banner.  The closing banner is the
+# first line that is *only* /* ═══…═══ */ (single-line comment with no ⚙).
+_SETTINGS_RE = re.compile(
+    r"(/\*\s*═+\s*\n\s*⚙\s+SETTINGS\b.*?\n[ \t]*/\*\s*═+\s*\*/)",
+    re.DOTALL,
+)
+
+
+def _merge_css_settings(old_css: str, new_css: str) -> str:
+    """Preserve the user's SETTINGS/MODES region when updating CSS."""
+    old_match = _SETTINGS_RE.search(old_css)
+    new_match = _SETTINGS_RE.search(new_css)
+    if old_match and new_match:
+        return new_css[: new_match.start()] + old_match.group(1) + new_css[new_match.end() :]
+    return new_css
 
 
 def _download_file(url: str) -> bytes:
@@ -86,7 +105,7 @@ def _create_notetype(front: str, back: str, css: str) -> None:
 def _update_notetype(model: dict, front: str, back: str, css: str) -> None:
     model["tmpls"][0]["qfmt"] = front
     model["tmpls"][0]["afmt"] = back
-    model["css"] = css
+    model["css"] = _merge_css_settings(model["css"], css)
     mw.col.models.update_dict(model)
 
 
