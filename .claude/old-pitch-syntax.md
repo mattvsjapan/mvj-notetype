@@ -112,7 +112,7 @@ When a verb or i-adjective appears inflected in a sentence, the pitch is reduced
 
 For compound base forms (e.g., `1-2`), only the second part (the verb portion) determines h/k.
 
-When the base form has both heiban and kifuku readings, `_convert_to_simplified_pitch()` produces `h,k` or `k,h` (order preserved), but sentence mode only uses the first value. The full `h,k` notation can appear in the **word field** when an inflected form is entered directly (e.g., `食[た;h,k]べた`).
+When the base form has both heiban and kifuku readings, `_convert_to_simplified_pitch()` produces `h,k` or `k,h` (order preserved), but sentence mode only uses the first value. The full `h,k` notation can appear in the **word field** when an inflected form is entered directly (e.g., `下[さ;h,k]がった` for a verb with both heiban and kifuku base-form readings).
 
 Examples:
 
@@ -131,7 +131,7 @@ A space is inserted before a token if the token has brackets (furigana or pitch)
 考[かんが;n]え 方[かた;n] を 変[か;k]え た。
 ```
 
-Note that `は` and `いい` have no brackets (all-kana words get no brackets from `format_output`), so no space is inserted between them. But `たい`, `です`, and `た` (助動詞, separate MeCab tokens) each get a space before them because the preceding token has pitch accent.
+Note that `は` and `いい` have no brackets (all-kana words get no brackets from `format_output`), so no space is inserted between them. Plain-kana auxiliaries like `たい`, `です`, and `た` only get a space before them when the preceding token has pitch accent — e.g., `たい` gets a space after `行[い;k]き`, but `です` runs together with `たい` as `たいです` because `たい` has no pitch accent.
 
 When MeCab produces a merged token like `今日は`, the particle is stripped for pitch lookup and appended as a separate part (with a space before it). When MeCab tokenizes a particle separately (e.g., `に`), it remains a separate token and also gets a space before it if the previous token has pitch.
 
