@@ -331,6 +331,8 @@ class SettingsDialog(QDialog):
         self._mode_deck_combo: _DeckComboBox | None = None
 
         outer = QVBoxLayout(self)
+        margins = outer.contentsMargins()
+        outer.setContentsMargins(margins.left(), 2, margins.right(), margins.bottom())
 
         # --- Splitter: settings on left, preview on right ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -376,6 +378,7 @@ class SettingsDialog(QDialog):
         preview_container = QWidget()
         preview_layout = QVBoxLayout(preview_container)
         preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(0)
 
         # Front/Back toggle
         toggle_row = QHBoxLayout()
@@ -386,7 +389,9 @@ class SettingsDialog(QDialog):
         self._btn_back.setChecked(True)  # default to showing back
         self._btn_front.clicked.connect(self._on_front_clicked)
         self._btn_back.clicked.connect(self._on_back_clicked)
+        toggle_row.addStretch()
         toggle_row.addWidget(self._btn_front)
+        toggle_row.addSpacing(6)
         toggle_row.addWidget(self._btn_back)
         toggle_row.addStretch()
         preview_layout.addLayout(toggle_row)
