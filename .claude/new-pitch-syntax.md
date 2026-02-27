@@ -222,14 +222,16 @@ The parser renders the first combination as the default colored sentence, with a
 
 Tokens are split by `splitToSections()` (`parse.js:37`) on whitespace (spaces, tabs, ideographic spaces `\u3000`). Each token is either:
 - A **content word** with `:accent` (has a colon)
-- A **particle** without colon (inherits pitch from surrounding context)
+- A **particle** without colon
 - A **separator** (`|`, `,`, `、`, `「`, `」`, `;`, `-`)
 
+**Important**: Bare particles (no colon) are subject to fragment merging (see below). A bare token before a colon-bearing token gets merged into it, not kept as a separate particle. Only bare tokens that appear **after** the last colon-bearing word in a fragment group (or before a separator) survive as independent particle sections that inherit pitch from surrounding context. To force a particle to remain separate between two accented words, give it an explicit colon: `に:` or `に:p`.
+
 ```
-日本[にほん]:2 に 行[い]く:k
+日本[にほん]:2 に:p 行[い]く:k
 ```
 
-Here `日本[にほん]:2` is accented, `に` is a particle (no colon), and `行[い]く:k` is accented.
+Here `日本[にほん]:2` is accented, `に:p` is a particle (explicit colon with `p` prefix), and `行[い]く:k` is accented. Without the colon on `に`, it would be merged into `行[い]く:k` by `mergeFragments()`.
 
 ### Fragment merging
 
@@ -537,11 +539,13 @@ const config = {
 ### Sentence field
 
 ```
-日本[にほん]:2 に 行[い]く:k たいです。
-今日[きょう]:1 は いい 天気[てんき]:1 ですね。
-考[かんが]え 方[かた]:n を 変[か]える:k
-お 母[かあ]さん:n は 元気[げんき]:1 です
+日本[にほん]:2 に:p 行[い]く:k たいです。
+今日[きょう]:1 は:p いい:h 天気[てんき]:1 ですね。
+考[かんが]え 方[かた]:n を:p 変[か]える:k
+お 母[かあ]さん:n は:p 元気[げんき]:1 です
 ```
+
+Note: Particles between accented words need explicit colons (e.g., `に:p`, `は:p`, `を:p`) to remain as separate sections. Without colons, `mergeFragments()` would merge them into the following accented word. Trailing bare tokens like `たいです`, `ですね`, `です` are fine without colons — they appear after the last accented word and naturally become independent particle sections.
 
 ### With special features
 
@@ -565,5 +569,5 @@ const config = {
 | `食[た;k]べる` | `食[た]べる:k` |
 | `アニメ[0]` | `アニメ:0` |
 | `考え方[かんがえかた;5,0]` | `考[かんが]え方[かた]:5,0` |
-| `日本[にほん;2] に 行[い;k]く` | `日本[にほん]:2 に 行[い]く:k` |
+| `日本[にほん;2] に 行[い;k]く` | `日本[にほん]:2 に:p 行[い]く:k` |
 | `考[かんが;n]え 方[かた;n]` | `考[かんが]え 方[かた]:n` |
