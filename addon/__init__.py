@@ -8,7 +8,7 @@ from aqt.editor import Editor
 from aqt.qt import QAction
 from aqt.utils import showWarning, tooltip
 
-NOTE_TYPE = "\U0001f1ef\U0001f1f5 Japanese"
+_NOTE_TYPES = {"\U0001f1ef\U0001f1f5 MvJ", "\U0001f1ef\U0001f1f5 Japanese"}
 _SOUND_RE = re.compile(r"\[sound:([^\]]+)\]")
 
 
@@ -16,7 +16,7 @@ def _is_target_note(editor: Editor) -> bool:
     if editor.note is None:
         return False
     model = editor.note.note_type()
-    return model is not None and model["name"] == NOTE_TYPE
+    return model is not None and model["name"] in _NOTE_TYPES
 
 
 # --- Patch Editor.fnameToLink via wrap() to produce [audio:] at insertion ---
@@ -29,7 +29,10 @@ def _fnameToLink_wrapper(self, fname, _old=None):
     return result
 
 
-Editor.fnameToLink = wrap(Editor.fnameToLink, _fnameToLink_wrapper, "around")
+try:
+    Editor.fnameToLink = wrap(Editor.fnameToLink, _fnameToLink_wrapper, "around")
+except AttributeError:
+    pass  # fnameToLink removed in newer Anki versions
 
 
 # --- Safety net: also convert on field sync ---
@@ -48,7 +51,8 @@ gui_hooks.editor_will_munge_html.append(_munge_sound_to_audio)
 
 
 def _bulk_convert_sound_to_audio(browser):
-    note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE}"')
+    queries = [f'"note:{nt}"' for nt in _NOTE_TYPES]
+    note_ids = mw.col.find_notes(" OR ".join(queries))
     if not note_ids:
         tooltip("No matching notes found.", parent=browser)
         return
@@ -110,3 +114,11 @@ def _setup_browser_menu(browser):
 
 
 gui_hooks.browser_menus_did_init.append(_setup_browser_menu)
+
+
+from .notetype import install_notetype
+
+_tools_action = QAction("Install/Update \U0001f1ef\U0001f1f5 MvJ Note Type", mw)
+_tools_action.triggered.connect(install_notetype)
+mw.form.menuTools.addSeparator()
+mw.form.menuTools.addAction(_tools_action)
