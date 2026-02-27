@@ -140,7 +140,8 @@ class SettingsDialog(QDialog):
             )
             return
 
-        self.setMinimumSize(900, 600)
+        self.setMinimumSize(800, 500)
+        self.resize(1050, 900)
 
         css = self._model["css"]
         current = _parse_settings(css)
@@ -161,6 +162,7 @@ class SettingsDialog(QDialog):
         for section, entries in _SETTINGS.items():
             group_box = QGroupBox(section)
             form = QFormLayout()
+            form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
             for var, options, default in entries:
                 btn_group = QButtonGroup(self)
                 row = QHBoxLayout()
@@ -203,7 +205,7 @@ class SettingsDialog(QDialog):
         self._init_preview(preview_layout)
 
         splitter.addWidget(preview_container)
-        splitter.setSizes([400, 500])
+        splitter.setSizes([550, 500])
 
         outer.addWidget(splitter, 1)
 
@@ -214,7 +216,7 @@ class SettingsDialog(QDialog):
         )
         btn_box.accepted.connect(self._save)
         btn_box.rejected.connect(self.reject)
-        update_btn = QPushButton("Update Note Type")
+        update_btn = QPushButton("Update to Newest Version")
         update_btn.clicked.connect(self._install)
         btn_box.addButton(update_btn, QDialogButtonBox.ButtonRole.ActionRole)
         outer.addWidget(btn_box)
