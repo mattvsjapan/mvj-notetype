@@ -23,17 +23,19 @@ _FONT_FILES = [
     "_yukyokasho-bold.woff2",
 ]
 
+_JP_FONT = "YuMincho"
+#                (name, description, font, font_size)
 _FIELDS = [
-    "Word",
-    "Word Audio",
-    "Sentence",
-    "Sentence Audio",
-    "Definition",
-    "Definition Audio",
-    "am-study-morphs",
-    "Image",
-    "Translation",
-    "Context",
+    ("Sentence", "Example sentence", _JP_FONT, None),
+    ("Sentence Audio", "Example sentence audio", None, 12),
+    ("Word", "Target word", _JP_FONT, 20),
+    ("Word Audio", "Target word audio", None, 12),
+    ("Definition", "Definition of target word", None, None),
+    ("Definition Audio", "TTS audio of the definition", None, 12),
+    ("am-study-morphs", "Unknown words (for AnkiMorphs & MvJ Japanese)", None, None),
+    ("Image", "Image", None, 12),
+    ("Translation", "English translation & LLM explanation", None, None),
+    ("Context", "For LLMs to better understand the sentence", None, None),
 ]
 
 
@@ -90,10 +92,15 @@ def _install_fonts(files: dict) -> None:
 def _create_notetype(front: str, back: str, css: str) -> None:
     mm = mw.col.models
     model = mm.new(NOTE_TYPE_NAME)
-    for field_name in _FIELDS:
+    for field_name, description, font, font_size in _FIELDS:
         field = mm.new_field(field_name)
+        field["description"] = description
+        if font:
+            field["font"] = font
+        if font_size:
+            field["size"] = font_size
         mm.add_field(model, field)
-    model["sortf"] = _FIELDS.index("Sentence")
+    model["sortf"] = [name for name, *_ in _FIELDS].index("Sentence")
     tmpl = mm.new_template(NOTE_TYPE_NAME)
     tmpl["qfmt"] = front
     tmpl["afmt"] = back
@@ -106,6 +113,15 @@ def _update_notetype(model: dict, front: str, back: str, css: str) -> None:
     model["tmpls"][0]["qfmt"] = front
     model["tmpls"][0]["afmt"] = back
     model["css"] = _merge_css_settings(model["css"], css)
+    field_map = {name: (desc, font, size) for name, desc, font, size in _FIELDS}
+    for fld in model["flds"]:
+        if fld["name"] in field_map:
+            desc, font, size = field_map[fld["name"]]
+            fld["description"] = desc
+            if font:
+                fld["font"] = font
+            if size:
+                fld["size"] = size
     mw.col.models.update_dict(model)
 
 
