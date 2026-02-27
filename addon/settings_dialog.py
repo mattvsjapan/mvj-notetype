@@ -14,6 +14,7 @@ from aqt.qt import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QEvent,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -233,6 +234,57 @@ def _apply_modes(css: str, modes: list[Mode]) -> str:
     return _MODES_CONTENT_RE.sub(replacer, css, count=1)
 
 
+class _DeckComboBox(QComboBox):
+    """Multi-select combo box with checkboxes for deck selection."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
+        self.lineEdit().setPlaceholderText("Click to select decks...")
+        self.view().viewport().installEventFilter(self)
+
+    def eventFilter(self, obj, event):  # type: ignore[override]
+        """Keep popup open on item click."""
+        if obj is self.view().viewport() and event.type() == QEvent.Type.MouseButtonRelease:
+            idx = self.view().indexAt(event.pos())
+            if idx.isValid():
+                item = self.model().itemFromIndex(idx)
+                if item.checkState() == Qt.CheckState.Checked:
+                    item.setCheckState(Qt.CheckState.Unchecked)
+                else:
+                    item.setCheckState(Qt.CheckState.Checked)
+                self._update_text()
+            return True
+        return super().eventFilter(obj, event)
+
+    def populate(
+        self, deck_names: list[str], selected: list[str]
+    ) -> None:
+        self.clear()
+        selected_set = set(selected)
+        for name in deck_names:
+            self.addItem(name)
+            item = self.model().item(self.count() - 1)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            if name in selected_set:
+                item.setCheckState(Qt.CheckState.Checked)
+            else:
+                item.setCheckState(Qt.CheckState.Unchecked)
+        self._update_text()
+
+    def checkedTexts(self) -> list[str]:
+        texts = []
+        for i in range(self.count()):
+            item = self.model().item(i)
+            if item.checkState() == Qt.CheckState.Checked:
+                texts.append(item.text())
+        return texts
+
+    def _update_text(self) -> None:
+        self.lineEdit().setText(", ".join(self.checkedTexts()))
+
+
 class SettingsDialog(QDialog):
     _preview_timer: QTimer | None = None
     _web: AnkiWebView | None = None
@@ -276,7 +328,7 @@ class SettingsDialog(QDialog):
         self._mode_overrides: dict[str, tuple[QCheckBox, QComboBox]] = {}
         self._mode_name_input: QLineEdit | None = None
         self._mode_tag_input: QLineEdit | None = None
-        self._mode_deck_input: QLineEdit | None = None
+        self._mode_deck_combo: _DeckComboBox | None = None
 
         outer = QVBoxLayout(self)
 
@@ -499,10 +551,17 @@ class SettingsDialog(QDialog):
         self._mode_tag_input.textChanged.connect(self._on_setting_changed)
         triggers_form.addRow("Tag:", self._mode_tag_input)
 
-        self._mode_deck_input = QLineEdit(mode.deck)
-        self._mode_deck_input.setPlaceholderText("e.g. Mining::Vocab")
-        self._mode_deck_input.textChanged.connect(self._on_setting_changed)
-        triggers_form.addRow("Deck:", self._mode_deck_input)
+        deck_names = [d.name for d in mw.col.decks.all_names_and_ids()]
+        current_decks = [d.strip() for d in mode.deck.split(",") if d.strip()]
+        # Include any saved decks not currently in the collection so data isn't lost
+        deck_name_set = set(deck_names)
+        for d in current_decks:
+            if d not in deck_name_set:
+                deck_names.append(d)
+        self._mode_deck_combo = _DeckComboBox()
+        self._mode_deck_combo.populate(deck_names, current_decks)
+        self._mode_deck_combo.model().dataChanged.connect(self._on_setting_changed)
+        triggers_form.addRow("Deck:", self._mode_deck_combo)
 
         triggers_box.setLayout(triggers_form)
         layout.addWidget(triggers_box)
@@ -594,8 +653,8 @@ class SettingsDialog(QDialog):
                 mode.name = self._mode_name_input.text()
             if self._mode_tag_input:
                 mode.tag = self._mode_tag_input.text()
-            if self._mode_deck_input:
-                mode.deck = self._mode_deck_input.text()
+            if self._mode_deck_combo:
+                mode.deck = ", ".join(self._mode_deck_combo.checkedTexts())
 
             # Preserve overrides not shown in the UI (e.g. --debug)
             ui_vars = set(self._mode_overrides.keys())
