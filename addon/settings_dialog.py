@@ -8,12 +8,14 @@ import shutil
 
 from aqt import mw
 from aqt.qt import (
+    QApplication,
     QButtonGroup,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QLineEdit,
     QPushButton,
     QRadioButton,
     QScrollArea,
@@ -58,11 +60,19 @@ _SAMPLE_FIELDS = {
 # Each entry: (css_var, [options], default)
 # Grouped by section for the UI.
 
+_HOTKEYS = [
+    ("--hotkey-word-audio", "n"),
+    ("--hotkey-sentence-audio", "h"),
+    ("--hotkey-definition-audio", ","),
+    ("--hotkey-play-all", "z"),
+    ("--hotkey-stop-all", "?"),
+    ("--hotkey-jp-toggle", "."),
+]
+
 _SETTINGS = {
     "Layout": [
         ("--tategaki", ["on", "off"], "off"),
         ("--color-scheme", ["blue", "black", "red", "purple", "white"], "blue"),
-        ("--debug", ["on", "off"], "off"),
         ("--audio-labels", ["on", "off"], "on"),
     ],
     "Word": [
@@ -107,6 +117,9 @@ def _parse_settings(css: str) -> dict[str, str]:
             # Match e.g.  --tategaki: off;  (with optional whitespace/comments)
             m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
             values[var] = m.group(1) if m else default
+    for var, default in _HOTKEYS:
+        m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
+        values[var] = m.group(1) if m else default
     return values
 
 
@@ -150,8 +163,9 @@ class SettingsDialog(QDialog):
             )
             return
 
-        self.setMinimumSize(800, 500)
-        self.resize(1200, 1000)
+        screen = QApplication.primaryScreen()
+        available_h = screen.availableGeometry().height() if screen else 1200
+        self.resize(1400, min(1200, available_h - 50))
 
         css = self._model["css"]
         current = _parse_settings(css)
@@ -173,6 +187,7 @@ class SettingsDialog(QDialog):
             group_box = QGroupBox(section)
             form = QFormLayout()
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
             for var, options, default in entries:
                 btn_group = QButtonGroup(self)
                 row = QHBoxLayout()
@@ -188,6 +203,25 @@ class SettingsDialog(QDialog):
                 btn_group.buttonClicked.connect(self._on_setting_changed)
             group_box.setLayout(form)
             settings_layout.addWidget(group_box)
+
+        # Hotkeys group box
+        self._hotkey_inputs: dict[str, QLineEdit] = {}
+        hotkey_box = QGroupBox("Hotkeys")
+        hotkey_form = QFormLayout()
+        hotkey_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        hotkey_form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        for var, default in _HOTKEYS:
+            line_edit = QLineEdit()
+            line_edit.setMaxLength(1)
+            line_edit.setFixedWidth(30)
+            line_edit.setText(current.get(var, default))
+            line_edit.textChanged.connect(self._on_setting_changed)
+            # Strip "Hotkey " prefix since they're in a "Hotkeys" group
+            label = _var_to_label(var).removeprefix("Hotkey ")
+            hotkey_form.addRow(label + ":", line_edit)
+            self._hotkey_inputs[var] = line_edit
+        hotkey_box.setLayout(hotkey_form)
+        settings_layout.addWidget(hotkey_box)
 
         settings_layout.addStretch()
         scroll.setWidget(settings_widget)
@@ -269,12 +303,16 @@ class SettingsDialog(QDialog):
         QTimer.singleShot(200, self._render_preview)
 
     def _get_current_settings(self) -> dict[str, str]:
-        """Read all radio button values into a dict."""
+        """Read all radio button and hotkey input values into a dict."""
         values = {}
         for var, btn_group in self._groups.items():
             checked = btn_group.checkedButton()
             if checked:
                 values[var] = checked.text()
+        for var, line_edit in self._hotkey_inputs.items():
+            text = line_edit.text()
+            if text:
+                values[var] = text
         return values
 
     def _render_preview(self) -> None:
