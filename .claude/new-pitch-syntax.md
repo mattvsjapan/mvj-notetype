@@ -81,7 +81,7 @@ A separate format for Keihan dialect, matched by a second regex:
 accent = role:levels
 ```
 
-Where `role` is 1–2 letters (case-insensitive — both uppercase and lowercase are accepted by the regex) and `levels` is a string of `h`/`l` characters specifying the pitch level of each mora.
+Where `role` is 1–2 letters (case-insensitive — both uppercase and lowercase are accepted by the regex) and `levels` is a string of `h`/`l`/`H`/`L` characters specifying the pitch level of each mora (uppercase is lowercased by `determineLevelsKeihan()`).
 
 Returns `{ role, levels, keihan: true }`.
 
@@ -176,7 +176,7 @@ These prefixes appear **inside** the word/reading portion (before kana character
 | Prefix | Constant | Description |
 |--------|----------|-------------|
 | `*` | `DEVOICED_PREFIX` | Devoiced mora — rendered with a dashed circle (single-char mora) or rounded rectangle (multi-char mora) around the kana |
-| `\` | `LITERAL_PREFIX` | Literal — prevents kana conversion (keeps original kana when `convert_reading` is set). During katakana conversion, the character is preserved as-is, then converted back to katakana individually (bypassing pronunciation normalization) |
+| `\` | `LITERAL_PREFIX` | Literal — bypasses pronunciation normalization (long vowel merging like おう→オー from `EQUIVALENT_SOUNDS`) but is still converted to katakana via `toKatakana()`. Also prevents particle pronunciation correction (は→ワ, へ→エ) since the mora is marked `literal` |
 | `^` | `HIGH_PREFIX` | High override — forces this mora to high pitch regardless of the accent pattern |
 
 Up to 3 prefixes can be combined on a single mora (matched by `[\*\\\^]{1,3}` in the mora regex).
@@ -298,7 +298,7 @@ const PITCH_BREAKS = ['|', '-', ',', '、'];  // Reset pitch tracking (lastLow)
 | `\|` | No (`SENT_HIDDEN`) | Yes (`PITCH_BREAKS`) | Empty section, no circles |
 | `,` | Yes | Yes (`PITCH_BREAKS`) | Empty section, no circles |
 | `、` | Yes | Yes (`PITCH_BREAKS`) | Empty section, no circles |
-| `-` | No (`SENT_HIDDEN`) | Yes (particle inherits low) | Ghost particle circle (no text) |
+| `-` | No (`SENT_HIDDEN`) | No (role is `'particle'`, not `'empty'`, so `PITCH_BREAKS` has no effect — behaves as a normal particle inheriting pitch from context) | Ghost particle circle (no text) |
 | `「` | Yes | No (preserves `lastLow`) | Empty section, no circles |
 | `」` | Yes | No (preserves `lastLow`) | Empty section, no circles |
 
@@ -531,7 +531,7 @@ const config = {
 あう:0,1                         // all-kana, two accents
 食[た]べる:k                     // kifuku verb (defaults to pitch 2)
 アニメ:0                         // katakana heiban
-考[かんが]え方[かた]:n            // compound nakadaka (merged fragments)
+考[かんが]え 方[かた]:n           // compound nakadaka (merged fragments)
 ```
 
 ### Sentence field
@@ -549,7 +549,7 @@ const config = {
 *す*き:a                          // devoiced す and き
 橋[はし]:2 -                      // ghost particle showing pitch drop
 食[た]べる:k ; 物[もの]:h         // tape connecting verb to noun
-\き:a                             // literal き (no katakana conversion)
+\き:a                             // literal き (bypasses pronunciation normalization, still converted to katakana)
 大阪[おおさか]:H:hlhh             // Keihan accent with explicit levels
 ^高[たか]い:0~                    // high override on first mora, all-low
 は:ph                             // particle with explicit heiban accent
