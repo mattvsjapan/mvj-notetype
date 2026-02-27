@@ -1,23 +1,26 @@
-"""Settings dialog for the MvJ note type — exposes CSS custom properties as radio buttons."""
+"""Settings dialog for the MvJ note type — exposes CSS custom properties as dropdowns."""
 
 import copy
 import json
 import os
 import re
 import shutil
+from dataclasses import dataclass, field
 
 from aqt import mw
 from aqt.qt import (
     QApplication,
-    QButtonGroup,
+    QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QPushButton,
-    QRadioButton,
     QScrollArea,
     QSplitter,
     Qt,
@@ -100,6 +103,34 @@ _SETTINGS = {
     ],
 }
 
+# All settings the JS mode system can override (matches front.html settings array).
+_OVERRIDABLE = [
+    "tategaki", "color-scheme", "debug", "audio-labels",
+    "word", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
+    "sentence", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
+    "image",
+    "definition-text", "definition-audio", "definition-mode",
+    "definition-furigana", "definition-pitch-color",
+]
+
+# Regex to find the modes *content* (between the MODES banner and the closing ═══ banner).
+_MODES_CONTENT_RE = re.compile(
+    r"(⚙\s+MODES\b.*?═+\s*\*/)"   # end of MODES banner  (group 1 — kept)
+    r"(.*?)"                         # mode content          (group 2 — replaced)
+    r"(\n[ \t]*/\*\s*═+\s*\*/)",    # closing ═══ banner    (group 3 — kept)
+    re.DOTALL,
+)
+
+_OVERRIDE_ACTIVE_STYLE = "QComboBox { background-color: rgba(76, 175, 80, 0.10); }"
+
+
+@dataclass
+class Mode:
+    name: str
+    tag: str
+    deck: str
+    overrides: dict[str, str] = field(default_factory=dict)
+
 
 def _var_to_label(var: str) -> str:
     """Convert a CSS variable name to a human-readable label.
@@ -135,6 +166,73 @@ def _apply_settings(css: str, settings: dict[str, str]) -> str:
     return css
 
 
+def _parse_modes(css: str) -> list[Mode]:
+    """Extract mode definitions from CSS custom properties."""
+    modes: list[Mode] = []
+    for i in range(1, 21):
+        tag_m = re.search(rf"--mode-{i}-tag:\s*([^;]*);", css)
+        deck_m = re.search(rf"--mode-{i}-deck:\s*([^;]*);", css)
+        if not tag_m and not deck_m:
+            break
+
+        tag = tag_m.group(1).strip() if tag_m else ""
+        deck = deck_m.group(1).strip() if deck_m else ""
+
+        # Name: try --mode-N-name variable first, then comment header
+        name = ""
+        name_m = re.search(rf"--mode-{i}-name:\s*([^;]*);", css)
+        if name_m and name_m.group(1).strip():
+            name = name_m.group(1).strip()
+        else:
+            comment_m = re.search(rf"/\*\s*——\s*Mode\s+{i}:\s*(\S+)", css)
+            if comment_m:
+                name = comment_m.group(1).strip()
+
+        overrides: dict[str, str] = {}
+        for setting in _OVERRIDABLE:
+            m = re.search(
+                rf"--mode-{i}-{re.escape(setting)}:\s*(\S+?)\s*;", css
+            )
+            if m:
+                overrides[f"--{setting}"] = m.group(1)
+
+        modes.append(Mode(name=name, tag=tag, deck=deck, overrides=overrides))
+    return modes
+
+
+def _serialize_modes(modes: list[Mode]) -> str:
+    """Generate CSS text for all modes."""
+    _DASH = "\u2014"
+    lines: list[str] = []
+    for i, mode in enumerate(modes, 1):
+        name_part = f": {mode.name} " if mode.name else " "
+        dashes = max(1, 55 - len(f"Mode {i}{name_part}"))
+        lines.append("")
+        lines.append(
+            f"    /* {_DASH}{_DASH} Mode {i}{name_part}"
+            f"{_DASH * dashes} */"
+        )
+        if mode.name:
+            lines.append(f"    --mode-{i}-name: {mode.name};")
+        lines.append(f"    --mode-{i}-tag: {mode.tag};")
+        lines.append(f"    --mode-{i}-deck: {mode.deck};")
+        for var, value in mode.overrides.items():
+            setting = var.lstrip("-")
+            lines.append(f"    --mode-{i}-{setting}: {value};")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _apply_modes(css: str, modes: list[Mode]) -> str:
+    """Replace the modes region in the CSS with serialized mode data."""
+    content = _serialize_modes(modes)
+
+    def replacer(m: re.Match) -> str:
+        return m.group(1) + content + m.group(3)
+
+    return _MODES_CONTENT_RE.sub(replacer, css, count=1)
+
+
 class SettingsDialog(QDialog):
     _preview_timer: QTimer | None = None
     _web: AnkiWebView | None = None
@@ -168,68 +266,61 @@ class SettingsDialog(QDialog):
         self.resize(1400, min(1200, available_h - 50))
 
         css = self._model["css"]
-        current = _parse_settings(css)
+        self._defaults = _parse_settings(css)
+        self._modes = _parse_modes(css)
+        self._selected_index = -1  # -1 = Defaults
+
+        # Widget refs (populated by detail panel builders)
+        self._combos: dict[str, QComboBox] = {}
+        self._hotkey_inputs: dict[str, QLineEdit] = {}
+        self._mode_overrides: dict[str, tuple[QCheckBox, QComboBox]] = {}
+        self._mode_name_input: QLineEdit | None = None
+        self._mode_tag_input: QLineEdit | None = None
+        self._mode_deck_input: QLineEdit | None = None
 
         outer = QVBoxLayout(self)
-        self._groups: dict[str, QButtonGroup] = {}
 
         # --- Splitter: settings on left, preview on right ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left: scrollable settings panel
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(320)
-        settings_widget = QWidget()
-        settings_layout = QVBoxLayout(settings_widget)
+        # ---- Left panel ----
+        left = QWidget()
+        left.setMinimumWidth(320)
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
 
-        for section, entries in _SETTINGS.items():
-            group_box = QGroupBox(section)
-            form = QFormLayout()
-            form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
-            form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-            for var, options, default in entries:
-                btn_group = QButtonGroup(self)
-                row = QHBoxLayout()
-                for opt in options:
-                    rb = QRadioButton(opt)
-                    if current.get(var, default) == opt:
-                        rb.setChecked(True)
-                    btn_group.addButton(rb)
-                    row.addWidget(rb)
-                row.addStretch()
-                form.addRow(_var_to_label(var) + ":", row)
-                self._groups[var] = btn_group
-                btn_group.buttonClicked.connect(self._on_setting_changed)
-            group_box.setLayout(form)
-            settings_layout.addWidget(group_box)
+        # Mode list
+        self._mode_list = QListWidget()
+        self._mode_list.setFixedHeight(180)
+        self._mode_list.currentRowChanged.connect(
+            self._on_mode_list_selection_changed
+        )
+        left_layout.addWidget(self._mode_list)
 
-        # Hotkeys group box
-        self._hotkey_inputs: dict[str, QLineEdit] = {}
-        hotkey_box = QGroupBox("Hotkeys")
-        hotkey_form = QFormLayout()
-        hotkey_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
-        hotkey_form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        for var, default in _HOTKEYS:
-            line_edit = QLineEdit()
-            line_edit.setMaxLength(1)
-            line_edit.setFixedWidth(30)
-            line_edit.setText(current.get(var, default))
-            line_edit.textChanged.connect(self._on_setting_changed)
-            # Strip "Hotkey " prefix since they're in a "Hotkeys" group
-            label = _var_to_label(var).removeprefix("Hotkey ")
-            if var == "--hotkey-jp-toggle":
-                label = "Hidden Definition Toggle"
-            hotkey_form.addRow(label + ":", line_edit)
-            self._hotkey_inputs[var] = line_edit
-        hotkey_box.setLayout(hotkey_form)
-        settings_layout.addWidget(hotkey_box)
+        # Button row
+        btn_row = QHBoxLayout()
+        self._btn_add = QPushButton("+")
+        self._btn_del = QPushButton("\u2212")   # minus sign
+        self._btn_up = QPushButton("\u25b2")    # ▲
+        self._btn_down = QPushButton("\u25bc")  # ▼
+        for btn in (self._btn_add, self._btn_del, self._btn_up, self._btn_down):
+            btn.setFixedWidth(30)
+            btn_row.addWidget(btn)
+        btn_row.addStretch()
+        self._btn_add.clicked.connect(self._add_mode)
+        self._btn_del.clicked.connect(self._delete_mode)
+        self._btn_up.clicked.connect(self._move_mode_up)
+        self._btn_down.clicked.connect(self._move_mode_down)
+        left_layout.addLayout(btn_row)
 
-        settings_layout.addStretch()
-        scroll.setWidget(settings_widget)
-        splitter.addWidget(scroll)
+        # Detail scroll area (content swapped on selection change)
+        self._detail_scroll = QScrollArea()
+        self._detail_scroll.setWidgetResizable(True)
+        left_layout.addWidget(self._detail_scroll, 1)
 
-        # Right: preview panel
+        splitter.addWidget(left)
+
+        # ---- Right panel: preview (unchanged) ----
         preview_container = QWidget()
         preview_layout = QVBoxLayout(preview_container)
         preview_layout.setContentsMargins(0, 0, 0, 0)
@@ -265,10 +356,301 @@ class SettingsDialog(QDialog):
         update_btn = QPushButton("Update to Newest Version")
         update_btn.clicked.connect(self._install)
         btn_box.addButton(update_btn, QDialogButtonBox.ButtonRole.ActionRole)
-        convert_btn = QPushButton("Convert [sound:] → [audio:]")
+        convert_btn = QPushButton("Convert [sound:] \u2192 [audio:]")
         convert_btn.clicked.connect(self._convert_sound_to_audio)
         btn_box.addButton(convert_btn, QDialogButtonBox.ButtonRole.ActionRole)
         outer.addWidget(btn_box)
+
+        # --- Populate mode list & detail panel ---
+        self._rebuild_mode_list()
+        self._rebuild_detail_panel()
+        self._update_button_states()
+
+    # --- Mode list ---
+
+    def _rebuild_mode_list(self) -> None:
+        """Repopulate the mode list widget from self._modes."""
+        self._mode_list.blockSignals(True)
+        self._mode_list.clear()
+
+        # Pinned "Defaults" row
+        defaults_item = QListWidgetItem("\u2605 Defaults")
+        font = defaults_item.font()
+        font.setBold(True)
+        defaults_item.setFont(font)
+        defaults_item.setFlags(
+            defaults_item.flags() & ~Qt.ItemFlag.ItemIsDragEnabled
+        )
+        self._mode_list.addItem(defaults_item)
+
+        for i, mode in enumerate(self._modes):
+            if mode.name:
+                text = f"{i + 1}. {mode.name}"
+            elif mode.tag:
+                text = f"{i + 1}. [{mode.tag}]"
+            else:
+                text = f"{i + 1}. (untitled)"
+            self._mode_list.addItem(QListWidgetItem(text))
+
+        # Restore selection
+        self._mode_list.setCurrentRow(self._selected_index + 1)
+        self._mode_list.blockSignals(False)
+
+    def _update_button_states(self) -> None:
+        is_default = self._selected_index == -1
+        self._btn_del.setEnabled(not is_default)
+        self._btn_up.setEnabled(self._selected_index > 0)
+        self._btn_down.setEnabled(
+            not is_default and self._selected_index < len(self._modes) - 1
+        )
+
+    def _on_mode_list_selection_changed(self, row: int) -> None:
+        if row < 0:
+            return
+        self._sync_current_to_data()
+        self._selected_index = row - 1  # row 0 = Defaults → -1
+        self._rebuild_detail_panel()
+        self._update_button_states()
+        self._on_setting_changed()
+
+    # --- Detail panel builders ---
+
+    def _rebuild_detail_panel(self) -> None:
+        old = self._detail_scroll.takeWidget()
+        if old:
+            old.deleteLater()
+
+        if self._selected_index == -1:
+            widget = self._build_defaults_view()
+        else:
+            widget = self._build_mode_view(self._modes[self._selected_index])
+        self._detail_scroll.setWidget(widget)
+
+    def _build_defaults_view(self) -> QWidget:
+        """Build the defaults editing panel (dropdowns + hotkeys)."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        self._combos = {}
+
+        for section, entries in _SETTINGS.items():
+            group_box = QGroupBox(section)
+            form = QFormLayout()
+            form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.setFormAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+            )
+            for var, options, default in entries:
+                combo = QComboBox()
+                combo.addItems(options)
+                combo.setCurrentText(self._defaults.get(var, default))
+                combo.currentTextChanged.connect(self._on_setting_changed)
+                form.addRow(_var_to_label(var) + ":", combo)
+                self._combos[var] = combo
+            group_box.setLayout(form)
+            layout.addWidget(group_box)
+
+        # Hotkeys group box
+        self._hotkey_inputs = {}
+        hotkey_box = QGroupBox("Hotkeys")
+        hotkey_form = QFormLayout()
+        hotkey_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        hotkey_form.setFormAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        for var, default in _HOTKEYS:
+            line_edit = QLineEdit()
+            line_edit.setMaxLength(1)
+            line_edit.setFixedWidth(30)
+            line_edit.setText(self._defaults.get(var, default))
+            line_edit.textChanged.connect(self._on_setting_changed)
+            # Strip "Hotkey " prefix since they're in a "Hotkeys" group
+            label = _var_to_label(var).removeprefix("Hotkey ")
+            if var == "--hotkey-jp-toggle":
+                label = "Hidden Definition Toggle"
+            hotkey_form.addRow(label + ":", line_edit)
+            self._hotkey_inputs[var] = line_edit
+        hotkey_box.setLayout(hotkey_form)
+        layout.addWidget(hotkey_box)
+
+        layout.addStretch()
+        return widget
+
+    def _build_mode_view(self, mode: Mode) -> QWidget:
+        """Build the mode editing panel (triggers + override checkboxes)."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        self._mode_overrides = {}
+
+        # --- Triggers ---
+        triggers_box = QGroupBox("Mode Settings")
+        triggers_form = QFormLayout()
+        triggers_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        triggers_form.setFormAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+
+        self._mode_name_input = QLineEdit(mode.name)
+        self._mode_name_input.setPlaceholderText("e.g. Sentence")
+        self._mode_name_input.textChanged.connect(self._on_mode_name_changed)
+        triggers_form.addRow("Name:", self._mode_name_input)
+
+        self._mode_tag_input = QLineEdit(mode.tag)
+        self._mode_tag_input.setPlaceholderText("e.g. _jp::sentence")
+        self._mode_tag_input.textChanged.connect(self._on_setting_changed)
+        triggers_form.addRow("Tag:", self._mode_tag_input)
+
+        self._mode_deck_input = QLineEdit(mode.deck)
+        self._mode_deck_input.setPlaceholderText("e.g. Mining::Vocab")
+        self._mode_deck_input.textChanged.connect(self._on_setting_changed)
+        triggers_form.addRow("Deck:", self._mode_deck_input)
+
+        triggers_box.setLayout(triggers_form)
+        layout.addWidget(triggers_box)
+
+        # --- Override sections (same groups as defaults, minus Hotkeys) ---
+        for section, entries in _SETTINGS.items():
+            group_box = QGroupBox(section)
+            form = QFormLayout()
+            form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.setFormAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+            )
+            for var, options, default in entries:
+                row = QHBoxLayout()
+                cb = QCheckBox()
+                combo = QComboBox()
+                combo.addItems(options)
+
+                is_overridden = var in mode.overrides
+                cb.setChecked(is_overridden)
+                if is_overridden:
+                    combo.setCurrentText(mode.overrides[var])
+                    combo.setStyleSheet(_OVERRIDE_ACTIVE_STYLE)
+                else:
+                    combo.setCurrentText(self._defaults.get(var, default))
+                    combo.setEnabled(False)
+
+                cb.toggled.connect(
+                    lambda checked, c=combo, v=var, d=default:
+                        self._on_override_toggled(checked, c, v, d)
+                )
+                combo.currentTextChanged.connect(self._on_setting_changed)
+
+                row.addWidget(cb)
+                row.addWidget(combo, 1)
+                form.addRow(_var_to_label(var) + ":", row)
+                self._mode_overrides[var] = (cb, combo)
+            group_box.setLayout(form)
+            layout.addWidget(group_box)
+
+        layout.addStretch()
+        return widget
+
+    def _on_override_toggled(
+        self, checked: bool, combo: QComboBox, var: str, default: str,
+    ) -> None:
+        combo.setEnabled(checked)
+        if checked:
+            combo.setStyleSheet(_OVERRIDE_ACTIVE_STYLE)
+        else:
+            combo.setStyleSheet("")
+            # Reset to inherited default
+            combo.setCurrentText(self._defaults.get(var, default))
+        self._on_setting_changed()
+
+    def _on_mode_name_changed(self, text: str) -> None:
+        if self._selected_index >= 0:
+            self._modes[self._selected_index].name = text
+            row = self._selected_index + 1
+            item = self._mode_list.item(row)
+            if item:
+                idx = self._selected_index
+                if text:
+                    item.setText(f"{idx + 1}. {text}")
+                elif self._modes[idx].tag:
+                    item.setText(f"{idx + 1}. [{self._modes[idx].tag}]")
+                else:
+                    item.setText(f"{idx + 1}. (untitled)")
+        self._on_setting_changed()
+
+    # --- Sync widget state ↔ data model ---
+
+    def _sync_current_to_data(self) -> None:
+        """Write current widget values back to the data model."""
+        if self._selected_index == -1:
+            if not self._combos:
+                return
+            for var, combo in self._combos.items():
+                self._defaults[var] = combo.currentText()
+            for var, line_edit in self._hotkey_inputs.items():
+                text = line_edit.text()
+                if text:
+                    self._defaults[var] = text
+        else:
+            if not self._mode_overrides:
+                return
+            mode = self._modes[self._selected_index]
+            if self._mode_name_input:
+                mode.name = self._mode_name_input.text()
+            if self._mode_tag_input:
+                mode.tag = self._mode_tag_input.text()
+            if self._mode_deck_input:
+                mode.deck = self._mode_deck_input.text()
+
+            # Preserve overrides not shown in the UI (e.g. --debug)
+            ui_vars = set(self._mode_overrides.keys())
+            new_overrides = {
+                k: v for k, v in mode.overrides.items() if k not in ui_vars
+            }
+            for var, (cb, combo) in self._mode_overrides.items():
+                if cb.isChecked():
+                    new_overrides[var] = combo.currentText()
+            mode.overrides = new_overrides
+
+    # --- Mode list operations ---
+
+    def _refresh_after_list_change(self) -> None:
+        self._rebuild_mode_list()
+        self._rebuild_detail_panel()
+        self._update_button_states()
+        self._on_setting_changed()
+
+    def _add_mode(self) -> None:
+        if len(self._modes) >= 20:
+            return
+        self._sync_current_to_data()
+        self._modes.append(Mode(name="", tag="", deck="", overrides={}))
+        self._selected_index = len(self._modes) - 1
+        self._refresh_after_list_change()
+
+    def _delete_mode(self) -> None:
+        if self._selected_index < 0:
+            return
+        self._modes.pop(self._selected_index)
+        self._selected_index = -1
+        self._refresh_after_list_change()
+
+    def _move_mode_up(self) -> None:
+        idx = self._selected_index
+        if idx <= 0:
+            return
+        self._sync_current_to_data()
+        self._modes[idx - 1], self._modes[idx] = (
+            self._modes[idx], self._modes[idx - 1]
+        )
+        self._selected_index = idx - 1
+        self._refresh_after_list_change()
+
+    def _move_mode_down(self) -> None:
+        idx = self._selected_index
+        if idx < 0 or idx >= len(self._modes) - 1:
+            return
+        self._sync_current_to_data()
+        self._modes[idx], self._modes[idx + 1] = (
+            self._modes[idx + 1], self._modes[idx]
+        )
+        self._selected_index = idx + 1
+        self._refresh_after_list_change()
 
     # --- Preview ---
 
@@ -304,18 +686,14 @@ class SettingsDialog(QDialog):
         # First render after webview page finishes loading
         QTimer.singleShot(200, self._render_preview)
 
-    def _get_current_settings(self) -> dict[str, str]:
-        """Read all radio button and hotkey input values into a dict."""
-        values = {}
-        for var, btn_group in self._groups.items():
-            checked = btn_group.checkedButton()
-            if checked:
-                values[var] = checked.text()
-        for var, line_edit in self._hotkey_inputs.items():
-            text = line_edit.text()
-            if text:
-                values[var] = text
-        return values
+    def _get_effective_settings(self) -> dict[str, str]:
+        """Get settings for preview: defaults overlaid with selected mode overrides."""
+        self._sync_current_to_data()
+        settings = dict(self._defaults)
+        if self._selected_index >= 0:
+            mode = self._modes[self._selected_index]
+            settings.update(mode.overrides)
+        return settings
 
     def _render_preview(self) -> None:
         """Render the preview card with current settings applied."""
@@ -324,7 +702,7 @@ class SettingsDialog(QDialog):
 
         self._cancel_preview_timer()
 
-        settings = self._get_current_settings()
+        settings = self._get_effective_settings()
         model_copy = copy.deepcopy(self._model)
         model_copy["css"] = _apply_settings(model_copy["css"], settings)
 
@@ -343,7 +721,7 @@ class SettingsDialog(QDialog):
         self._web.eval(f"_showAnswer({json.dumps(text)},'{bodyclass}');")
 
     def _on_setting_changed(self) -> None:
-        """Debounce preview updates when a radio button changes."""
+        """Debounce preview updates when a setting changes."""
         self._cancel_preview_timer()
         self._preview_timer = QTimer(self)
         self._preview_timer.setSingleShot(True)
@@ -442,8 +820,9 @@ class SettingsDialog(QDialog):
             self.reject()
             return
 
-        new_values = self._get_current_settings()
-        model["css"] = _apply_settings(model["css"], new_values)
+        self._sync_current_to_data()
+        model["css"] = _apply_settings(model["css"], self._defaults)
+        model["css"] = _apply_modes(model["css"], self._modes)
         mw.col.models.update_dict(model)
 
         self._cleanup()
