@@ -11,6 +11,7 @@ from aqt import mw
 from aqt.qt import (
     QApplication,
     QCheckBox,
+    QColor,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -21,6 +22,7 @@ from aqt.qt import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QPalette,
     QPushButton,
     QScrollArea,
     QSplitter,
@@ -122,7 +124,7 @@ _MODES_CONTENT_RE = re.compile(
     re.DOTALL,
 )
 
-_OVERRIDE_ACTIVE_STYLE = "QComboBox { background-color: rgba(76, 175, 80, 0.10); }"
+_OVERRIDE_ACTIVE_COLOR = QColor(76, 175, 80, 25)
 
 
 @dataclass
@@ -599,7 +601,9 @@ class SettingsDialog(QDialog):
                 cb.setChecked(is_overridden)
                 if is_overridden:
                     combo.setCurrentText(mode.overrides[var])
-                    combo.setStyleSheet(_OVERRIDE_ACTIVE_STYLE)
+                    pal = combo.palette()
+                    pal.setColor(QPalette.ColorRole.Button, _OVERRIDE_ACTIVE_COLOR)
+                    combo.setPalette(pal)
                 else:
                     combo.setCurrentText(self._defaults.get(var, default))
                     combo.setEnabled(False)
@@ -624,12 +628,14 @@ class SettingsDialog(QDialog):
         self, checked: bool, combo: QComboBox, var: str, default: str,
     ) -> None:
         combo.setEnabled(checked)
+        pal = combo.palette()
         if checked:
-            combo.setStyleSheet(_OVERRIDE_ACTIVE_STYLE)
+            pal.setColor(QPalette.ColorRole.Button, _OVERRIDE_ACTIVE_COLOR)
         else:
-            combo.setStyleSheet("")
+            pal = self.style().standardPalette()
             # Reset to inherited default
             combo.setCurrentText(self._defaults.get(var, default))
+        combo.setPalette(pal)
         self._on_setting_changed()
 
     def _on_mode_name_changed(self, text: str) -> None:
