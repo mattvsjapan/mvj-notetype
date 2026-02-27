@@ -57,7 +57,7 @@ When the word is all kana (hiragana or katakana), the bracket contains only pitc
 | `かわいい[3]` | `かわいい:3` |
 | `アニメ[0]` | `アニメ:0` |
 
-**Detection**: Bracket content matches `/^[0-9,hkaonb~+p*]+$/` (digits, commas, and pitch modifier characters — no kana). The word before the bracket is all kana.
+**Detection**: Bracket content matches `/^[0-9,hkaonb~+p*\-]+$/` (digits, commas, hyphens, and pitch modifier characters — no kana). The word before the bracket is all kana.
 
 **Rule**: Strip brackets, append `:pitch`.
 
@@ -128,7 +128,7 @@ Nakaten (`・`) in the reading separates segments, and hyphens in the pitch corr
 
 The new syntax has no equivalent for compound pitch with hyphens. The hyphenated pitch `1-1` means "first segment is pitch 1, second segment is pitch 1."
 
-**Rule**: Strip the nakaten from the reading. Use the **last** pitch value (the primary/verb portion in compound verbs). Flag for manual review. If furigana distribution can split the word, split it into separate accented sections (e.g., `十人[じゅうにん]:1 十色[といろ]:1`), but still flag for verification.
+**Rule**: Use the nakaten positions to split both reading and pitch into corresponding segments. The `・` delimiters in the reading and `-` delimiters in the pitch align 1:1, giving us natural split points. Apply the furigana distribution algorithm to each reading segment independently against the word text to produce separate accented sections (e.g., `十人[じゅうにん]:1 十色[といろ]:1`). If the word is all-kanji and the segments can't be distributed, fall back to keeping the combined bracket with the **last** pitch value. Flag for manual review in all cases.
 
 ### 2.8 Pitch value mapping
 
@@ -157,6 +157,7 @@ These only appear in user-override data, not auto-generated. They're rare but mu
 | `p`, `p0` | `:p`, `:ph` | Particle marker → `p` prefix in new accent |
 | `p1` | `:pa` | Particle with atamadaka |
 | `ph` | `:ph` | Particle with heiban |
+| `pb` | `:pb` | Particle with black/neutral coloring |
 | `*き` in reading | `*き` in reading | Devoiced mora — no change needed, same prefix in both systems |
 
 ---
@@ -189,6 +190,8 @@ In old sentence syntax, compound words have **every** bracket tagged with a lett
 - Its bracket contains `;` followed by a single letter (`h`, `a`, `n`, `k`) matching the group's letter
 - OR it's a pitch-only bracket (e.g., `[n]`, `[h]`) on a bare kana token with the same letter
 The run ends when a token has a different pitch letter, a numeric pitch, no pitch, or is a particle/punctuation.
+
+**Known limitation — false positives with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. In practice this is rare (adjacent verbs usually have a particle between them), but the implementation should add a heuristic: only group `h`/`k` tokens when their structure looks like a compound (e.g., no token in the group has okurigana after its bracket, or the group contains a mix of kanji-bracket and kana-only tokens). The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
 
 ### 3.3 Inflected verbs/adjectives in sentences
 
@@ -244,7 +247,7 @@ def classify_bracket(content: str) -> str:
         return 'already_new'  # shouldn't happen in old data
     if ';' in content:
         return 'reading_and_pitch'
-    if re.match(r'^[0-9,hkaonb~+p*]+$', content):
+    if re.match(r'^[0-9,hkaonb~+p*\-]+$', content):
         return 'pitch_only'
     return 'reading_only'
 ```
@@ -370,8 +373,13 @@ def distribute_furigana(word, reading):
 ### 5.2 Reconstructing new syntax from segments
 
 ```python
-def segments_to_new_syntax(segments, pitch):
-    """Convert distributed segments to new colon notation."""
+def segments_to_new_syntax(segments, pitch, okurigana=''):
+    """Convert distributed segments to new colon notation.
+
+    `okurigana` is any trailing kana that was outside the original bracket
+    (e.g., the え in 取り替[とりか;3,0]え). It is appended after the last
+    segment and before :pitch.
+    """
     parts = []
     for seg in segments:
         if seg[0] == 'kana':
@@ -379,10 +387,12 @@ def segments_to_new_syntax(segments, pitch):
         else:  # kanji
             kanji, reading = seg[1], seg[2]
             parts.append(f'{kanji}[{reading}]')
-    return ' '.join(parts) + f':{pitch}'
+    return ' '.join(parts) + okurigana + f':{pitch}'
 ```
 
 Result: `考[かんが] え 方[かた]:5,0`
+
+Note: the spaces between all parts (including kana segments like `え`) are fine — the new parser's fragment merging collects all unaccented tokens before the colon-bearing token and merges them into a single section. `考[かんが] え 方[かた]:5,0` parses identically to `考[かんが]え 方[かた]:5,0`.
 
 ### 5.3 Consecutive kanji (no kana anchors)
 
@@ -497,7 +507,7 @@ def _is_punctuation(token):
     return token.strip() in ('。', '、', '！', '？', '!', '?', '…', '「', '」')
 ```
 
-**Refinement**: The "has_before" and "has_after" checks should stop at sentence punctuation boundaries. A particle after `。` is not between two accented words. The simplest approach: split on punctuation first, process each clause independently.
+**Important**: The "has_before" and "has_after" checks must stop at sentence punctuation boundaries (`。`, `！`, `？`). A particle after `。` is not between two accented words — it's at the start of a new clause. The implementation should split the token list on sentence-ending punctuation first, then process each clause independently before reassembling.
 
 ---
 
@@ -631,7 +641,7 @@ OLD_PITCHED_BRACKET = re.compile(r'\[[^\]]*;[^\]]*\]')
 
 ```python
 # Matches: [0], [0,1], [3], [h], [k2], [h,k]
-PITCH_ONLY_BRACKET = re.compile(r'\[([0-9hkaonbk~+p*,]+)\]')
+PITCH_ONLY_BRACKET = re.compile(r'\[([0-9hkaonb~+p*,\-]+)\]')
 ```
 
 Note: Must verify the **word** before the bracket is all kana (no kanji). Otherwise `何[3]` (kanji with a digit bracket) might be misclassified — but in practice this doesn't occur because kanji words always have kana readings in brackets.
