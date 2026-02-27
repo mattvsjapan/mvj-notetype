@@ -35,10 +35,12 @@ _SAMPLE_FIELDS = {
     "Sentence Audio": "[audio:_]",
     "Definition": (
         '<!-- def-type="bilingual" -->'
-        "(the) Japanese language"
+        "A language that is spoken by the people of Japan as their primary means of communication."
         "<!-- def-end -->"
+        '<!-- def-br-start --><br><br><!-- def-br-end -->'
         '<!-- def-type="monolingual" -->'
-        "日本[にほん]:0 の 国語[こくご]:0 。"
+        "にほん‐ご [0]【日本語】<br>"
+        "日本列島で話される言語。主語・目的語・述語の順に並び、動詞に助動詞や助詞が いくつも つく。音節の種類が少ない。"
         "<!-- def-end -->"
     ),
     "Definition Audio": "[audio:_]",
@@ -194,7 +196,7 @@ class SettingsDialog(QDialog):
         self._btn_back = QPushButton("Back")
         self._btn_front.setCheckable(True)
         self._btn_back.setCheckable(True)
-        self._btn_front.setChecked(True)  # default to showing front
+        self._btn_back.setChecked(True)  # default to showing back
         self._btn_front.clicked.connect(self._on_front_clicked)
         self._btn_back.clicked.connect(self._on_back_clicked)
         toggle_row.addWidget(self._btn_front)
