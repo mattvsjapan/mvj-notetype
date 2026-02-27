@@ -2,7 +2,9 @@
 
 import copy
 import json
+import os
 import re
+import shutil
 
 from aqt import mw
 from aqt.qt import (
@@ -27,6 +29,8 @@ from aqt.webview import AnkiWebView, AnkiWebViewKind
 
 from .notetype import NOTE_TYPE_NAME, install_notetype
 
+_SAMPLE_IMAGE = "_mvj_sample.jpg"
+
 # --- Sample card for the live preview ---
 _SAMPLE_FIELDS = {
     "Word": "日本語[にほんご]:0-",
@@ -43,7 +47,11 @@ _SAMPLE_FIELDS = {
         "日本列島で話される言語。主語・目的語・述語の順に並び、動詞に助動詞や助詞が いくつも つく。音節の種類が少ない。"
         "<!-- def-end -->"
     ),
-    "Definition Audio": "[audio:_]",
+    "Definition Audio": (
+        '<!-- def-type="bilingual" -->[audio:_]<!-- def-end -->'
+        '<!-- def-type="monolingual" -->[audio:_]<!-- def-end -->'
+    ),
+    "Image": f'<img src="{_SAMPLE_IMAGE}">',
 }
 
 # --- Settings schema ---
@@ -230,6 +238,12 @@ class SettingsDialog(QDialog):
 
     def _init_preview(self, layout: QVBoxLayout) -> None:
         """Set up the preview webview with a synthetic sample card."""
+        # Ensure sample image is in media folder
+        src = os.path.join(os.path.dirname(__file__), _SAMPLE_IMAGE)
+        dst = os.path.join(mw.col.media.dir(), _SAMPLE_IMAGE)
+        if os.path.exists(src) and not os.path.exists(dst):
+            shutil.copy2(src, dst)
+
         self._note = mw.col.new_note(self._model)
         for name, value in _SAMPLE_FIELDS.items():
             if name in self._note:
