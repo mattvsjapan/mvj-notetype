@@ -3,6 +3,7 @@
 @font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
 @font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
 @font-face { font-family: 'YuKyokasho'; src: url('_yukyokasho-bold.woff2') format('woff2'); font-weight: 600 900; }
+@font-face { font-family: 'PitchNum'; src: url('_pitch_num.woff2') format('woff2'); font-weight: 100 900; }
 
 :root,
 :root[class*=night-mode] {
@@ -1547,11 +1548,6 @@ html.tategaki:has(.back) {
 .tategaki .front-content .sentence.furigana-front rt { display: revert; }
 .tategaki .front-content .target-word rt[data-split],
 .tategaki .front-content .sentence rt[data-split] { display: revert; }
-
-@font-face {
-  font-family: "PitchNum";
-  src: url("_pitch_num.woff2") format("woff2");
-}
 
 .pitch-num {
   font-family: "Hiragino Mincho ProN", "PitchNum";
