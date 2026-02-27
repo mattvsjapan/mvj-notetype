@@ -57,7 +57,7 @@ When the word is all kana (hiragana or katakana), the bracket contains only pitc
 | `かわいい[3]` | `かわいい:3` |
 | `アニメ[0]` | `アニメ:0` |
 
-**Detection**: Bracket content matches `/^[0-9,hkaonb~+p*\-]+$/` (digits, commas, hyphens, and pitch modifier characters — no kana). The word before the bracket is all kana.
+**Detection**: Bracket content matches `/^[0-9,hkaonb~+p\-]+$/` (digits, commas, hyphens, and pitch modifier characters — no kana). The word before the bracket is all kana.
 
 **Rule**: Strip brackets, append `:pitch`.
 
@@ -114,13 +114,13 @@ This is the hardest conversion. The old addon collapses multi-kanji compounds in
 |-----|-----|
 | `考え方[かんがえかた;5,0]` | `考[かんが]え 方[かた]:5,0` |
 | `一石[いっせき;2]` | `一石[いっせき]:2` (consecutive kanji — see §5) |
-| `取り替[とりか;3,0]え` | `取[と]り 替[か]え:3,0` |
+| `取り替[とりか;3,0]え` | `取[と] り 替[か]え:3,0` |
 
 **Rule**: Use the furigana distribution algorithm (§5) to split the combined reading back into per-kanji segments. Place `:pitch` after the last segment (including any trailing okurigana).
 
 ### 2.7 Nakaten compound pitch: `word[reading・with・dots;N-N]`
 
-Nakaten (`・`) in the reading separates segments, and hyphens in the pitch correspond 1:1 with those segments.
+Nakaten (`・`) in the reading separates segments, and hyphens in the pitch correspond 1:1 with those segments. Note that individual pitch segments can carry `k`/`h` prefixes for verb compounds (e.g., `1-k2` means first segment pitch 1, second segment kifuku pitch 2 — see §2.8 on verb pitch notation).
 
 | Old | New |
 |-----|-----|
@@ -128,7 +128,16 @@ Nakaten (`・`) in the reading separates segments, and hyphens in the pitch corr
 
 The new syntax has no equivalent for compound pitch with hyphens. The hyphenated pitch `1-1` means "first segment is pitch 1, second segment is pitch 1."
 
-**Rule**: Use the nakaten positions to split both reading and pitch into corresponding segments. The `・` delimiters in the reading and `-` delimiters in the pitch align 1:1, giving us natural split points. Apply the furigana distribution algorithm to each reading segment independently against the word text to produce separate accented sections (e.g., `十人[じゅうにん]:1 十色[といろ]:1`). If the word is all-kanji and the segments can't be distributed, fall back to keeping the combined bracket with the **last** pitch value. Flag for manual review in all cases.
+**Rule**: Use the nakaten positions to split both reading and pitch into corresponding segments. The `・` delimiters in the reading and `-` delimiters in the pitch align 1:1, giving us natural split points. Each pitch segment is treated as a full pitch value (it may be a plain number like `1`, or a prefixed value like `k2` or `h`).
+
+For each reading segment, attempt to run the furigana distribution algorithm (§5) against the corresponding portion of the word text to produce separate accented sections. However, this requires knowing which characters in the word belong to which segment, which is only possible when kana anchors exist between segments. For all-kanji words (like `十人十色`), the algorithm cannot determine the character boundaries and will fail.
+
+**Fallback**: When the segments can't be distributed across the word text (typically because the word is all kanji with no kana anchors), keep the combined bracket with the **last** pitch value and strip the nakaten from the reading:
+```
+十人十色[じゅうにん・といろ;1-1] → 十人十色[じゅうにんといろ]:1
+```
+
+Flag for manual review in all cases, since even successful splits lose the per-segment pitch relationship.
 
 ### 2.8 Pitch value mapping
 
@@ -247,7 +256,7 @@ def classify_bracket(content: str) -> str:
         return 'already_new'  # shouldn't happen in old data
     if ';' in content:
         return 'reading_and_pitch'
-    if re.match(r'^[0-9,hkaonb~+p*\-]+$', content):
+    if re.match(r'^[0-9,hkaonb~+p\-]+$', content):
         return 'pitch_only'
     return 'reading_only'
 ```
@@ -479,35 +488,54 @@ def group_compound_tokens(tokens):
 
 ### 6.3 Adding `:p` to interstitial particles
 
-After all pitched tokens have been converted (they now have `:`), scan for bare tokens between two colon-bearing tokens:
+After all pitched tokens have been converted (they now have `:`), scan for bare tokens between two colon-bearing tokens. The search must respect sentence-ending punctuation as clause boundaries — a particle after `。` is at the start of a new clause, not between two accented words.
 
 ```python
+SENTENCE_ENDING = {'。', '！', '？', '!', '?'}
+NON_PARTICLE = {'。', '、', '！', '？', '!', '?', '…', '「', '」'}
+
 def add_particle_colons(tokens):
-    """Add :p to bare tokens sitting between two accented tokens."""
+    """Add :p to bare tokens sitting between two accented tokens.
+
+    Splits on sentence-ending punctuation first, then processes each
+    clause independently to avoid adding :p across clause boundaries.
+    """
+    # Split token list into clauses at sentence-ending punctuation
+    clauses = []
+    current = []
+    for token in tokens:
+        current.append(token)
+        if token.strip() in SENTENCE_ENDING:
+            clauses.append(current)
+            current = []
+    if current:
+        clauses.append(current)
+
+    # Process each clause independently
+    result = []
+    for clause in clauses:
+        result.extend(_add_particle_colons_clause(clause))
+    return result
+
+def _add_particle_colons_clause(tokens):
+    """Add :p to bare tokens between accented tokens within a single clause."""
     result = list(tokens)
 
     for i in range(len(result)):
         if ':' in result[i]:
             continue  # already accented
-        if _is_punctuation(result[i]):
+        if result[i].strip() in NON_PARTICLE:
             continue  # don't add :p to punctuation
 
-        # Look for accented token before and after
-        has_before = any(':' in result[j] for j in range(i - 1, -1, -1)
-                        if not _is_punctuation(result[j]))
-        has_after = any(':' in result[j] for j in range(i + 1, len(result))
-                       if not _is_punctuation(result[j]))
+        # Look for accented token before and after within this clause
+        has_before = any(':' in result[j] for j in range(i - 1, -1, -1))
+        has_after = any(':' in result[j] for j in range(i + 1, len(result)))
 
         if has_before and has_after:
             result[i] = result[i] + ':p'
 
     return result
-
-def _is_punctuation(token):
-    return token.strip() in ('。', '、', '！', '？', '!', '?', '…', '「', '」')
 ```
-
-**Important**: The "has_before" and "has_after" checks must stop at sentence punctuation boundaries (`。`, `！`, `？`). A particle after `。` is not between two accented words — it's at the start of a new clause. The implementation should split the token list on sentence-ending punctuation first, then process each clause independently before reassembling.
 
 ---
 
@@ -641,7 +669,7 @@ OLD_PITCHED_BRACKET = re.compile(r'\[[^\]]*;[^\]]*\]')
 
 ```python
 # Matches: [0], [0,1], [3], [h], [k2], [h,k]
-PITCH_ONLY_BRACKET = re.compile(r'\[([0-9hkaonb~+p*,\-]+)\]')
+PITCH_ONLY_BRACKET = re.compile(r'\[([0-9hkaonb~+p,\-]+)\]')
 ```
 
 Note: Must verify the **word** before the bracket is all kana (no kanji). Otherwise `何[3]` (kanji with a digit bracket) might be misclassified — but in practice this doesn't occur because kanji words always have kana readings in brackets.
@@ -700,7 +728,7 @@ assert convert_word("食[た]べる") == "食[た]べる"
 
 # §2.6 Compound splitting
 assert convert_word("考え方[かんがえかた;5,0]") == "考[かんが]え 方[かた]:5,0"
-assert convert_word("取り替[とりか;3,0]え") == "取[と]り 替[か]え:3,0"
+assert convert_word("取り替[とりか;3,0]え") == "取[と] り 替[か]え:3,0"
 
 # §2.6 Consecutive kanji (no split possible)
 assert convert_word("一石[いっせき;2]") == "一石[いっせき]:2"
