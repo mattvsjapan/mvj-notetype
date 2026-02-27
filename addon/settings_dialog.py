@@ -339,19 +339,17 @@ class SettingsDialog(QDialog):
         # --- Splitter: settings on left, preview on right ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # ---- Left panel ----
-        left = QWidget()
-        left.setMinimumWidth(320)
-        left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        # ---- Left panel (all content in one scroll area) ----
+        left_inner = QWidget()
+        self._left_layout = QVBoxLayout(left_inner)
+        self._left_layout.setContentsMargins(0, 0, 0, 0)
 
         # Mode list
         self._mode_list = QListWidget()
-        self._mode_list.setFixedHeight(120)
         self._mode_list.currentRowChanged.connect(
             self._on_mode_list_selection_changed
         )
-        left_layout.addWidget(self._mode_list)
+        self._left_layout.addWidget(self._mode_list)
 
         # Button row
         btn_row = QHBoxLayout()
@@ -367,14 +365,17 @@ class SettingsDialog(QDialog):
         self._btn_del.clicked.connect(self._delete_mode)
         self._btn_up.clicked.connect(self._move_mode_up)
         self._btn_down.clicked.connect(self._move_mode_down)
-        left_layout.addLayout(btn_row)
+        self._left_layout.addLayout(btn_row)
 
-        # Detail scroll area (content swapped on selection change)
-        self._detail_scroll = QScrollArea()
-        self._detail_scroll.setWidgetResizable(True)
-        left_layout.addWidget(self._detail_scroll, 1)
+        # Detail widget placeholder
+        self._detail_widget: QWidget | None = None
 
-        splitter.addWidget(left)
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setMinimumWidth(320)
+        left_scroll.setWidget(left_inner)
+
+        splitter.addWidget(left_scroll)
 
         # ---- Right panel: preview (unchanged) ----
         preview_container = QWidget()
@@ -427,7 +428,7 @@ class SettingsDialog(QDialog):
         # Measure ideal left width from a mode view before building defaults
         if self._modes:
             tmp = self._build_mode_view(self._modes[0])
-            scrollbar_w = self._detail_scroll.verticalScrollBar().sizeHint().width()
+            scrollbar_w = left_scroll.verticalScrollBar().sizeHint().width()
             left_w = tmp.sizeHint().width() + scrollbar_w + 2
             tmp.deleteLater()
             splitter.setSizes([left_w, self.width() - left_w])
@@ -465,6 +466,11 @@ class SettingsDialog(QDialog):
         self._mode_list.setCurrentRow(self._selected_index + 1)
         self._mode_list.blockSignals(False)
 
+        # Size list to fit all items (no separate scrolling)
+        row_h = self._mode_list.sizeHintForRow(0) if self._mode_list.count() else 0
+        frame = 2 * self._mode_list.frameWidth()
+        self._mode_list.setFixedHeight(row_h * self._mode_list.count() + frame)
+
     def _update_button_states(self) -> None:
         is_default = self._selected_index == -1
         self._btn_del.setEnabled(not is_default)
@@ -485,15 +491,16 @@ class SettingsDialog(QDialog):
     # --- Detail panel builders ---
 
     def _rebuild_detail_panel(self) -> None:
-        old = self._detail_scroll.takeWidget()
-        if old:
-            old.deleteLater()
+        if self._detail_widget:
+            self._left_layout.removeWidget(self._detail_widget)
+            self._detail_widget.deleteLater()
 
         if self._selected_index == -1:
             widget = self._build_defaults_view()
         else:
             widget = self._build_mode_view(self._modes[self._selected_index])
-        self._detail_scroll.setWidget(widget)
+        self._left_layout.addWidget(widget)
+        self._detail_widget = widget
 
     def _build_defaults_view(self) -> QWidget:
         """Build the defaults editing panel (dropdowns + hotkeys)."""
