@@ -67,50 +67,50 @@ _SAMPLE_FIELDS = {
 # Grouped by section for the UI.
 
 _HOTKEYS = [
-    ("--hotkey-word-audio", "n"),
-    ("--hotkey-sentence-audio", "h"),
-    ("--hotkey-definition-audio", ","),
-    ("--hotkey-play-all", "z"),
-    ("--hotkey-stop-all", "?"),
-    ("--hotkey-jp-toggle", "."),
+    ("--hotkey-word-audio", "Word Audio", "n"),
+    ("--hotkey-sentence-audio", "Sentence Audio", "h"),
+    ("--hotkey-definition-audio", "Definition Audio", ","),
+    ("--hotkey-play-all", "Play All", "z"),
+    ("--hotkey-stop-all", "Stop All", "?"),
+    ("--hotkey-jp-toggle", "Hidden Definition Toggle", "."),
 ]
 
 _SETTINGS = {
     "Layout": [
-        ("--tategaki", ["on", "off"], "off"),
-        ("--color-scheme", ["blue", "black", "red", "purple", "white"], "blue"),
-        ("--audio-labels", ["on", "off"], "on"),
+        ("--tategaki", "Tategaki", ["on", "off"], "off"),
+        ("--color-scheme", "Color Scheme", ["blue", "black", "red", "purple", "white"], "blue"),
+        ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
     ],
-    "Word": [
-        ("--word", ["front", "back", "off"], "front"),
-        ("--word-audio", ["front", "back", "off"], "back"),
-        ("--word-furigana", ["front", "back", "off"], "front"),
-        ("--word-pitch-color", ["front", "back", "off"], "back"),
-        ("--pitch-graph", ["on", "off"], "on"),
+    "Word Text": [
+        ("--word-text", "Word Text", ["front", "back", "off"], "front"),
+        ("--word-audio", "Word Audio", ["front", "back", "off"], "back"),
+        ("--word-furigana", "Word Furigana", ["front", "back", "off"], "front"),
+        ("--word-pitch-color", "Word Pitch Color", ["front", "back", "off"], "back"),
+        ("--pitch-graph", "Pitch Graph", ["on", "off"], "on"),
     ],
-    "Sentence": [
-        ("--sentence", ["front", "back", "off"], "front"),
-        ("--sentence-audio", ["front", "back", "off"], "back"),
-        ("--sentence-furigana", ["front", "back", "off"], "front"),
-        ("--sentence-pitch-color", ["front", "back", "off"], "back"),
+    "Sentence Text": [
+        ("--sentence-text", "Sentence Text", ["front", "back", "off"], "front"),
+        ("--sentence-audio", "Sentence Audio", ["front", "back", "off"], "back"),
+        ("--sentence-furigana", "Sentence Furigana", ["front", "back", "off"], "front"),
+        ("--sentence-pitch-color", "Sentence Pitch Color", ["front", "back", "off"], "back"),
     ],
     "Image": [
-        ("--image", ["front", "back", "off"], "back"),
+        ("--image", "Image", ["front", "back", "off"], "back"),
     ],
     "Definitions": [
-        ("--definition-text", ["on", "off"], "on"),
-        ("--definition-audio", ["on", "off"], "on"),
-        ("--definition-mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
-        ("--definition-furigana", ["front", "back", "off"], "back"),
-        ("--definition-pitch-color", ["front", "back", "off"], "back"),
+        ("--definition-text", "Definition Text", ["on", "off"], "on"),
+        ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
+        ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
+        ("--definition-furigana", "Definition Furigana", ["front", "back", "off"], "back"),
+        ("--definition-pitch-color", "Definition Pitch Color", ["front", "back", "off"], "back"),
     ],
 }
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
     "tategaki", "color-scheme", "debug", "audio-labels",
-    "word", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
-    "sentence", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
+    "word-text", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
+    "sentence-text", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
     "image",
     "definition-text", "definition-audio", "definition-mode",
     "definition-furigana", "definition-pitch-color",
@@ -135,23 +135,15 @@ class Mode:
     overrides: dict[str, str] = field(default_factory=dict)
 
 
-def _var_to_label(var: str) -> str:
-    """Convert a CSS variable name to a human-readable label.
-
-    '--word-furigana' -> 'Word Furigana'
-    """
-    return var.lstrip("-").replace("-", " ").title()
-
-
 def _parse_settings(css: str) -> dict[str, str]:
     """Extract current setting values from CSS text."""
     values = {}
     for entries in _SETTINGS.values():
-        for var, _options, default in entries:
+        for var, _label, _options, default in entries:
             # Match e.g.  --tategaki: off;  (with optional whitespace/comments)
             m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
             values[var] = m.group(1) if m else default
-    for var, default in _HOTKEYS:
+    for var, _label, default in _HOTKEYS:
         m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
         values[var] = m.group(1) if m else default
     return values
@@ -517,12 +509,12 @@ class SettingsDialog(QDialog):
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
             )
-            for var, options, default in entries:
+            for var, label, options, default in entries:
                 combo = QComboBox()
                 combo.addItems(options)
                 combo.setCurrentText(self._defaults.get(var, default))
                 combo.currentTextChanged.connect(self._on_setting_changed)
-                form.addRow(_var_to_label(var) + ":", combo)
+                form.addRow(label + ":", combo)
                 self._combos[var] = combo
             group_box.setLayout(form)
             layout.addWidget(group_box)
@@ -536,16 +528,12 @@ class SettingsDialog(QDialog):
         hotkey_form.setFormAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
         )
-        for var, default in _HOTKEYS:
+        for var, label, default in _HOTKEYS:
             line_edit = QLineEdit()
             line_edit.setMaxLength(1)
             line_edit.setFixedWidth(30)
             line_edit.setText(self._defaults.get(var, default))
             line_edit.textChanged.connect(self._on_setting_changed)
-            # Strip "Hotkey " prefix since they're in a "Hotkeys" group
-            label = _var_to_label(var).removeprefix("Hotkey ")
-            if var == "--hotkey-jp-toggle":
-                label = "Hidden Definition Toggle"
             hotkey_form.addRow(label + ":", line_edit)
             self._hotkey_inputs[var] = line_edit
         hotkey_box.setLayout(hotkey_form)
@@ -603,7 +591,7 @@ class SettingsDialog(QDialog):
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
             )
-            for var, options, default in entries:
+            for var, label, options, default in entries:
                 row = QHBoxLayout()
                 cb = QCheckBox()
                 combo = QComboBox()
@@ -628,7 +616,7 @@ class SettingsDialog(QDialog):
 
                 row.addWidget(cb)
                 row.addWidget(combo, 1)
-                form.addRow(_var_to_label(var) + ":", row)
+                form.addRow(label + ":", row)
                 self._mode_overrides[var] = (cb, combo)
             group_box.setLayout(form)
             layout.addWidget(group_box)

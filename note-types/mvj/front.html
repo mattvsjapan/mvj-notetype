@@ -46,8 +46,8 @@
     var rs = getComputedStyle(root);
     var settings = [
         'tategaki', 'color-scheme', 'debug', 'audio-labels',
-        'word', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
-        'sentence', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
+        'word-text', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
+        'sentence-text', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
         'image',
         'definition-text', 'definition-audio', 'definition-mode', 'definition-furigana', 'definition-pitch-color'
     ];
@@ -528,8 +528,8 @@ function clearLastMargin(el) {
         return v ? v.trim() : (fallback || '');
     }
 
-    var wordSide = setting('--word', 'back');
-    var sentSide = setting('--sentence', 'back');
+    var wordSide = setting('--word-text', 'back');
+    var sentSide = setting('--sentence-text', 'back');
     var imageSide = setting('--image', 'back');
     var wordAudioSide = setting('--word-audio', 'front');
     var sentAudioSide = setting('--sentence-audio', 'front');

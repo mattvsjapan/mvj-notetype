@@ -827,8 +827,8 @@
 
     // ── Settings ──
     var _rootStyle = getComputedStyle(document.documentElement);
-    var wordOn = _rootStyle.getPropertyValue('--word').trim() !== 'off';
-    var sentOn = _rootStyle.getPropertyValue('--sentence').trim() !== 'off';
+    var wordOn = _rootStyle.getPropertyValue('--word-text').trim() !== 'off';
+    var sentOn = _rootStyle.getPropertyValue('--sentence-text').trim() !== 'off';
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
@@ -846,8 +846,8 @@
     var sentFurigana = _rootStyle.getPropertyValue('--sentence-furigana').trim() || 'back';
     var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'back';
 
-    var wordSide = _rootStyle.getPropertyValue('--word').trim() || 'back';
-    var sentSide = _rootStyle.getPropertyValue('--sentence').trim() || 'back';
+    var wordSide = _rootStyle.getPropertyValue('--word-text').trim() || 'back';
+    var sentSide = _rootStyle.getPropertyValue('--sentence-text').trim() || 'back';
     var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back';
     var answerEl = document.querySelector('.answer');
     var wordIsOnFront = (wordSide === 'front');

@@ -18,14 +18,14 @@
     --audio-labels: on;            /* on | off                            */
 
     /* Word */
-    --word: front;                 /* front | back | off                  */
+    --word-text: front;             /* front | back | off                  */
     --word-audio: back;            /* front | back | off                  */
     --word-furigana: front;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence: front;             /* front | back | off                  */
+    --sentence-text: front;         /* front | back | off                  */
     --sentence-audio: back;        /* front | back | off                  */
     --sentence-furigana: front;     /* front | back | off                  */
     --sentence-pitch-color: back;  /* front | back | off                  */
@@ -64,19 +64,19 @@
     --mode-1-tategaki: on;               /* on | off                            */
     --mode-1-word-furigana: back;             /* front | back | off                  */
     --mode-1-sentence-furigana: back;             /* front | back | off                  */
-    --mode-1-word: back;                 /* front | back | off                  */
+    --mode-1-word-text: back;             /* front | back | off                  */
 
     /* —— Mode 2: image ——————————————————————————————————————————— */
     --mode-2-tag: _jp::image;
     --mode-2-deck: ;
     --mode-2-image: front;               /* on | off                            */
-    --mode-2-word: back;                 /* front | back | off                  */
+    --mode-2-word-text: back;             /* front | back | off                  */
 
     /* —— Mode 3: knowledge ——————————————————————————————————————————— */
     --mode-3-tag: _jp::knowledge;
     --mode-3-deck: 1. 🇯🇵::📚 雑学;
-    --mode-3-word: back;                 /* front | back | off                  */
-    --mode-3-sentence: front;             /* front | back | off                  */
+    --mode-3-word-text: back;             /* front | back | off                  */
+    --mode-3-sentence-text: front;         /* front | back | off                  */
     --mode-3-color-scheme: black;          /* blue | black | red | purple | white */
 
     /* —— Mode 4: keihan ——————————————————————————————————————————— */
