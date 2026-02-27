@@ -22,7 +22,7 @@ from aqt.qt import (
     QWidget,
 )
 from aqt.theme import theme_manager
-from aqt.utils import showWarning
+from aqt.utils import showInfo, showWarning, tooltip
 from aqt.webview import AnkiWebView, AnkiWebViewKind
 
 from .notetype import NOTE_TYPE_NAME, install_notetype
@@ -136,7 +136,7 @@ class SettingsDialog(QDialog):
             self.resize(300, 100)
             layout = QVBoxLayout(self)
             layout.addWidget(
-                QPushButton("Install Note Type", clicked=self._install)
+                QPushButton("Install Note Type", clicked=self._install_and_close)
             )
             return
 
@@ -219,6 +219,9 @@ class SettingsDialog(QDialog):
         update_btn = QPushButton("Update to Newest Version")
         update_btn.clicked.connect(self._install)
         btn_box.addButton(update_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        convert_btn = QPushButton("Convert [sound:] → [audio:]")
+        convert_btn.clicked.connect(self._convert_sound_to_audio)
+        btn_box.addButton(convert_btn, QDialogButtonBox.ButtonRole.ActionRole)
         outer.addWidget(btn_box)
 
     # --- Preview ---
@@ -310,10 +313,70 @@ class SettingsDialog(QDialog):
             self._preview_timer.stop()
             self._preview_timer = None
 
-    # --- Install / Save / Cancel ---
+    # --- Install / Convert / Save / Cancel ---
+
+    def _install_and_close(self):
+        self.accept()
+        install_notetype(on_success=lambda: showInfo(
+            f"{NOTE_TYPE_NAME} note type installed successfully."
+        ))
 
     def _install(self):
         install_notetype(on_success=self._build_ui)
+
+    def _convert_sound_to_audio(self):
+        sound_re = re.compile(r"\[sound:([^\]]+)\]")
+        note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
+        if not note_ids:
+            tooltip("No matching notes found.", parent=self)
+            return
+
+        converted = 0
+
+        def task():
+            nonlocal converted
+            modified = []
+            total = len(note_ids)
+            for i, nid in enumerate(note_ids):
+                note = mw.col.get_note(nid)
+                changed = False
+                for j, field in enumerate(note.fields):
+                    new_field = sound_re.sub(r"[audio:\1]", field)
+                    if new_field != field:
+                        note.fields[j] = new_field
+                        changed = True
+                if changed:
+                    modified.append(note)
+                if i % 10 == 0:
+                    mw.taskman.run_on_main(
+                        lambda v=i + 1: mw.progress.update(
+                            label=f"Scanning note {v}/{total}...",
+                            value=v,
+                        )
+                    )
+            converted = len(modified)
+            if modified:
+                pos = mw.col.add_custom_undo_entry(
+                    f"Convert [sound:] to [audio:] in {converted} notes"
+                )
+                mw.col.update_notes(modified)
+                mw.col.merge_undo_entries(pos)
+
+        def on_done(future):
+            mw.progress.finish()
+            try:
+                future.result()
+            except Exception as e:
+                showWarning(str(e))
+                return
+            tooltip(f"Converted {converted} notes.", parent=self)
+
+        mw.progress.start(
+            max=len(note_ids),
+            label="Scanning notes...",
+            parent=self,
+        )
+        mw.taskman.run_in_background(task, on_done)
 
     def _save(self):
         # Re-fetch in case something changed

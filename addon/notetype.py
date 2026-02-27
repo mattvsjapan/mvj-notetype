@@ -6,7 +6,7 @@ import urllib.request
 from urllib.error import HTTPError, URLError
 
 from aqt import mw
-from aqt.utils import showWarning, tooltip
+from aqt.utils import showWarning
 
 NOTE_TYPE_NAME = "\U0001f1ef\U0001f1f5 MvJ"
 
@@ -166,10 +166,8 @@ def install_notetype(on_success=None) -> None:
             existing = mw.col.models.by_name(NOTE_TYPE_NAME)
             if existing:
                 _update_notetype(existing, front, back, css)
-                tooltip(f"Updated {NOTE_TYPE_NAME} note type.")
             else:
                 _create_notetype(front, back, css)
-                tooltip(f"Created {NOTE_TYPE_NAME} note type.")
         except Exception as e:
             showWarning(f"Failed to update note type: {e}")
             return

@@ -6,9 +6,8 @@ from anki.hooks import wrap
 from aqt import gui_hooks, mw
 from aqt.editor import Editor
 from aqt.qt import QAction
-from aqt.utils import showWarning, tooltip
+from .notetype import NOTE_TYPE_NAME
 
-_NOTE_TYPES = {"\U0001f1ef\U0001f1f5 MvJ", "\U0001f1ef\U0001f1f5 Japanese"}
 _SOUND_RE = re.compile(r"\[sound:([^\]]+)\]")
 
 
@@ -16,7 +15,7 @@ def _is_target_note(editor: Editor) -> bool:
     if editor.note is None:
         return False
     model = editor.note.note_type()
-    return model is not None and model["name"] in _NOTE_TYPES
+    return model is not None and model["name"] == NOTE_TYPE_NAME
 
 
 # --- Patch Editor.fnameToLink via wrap() to produce [audio:] at insertion ---
@@ -47,78 +46,33 @@ def _munge_sound_to_audio(txt: str, editor: Editor) -> str:
 gui_hooks.editor_will_munge_html.append(_munge_sound_to_audio)
 
 
-# --- Browser: bulk convert [sound:] to [audio:] ---
-
-
-def _bulk_convert_sound_to_audio(browser):
-    queries = [f'"note:{nt}"' for nt in _NOTE_TYPES]
-    note_ids = mw.col.find_notes(" OR ".join(queries))
-    if not note_ids:
-        tooltip("No matching notes found.", parent=browser)
-        return
-
-    converted = 0
-
-    def task():
-        nonlocal converted
-        modified = []
-        total = len(note_ids)
-        for i, nid in enumerate(note_ids):
-            note = mw.col.get_note(nid)
-            changed = False
-            for j, field in enumerate(note.fields):
-                new_field = _SOUND_RE.sub(r"[audio:\1]", field)
-                if new_field != field:
-                    note.fields[j] = new_field
-                    changed = True
-            if changed:
-                modified.append(note)
-            if i % 10 == 0:
-                mw.taskman.run_on_main(
-                    lambda v=i + 1: mw.progress.update(
-                        label=f"Scanning note {v}/{total}...",
-                        value=v,
-                    )
-                )
-        converted = len(modified)
-        if modified:
-            pos = mw.col.add_custom_undo_entry(
-                f"Convert [sound:] to [audio:] in {converted} notes"
-            )
-            mw.col.update_notes(modified)
-            mw.col.merge_undo_entries(pos)
-
-    def on_done(future):
-        mw.progress.finish()
-        try:
-            future.result()
-        except Exception as e:
-            showWarning(str(e))
-            return
-        browser.model.reset()
-        tooltip(f"Converted {converted} notes.", parent=browser)
-
-    mw.progress.start(
-        max=len(note_ids),
-        label="Scanning notes...",
-        parent=browser,
-    )
-    mw.taskman.run_in_background(task, on_done)
-
-
-def _setup_browser_menu(browser):
-    action = QAction("Convert [sound:] to [audio:]", browser)
-    action.triggered.connect(lambda: _bulk_convert_sound_to_audio(browser))
-    browser.form.menu_Notes.addSeparator()
-    browser.form.menu_Notes.addAction(action)
-
-
-gui_hooks.browser_menus_did_init.append(_setup_browser_menu)
-
-
 from .settings_dialog import SettingsDialog
 
-_tools_action = QAction("\U0001f1ef\U0001f1f5 MvJ Note Type\u2026", mw)
-_tools_action.triggered.connect(lambda: SettingsDialog(mw).exec())
+from .notetype import install_notetype
+from aqt.utils import showInfo
+
+
+def _on_tools_action():
+    if mw.col and mw.col.models.by_name(NOTE_TYPE_NAME):
+        SettingsDialog(mw).exec()
+    else:
+        install_notetype(on_success=lambda: showInfo(
+            f"{NOTE_TYPE_NAME} note type installed successfully."
+        ))
+
+
+_tools_action = QAction("", mw)
+_tools_action.triggered.connect(_on_tools_action)
 mw.form.menuTools.addSeparator()
 mw.form.menuTools.addAction(_tools_action)
+
+
+def _update_tools_label():
+    installed = mw.col is not None and mw.col.models.by_name(NOTE_TYPE_NAME) is not None
+    if installed:
+        _tools_action.setText("\U0001f1ef\U0001f1f5 MvJ Note Type")
+    else:
+        _tools_action.setText("Install \U0001f1ef\U0001f1f5 MvJ Note Type")
+
+
+mw.form.menuTools.aboutToShow.connect(_update_tools_label)
