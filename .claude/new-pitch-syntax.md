@@ -421,7 +421,7 @@ Morae are split by `kanaToMoraes()` (`parse.js:59`) using:
 - Any single character (`.`) is the main kana
 - Optional small kana (`ァィゥェォャュョぁぃぅぇぉゃゅょ`) combines with the preceding character into one mora
 
-Before mora splitting, `filterKana()` (`parse.js:55`) strips everything except hiragana, katakana, and the prefix markers `*`, `-`, `\`, `^`.
+Before mora splitting, `filterKana()` (`parse.js:55`) strips everything except hiragana, katakana, the prefix markers `*`, `\`, `^`, and the ghost particle character `-`.
 
 ### Reading conversion (adjustKana)
 
