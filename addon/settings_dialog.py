@@ -317,7 +317,7 @@ class SettingsDialog(QDialog):
 
         screen = QApplication.primaryScreen()
         available_h = screen.availableGeometry().height() if screen else 1200
-        self.resize(1400, min(1200, available_h - 50))
+        self.resize(1200, min(1200, available_h - 50))
 
         css = self._model["css"]
         self._defaults = _parse_settings(css)
@@ -347,7 +347,7 @@ class SettingsDialog(QDialog):
 
         # Mode list
         self._mode_list = QListWidget()
-        self._mode_list.setFixedHeight(180)
+        self._mode_list.setFixedHeight(120)
         self._mode_list.currentRowChanged.connect(
             self._on_mode_list_selection_changed
         )
