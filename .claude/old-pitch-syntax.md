@@ -92,7 +92,7 @@ When a compound word appears in a sentence, the pitch is converted to a **letter
 Letter codes used for compounds:
 - `h` — heiban (when pitch is `0`)
 - `a` — atamadaka (when pitch is `1`)
-- `n` — nakadaka/non-heiban (when pitch is 2+, catch-all for nouns)
+- `n` — catch-all for any remaining pitch (2+, including odaka — no distinction is made)
 - `k` — kifuku (when pitch contains `k`, for verbs/i-adjectives)
 
 ### Leading plain kana in compounds
@@ -123,12 +123,15 @@ Examples:
 
 ### Spacing
 
-A space is inserted before a token if the token has brackets (furigana or pitch), or if the previous token has pitch accent notation (`;` in brackets or brackets containing only digits/commas). This means particles end up space-separated from the preceding pitched word:
+A space is inserted before a token if the token has brackets (furigana or pitch), or if the previous token has pitch accent notation (`;` in brackets or brackets containing only digits/commas). This means particles and auxiliaries end up space-separated from the preceding pitched word, but plain-kana tokens (no brackets) run together with following plain-kana tokens:
 
 ```
-日本[にほん;2] に 行[い;k]きたいです。
-今日[きょう;1] は いい 天気[てんき;1]ですね。
+日本[にほん;2] に 行[い;k]き たいです。
+今日[きょう;1] はいい 天気[てんき;1] ですね。
+考[かんが;n]え 方[かた;n] を 変[か;k]え た。
 ```
+
+Note that `は` and `いい` have no brackets (all-kana words get no brackets from `format_output`), so no space is inserted between them. But `たい`, `です`, and `た` (助動詞, separate MeCab tokens) each get a space before them because the preceding token has pitch accent.
 
 When MeCab produces a merged token like `今日は`, the particle is stripped for pitch lookup and appended as a separate part (with a space before it). When MeCab tokenizes a particle separately (e.g., `に`), it remains a separate token and also gets a space before it if the previous token has pitch.
 
@@ -163,7 +166,7 @@ These are used in user-defined overrides and `parse_pitch_specification()`. The 
 |--------|---------|------------|-----------------------------|
 | `h` | Heiban | `0` | Yes |
 | `a` | Atamadaka | `1` | Yes |
-| `n` | Nakadaka | Any 2+ but not odaka (unspecified) | Yes (catch-all) |
+| `n` | Nakadaka | In overrides: any 2+ excluding odaka. In sentence compounds: catch-all for any 2+ including odaka | Yes (catch-all) |
 | `o` | Odaka | Mora count of the reading | No (overrides only) |
 | `k` | Kifuku | Stripped prefix; underlying pitch determined separately | Yes |
 
@@ -251,9 +254,9 @@ Examples:
 ### Sentence field
 
 ```
-日本[にほん;2] に 行[い;k]きたいです。
-今日[きょう;1] は いい 天気[てんき;1]ですね。
-考[かんが;n]え 方[かた;n] を 変[か;k]えた。
+日本[にほん;2] に 行[い;k]き たいです。
+今日[きょう;1] はいい 天気[てんき;1] ですね。
+考[かんが;n]え 方[かた;n] を 変[か;k]え た。
 ```
 
 ## Data Sources
