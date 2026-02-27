@@ -218,6 +218,8 @@ class SettingsDialog(QDialog):
             line_edit.textChanged.connect(self._on_setting_changed)
             # Strip "Hotkey " prefix since they're in a "Hotkeys" group
             label = _var_to_label(var).removeprefix("Hotkey ")
+            if var == "--hotkey-jp-toggle":
+                label = "Hidden Definition Toggle"
             hotkey_form.addRow(label + ":", line_edit)
             self._hotkey_inputs[var] = line_edit
         hotkey_box.setLayout(hotkey_form)
