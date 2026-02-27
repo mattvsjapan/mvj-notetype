@@ -1,1 +1,5 @@
 note-types/_images/
+__pycache__/
+.DS_Store
+.claude/settings.json
+.claude/settings.local.json
