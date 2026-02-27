@@ -174,7 +174,7 @@ For dictionary-form verbs and i-adjectives in the **word field**, pitch numbers 
 - Heiban (pitch `0`) → `h`
 - Non-heiban (pitch `N`) → `kN` (e.g., `k2`, `k1`)
 
-For compound pitch (hyphen-separated), the prefix applies to each part independently:
+For compound pitch (hyphen-separated), only the second part (the verb portion) gets `h`/`k` notation; the first part stays numeric:
 
 - `1-2` → `1-k2` (second part is non-heiban)
 - `1-0` → `1-h` (second part is heiban)
@@ -194,7 +194,7 @@ These are **not generated automatically** by the addon — they only appear if m
 
 | Modifier | Example | Meaning |
 |----------|---------|---------|
-| `b` suffix | `0b`, `2b`, `pb` | "Black" — rendered in black/neutral color instead of category color |
+| `b` modifier | `0b`, `2b`, `pb`, `b2` | "Black" — rendered in black/neutral color instead of category color (prefix or suffix) |
 | `~` | `~0`, `0~` | Force all-low pitch |
 | `+` | `2+` | Extra particle mora appended |
 | `p` prefix | `p`, `p0`, `p1`, `ph` | Particle marker |
