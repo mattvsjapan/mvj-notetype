@@ -25,7 +25,7 @@ from aqt.theme import theme_manager
 from aqt.utils import showWarning
 from aqt.webview import AnkiWebView, AnkiWebViewKind
 
-from .notetype import NOTE_TYPE_NAME
+from .notetype import NOTE_TYPE_NAME, install_notetype
 
 # --- Sample card for the live preview ---
 _SAMPLE_FIELDS = {
@@ -119,16 +119,28 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent or mw)
         self.setWindowTitle(f"{NOTE_TYPE_NAME} Settings")
-        self.setMinimumSize(900, 600)
+        self._build_ui()
+
+    def _build_ui(self) -> None:
+        """Build (or rebuild) the dialog contents."""
+        self._cleanup()
+
+        # Tear down any existing layout
+        old = self.layout()
+        if old:
+            QWidget().setLayout(old)
 
         self._model = mw.col.models.by_name(NOTE_TYPE_NAME)
         if not self._model:
-            showWarning(
-                f'Note type "{NOTE_TYPE_NAME}" not found.\n'
-                "Please install it first via Tools menu."
+            self.setMinimumSize(0, 0)
+            self.resize(300, 100)
+            layout = QVBoxLayout(self)
+            layout.addWidget(
+                QPushButton("Install Note Type", clicked=self._install)
             )
-            self.reject()
             return
+
+        self.setMinimumSize(900, 600)
 
         css = self._model["css"]
         current = _parse_settings(css)
@@ -196,13 +208,16 @@ class SettingsDialog(QDialog):
         outer.addWidget(splitter, 1)
 
         # --- Dialog buttons ---
-        buttons = QDialogButtonBox(
+        btn_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
         )
-        buttons.accepted.connect(self._save)
-        buttons.rejected.connect(self.reject)
-        outer.addWidget(buttons)
+        btn_box.accepted.connect(self._save)
+        btn_box.rejected.connect(self.reject)
+        update_btn = QPushButton("Update Note Type")
+        update_btn.clicked.connect(self._install)
+        btn_box.addButton(update_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        outer.addWidget(btn_box)
 
     # --- Preview ---
 
@@ -293,7 +308,10 @@ class SettingsDialog(QDialog):
             self._preview_timer.stop()
             self._preview_timer = None
 
-    # --- Save / Cancel ---
+    # --- Install / Save / Cancel ---
+
+    def _install(self):
+        install_notetype(on_success=self._build_ui)
 
     def _save(self):
         # Re-fetch in case something changed

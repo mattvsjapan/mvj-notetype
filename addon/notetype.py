@@ -125,8 +125,13 @@ def _update_notetype(model: dict, front: str, back: str, css: str) -> None:
     mw.col.models.update_dict(model)
 
 
-def install_notetype() -> None:
-    """Main entry point — download files then create or update note type."""
+def install_notetype(on_success=None) -> None:
+    """Main entry point — download files then create or update note type.
+
+    Args:
+        on_success: Optional callback invoked (on the main thread) after a
+            successful install or update.
+    """
     total_files = len(_TEMPLATE_FILES) + len(_FONT_FILES)
     mw.progress.start(max=total_files, label="Starting download...", parent=mw)
 
@@ -167,5 +172,9 @@ def install_notetype() -> None:
                 tooltip(f"Created {NOTE_TYPE_NAME} note type.")
         except Exception as e:
             showWarning(f"Failed to update note type: {e}")
+            return
+
+        if on_success:
+            on_success()
 
     mw.taskman.run_in_background(task, on_done)
