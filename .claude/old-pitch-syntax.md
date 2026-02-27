@@ -262,5 +262,5 @@ Examples:
 ## Data Sources
 
 - **NHK dictionary**: Preferred source for pitch numbers (`NHK-2016.pickle`). Returns pitch as strings — plain integers (e.g., `"2"`) or compound pitches (e.g., `"1-1"` for nakaten words). NHK is always preferred when it has compound pitch data. Otherwise, the source with the most distinct readings wins (NHK wins ties). Shinmeikai-8 (`Shinmeikai-8.pickle`) is used as fallback when NHK has no entries, or as primary when it has more distinct readings.
-- **User overrides** (`reading_overrides.csv`): Can override any word's pitch. Supports conditional overrides based on MeCab reading, next word, and POS subcategory.
+- **User overrides** (`reading_overrides.csv`): Can override any word's reading and pitch. Supports conditional overrides based on MeCab reading and next word. POS subcategory conditions are supported for reading overrides only (pitch override matching does not use POS subcategory).
 - **Simplified notation**: Generated at lookup time for inflected verbs/i-adjectives. Not stored in overrides.
