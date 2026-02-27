@@ -1540,6 +1540,12 @@
     var HANDLER_KEY = '__audioHandler';
     var animateBtn = window.__animateBtn;
     var _lastKey = null, _lastKeyTime = 0, _DBL_MS = 350;
+    var _rs = getComputedStyle(document.documentElement);
+    var K_WORD = (_rs.getPropertyValue('--hotkey-word-audio').trim() || 'n').toLowerCase();
+    var K_SENT = (_rs.getPropertyValue('--hotkey-sentence-audio').trim() || 'h').toLowerCase();
+    var K_DEF  = _rs.getPropertyValue('--hotkey-definition-audio').trim() || ',';
+    var K_ALL  = (_rs.getPropertyValue('--hotkey-play-all').trim() || 'z').toLowerCase();
+    var K_STOP = _rs.getPropertyValue('--hotkey-stop-all').trim() || '?';
     function isDbl(key) {
       var now = Date.now();
       if (_lastKey === key && now - _lastKeyTime < _DBL_MS) { _lastKey = null; _lastKeyTime = 0; return true; }
@@ -1590,18 +1596,17 @@
       var wordItem = document.querySelector('.audio-row .audio-item[data-audio="word"]:not([data-side="off"])');
       var sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]:not([data-side="off"])');
       var defItem = document.querySelector('.audio-row .audio-item[data-audio="def"]');
-      switch (ev.key.toLowerCase()) {
-        case 'n': ev.preventDefault(); ev.stopPropagation(); if (isDbl('n')) window.__stopAllAudio(); else play(wordItem); break;
-        case 'h': ev.preventDefault(); ev.stopPropagation(); if (isDbl('h')) window.__stopAllAudio(); else play(sentItem); break;
-        case ',':
-          ev.preventDefault(); ev.stopPropagation();
-          if (isDbl(',')) { window.__stopAllAudio(); }
-          else if (window.__playLockedDefAudio) window.__playLockedDefAudio();
-          else play(defItem);
-          break;
-        case 'z': if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } break;
-        case '?': ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); break;
+      var k = ev.key.toLowerCase();
+      if (k === K_WORD) { ev.preventDefault(); ev.stopPropagation(); if (isDbl(K_WORD)) window.__stopAllAudio(); else play(wordItem); }
+      else if (k === K_SENT) { ev.preventDefault(); ev.stopPropagation(); if (isDbl(K_SENT)) window.__stopAllAudio(); else play(sentItem); }
+      else if (k === K_DEF) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (isDbl(K_DEF)) { window.__stopAllAudio(); }
+        else if (window.__playLockedDefAudio) window.__playLockedDefAudio();
+        else play(defItem);
       }
+      else if (k === K_ALL) { if (playAll()) { ev.preventDefault(); ev.stopPropagation(); } }
+      else if (k === K_STOP) { ev.preventDefault(); ev.stopPropagation(); if (window.__stopAllAudio) window.__stopAllAudio(); }
     }
     if (window[HANDLER_KEY]) {
       window.removeEventListener('keydown', window[HANDLER_KEY], true);
@@ -1625,8 +1630,10 @@
         label.style.background = '';
       }, 350);
     }
+    var _rs = getComputedStyle(document.documentElement);
+    var K_JP = _rs.getPropertyValue('--hotkey-jp-toggle').trim() || '.';
     function handler(ev) {
-      if (ev.code === 'KeyG' || ev.key === '.') {
+      if (ev.key === K_JP) {
         var cb = document.getElementById('jp-toggle');
         if (cb) {
           ev.preventDefault();

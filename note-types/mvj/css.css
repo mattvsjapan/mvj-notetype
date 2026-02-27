@@ -40,6 +40,14 @@
     --definition-furigana: back;   /* front | back | off                  */
     --definition-pitch-color: back;/* front | back | off                  */
 
+    /* Hotkeys */
+    --hotkey-word-audio: n;        /* keyboard key                        */
+    --hotkey-sentence-audio: h;    /* keyboard key                        */
+    --hotkey-definition-audio: ,;  /* keyboard key (back only)            */
+    --hotkey-play-all: z;          /* keyboard key                        */
+    --hotkey-stop-all: ?;          /* keyboard key                        */
+    --hotkey-jp-toggle: .;         /* keyboard key (back only)            */
+
     /* ═══════════════════════════════════════════════════════
        ⚙  MODES — Tag & deck-based settings overrides.
        A mode triggers if the card's tags contain --mode-N-tag
