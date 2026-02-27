@@ -117,19 +117,26 @@ gui_hooks.browser_menus_did_init.append(_setup_browser_menu)
 
 
 from .notetype import NOTE_TYPE_NAME, install_notetype
+from .settings_dialog import SettingsDialog
 
 _tools_action = QAction("Install \U0001f1ef\U0001f1f5 MvJ Note Type", mw)
 _tools_action.triggered.connect(install_notetype)
 mw.form.menuTools.addSeparator()
 mw.form.menuTools.addAction(_tools_action)
 
+_settings_action = QAction("\U0001f1ef\U0001f1f5 MvJ Settings\u2026", mw)
+_settings_action.triggered.connect(lambda: SettingsDialog(mw).exec())
+mw.form.menuTools.addAction(_settings_action)
+
 
 def _update_tools_label():
-    if mw.col is not None and mw.col.models.by_name(NOTE_TYPE_NAME):
+    installed = mw.col is not None and mw.col.models.by_name(NOTE_TYPE_NAME) is not None
+    if installed:
         verb = "Update"
     else:
         verb = "Install"
     _tools_action.setText(f"{verb} \U0001f1ef\U0001f1f5 MvJ Note Type")
+    _settings_action.setEnabled(installed)
 
 
 mw.form.menuTools.aboutToShow.connect(_update_tools_label)
