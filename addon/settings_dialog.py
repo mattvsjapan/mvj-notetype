@@ -504,6 +504,7 @@ class SettingsDialog(QDialog):
         for section, entries in _SETTINGS.items():
             group_box = QGroupBox(section)
             form = QFormLayout()
+            form.setVerticalSpacing(8)
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
@@ -522,6 +523,7 @@ class SettingsDialog(QDialog):
         self._hotkey_inputs = {}
         hotkey_box = QGroupBox("Hotkeys")
         hotkey_form = QFormLayout()
+        hotkey_form.setVerticalSpacing(8)
         hotkey_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
         hotkey_form.setFormAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
@@ -553,6 +555,7 @@ class SettingsDialog(QDialog):
         # --- Triggers ---
         triggers_box = QGroupBox("Mode Settings")
         triggers_form = QFormLayout()
+        triggers_form.setVerticalSpacing(8)
         triggers_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
         triggers_form.setFormAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
@@ -587,6 +590,7 @@ class SettingsDialog(QDialog):
         for section, entries in _SETTINGS.items():
             group_box = QGroupBox(section)
             form = QFormLayout()
+            form.setVerticalSpacing(8)
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
