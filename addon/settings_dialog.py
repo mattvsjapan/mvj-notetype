@@ -151,7 +151,7 @@ class SettingsDialog(QDialog):
             return
 
         self.setMinimumSize(800, 500)
-        self.resize(1050, 900)
+        self.resize(1200, 1000)
 
         css = self._model["css"]
         current = _parse_settings(css)
@@ -215,7 +215,7 @@ class SettingsDialog(QDialog):
         self._init_preview(preview_layout)
 
         splitter.addWidget(preview_container)
-        splitter.setSizes([550, 500])
+        splitter.setSizes([550, 650])
 
         outer.addWidget(splitter, 1)
 
