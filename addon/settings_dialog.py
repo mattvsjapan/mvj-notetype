@@ -44,9 +44,9 @@ _SAMPLE_IMAGE = "_mvj_sample.jpg"
 # --- Sample card for the live preview ---
 _SAMPLE_FIELDS = {
     "Word": "日本語[にほんご]:0-",
-    "Word Audio": "[audio:_]",
+    "Word Audio": "[audio:_mvj_word]",
     "Sentence": "日本語[にほんご]:0 って: 難[むずか]し\\い:h3 よね: 、 分[わ]かる:k",
-    "Sentence Audio": "[audio:_]",
+    "Sentence Audio": "[audio:_mvj_sentence]",
     "Definition": (
         '<!-- def-type="bilingual" -->'
         "A language that is spoken by the people of Japan as their primary means of communication."
@@ -58,8 +58,8 @@ _SAMPLE_FIELDS = {
         "<!-- def-end -->"
     ),
     "Definition Audio": (
-        '<!-- def-type="bilingual" -->[audio:_]<!-- def-end -->'
-        '<!-- def-type="monolingual" -->[audio:_]<!-- def-end -->'
+        '<!-- def-type="bilingual" -->[audio:_mvj_def_bi]<!-- def-end -->'
+        '<!-- def-type="monolingual" -->[audio:_mvj_def_mono]<!-- def-end -->'
     ),
     "Image": f'<img src="{_SAMPLE_IMAGE}">',
 }
@@ -764,7 +764,7 @@ class SettingsDialog(QDialog):
             context=self,
         )
         self._web.set_bridge_command(self._on_bridge_cmd, self)
-        self._web.setPlaybackRequiresGesture(True)
+        self._web.setPlaybackRequiresGesture(False)
 
         layout.addWidget(self._web, 1)
 

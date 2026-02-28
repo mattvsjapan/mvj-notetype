@@ -907,7 +907,7 @@ function clearLastMargin(el) {
       window.__safePlay(entry.audio);
       if (entry.btn) animateBtn(entry.btn);
       if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-      entry.audio.onended = next;
+      entry.audio.onended = entry.audio.onerror = next;
     }
     next();
     return true;

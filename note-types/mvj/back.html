@@ -109,7 +109,7 @@
                           if (idx >= audios.length) return;
                           var cur = idx++;
                           audios[cur].currentTime = 0;
-                          audios[cur].onended = playNext;
+                          audios[cur].onended = audios[cur].onerror = playNext;
                           window.__safePlay(audios[cur]);
                           animateBtn(btns[cur]);
                           window.__startPlaying(audios[cur], btns[cur]);
@@ -1209,7 +1209,7 @@
             if (idx >= audioEls.length) return;
             var cur = idx++;
             audioEls[cur].currentTime = 0;
-            audioEls[cur].onended = playNext;
+            audioEls[cur].onended = audioEls[cur].onerror = playNext;
             window.__safePlay(audioEls[cur]);
             if (btn) window.__startPlaying(audioEls[cur], btn);
           };
@@ -1585,7 +1585,7 @@
         window.__safePlay(entry.audio);
         if (entry.btn) animateBtn(entry.btn);
         if (entry.js) window.__startPlaying(entry.audio, entry.btn);
-        entry.audio.onended = next;
+        entry.audio.onended = entry.audio.onerror = next;
       }
       next();
       return true;
