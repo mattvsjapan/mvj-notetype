@@ -63,12 +63,12 @@ def _download_file(url: str) -> bytes:
         return resp.read()
 
 
-def _download_all() -> dict:
+def _download_all(skip_fonts: bool = False) -> dict:
     """Download templates and fonts. Returns dict with keys for each file."""
     results = {}
-    all_files = [(f, _BASE_URL + f) for f in _TEMPLATE_FILES] + [
-        (f, _BASE_URL + "fonts/" + f) for f in _FONT_FILES
-    ]
+    all_files = [(f, _BASE_URL + f) for f in _TEMPLATE_FILES]
+    if not skip_fonts:
+        all_files += [(f, _BASE_URL + "fonts/" + f) for f in _FONT_FILES]
     total = len(all_files)
     for i, (name, url) in enumerate(all_files):
         mw.taskman.run_on_main(
@@ -125,6 +125,12 @@ def _update_notetype(model: dict, front: str, back: str, css: str) -> None:
     mw.col.models.update_dict(model)
 
 
+def _fonts_exist() -> bool:
+    """Check whether all font files are already in the media folder."""
+    media_dir = mw.col.media.dir()
+    return all(os.path.exists(os.path.join(media_dir, f)) for f in _FONT_FILES)
+
+
 def install_notetype(on_success=None) -> None:
     """Main entry point — download files then create or update note type.
 
@@ -132,11 +138,12 @@ def install_notetype(on_success=None) -> None:
         on_success: Optional callback invoked (on the main thread) after a
             successful install or update.
     """
-    total_files = len(_TEMPLATE_FILES) + len(_FONT_FILES)
+    skip_fonts = _fonts_exist()
+    total_files = len(_TEMPLATE_FILES) + (0 if skip_fonts else len(_FONT_FILES))
     mw.progress.start(max=total_files, label="Starting download...", parent=mw)
 
     def task():
-        return _download_all()
+        return _download_all(skip_fonts=skip_fonts)
 
     def on_done(future):
         mw.progress.finish()
@@ -152,11 +159,12 @@ def install_notetype(on_success=None) -> None:
             showWarning(f"Download failed: {e}")
             return
 
-        try:
-            _install_fonts(files)
-        except Exception as e:
-            showWarning(f"Failed to install fonts: {e}")
-            return
+        if not skip_fonts:
+            try:
+                _install_fonts(files)
+            except Exception as e:
+                showWarning(f"Failed to install fonts: {e}")
+                return
 
         front = files["front.html"].decode("utf-8")
         back = files["back.html"].decode("utf-8")
