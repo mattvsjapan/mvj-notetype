@@ -72,7 +72,7 @@ _HOTKEYS = [
     ("--hotkey-definition-audio", "Definition Audio", ","),
     ("--hotkey-play-all", "Play All", "z"),
     ("--hotkey-stop-all", "Stop All", "?"),
-    ("--hotkey-jp-toggle", "Hidden Definition Toggle", "."),
+    ("--hotkey-jp-toggle", "Reveal Definition Toggle", "."),
 ]
 
 _SETTINGS = {
@@ -80,6 +80,7 @@ _SETTINGS = {
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", ["blue", "black", "red", "purple", "white"], "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
+        ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [
         ("--word-text", "Word Text", ["front", "back", "off"], "front"),
@@ -677,7 +678,7 @@ class SettingsDialog(QDialog):
             if self._mode_deck_combo:
                 mode.deck = ", ".join(self._mode_deck_combo.checkedTexts())
 
-            # Preserve overrides not shown in the UI (e.g. --debug)
+            # Preserve overrides not shown in the UI
             ui_vars = set(self._mode_overrides.keys())
             new_overrides = {
                 k: v for k, v in mode.overrides.items() if k not in ui_vars
