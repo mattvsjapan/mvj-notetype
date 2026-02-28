@@ -499,7 +499,9 @@ def _convert_compound_group(tokens, letter):
     if letter in ('h', 'k') and len(tokens) > 1:
         warnings.append('hk_compound_review')
 
-    return ' '.join(converted), warnings
+    merged = ' '.join(converted)
+    merged = _escape_trailing_i(merged)
+    return merged, warnings
 
 
 # Sentence-ending punctuation and non-particle characters
@@ -592,6 +594,18 @@ def _convert_preserving_html(text, converter_fn):
 # Word field conversion pipeline
 # ---------------------------------------------------------------------------
 
+def _escape_trailing_i(text):
+    """Escape trailing い as \\い for verb/adjective pitch tokens."""
+    colon_idx = text.rfind(':')
+    if colon_idx > 0 and text[colon_idx - 1] == 'い':
+        if colon_idx >= 2 and text[colon_idx - 2] == '\\':
+            return text  # already escaped
+        pitch = text[colon_idx + 1:].split()[0]  # ignore ' -' suffix
+        if 'h' in pitch or 'k' in pitch:
+            text = text[:colon_idx - 1] + '\\い' + text[colon_idx:]
+    return text
+
+
 # Matches tokens ending with a numeric-only pitch (no verb/adjective letter)
 _NUMERIC_PITCH_END_RE = re.compile(r':[0-9,~]+$')
 
@@ -606,6 +620,7 @@ def _convert_word_text(text):
     converted_tokens = []
     for token in tokens:
         conv, w = _convert_single_token(token)
+        conv = _escape_trailing_i(conv)
         if _NUMERIC_PITCH_END_RE.search(conv):
             conv = conv + '-'
         converted_tokens.append(conv)
@@ -649,6 +664,7 @@ def _convert_sentence_text(text):
             # Single token with a pitch letter — convert it
             token = group_tokens[0]
             conv, w = _convert_single_token(token)
+            conv = _escape_trailing_i(conv)
             converted_tokens.append(conv)
             warnings.extend(w)
         else:
@@ -658,6 +674,7 @@ def _convert_sentence_text(text):
                 _PITCH_ONLY_BRACKET.search(token) and not _is_already_converted(token)
             ):
                 conv, w = _convert_single_token(token)
+                conv = _escape_trailing_i(conv)
                 converted_tokens.append(conv)
                 warnings.extend(w)
             else:
