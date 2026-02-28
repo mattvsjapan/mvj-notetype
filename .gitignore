@@ -4,3 +4,4 @@ __pycache__/
 .claude/settings.json
 .claude/settings.local.json
 note-types/mvj/my_settings.css
+addon/meta.json
