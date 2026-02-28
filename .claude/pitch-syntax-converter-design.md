@@ -302,7 +302,7 @@ In old sentence syntax, compound words have **every** bracket tagged with a lett
 | `考[かんが;n]え 方[かた;n]` | `考[かんが]え 方[かた]:n` |
 | `お[n] 母[かあ;n]さん` | `お 母[かあ]さん:n` |
 
-**Rule**: Identify runs of consecutive tokens where **all** brackets carry the **same** pitch letter code. Strip the pitch from all brackets except the last one in the run, and place the code after a colon on the last token.
+**Rule**: Identify runs of consecutive tokens where **all** brackets carry the **same** pitch letter code. Strip the pitch from all brackets, place the code after a colon on the last token, then **join all members into a single output token** (space-separated). The joined token is emitted as one unit so that step 5 (`:p` insertion) cannot see the internal members as separate bare tokens. Without this merge, a compound like `お 母[かあ]さん:n` preceded by an accented word would have `お` incorrectly tagged as `:p`.
 
 **Detection of compound runs**: Walk tokens left to right. A token belongs to the current compound group if:
 - Its bracket contains `;` followed by a single letter (`h`, `a`, `n`, `k`) matching the group's letter
@@ -434,10 +434,11 @@ Steps:
 import unicodedata
 
 def is_kanji(ch):
-    return unicodedata.category(ch) == 'Lo' and (
-        '\u4e00' <= ch <= '\u9fff' or   # CJK Unified
-        '\u3400' <= ch <= '\u4dbf' or   # CJK Extension A
-        ch == '々'                       # kanji repeat mark
+    return ch == '々' or (              # kanji repeat mark (category Lm, not Lo)
+        unicodedata.category(ch) == 'Lo' and (
+            '\u4e00' <= ch <= '\u9fff' or   # CJK Unified
+            '\u3400' <= ch <= '\u4dbf'      # CJK Extension A
+        )
     )
 
 def is_kana(ch):
@@ -579,7 +580,11 @@ If the split produces a kanji segment with an empty reading (0 characters), that
 2. For each token, classify it (bracketed with pitch, bracketed without pitch, bare)
 3. Identify compound groups (consecutive tokens sharing the same pitch letter)
 4. Convert each token/group:
-   a. Compound group → strip pitch from all but last, add :letter to last
+   a. Compound group → strip pitch from all members, add :letter to last,
+      then JOIN all members into a single token (space-separated). This is
+      critical: compound members must not remain as separate tokens, or step 5
+      would incorrectly add :p to the leading members when an accented word
+      precedes the compound.
    b. Any remaining token with old-syntax pitch (numeric or letter) → move pitch
       from bracket to colon. This includes both 'single' groups from step 3 AND
       tokens that step 3 classified as non-compound because they have numeric
@@ -642,6 +647,51 @@ def group_compound_tokens(tokens):
     flush_group()
     return groups
 ```
+
+### 6.2.1 Converting compound groups to single tokens
+
+After grouping, each compound group is converted and merged into a **single** output token. This prevents step 5 from adding `:p` to internal members.
+
+```python
+SENTENCE_PITCH_LETTER = re.compile(
+    r'\[(?:([^\];]*);)?([hank])\]'
+    # group 1: optional reading, group 2: pitch letter
+)
+
+def convert_compound_group(tokens, letter):
+    """Convert a compound group into a single merged token.
+
+    Strips pitch from all members, adds :letter to the last one,
+    then joins everything into one space-separated string.
+
+    Returns (merged_token, warnings).
+    """
+    converted = []
+    for token in tokens:
+        # Strip pitch letter from bracket
+        def strip_pitch(m):
+            reading = m.group(1)
+            if reading:
+                return f'[{reading}]'   # [かんが;n] → [かんが]
+            else:
+                return ''               # [n] → removed entirely
+        converted.append(SENTENCE_PITCH_LETTER.sub(strip_pitch, token))
+
+    # Add :letter to the last token
+    converted[-1] = converted[-1] + f':{letter}'
+
+    warnings = []
+    if letter in ('h', 'k'):
+        warnings.append('hk_compound_review')
+
+    # Join into a single token — the new parser's fragment merging
+    # handles internal spaces correctly
+    return ' '.join(converted), warnings
+```
+
+Example traces:
+- `['考[かんが;n]え', '方[かた;n]']` → `'考[かんが]え 方[かた]:n'` (one token)
+- `['お[n]', '母[かあ;n]さん']` → `'お 母[かあ]さん:n'` (one token)
 
 ### 6.3 Adding `:p` to interstitial particles
 
