@@ -1,0 +1,3761 @@
+{{FrontSide}}
+<hr class="MvJ-divider MvJ-divider--answer" id="answer" />
+
+<div class="MvJ-field MvJ-field--front">
+<span id="snd3">{{Definition Audio}}</span>
+</div>
+
+<script>
+// Hide audio buttons marked with LOCKED_ in HTML comments
+(function() {
+  const container = document.querySelector('#snd3');
+  if (!container) return;
+
+  // Find all HTML comment nodes in the container
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_COMMENT,
+    null
+  );
+
+  let currentNode;
+
+  while (currentNode = walker.nextNode()) {
+    // Check if comment contains def-type="LOCKED_
+    if (currentNode.nodeValue && currentNode.nodeValue.includes('def-type="LOCKED_')) {
+      // Find the next audio button after this comment
+      let nextElement = currentNode.nextSibling;
+      while (nextElement) {
+        if (nextElement.nodeType === 1 && nextElement.classList.contains('replay-button')) {
+          nextElement.style.display = 'none';
+          break;
+        }
+        nextElement = nextElement.nextSibling;
+      }
+    }
+  }
+
+  // Click-to-Reveal: Selectively wrap bilingual definitions
+  function applyClickToReveal() {
+    // Only apply to Definition text fields, not Definition Audio
+    const allFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    allFields.forEach(field => {
+      let html = field.innerHTML;
+      let modified = false;
+
+      // Step 1: Check if bilingual definition exists
+      const hasBilingual = /\x3C!-- def-type="bilingual"/.test(html);
+
+      if (hasBilingual) {
+        // Step 2: Count valid monolingual definitions (excluding LOCKED_monolingual)
+        // Check TEXT definitions in current field
+        const monoCount = (html.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+        const disabledCount = (html.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+        const validMonoTextCount = monoCount - disabledCount;
+
+        // Check AUDIO definitions in Definition Audio field (#snd3)
+        const audioField = document.getElementById('snd3');
+        let validMonoAudioCount = 0;
+        if (audioField) {
+          const audioHtml = audioField.innerHTML;
+          const audioMonoCount = (audioHtml.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+          const audioDisabledCount = (audioHtml.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+          validMonoAudioCount = audioMonoCount - audioDisabledCount;
+        }
+
+        const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+        // Step 3: Only wrap bilingual if valid monolingual exists (text OR audio)
+        if (validMonoCount > 0) {
+          // Find and wrap bilingual definition sections (including nearby separators) so we can restore
+          // the exact original HTML after reveal.
+          const originals = [];
+
+          // Check if this field had LOCKED_monolingual blocks removed
+          const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+          // Match: [optional <br> block before] <!-- def-type="bilingual"... --> ... <!-- def-end --> [optional <br> after]
+          html = html.replace(
+            /(\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E\s*)?\x3C!-- def-type="bilingual".*?--\x3E[\s\S]*?\x3C!-- def-end --\x3E(\s*\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E)?/g,
+            function(match, leadingBr, trailingBr) {
+              const idx = originals.length;
+              // Preserve the original HTML including any BR separators.
+              // BR separators between active definitions should be maintained for proper spacing.
+              // (BR separators after LOCKED_monolingual blocks are already removed by hideDisabledMonolingual)
+              originals.push(match);
+
+              const classes = ['MvJ-definition-revealer'];
+              // Apply class based on context (3 cases):
+              // Case 1: Mono above, bi below (standard case)
+              // Case 2: Bi above, mono below
+              // Case 3: Bi only, no mono
+              if (leadingBr || hadDisabledMono) {
+                // Mono definition was above this bilingual block
+                classes.push('MvJ-definition-revealer--mono-above-bi');
+              } else if (validMonoTextCount > 0) {
+                // Mono definition exists in field but not above, so must be below
+                classes.push('MvJ-definition-revealer--bi-above-mono');
+              } else {
+                // No mono text (only mono audio exists, or no mono at all)
+                classes.push('MvJ-definition-revealer--bi-only');
+              }
+
+              return '' +
+                '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+                  '<div class="MvJ-reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+                '</div>';
+            }
+          );
+
+          field.innerHTML = html;
+
+          // Delegate reveal handling to the field so listeners survive other innerHTML changes
+          const handler = event => {
+            const isClick = event.type === 'click';
+            const isKey = event.type === 'keydown' && (event.key === 'Enter' || event.key === ' ');
+            if (!isClick && !isKey) {
+              return;
+            }
+
+            const wrapper = event.target.closest('.MvJ-definition-revealer');
+            if (!wrapper || !field.contains(wrapper)) {
+              return;
+            }
+
+            const idx = Number(wrapper.getAttribute('data-original-index'));
+            const originalHtml = originals[idx];
+            if (!originalHtml) {
+              return;
+            }
+
+            event.preventDefault();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Avoid attaching multiple listeners if this code ever re-runs for the same field
+          if (!field.__mvjRevealBound) {
+            field.addEventListener('click', handler);
+            field.addEventListener('keydown', handler);
+            field.__mvjRevealBound = true;
+          }
+
+          modified = true;
+        }
+        // Else: validMonoCount = 0, leave bilingual unwrapped (visible normally)
+      }
+      // If we didn't rewrite the field (no modifications needed), ensure content remains unchanged
+      if (!modified) {
+        field.innerHTML = html;
+      }
+    });
+  }
+
+  // Run click-to-reveal logic BEFORE monolingual transition mode
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // Configuration: Convert pitch accent graphs to katakana
+  const CONVERT_PITCH_TO_KATAKANA = false;
+  // Hide LOCKED_monolingual audio definition blocks
+
+  const LOCKED_MONO_AUDIO_REGEX = /<!-- def-type="LOCKED_monolingual".*?-->[\s\S]*?<!-- def-end -->/g;
+
+  function hideDisabledMonolingualAudio() {
+    // Find the Definition Audio field
+    const audioField = document.getElementById('snd3');
+
+    if (!audioField) return;
+
+    const originalHtml = audioField.innerHTML;
+
+    // Check if there are any LOCKED_monolingual audio blocks
+    const hasDisabledMono = LOCKED_MONO_AUDIO_REGEX.test(originalHtml);
+
+    if (!hasDisabledMono) return;
+
+    // Remove LOCKED_monolingual audio blocks
+    let modifiedHtml = originalHtml.replace(LOCKED_MONO_AUDIO_REGEX, '');
+
+    audioField.innerHTML = modifiedHtml;
+  }
+
+  // Run immediately
+  hideDisabledMonolingualAudio();
+
+  // Also run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideDisabledMonolingualAudio);
+  } else {
+    // If DOM is already loaded, run again after short delay
+    setTimeout(hideDisabledMonolingualAudio, 100);
+  }
+
+  // Click-to-Reveal: Selectively wrap bilingual definitions
+  function applyClickToReveal() {
+    // Only apply to Definition text fields, not Definition Audio
+    const allFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    allFields.forEach(field => {
+      let html = field.innerHTML;
+      let modified = false;
+
+      // Step 1: Check if bilingual definition exists
+      const hasBilingual = /\x3C!-- def-type="bilingual"/.test(html);
+
+      if (hasBilingual) {
+        // Step 2: Count valid monolingual definitions (excluding LOCKED_monolingual)
+        // Check TEXT definitions in current field
+        const monoCount = (html.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+        const disabledCount = (html.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+        const validMonoTextCount = monoCount - disabledCount;
+
+        // Check AUDIO definitions in Definition Audio field (#snd3)
+        const audioField = document.getElementById('snd3');
+        let validMonoAudioCount = 0;
+        if (audioField) {
+          const audioHtml = audioField.innerHTML;
+          const audioMonoCount = (audioHtml.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+          const audioDisabledCount = (audioHtml.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+          validMonoAudioCount = audioMonoCount - audioDisabledCount;
+        }
+
+        const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+        // Step 3: Only wrap bilingual if valid monolingual exists (text OR audio)
+        if (validMonoCount > 0) {
+          // Find and wrap bilingual definition sections (including nearby separators) so we can restore
+          // the exact original HTML after reveal.
+          const originals = [];
+
+          // Check if this field had LOCKED_monolingual blocks removed
+          const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+          // Match: [optional <br> block before] <!-- def-type="bilingual"... --> ... <!-- def-end --> [optional <br> after]
+          html = html.replace(
+            /(\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E\s*)?\x3C!-- def-type="bilingual".*?--\x3E[\s\S]*?\x3C!-- def-end --\x3E(\s*\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E)?/g,
+            function(match, leadingBr, trailingBr) {
+              const idx = originals.length;
+              // Preserve the original HTML including any BR separators.
+              // BR separators between active definitions should be maintained for proper spacing.
+              // (BR separators after LOCKED_monolingual blocks are already removed by hideDisabledMonolingual)
+              originals.push(match);
+
+              const classes = ['MvJ-definition-revealer'];
+              // Apply class based on context (3 cases):
+              // Case 1: Mono above, bi below (standard case)
+              // Case 2: Bi above, mono below
+              // Case 3: Bi only, no mono
+              if (leadingBr || hadDisabledMono) {
+                // Mono definition was above this bilingual block
+                classes.push('MvJ-definition-revealer--mono-above-bi');
+              } else if (validMonoTextCount > 0) {
+                // Mono definition exists in field but not above, so must be below
+                classes.push('MvJ-definition-revealer--bi-above-mono');
+              } else {
+                // No mono text (only mono audio exists, or no mono at all)
+                classes.push('MvJ-definition-revealer--bi-only');
+              }
+
+              return '' +
+                '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+                  '<div class="MvJ-reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+                '</div>';
+            }
+          );
+
+          field.innerHTML = html;
+
+          // Delegate reveal handling to the field so listeners survive other innerHTML changes
+          const handler = event => {
+            const isClick = event.type === 'click';
+            const isKey = event.type === 'keydown' && (event.key === 'Enter' || event.key === ' ');
+            if (!isClick && !isKey) {
+              return;
+            }
+
+            const wrapper = event.target.closest('.MvJ-definition-revealer');
+            if (!wrapper || !field.contains(wrapper)) {
+              return;
+            }
+
+            const idx = Number(wrapper.getAttribute('data-original-index'));
+            const originalHtml = originals[idx];
+            if (!originalHtml) {
+              return;
+            }
+
+            event.preventDefault();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Avoid attaching multiple listeners if this code ever re-runs for the same field
+          if (!field.__mvjRevealBound) {
+            field.addEventListener('click', handler);
+            field.addEventListener('keydown', handler);
+            field.__mvjRevealBound = true;
+          }
+
+          modified = true;
+        }
+        // Else: validMonoCount = 0, leave bilingual unwrapped (visible normally)
+      }
+      // If we didn't rewrite the field (no modifications needed), ensure content remains unchanged
+      if (!modified) {
+        field.innerHTML = html;
+      }
+    });
+  }
+
+  // Run click-to-reveal logic BEFORE monolingual transition mode
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // Configuration: Convert pitch accent graphs to katakana
+  const CONVERT_PITCH_TO_KATAKANA = false;
+  // Hide LOCKED_monolingual definition text blocks
+
+  const LOCKED_MONO_REGEX = /<!-- def-type="LOCKED_monolingual".*?-->[\s\S]*?<!-- def-end -->/g;
+  const BR_SEPARATOR_REGEX = /<!-- def-br-start --><br><br><!-- def-br-end -->/g;
+
+  function hideDisabledMonolingual() {
+    // Find all definition fields
+    const definitionFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    definitionFields.forEach(field => {
+      if (!field) return;
+
+      const originalHtml = field.innerHTML;
+
+      // Check if there are any LOCKED_monolingual blocks
+      const hasDisabledMono = LOCKED_MONO_REGEX.test(originalHtml);
+
+      if (!hasDisabledMono) return;
+
+      // Remove LOCKED_monolingual blocks
+      let modifiedHtml = originalHtml.replace(LOCKED_MONO_REGEX, '');
+
+      // Remove br separators (only runs if we removed a LOCKED_monolingual block)
+      modifiedHtml = modifiedHtml.replace(BR_SEPARATOR_REGEX, '');
+
+      field.innerHTML = modifiedHtml;
+
+      // Mark this field as having had disabled mono removed (for spacing purposes)
+      field.setAttribute('data-had-disabled-mono', 'true');
+    });
+  }
+
+  // Run immediately
+  hideDisabledMonolingual();
+
+  // Also run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideDisabledMonolingual);
+  } else {
+    // If DOM is already loaded, run again after short delay
+    setTimeout(hideDisabledMonolingual, 100);
+  }
+
+  // Click-to-Reveal: Selectively wrap bilingual definitions
+  function applyClickToReveal() {
+    // Only apply to Definition text fields, not Definition Audio
+    const allFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    allFields.forEach(field => {
+      let html = field.innerHTML;
+      let modified = false;
+
+      // Step 1: Check if bilingual definition exists
+      const hasBilingual = /\x3C!-- def-type="bilingual"/.test(html);
+
+      if (hasBilingual) {
+        // Step 2: Count valid monolingual definitions (excluding LOCKED_monolingual)
+        // Check TEXT definitions in current field
+        const monoCount = (html.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+        const disabledCount = (html.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+        const validMonoTextCount = monoCount - disabledCount;
+
+        // Check AUDIO definitions in Definition Audio field (#snd3)
+        const audioField = document.getElementById('snd3');
+        let validMonoAudioCount = 0;
+        if (audioField) {
+          const audioHtml = audioField.innerHTML;
+          const audioMonoCount = (audioHtml.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+          const audioDisabledCount = (audioHtml.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+          validMonoAudioCount = audioMonoCount - audioDisabledCount;
+        }
+
+        const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+        // Step 3: Only wrap bilingual if valid monolingual exists (text OR audio)
+        if (validMonoCount > 0) {
+          // Find and wrap bilingual definition sections (including nearby separators) so we can restore
+          // the exact original HTML after reveal.
+          const originals = [];
+
+          // Check if this field had LOCKED_monolingual blocks removed
+          const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+          // Match: [optional <br> block before] <!-- def-type="bilingual"... --> ... <!-- def-end --> [optional <br> after]
+          html = html.replace(
+            /(\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E\s*)?\x3C!-- def-type="bilingual".*?--\x3E[\s\S]*?\x3C!-- def-end --\x3E(\s*\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E)?/g,
+            function(match, leadingBr, trailingBr) {
+              const idx = originals.length;
+              // Preserve the original HTML including any BR separators.
+              // BR separators between active definitions should be maintained for proper spacing.
+              // (BR separators after LOCKED_monolingual blocks are already removed by hideDisabledMonolingual)
+              originals.push(match);
+
+              const classes = ['MvJ-definition-revealer'];
+              // Apply class based on context (3 cases):
+              // Case 1: Mono above, bi below (standard case)
+              // Case 2: Bi above, mono below
+              // Case 3: Bi only, no mono
+              if (leadingBr || hadDisabledMono) {
+                // Mono definition was above this bilingual block
+                classes.push('MvJ-definition-revealer--mono-above-bi');
+              } else if (validMonoTextCount > 0) {
+                // Mono definition exists in field but not above, so must be below
+                classes.push('MvJ-definition-revealer--bi-above-mono');
+              } else {
+                // No mono text (only mono audio exists, or no mono at all)
+                classes.push('MvJ-definition-revealer--bi-only');
+              }
+
+              return '' +
+                '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+                  '<div class="MvJ-reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+                '</div>';
+            }
+          );
+
+          field.innerHTML = html;
+
+          // Delegate reveal handling to the field so listeners survive other innerHTML changes
+          const handler = event => {
+            const isClick = event.type === 'click';
+            const isKey = event.type === 'keydown' && (event.key === 'Enter' || event.key === ' ');
+            if (!isClick && !isKey) {
+              return;
+            }
+
+            const wrapper = event.target.closest('.MvJ-definition-revealer');
+            if (!wrapper || !field.contains(wrapper)) {
+              return;
+            }
+
+            const idx = Number(wrapper.getAttribute('data-original-index'));
+            const originalHtml = originals[idx];
+            if (!originalHtml) {
+              return;
+            }
+
+            event.preventDefault();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Avoid attaching multiple listeners if this code ever re-runs for the same field
+          if (!field.__mvjRevealBound) {
+            field.addEventListener('click', handler);
+            field.addEventListener('keydown', handler);
+            field.__mvjRevealBound = true;
+          }
+
+          modified = true;
+        }
+        // Else: validMonoCount = 0, leave bilingual unwrapped (visible normally)
+      }
+      // If we didn't rewrite the field (no modifications needed), ensure content remains unchanged
+      if (!modified) {
+        field.innerHTML = html;
+      }
+    });
+  }
+
+  // Run click-to-reveal logic BEFORE monolingual transition mode
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+
+<!-- Hidden divs with raw content for pitch accent parsing -->
+<div style="display:none;" class="MvJ-raw-word">{{Word}}</div>
+<div style="display:none;" class="MvJ-raw-sentence">{{Sentence}}</div>
+<div style="display:none;" class="MvJ-raw-definition">{{Definition}}</div>
+<div style="display:none;" class="MvJ-raw-tags">{{Tags}}</div>
+
+<div class="MvJ-field MvJ-field--word">
+{{furigana:Word}}
+</div>
+
+<!-- Pitch accent graphs disabled by user preference -->
+
+<div class="MvJ-field MvJ-field--sentence">
+{{furigana:Sentence}}
+</div>
+
+<!-- Conditional definition: shown/hidden by JavaScript based on non-DISABLED audio presence -->
+<div class="MvJ-field MvJ-field--explanation MvJ-field--explanation-conditional">
+{{furigana:Definition}}
+</div>
+
+<!-- Always-show definition: shown regardless of Definition Audio (variants 3 & 4) -->
+<div class="MvJ-field MvJ-field--explanation MvJ-field--explanation-always">
+{{furigana:Definition}}
+</div>
+
+<div class="MvJ-field MvJ-field--front">
+{{Image}}
+</div>
+
+<script>
+(function() {
+  // Configuration: Convert pitch accent graphs to katakana
+  const CONVERT_PITCH_TO_KATAKANA = false;
+  // Control definition text visibility based on available non-DISABLED audio
+
+  function shouldShowDefinitionText() {
+    const audioField = document.getElementById('snd3');
+
+    if (!audioField) {
+      return true; // No audio field, show text as fallback
+    }
+
+    const audioHtml = audioField.innerHTML;
+
+    // Check if completely empty (no content at all)
+    if (!audioHtml || audioHtml.trim() === '') {
+      return true; // No audio at all, show text
+    }
+
+    // Check for non-DISABLED bilingual audio definition blocks
+    // Matches: <!-- def-type="bilingual" -->
+    // Does NOT match: <!-- def-type="LOCKED_bilingual" --> or <!-- def-type="monolingual" -->
+    const hasNonDisabledBilingualAudio = /<!-- def-type="(?!LOCKED_)bilingual"/.test(audioHtml);
+
+    // If we have at least one non-DISABLED bilingual audio, hide text; otherwise show text
+    return !hasNonDisabledBilingualAudio;
+  }
+
+  function applyDefinitionVisibility() {
+    const conditionalDefField = document.querySelector('.MvJ-field--explanation-conditional');
+
+    if (!conditionalDefField) return;
+
+    if (shouldShowDefinitionText()) {
+      conditionalDefField.classList.remove('hide-definition');
+    } else {
+      conditionalDefField.classList.add('hide-definition');
+    }
+  }
+
+  // Run immediately
+  applyDefinitionVisibility();
+
+  // Also run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyDefinitionVisibility);
+  } else {
+    // If DOM is already loaded, run again after short delay
+    setTimeout(applyDefinitionVisibility, 100);
+  }
+
+  // Click-to-Reveal: Selectively wrap bilingual definitions
+  function applyClickToReveal() {
+    // Only apply to Definition text fields, not Definition Audio
+    const allFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    allFields.forEach(field => {
+      let html = field.innerHTML;
+      let modified = false;
+
+      // Step 1: Check if bilingual definition exists
+      const hasBilingual = /\x3C!-- def-type="bilingual"/.test(html);
+
+      if (hasBilingual) {
+        // Step 2: Count valid monolingual definitions (excluding LOCKED_monolingual)
+        // Check TEXT definitions in current field
+        const monoCount = (html.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+        const disabledCount = (html.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+        const validMonoTextCount = monoCount - disabledCount;
+
+        // Check AUDIO definitions in Definition Audio field (#snd3)
+        const audioField = document.getElementById('snd3');
+        let validMonoAudioCount = 0;
+        if (audioField) {
+          const audioHtml = audioField.innerHTML;
+          const audioMonoCount = (audioHtml.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+          const audioDisabledCount = (audioHtml.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+          validMonoAudioCount = audioMonoCount - audioDisabledCount;
+        }
+
+        const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+        // Step 3: Only wrap bilingual if valid monolingual exists (text OR audio)
+        if (validMonoCount > 0) {
+          // Find and wrap bilingual definition sections (including nearby separators) so we can restore
+          // the exact original HTML after reveal.
+          const originals = [];
+
+          // Check if this field had LOCKED_monolingual blocks removed
+          const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+          // Match: [optional <br> block before] <!-- def-type="bilingual"... --> ... <!-- def-end --> [optional <br> after]
+          html = html.replace(
+            /(\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E\s*)?\x3C!-- def-type="bilingual".*?--\x3E[\s\S]*?\x3C!-- def-end --\x3E(\s*\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E)?/g,
+            function(match, leadingBr, trailingBr) {
+              const idx = originals.length;
+              // Preserve the original HTML including any BR separators.
+              // BR separators between active definitions should be maintained for proper spacing.
+              // (BR separators after LOCKED_monolingual blocks are already removed by hideDisabledMonolingual)
+              originals.push(match);
+
+              const classes = ['MvJ-definition-revealer'];
+              // Apply class based on context (3 cases):
+              // Case 1: Mono above, bi below (standard case)
+              // Case 2: Bi above, mono below
+              // Case 3: Bi only, no mono
+              if (leadingBr || hadDisabledMono) {
+                // Mono definition was above this bilingual block
+                classes.push('MvJ-definition-revealer--mono-above-bi');
+              } else if (validMonoTextCount > 0) {
+                // Mono definition exists in field but not above, so must be below
+                classes.push('MvJ-definition-revealer--bi-above-mono');
+              } else {
+                // No mono text (only mono audio exists, or no mono at all)
+                classes.push('MvJ-definition-revealer--bi-only');
+              }
+
+              return '' +
+                '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+                  '<div class="MvJ-reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+                '</div>';
+            }
+          );
+
+          field.innerHTML = html;
+
+          // Delegate reveal handling to the field so listeners survive other innerHTML changes
+          const handler = event => {
+            const isClick = event.type === 'click';
+            const isKey = event.type === 'keydown' && (event.key === 'Enter' || event.key === ' ');
+            if (!isClick && !isKey) {
+              return;
+            }
+
+            const wrapper = event.target.closest('.MvJ-definition-revealer');
+            if (!wrapper || !field.contains(wrapper)) {
+              return;
+            }
+
+            const idx = Number(wrapper.getAttribute('data-original-index'));
+            const originalHtml = originals[idx];
+            if (!originalHtml) {
+              return;
+            }
+
+            event.preventDefault();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Avoid attaching multiple listeners if this code ever re-runs for the same field
+          if (!field.__mvjRevealBound) {
+            field.addEventListener('click', handler);
+            field.addEventListener('keydown', handler);
+            field.__mvjRevealBound = true;
+          }
+
+          modified = true;
+        }
+        // Else: validMonoCount = 0, leave bilingual unwrapped (visible normally)
+      }
+      // If we didn't rewrite the field (no modifications needed), ensure content remains unchanged
+      if (!modified) {
+        field.innerHTML = html;
+      }
+    });
+  }
+
+  // Run click-to-reveal logic BEFORE monolingual transition mode
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // Configuration: Convert pitch accent graphs to katakana
+  const CONVERT_PITCH_TO_KATAKANA = false;
+  // Small kana that don't count as separate morae (combines with previous kana)
+  const SMALL_KANA = 'ゃゅょゎぁぃぅぇぉャュョヮァィゥェォ';
+
+  // Punctuation marks that act as delimiters (stop coloring but remain visible)
+  const PUNCTUATION_DELIMITERS = '。、！？）」』】・〜….,!?;:)]}';
+
+  // Detect dark mode
+  const isDarkMode = document.body.classList.contains('night_mode') ||
+                     document.documentElement.classList.contains('night_mode');
+
+  // Color mapping for pitch accent patterns
+  const COLORS = {
+    heiban: '#005CE6',    // Blue - flat pitch
+    atamadaka: '#E60000', // Red - drop after first mora
+    nakadaka: '#E68A00',  // Orange - drop in middle
+    odaka: '#00802B',     // Green - drop after last mora
+    kifuku: '#AC00E6',    // Purple - irregular/undulating pitch
+    black: isDarkMode ? '#ffffff' : '#000000'  // White in dark mode, black in light mode
+  };
+
+  /**
+   * Count the number of morae in a Japanese reading.
+   * Small kana (ゃゅょ etc.) don't count as separate morae.
+   */
+  function countMorae(reading) {
+    if (!reading) return 0;
+    // Remove devoicing markers (*) and protection markers (dots) before counting
+    const cleanReading = reading.replace(/\*([ぁ-んァ-ンー])/g, '$1').replace(/\./g, '');
+    let count = 0;
+    for (let i = 0; i < cleanReading.length; i++) {
+      if (SMALL_KANA.indexOf(cleanReading[i]) === -1) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Parse compound pitch accent data (e.g., "1-0" with "むが・むちゅう").
+   * Validates counts match and returns array of parts with their patterns.
+   *
+   * @param {string} pitchSpec - Pitch specification like "1-0" or "1-2-4"
+   * @param {string} reading - Reading with delimiters like "むが・むちゅう" or "むが=むちゅう"
+   * @param {Array|null} baseParts - Optional base text parts split by delimiters (e.g., ["第", "一次", "世界大戦"])
+   * @returns {Array|null} Array of {base, reading, pitch, pattern} objects, or null if invalid
+   */
+  function parseCompoundPitch(pitchSpec, reading, baseParts) {
+    // Check if compound pitch spec has trailing + modifier
+    let hasTrailingPlus = false;
+    let cleanPitchSpec = pitchSpec;
+    if (pitchSpec.endsWith('+')) {
+      hasTrailingPlus = true;
+      cleanPitchSpec = pitchSpec.slice(0, -1);
+    }
+
+    const pitchParts = cleanPitchSpec.split('-');
+    // Split reading by either nakaten (・) or equals (=)
+    const readingParts = reading.split(/[・=]/);
+
+    // Validate all counts match
+    if (pitchParts.length !== readingParts.length) {
+      return null; // Mismatch between pitch count and reading parts
+    }
+
+    if (baseParts && baseParts.length !== readingParts.length) {
+      return null; // Mismatch between base parts and reading parts
+    }
+
+    // Build array of parts with their pitch patterns
+    const parts = [];
+    for (let i = 0; i < readingParts.length; i++) {
+      const readingPart = readingParts[i].trim();
+      const pitchPart = pitchParts[i].trim();
+      const basePart = baseParts ? baseParts[i].trim() : null;
+
+      // Get the pitch pattern for this part
+      const pattern = getPitchPattern(pitchPart, readingPart);
+
+      if (pattern) {
+        // For the last part, add + back if it was stripped
+        const finalPitch = (hasTrailingPlus && i === readingParts.length - 1) ? pitchPart + '+' : pitchPart;
+        console.log('[DEBUG PARSE COMPOUND] Part', i, 'pitchPart:', pitchPart, 'hasTrailingPlus:', hasTrailingPlus, 'isLast:', i === readingParts.length - 1, 'finalPitch:', finalPitch);
+
+        parts.push({
+          base: basePart,
+          reading: readingPart,
+          pitch: finalPitch,
+          pattern: pattern
+        });
+      }
+    }
+
+    return parts.length > 0 ? { parts: parts, hasExtraParticle: hasTrailingPlus } : null;
+  }
+
+  /**
+   * Check if a string contains only kana characters (hiragana or katakana)
+   */
+  function isAllKana(text) {
+    if (!text || text.trim().length === 0) return false;
+    return /^[ぁ-んァ-ン]+$/.test(text.trim());
+  }
+
+  /**
+   * Extract ALL pitch information from raw Word field content.
+   * Parses all bracket notations: word[reading;pitch] or base=parts[reading;pitch]
+   * Returns an array of entries with usage tracking to handle duplicate readings
+   */
+  function extractAllPitchInfo(wordFieldContent) {
+    if (!wordFieldContent) return [];
+
+    const pitchArray = [];
+
+    // Process tokens in order to maintain correct positioning
+    // Split by whitespace only (NOT by equals - equals is for intra-word compound delimiters)
+    const tokens = wordFieldContent.split(/\s+/);
+    let nextHasSlashDelimiter = false;  // Track if next entry should have slash delimiter
+    let nextHasHardBreak = false;  // Track if next entry should have hard break (comma)
+
+    for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+      const token = tokens[tokenIndex].trim();
+
+      if (!token) continue;
+
+      // Check if this token is a forward slash delimiter
+      if (token === '/' || token === '/') {
+        nextHasSlashDelimiter = true;
+        continue;  // Skip this token, just mark the flag
+      }
+
+      // Check if this token is a comma or pipe delimiter (hard break)
+      if (token === '、' || token === '|') {
+        nextHasHardBreak = true;
+        continue;  // Skip this token, just mark the flag
+      }
+
+      const hasSlashDelimiter = nextHasSlashDelimiter;
+      const hasHardBreak = nextHasHardBreak;
+      nextHasSlashDelimiter = false;  // Reset for next iteration
+      nextHasHardBreak = false;  // Reset for next iteration
+
+      // Check if token contains bracket notation
+      const bracketRegex = /([^\s\[]+)\[([^\]]+)\]((?:d)?(?:\*?[ぁ-んァ-ンー])*\+?)/;
+      const match = bracketRegex.exec(token);
+
+      if (match) {
+        // Token has bracket notation - parse it
+        const baseWord = match[1];
+        const bracketContent = match[2];
+        const rawTrailingOkurigana = match[3] || '';
+
+        // Check if okurigana has trailing particle marker '+'
+        let hasTrailingParticleMarker = false;
+        let cleanRawOkurigana = rawTrailingOkurigana;
+        if (rawTrailingOkurigana.endsWith('+')) {
+          hasTrailingParticleMarker = true;
+          cleanRawOkurigana = rawTrailingOkurigana.slice(0, -1);
+        }
+
+        const trailingOkurigana = cleanRawOkurigana.replace(/\*([ぁ-んァ-ンー])/g, '$1');
+
+        // Split by comma to get all parts (handles mixed formats)
+        const parts = bracketContent.split(',');
+        if (parts.length === 0) continue;
+
+        // Track current reading for standalone pitch specs
+        let currentReading = null;
+        let currentRawReading = null;
+        const readingsToProcess = [];
+
+        // Process each comma-separated part
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i].trim();
+
+          if (part.includes(';')) {
+            // Format: reading;pitch
+            const semicolonParts = part.split(';');
+            const rawReading = semicolonParts[0].trim();
+            let reading = rawReading;
+            // Remove devoicing markers (* prefix) to match what cleanFurigana will display
+            reading = reading.replace(/\*([ぁ-んァ-ンー])/g, '$1');
+            // Remove protection markers (dots) - they're metadata for katakana conversion,
+            // not part of the actual reading for pitch/mora purposes
+            reading = reading.replace(/\./g, '');
+            const pitch = semicolonParts[1].trim();
+
+            // Update current reading for subsequent standalone pitches
+            currentReading = reading;
+            currentRawReading = rawReading;
+
+            // Add this reading;pitch combination
+            readingsToProcess.push({
+              reading: reading,        // Cleaned (for text coloring)
+              rawReading: rawReading,  // Original with '*' (for graphs)
+              pitchSpec: pitch
+            });
+          } else {
+            // No semicolon - could be standalone reading or standalone pitch
+
+            // Check if it looks like a pitch spec
+            if (/^[0-9hanokpb]/i.test(part.charAt(0))) {
+              // Standalone pitch - use current reading or baseWord
+              const reading = currentReading || baseWord;
+              const rawReading = currentRawReading || baseWord;
+              readingsToProcess.push({
+                reading: reading,
+                rawReading: rawReading,
+                pitchSpec: part
+              });
+            } else {
+              // Standalone reading (no pitch) - skip for now as we need pitch for graphs
+              // Update current reading in case pitches follow
+              currentReading = part;
+              // Note: Could add support for readings without pitch if needed
+            }
+          }
+        }
+
+        if (readingsToProcess.length === 0) continue;
+
+        // Process each reading/pitch combination
+        for (let readingIndex = 0; readingIndex < readingsToProcess.length; readingIndex++) {
+          const item = readingsToProcess[readingIndex];
+          const reading = item.reading;
+          const rawReading = item.rawReading || item.reading;
+          const pitchSpec = item.pitchSpec;
+
+          // Create full reading including okurigana for accurate mora counting
+          const fullReading = reading + trailingOkurigana;
+          const fullRawReading = rawReading + cleanRawOkurigana;
+
+          // For comma-separated entries after the first, force a hard break
+          // This ensures each reading/pitch combo renders as a separate graph
+          const isCommaEntry = readingIndex > 0;
+          const entryHasHardBreak = isCommaEntry ? true : hasHardBreak;
+          // Track whether this is a manual split (|, 、) vs comma-separated reading
+          const isManualSplit = hasHardBreak;  // Only true for | or 、, not commas inside brackets
+
+          // Check if this is a compound pitch (contains hyphen)
+          const isCompound = pitchSpec.indexOf('-') !== -1;
+
+          if (isCompound) {
+            // Parse compound pitch
+            // Check for delimiters in base text: equals (=) or nakaten (・)
+            let baseParts = null;
+            let hasNakatenInBase = false;
+
+            if (baseWord.indexOf('=') !== -1) {
+              baseParts = baseWord.split('=');
+            } else if (baseWord.indexOf('・') !== -1) {
+              baseParts = baseWord.split('・');
+              hasNakatenInBase = true;
+            }
+
+            const compoundResult = parseCompoundPitch(pitchSpec, fullReading, baseParts);
+
+            if (compoundResult) {
+              const compoundParts = compoundResult.parts || compoundResult;  // Support both old and new return format
+              const hasExtraParticle = compoundResult.hasExtraParticle || hasTrailingParticleMarker;
+
+              // If hasExtraParticle, add + to last part's pitch so generateCompoundPitchGraph can find it
+              if (hasExtraParticle && compoundParts.length > 0) {
+                const lastPart = compoundParts[compoundParts.length - 1];
+                if (!lastPart.pitch.endsWith('+')) {
+                  lastPart.pitch = lastPart.pitch + '+';
+                }
+              }
+
+              // Store compound info in array with usage tracking
+              pitchArray.push({
+                reading: reading,
+                rawReading: rawReading,
+                fullReading: fullReading,
+                fullRawReading: fullRawReading,
+                pitchInfo: {
+                  reading: reading,
+                  rawReading: rawReading,
+                  fullReading: fullReading,
+                  fullRawReading: fullRawReading,
+                  pitchSpec: pitchSpec,
+                  isCompound: true,
+                  baseParts: baseParts,
+                  hasNakatenInBase: hasNakatenInBase,
+                  compoundParts: compoundParts,
+                  hasExtraParticle: hasExtraParticle  // Store + modifier flag
+                },
+                used: false,
+                hasSlashDelimiter: hasSlashDelimiter,
+                hasHardBreak: entryHasHardBreak,
+                isManualSplit: isManualSplit
+              });
+            }
+          } else {
+            // Simple (non-compound) pitch
+
+            // Check if this is an explicit particle (including colored particles)
+            // Patterns: p, p0, p1, p2, etc. (numeric) or ph, pa, pn, po, pk, pb (colored), with optional ~ and/or + modifiers
+            const particleMatch = pitchSpec.match(/^p(\d+|[hanokb]\d*)?[~+]*$/i);
+            if (particleMatch) {
+              const particleSpec = particleMatch[1] || null;  // '0', '1', '2', etc. or 'n', 'a2', 'b', 'b1', etc.
+              let particlePitch = null;
+              let particlePattern = null;
+
+              if (particleSpec) {
+                // Check if it's a letter-based colored particle
+                const colorMatch = particleSpec.match(/^([hanokb])(\d*)$/i);
+                if (colorMatch) {
+                  // Colored particle: pn, pa2, po, pb, pb1, etc.
+                  const letter = colorMatch[1].toLowerCase();
+                  const patternMap = {
+                    'h': 'heiban',
+                    'a': 'atamadaka',
+                    'n': 'nakadaka',
+                    'o': 'odaka',
+                    'k': 'kifuku',
+                    'b': 'black'
+                  };
+                  particlePattern = patternMap[letter];
+
+                  // Extract number if present, otherwise use pattern default
+                  // Note: for 'b' (black), the number is NOT ignored for pitch level
+                  if (colorMatch[2]) {
+                    particlePitch = colorMatch[2];  // Keep as string, will be parsed later
+                  } else {
+                    // Use pattern defaults
+                    if (letter === 'h') particlePitch = '0';
+                    else if (letter === 'a') particlePitch = '1';
+                    else if (letter === 'n') particlePitch = '2';
+                    else if (letter === 'o') particlePitch = null;  // Auto from mora count
+                    else if (letter === 'k') particlePitch = '2';
+                    else if (letter === 'b') particlePitch = null;  // Black particle, no extension
+                  }
+                } else {
+                  // Numeric particle: p0, p1, p2, p3, etc.
+                  particlePitch = particleSpec;
+                }
+              }
+
+              // Check for extra particle marker (+ can be inside brackets or after)
+              const hasExtraParticle = pitchSpec.includes('+') || hasTrailingParticleMarker;
+
+              // Store particle entry with special flag
+              pitchArray.push({
+                reading: reading,
+                rawReading: rawReading,
+                fullReading: fullReading,
+                fullRawReading: fullRawReading,
+                pitchInfo: {
+                  reading: reading,
+                  rawReading: rawReading,
+                  fullReading: fullReading,
+                  fullRawReading: fullRawReading,
+                  pitchSpec: pitchSpec,
+                  isParticle: true,
+                  particlePitch: particlePitch,  // '0', '1', '2', or null
+                  particlePattern: particlePattern,  // 'heiban', 'nakadaka', etc. or null
+                  isCompound: false,
+                  hasExtraParticle: hasExtraParticle  // true if + modifier present
+                },
+                used: false,
+                hasSlashDelimiter: hasSlashDelimiter,
+                hasHardBreak: entryHasHardBreak,
+                isManualSplit: isManualSplit
+              });
+              continue;  // Skip normal pattern processing
+            }
+
+            // Check for extra particle suffix ('+' can be in pitch spec OR in okurigana)
+            let hasExtraParticle = hasTrailingParticleMarker;
+            let cleanPitchSpec = pitchSpec;
+            if (pitchSpec.endsWith('+')) {
+              hasExtraParticle = true;
+              cleanPitchSpec = pitchSpec.slice(0, -1);
+            }
+
+            const pattern = getPitchPattern(cleanPitchSpec, fullReading);
+            if (!pattern) continue;
+
+            const color = COLORS[pattern];
+            if (!color) continue;
+
+            // Store in array with usage tracking
+            pitchArray.push({
+              reading: reading,
+              rawReading: rawReading,
+              fullReading: fullReading,
+              fullRawReading: fullRawReading,
+              pitchInfo: {
+                reading: reading,
+                rawReading: rawReading,
+                fullReading: fullReading,
+                fullRawReading: fullRawReading,
+                pitchSpec: pitchSpec,
+                pattern: pattern,
+                color: color,
+                isCompound: false,
+                hasExtraParticle: hasExtraParticle
+              },
+              used: false,
+              hasSlashDelimiter: hasSlashDelimiter,
+              hasHardBreak: entryHasHardBreak,
+              isManualSplit: isManualSplit
+            });
+          }
+        }  // End of for loop over readings
+      } else {
+        // Token has no brackets - check if it's standalone kana (auto-detect particle)
+        // Check for trailing + marker
+        let hasTrailingPlus = false;
+        let cleanToken = token;
+        if (token.endsWith('+')) {
+          hasTrailingPlus = true;
+          cleanToken = token.slice(0, -1);
+        }
+
+        // Strip dots and devoicing markers temporarily for kana detection, but keep original token for processing
+        const tokenForCheck = cleanToken.replace(/\./g, '').replace(/\*([ぁ-んァ-ン])/g, '$1');
+        const isKana = isAllKana(tokenForCheck);
+
+        if (isKana) {
+          pitchArray.push({
+            reading: cleanToken,
+            fullReading: cleanToken,
+            pitchInfo: {
+              reading: cleanToken,
+              fullReading: cleanToken,
+              pitchSpec: 'p',
+              isParticle: true,
+              particlePitch: null,  // Automatic pitch detection
+              isCompound: false,
+              hasExtraParticle: hasTrailingPlus  // Track + modifier
+            },
+            used: false,
+            hasSlashDelimiter: hasSlashDelimiter,
+            hasHardBreak: hasHardBreak,
+            isManualSplit: hasHardBreak  // Standalone tokens use original hasHardBreak
+          });
+        }
+      }
+    }
+
+    return pitchArray;
+  }
+
+  /**
+   * Convert pitch accent letter to number.
+   * h -> 0 (heiban)
+   * a -> 1 (atamadaka)
+   * o -> mora_count (odaka)
+   * n -> 'n' (nakadaka marker)
+   * k -> 'k' (kifuku marker)
+   */
+  function convertLetterToNumber(letter, reading) {
+    const lower = letter.toLowerCase();
+    if (lower === 'h') return '0';
+    if (lower === 'a') return '1';
+    if (lower === 'o') return String(countMorae(reading));
+    if (lower === 'n') return 'n'; // Special marker for nakadaka
+    if (lower === 'k') return 'k'; // Special marker for kifuku
+    return letter; // Already a number or unknown
+  }
+
+  /**
+   * Extract numeric pitch value from pitch specification.
+   * Handles letter+number (h2, a3, k1), letter-only (h, a, n), or pure numbers (2, 3).
+   * Returns the pitch number to use for graph calculation.
+   */
+  function extractPitchNumber(pitchSpec, reading) {
+    // Strip ~ and + modifiers from both start and end before processing
+    let cleanSpec = pitchSpec.replace(/^~+|[~+]+$/, '');
+    const lowerSpec = cleanSpec.toLowerCase();
+
+    // Handle standalone 'b' - use pitch 0 (flat/low) for flow behavior
+    if (lowerSpec === 'b') {
+      return 0;
+    }
+
+    // Handle 'b' followed by number (e.g., "b2" → "2", "b1" → "1")
+    const bNumberMatch = lowerSpec.match(/^b(\d+)$/);
+    if (bNumberMatch) {
+      return parseInt(bNumberMatch[1], 10);
+    }
+
+    // Strip 'b' (black) modifier if present at end (e.g., "0b" → "0", "1-1b" → "1-1")
+    cleanSpec = cleanSpec.replace(/b$/i, '');
+
+    const lowerCleanSpec = cleanSpec.toLowerCase();
+
+    // Handle letter+number combinations (h2, a2, n2, o2, k2)
+    const letterMatch = lowerCleanSpec.match(/^([hanok])(\d+)$/);
+    if (letterMatch) {
+      const numberPart = letterMatch[2];
+      return parseInt(numberPart, 10);
+    }
+
+    // Handle single letters (use defaults)
+    if (lowerCleanSpec === 'h') return 0;
+    if (lowerCleanSpec === 'a') return 1;
+    if (lowerCleanSpec === 'o') return countMorae(reading);
+    if (lowerCleanSpec === 'n') return 2;
+    if (lowerCleanSpec === 'k') return 2;
+
+    // Handle numeric-only specs (including compound like "1-1")
+    const num = parseInt(cleanSpec, 10);
+    if (!isNaN(num)) return num;
+
+    // Fallback
+    return null;
+  }
+
+  /**
+   * Determine pitch accent pattern from pitch specification.
+   * Returns: 'heiban', 'atamadaka', 'nakadaka', 'odaka', 'kifuku', 'black', or null
+   * Note: This function now handles individual pitch numbers. Compound pitches are parsed separately.
+   */
+  function getPitchPattern(pitchSpec, reading) {
+    // Strip ~ and + modifiers from pitch spec before pattern detection
+    const cleanSpec = pitchSpec.replace(/[~+]/g, '');
+    const lowerSpec = cleanSpec.toLowerCase();
+
+    // Check for black patterns
+    // - standalone 'b'
+    // - 'b' followed by number (b2, b1)
+    // - number followed by 'b' (0b, 2b)
+    // - 'pb' patterns (pb, pb1)
+    if (lowerSpec === 'b' ||
+        lowerSpec.match(/^b\d+$/) ||
+        lowerSpec.endsWith('b')) {
+      return 'black';
+    }
+
+    // Check for letter-based patterns (with or without numbers)
+    // Letter determines the COLOR/pattern, number (if present) determines pitch drop
+    const letterMatch = lowerSpec.match(/^([hanok])/);
+    if (letterMatch) {
+      const letter = letterMatch[1];
+
+      // Map letter to pattern name (for CSS color class)
+      const patternMap = {
+        'h': 'heiban',
+        'a': 'atamadaka',
+        'n': 'nakadaka',
+        'o': 'odaka',
+        'k': 'kifuku'
+      };
+
+      return patternMap[letter];
+    }
+
+    // Handle numeric-only specs - determine pattern based on pitch number
+    const pitchNum = parseInt(cleanSpec, 10);
+    if (isNaN(pitchNum)) {
+      return null;
+    }
+
+    const moraeCount = countMorae(reading);
+
+    // Determine pattern based on pitch number
+    if (pitchNum === 0) {
+      return 'heiban';
+    } else if (pitchNum === 1) {
+      return 'atamadaka';
+    } else if (pitchNum === moraeCount) {
+      return 'odaka';
+    } else {
+      return 'nakadaka';
+    }
+  }
+
+  /**
+   * Clean furigana by removing pitch information (semicolon and everything after).
+   * Modifies <rt> tags to only show the reading, not the pitch.
+   */
+  function cleanFurigana(wordField) {
+    const rtElements = wordField.querySelectorAll('rt');
+    for (let i = 0; i < rtElements.length; i++) {
+      const rt = rtElements[i];
+      let text = rt.textContent;
+
+      // If there's a semicolon, remove it and everything after
+      const semicolonIndex = text.indexOf(';');
+      if (semicolonIndex !== -1) {
+        text = text.substring(0, semicolonIndex);
+      }
+
+      // Remove devoicing markers (* prefix before kana)
+      text = text.replace(/\*([ぁ-んァ-ンー])/g, '$1');
+
+      // Remove protection markers (dots)
+      text = text.replace(/\./g, '');
+
+      rt.textContent = text;
+      console.log('[PARTICLE DEBUG cleanFurigana] Final rt.textContent:', rt.textContent);
+    }
+  }
+
+  /**
+   * Apply furigana-only coloring to compound words (Mode 1: no equals signs in base text).
+   * Base text remains uncolored, only furigana parts are colored separately.
+   *
+   * @param {HTMLElement} ruby - The ruby element to modify
+   * @param {Array} compoundParts - Array of {base, reading, pitch, pattern} objects
+   */
+  function applyCompoundFuriganaColoring(ruby, compoundParts) {
+    ruby.className = (ruby.className || '') + ' compound-word';
+
+    const rt = ruby.querySelector('rt');
+    if (!rt) return;
+
+    // Clear RT content and add colored spans for each part
+    rt.textContent = '';
+
+    for (let i = 0; i < compoundParts.length; i++) {
+      const part = compoundParts[i];
+      const span = document.createElement('span');
+      span.className = 'pitch-' + part.pattern;
+      span.textContent = part.reading; // No nakaten, just the kana part
+      rt.appendChild(span);
+    }
+
+    // Remove equals signs from base text if present
+    const baseTextNodes = [];
+    for (let i = 0; i < ruby.childNodes.length; i++) {
+      const node = ruby.childNodes[i];
+      if (node.nodeType === 3) { // Text node
+        baseTextNodes.push(node);
+      }
+    }
+
+    for (let i = 0; i < baseTextNodes.length; i++) {
+      const node = baseTextNodes[i];
+      const text = node.textContent.replace(/=/g, '');
+      node.textContent = text;
+    }
+  }
+
+  /**
+   * Apply full split coloring to compound words (Mode 2: equals signs/nakaten in base text).
+   * Both base text and furigana are split and colored by parts.
+   *
+   * @param {HTMLElement} ruby - The ruby element to replace
+   * @param {Array} compoundParts - Array of {base, reading, pitch, pattern} objects with base parts
+   * @param {string|null} delimiter - Optional delimiter to insert between parts (e.g., ' ・ ')
+   * @returns {HTMLElement} The wrapper element containing the colored ruby elements
+   */
+  function applyCompoundSplitColoring(ruby, compoundParts, delimiter) {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'compound-word-split';
+
+    // Create separate ruby elements for each part
+    for (let i = 0; i < compoundParts.length; i++) {
+      const part = compoundParts[i];
+
+      const newRuby = document.createElement('ruby');
+      newRuby.className = 'pitch-' + part.pattern;
+      newRuby.textContent = part.base; // Kanji/base text part (no delimiters)
+
+      const rt = document.createElement('rt');
+      rt.textContent = part.reading; // Kana part (no nakaten)
+
+      newRuby.appendChild(rt);
+      wrapper.appendChild(newRuby);
+
+      // Insert delimiter between parts (if specified and not last part)
+      if (delimiter && i < compoundParts.length - 1) {
+        const delimiterSpan = document.createElement('span');
+        delimiterSpan.className = 'compound-delimiter';
+        delimiterSpan.textContent = delimiter;
+        wrapper.appendChild(delimiterSpan);
+      }
+    }
+
+    // Replace original ruby with wrapper containing multiple colored rubies
+    ruby.parentNode.replaceChild(wrapper, ruby);
+
+    // Return the wrapper so caller can extend color to following text
+    return wrapper;
+  }
+
+  /**
+   * Extend pitch accent color to following text until hitting a delimiter.
+   * Handles spaces (removed) and punctuation (kept as uncolored).
+   *
+   * @param {HTMLElement} element - The element (ruby or wrapper) to extend color from
+   * @param {string} pitchClass - The CSS class to apply (e.g., 'pitch-heiban')
+   */
+  function extendColorToFollowingText(element, pitchClass) {
+    // Start from the next sibling of the element
+    let currentNode = element.nextSibling;
+    const nodesToRemove = [];
+    let accumulatedText = '';
+    let afterSpaceText = '';
+    let shouldWrapText = false;
+
+    while (currentNode) {
+      // If we hit another ruby, stop and wrap everything we collected
+      if (currentNode.nodeType === 1 && currentNode.tagName === 'RUBY') {
+        shouldWrapText = true;
+        break;
+      }
+
+      // If it's a text node, check for delimiters (space or punctuation)
+      if (currentNode.nodeType === 3) {
+        const text = currentNode.textContent;
+
+        // Find the earliest delimiter (space, punctuation, pipe, or plus)
+        let delimiterIndex = -1;
+        let isPunctuation = false;
+        let isPipe = false;
+        let isPlus = false;
+
+        // Check for pipe delimiter first (completely removed, not kept like punctuation)
+        const pipeIndex = text.indexOf('|');
+        if (pipeIndex !== -1) {
+          delimiterIndex = pipeIndex;
+          isPipe = true;
+        }
+
+        // Check for plus delimiter (extra particle marker, removed from display)
+        const plusIndex = text.indexOf('+');
+        if (plusIndex !== -1 && (delimiterIndex === -1 || plusIndex < delimiterIndex)) {
+          delimiterIndex = plusIndex;
+          isPipe = false;
+          isPlus = true;
+        }
+
+        // Check for space (but don't override pipe/plus delimiter)
+        const spaceIndex = text.indexOf(' ');
+        if (spaceIndex !== -1 && !isPipe && !isPlus && (delimiterIndex === -1 || spaceIndex < delimiterIndex)) {
+          delimiterIndex = spaceIndex;
+          isPipe = false;
+          isPlus = false;
+        }
+
+        // Check for punctuation marks
+        for (let p = 0; p < PUNCTUATION_DELIMITERS.length; p++) {
+          const puncIndex = text.indexOf(PUNCTUATION_DELIMITERS[p]);
+          if (puncIndex !== -1 && (delimiterIndex === -1 || puncIndex < delimiterIndex)) {
+            delimiterIndex = puncIndex;
+            isPunctuation = true;
+            isPipe = false;
+            isPlus = false;
+          }
+        }
+
+        if (delimiterIndex !== -1) {
+          // Found delimiter - this is a stop signal
+          shouldWrapText = true;
+
+          // Text before delimiter (should be colored)
+          if (delimiterIndex > 0) {
+            accumulatedText += text.substring(0, delimiterIndex);
+          }
+
+          // Text after delimiter (should NOT be colored)
+          if (isPipe) {
+            // Skip the pipe AND any following spaces (pipe is completely removed)
+            afterSpaceText = text.substring(delimiterIndex + 1).replace(/^\s+/, '');
+          } else if (isPlus) {
+            // Skip the plus (extra particle marker is completely removed, text after stays gray)
+            afterSpaceText = text.substring(delimiterIndex + 1);
+          } else if (isPunctuation) {
+            // Keep punctuation visible
+            afterSpaceText = text.substring(delimiterIndex);
+          } else {
+            // Skip the space character
+            afterSpaceText = text.substring(delimiterIndex + 1);
+          }
+
+          // Mark this node for removal
+          nodesToRemove.push(currentNode);
+
+          break;
+        } else {
+          // No delimiter found - continue accumulating
+          accumulatedText += text;
+          nodesToRemove.push(currentNode);
+          currentNode = currentNode.nextSibling;
+        }
+      } else {
+        // Some other node type - stop and wrap what we have
+        shouldWrapText = true;
+        break;
+      }
+    }
+
+    // If we reached end of content, wrap what we collected
+    if (!shouldWrapText && accumulatedText) {
+      shouldWrapText = true;
+    }
+
+    // Now apply the changes if we have text to wrap
+    if (shouldWrapText && (accumulatedText || nodesToRemove.length > 0)) {
+      const parent = element.parentNode;
+
+      // Remove all collected nodes FIRST
+      for (let j = 0; j < nodesToRemove.length; j++) {
+        parent.removeChild(nodesToRemove[j]);
+      }
+
+      // Get nextSib AFTER removal (so it points to valid node, not removed one)
+      const nextSib = element.nextSibling;
+
+      // Insert wrapped text if we have any
+      if (accumulatedText) {
+        const span = document.createElement('span');
+        span.className = pitchClass;
+        span.textContent = accumulatedText;
+        parent.insertBefore(span, nextSib);
+      }
+
+      // Insert text after space (if any) - this remains uncolored
+      if (afterSpaceText) {
+        parent.insertBefore(document.createTextNode(afterSpaceText), nextSib);
+      }
+    }
+  }
+
+  /**
+   * Check if text is a pitch-only specification (no reading).
+   * Returns true if text starts with a digit or pitch letter (h/a/n/o/k).
+   *
+   * @param {string} text - Text to check
+   * @returns {boolean} True if text is a pitch specification
+   */
+  function isPitchOnly(text) {
+    if (!text || text.length === 0) return false;
+    const firstChar = text.charAt(0).toLowerCase();
+    // Check if starts with digit (0-9), pitch letter (h/a/n/o/k), or particle marker (p)
+    return /^[0-9hanokp]/.test(firstChar);
+  }
+
+  /**
+   * Apply color coding to a specific field based on pitch accent patterns.
+   * Colors each ruby element individually based on its reading's pitch.
+   * Handles both simple words and compound words (with or without equals sign delimiters).
+   * Colors extend to following text until a space or punctuation is encountered.
+   * Spaces are removed from output, punctuation remains visible.
+   *
+   * @param {string} rawFieldSelector - CSS selector for the hidden raw field
+   * @param {string} displayFieldSelector - CSS selector for the displayed field
+   */
+  function applyColorCodingToField(rawFieldSelector, displayFieldSelector, isWordField = false) {
+    const rawField = document.querySelector(rawFieldSelector);
+    const displayField = document.querySelector(displayFieldSelector);
+
+    if (!rawField || !displayField) return;
+
+    // First, clean the furigana to remove pitch information
+    cleanFurigana(displayField);
+
+    // Extract all pitch information from raw content
+    const rawContent = rawField.textContent;
+    const pitchArray = extractAllPitchInfo(rawContent);
+
+    // Find all ruby elements in the display field - convert to array to avoid live collection issues
+    const rubyElements = Array.from(displayField.querySelectorAll('ruby'));
+    console.log('[PARTICLE DEBUG] Found', rubyElements.length, 'ruby elements');
+
+    // Color each ruby element based on its reading
+    for (let i = 0; i < rubyElements.length; i++) {
+      const ruby = rubyElements[i];
+      const rt = ruby.querySelector('rt');
+
+      if (!rt) continue;
+
+      // Get the cleaned reading from the rt tag
+      const reading = rt.textContent.trim();
+      console.log('[PARTICLE DEBUG] Processing ruby #' + i + ':', ruby.textContent, 'reading:', reading);
+
+      // Check for following text nodes (trailing okurigana)
+      // This helps distinguish cases like 人[ひと;2] vs 人[ひと;2]たち
+      let followingOkurigana = '';
+      let nextNode = ruby.nextSibling;
+      if (nextNode && nextNode.nodeType === 3) { // Text node
+        const nextText = nextNode.textContent;
+        // Extract leading hiragana/katakana characters with optional devoicing markers (stop at space or punctuation)
+        const match = nextText.match(/^(?:\*?[ぁ-んァ-ンー])+/);
+        if (match) {
+          followingOkurigana = match[0];
+        }
+      }
+
+      // Check if this is pitch-only format (no semicolon, just pitch spec)
+      if (isPitchOnly(reading)) {
+        console.log('[PARTICLE DEBUG] Detected pitch-only reading:', reading);
+        // Treat rt content as pitch spec
+        const pitchSpec = reading;
+
+        // Check for particle markers
+        if (/^p[01]?$/i.test(pitchSpec)) {
+          console.log('[PARTICLE DEBUG] Detected gray particle (p/p0/p1)');
+          // Gray particles (p, p0, p1) - apply gray color in Word field only
+          rt.textContent = '';
+          if (isWordField) {
+            ruby.className = (ruby.className || '') + ' pitch-particle';
+          }
+          continue;
+        }
+
+        // Check for colored particles (pn, pa, po, ph, pk) with optional ~ modifier
+        const coloredParticleMatch = pitchSpec.match(/^p([hanok])(\d*)~?$/i);
+        console.log('[PARTICLE DEBUG] pitchSpec:', pitchSpec, 'match:', coloredParticleMatch);
+        if (coloredParticleMatch) {
+          const letter = coloredParticleMatch[1].toLowerCase();
+          const patternMap = {
+            'h': 'heiban',
+            'a': 'atamadaka',
+            'n': 'nakadaka',
+            'o': 'odaka',
+            'k': 'kifuku'
+          };
+          const pattern = patternMap[letter];
+          console.log('[PARTICLE DEBUG] letter:', letter, 'pattern:', pattern);
+
+          if (pattern) {
+            const pitchClass = 'pitch-' + pattern;
+            console.log('[PARTICLE DEBUG] Applying class:', pitchClass, 'to ruby element');
+
+            // Clear furigana (don't show pitch spec like "pn")
+            rt.textContent = '';
+
+            // Apply CSS class to the ruby element
+            ruby.className = (ruby.className || '') + ' ' + pitchClass;
+            console.log('[PARTICLE DEBUG] Ruby className after:', ruby.className);
+
+            // Extend color to following text
+            extendColorToFollowingText(ruby, pitchClass);
+
+            continue; // Skip normal processing
+          }
+        }
+
+        // Get base text from ruby element
+        let baseText = '';
+        const rb = ruby.querySelector('rb');
+        if (rb) {
+          // Modern format: <ruby><rb>base</rb><rt>reading</rt></ruby>
+          baseText = rb.textContent.trim();
+        } else {
+          // Fallback: get text nodes directly
+          for (let j = 0; j < ruby.childNodes.length; j++) {
+            const node = ruby.childNodes[j];
+            if (node.nodeType === 3) { // Text node
+              baseText += node.textContent;
+            }
+          }
+          baseText = baseText.trim();
+        }
+
+        // Get pitch pattern
+        const pattern = getPitchPattern(pitchSpec, baseText);
+        if (!pattern) continue; // Invalid pitch
+
+        const pitchClass = 'pitch-' + pattern;
+
+        // Clear the rt tag (don't show furigana)
+        rt.textContent = '';
+
+        // Color the ruby element
+        ruby.className = (ruby.className || '') + ' ' + pitchClass;
+
+        // Extend color to following text
+        extendColorToFollowingText(ruby, pitchClass);
+
+        continue; // Skip normal processing
+      }
+
+      // Look up pitch information for this reading
+      // Find the first unused entry that matches (try full reading first, then base reading)
+      const fullReading = reading + followingOkurigana;
+      let pitchEntry = null;
+
+      // Try to find unused entry with full reading
+      for (let j = 0; j < pitchArray.length; j++) {
+        if (!pitchArray[j].used && pitchArray[j].fullReading === fullReading) {
+          pitchEntry = pitchArray[j];
+          break;
+        }
+      }
+
+      // If not found, try base reading
+      if (!pitchEntry) {
+        for (let j = 0; j < pitchArray.length; j++) {
+          if (!pitchArray[j].used && pitchArray[j].reading === reading) {
+            pitchEntry = pitchArray[j];
+            break;
+          }
+        }
+      }
+
+      if (!pitchEntry) {
+        continue; // No pitch info for this reading
+      }
+
+      // Mark this entry as used
+      pitchEntry.used = true;
+      const pitchInfo = pitchEntry.pitchInfo;
+
+      // Handle particles (including colored particles)
+      if (pitchInfo.isParticle) {
+        // Check if this is a colored particle
+        if (pitchInfo.particlePattern) {
+          const pitchClass = 'pitch-' + pitchInfo.particlePattern;
+
+          // Clear furigana (don't show pitch spec like "pn")
+          rt.textContent = '';
+
+          // Apply CSS class to the ruby element
+          ruby.className = (ruby.className || '') + ' ' + pitchClass;
+
+          // Extend color to following text
+          extendColorToFollowingText(ruby, pitchClass);
+        } else {
+          // Gray particles (p, p0, p1) - apply gray color in Word field only
+          if (isWordField) {
+            rt.textContent = '';
+            ruby.className = (ruby.className || '') + ' pitch-particle';
+          }
+        }
+        continue;
+      }
+
+      // Check if this is a compound word
+      if (pitchInfo.isCompound) {
+        // Compound word - route to appropriate handler
+        if (pitchInfo.baseParts) {
+          // Mode 2: Delimiters in base text - split and color both base and furigana
+          // Determine delimiter to display: nakaten (visible) or none (for equals signs)
+          const delimiter = pitchInfo.hasNakatenInBase ? ' ・ ' : null;
+          const wrapper = applyCompoundSplitColoring(ruby, pitchInfo.compoundParts, delimiter);
+
+          // Extend the last part's color to following text
+          const lastPart = pitchInfo.compoundParts[pitchInfo.compoundParts.length - 1];
+          const lastPitchClass = 'pitch-' + lastPart.pattern;
+          extendColorToFollowingText(wrapper, lastPitchClass);
+        } else {
+          // Mode 1: No delimiters - keep base uncolored, color furigana parts only
+          applyCompoundFuriganaColoring(ruby, pitchInfo.compoundParts);
+          // No text extension for Mode 1 (base text is uncolored)
+        }
+        // Compound coloring is complete, skip the rest of the loop
+        continue;
+      }
+
+      // Simple (non-compound) word - apply regular coloring
+      const pitchClass = 'pitch-' + pitchInfo.pattern;
+
+      // Apply CSS class based on pitch pattern (much faster than inline styles)
+      ruby.className = (ruby.className || '') + ' ' + pitchClass;
+
+      // Extend color to following text until hitting a delimiter
+      extendColorToFollowingText(ruby, pitchClass);
+    }
+  }
+
+  /**
+   * Apply color coding to Word, Sentence, and Definition fields.
+   */
+  function applyAllColorCoding() {
+    applyColorCodingToField('.MvJ-raw-word', '.MvJ-field--word', true);
+    applyColorCodingToField('.MvJ-raw-sentence', '.MvJ-field--sentence', false);
+    applyColorCodingToField('.MvJ-raw-definition', '.MvJ-field--explanation-conditional', false);
+    applyColorCodingToField('.MvJ-raw-definition', '.MvJ-field--explanation-always', false);
+  }
+
+  // ====================
+  // PITCH GRAPH RENDERING
+  // ====================
+
+  /**
+   * Configuration for pitch graphs (matching make_graphs addon defaults)
+   */
+  const GRAPH_CONFIG = {
+    circleRadius: 4,
+    strokeWidth: 2,
+    graphHeight: 28,
+    xStep: 40,
+    sizeUnit: 20,
+    graphHorizontalPadding: 20,
+    fontSize: 16,
+    textDx: -8,
+    textDxTwoChar: -16,
+    graphVisibleHeight: 120,
+    graphFont: 'Noto Serif JP, serif',
+    strokeDasharray: '4,4'
+  };
+
+  /**
+   * Devoicing configuration
+   */
+  const DEVOICED_PREFIX = '*';
+  const DEVOICED_CONFIG = {
+    circleRadius: 12,
+    strokeWidth: 1,
+    strokeDasharray: '1 2',
+    rectanglePadding: 5
+  };
+
+  /**
+   * Kana conversion maps (hiragana ↔ katakana)
+   */
+  const HIRAGANA = 'がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんぁぃぅぇぉゃゅょっ';
+  const KATAKANA = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォャュョッ';
+
+  function toKatakana(hiragana) {
+    let result = '';
+    for (let i = 0; i < hiragana.length; i++) {
+      const char = hiragana[i];
+      const idx = HIRAGANA.indexOf(char);
+      result += idx !== -1 ? KATAKANA[idx] : char;
+    }
+    return result;
+  }
+
+  function toHiragana(katakana) {
+    let result = '';
+    for (let i = 0; i < katakana.length; i++) {
+      const char = katakana[i];
+      const idx = KATAKANA.indexOf(char);
+      result += idx !== -1 ? HIRAGANA[idx] : char;
+    }
+    return result;
+  }
+
+  /**
+   * Convert long vowels in katakana to ー (chōonpu), respecting protected characters
+   * @param {string} katakana - Katakana string to convert
+   * @param {number[]} protectedIndices - Array of character indices that should not participate in long vowel conversion
+   * @returns {string} Katakana with long vowels converted
+   */
+  function convertLongVowelsWithProtection(katakana, protectedIndices = []) {
+    let result = '';
+    for (let i = 0; i < katakana.length; i++) {
+      const current = katakana[i];
+      const next = katakana[i + 1];
+
+      // Check if current or next character is protected
+      const currentProtected = protectedIndices.includes(i);
+      const nextProtected = next && protectedIndices.includes(i + 1);
+
+      // Skip long vowel conversion if either character is protected
+      if (currentProtected || nextProtected) {
+        result += current;
+        continue;
+      }
+
+      // Check for long vowel patterns
+      if (next) {
+        // Same vowel repeated (アア→アー, イイ→イー, etc.)
+        if ((current === 'ア' && next === 'ア') ||
+            (current === 'イ' && next === 'イ') ||
+            (current === 'ウ' && next === 'ウ') ||
+            (current === 'エ' && next === 'エ') ||
+            (current === 'オ' && next === 'オ')) {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // o-column + ウ → ō (コウ→コー, etc.)
+        if ('コゴソゾトドノホボポモヨロヲ'.indexOf(current) !== -1 && next === 'ウ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // Contracted o-sound (small ょ) + ウ → ー (ジョウ→ジョー, ショウ→ショー, キョウ→キョー)
+        if ((current.endsWith('ョ') || current.endsWith('ょ')) && next === 'ウ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // オ + ウ → オー
+        if (current === 'オ' && next === 'ウ') {
+          result += 'オー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // e-column + イ → ē (ケイ→ケー, etc.)
+        if ('ケゲセゼテデネヘベペメレ'.indexOf(current) !== -1 && next === 'イ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // エ + イ → エー
+        if (current === 'エ' && next === 'イ') {
+          result += 'エー';
+          i++; // Skip next character
+          continue;
+        }
+      }
+
+      // No long vowel pattern matched, keep character as-is
+      result += current;
+    }
+    return result;
+  }
+
+  /**
+   * Convert long vowels in katakana to ー (chōonpu)
+   * Applies standard katakana long vowel rules:
+   * - アア → アー, イイ → イー, ウウ → ウー, etc.
+   * - オウ → オー, コウ → コー (o + u becomes ō)
+   * - エイ → エー, ケイ → ケー (e + i becomes ē in many cases)
+   * - オオ → オー, コオ → コー (o + o becomes ō)
+   */
+  function convertLongVowels(katakana) {
+    let result = '';
+    for (let i = 0; i < katakana.length; i++) {
+      const current = katakana[i];
+      const next = katakana[i + 1];
+
+      // Check for long vowel patterns
+      if (next) {
+        // Same vowel repeated (アア→アー, イイ→イー, etc.)
+        if ((current === 'ア' && next === 'ア') ||
+            (current === 'イ' && next === 'イ') ||
+            (current === 'ウ' && next === 'ウ') ||
+            (current === 'エ' && next === 'エ') ||
+            (current === 'オ' && next === 'オ')) {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // o-column + ウ → ō (コウ→コー, etc.)
+        if ('コゴソゾトドノホボポモヨロヲ'.indexOf(current) !== -1 && next === 'ウ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // Contracted o-sound (small ょ) + ウ → ー (ジョウ→ジョー, ショウ→ショー, キョウ→キョー)
+        if ((current.endsWith('ョ') || current.endsWith('ょ')) && next === 'ウ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // オ + ウ → オー
+        if (current === 'オ' && next === 'ウ') {
+          result += 'オー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // e-column + イ → ē (ケイ→ケー, etc.)
+        if ('ケゲセゼテデネヘベペメレ'.indexOf(current) !== -1 && next === 'イ') {
+          result += current + 'ー';
+          i++; // Skip next character
+          continue;
+        }
+
+        // エ + イ → エー
+        if (current === 'エ' && next === 'イ') {
+          result += 'エー';
+          i++; // Skip next character
+          continue;
+        }
+      }
+
+      result += current;
+    }
+    return result;
+  }
+
+  /**
+   * Convert text to katakana with long vowel conversion and protection markers
+   * Protection marker (.) prevents the next character from being converted
+   * Example: "メ.イン" keeps イ as イ (instead of converting メイン → メーン)
+   *
+   * NOTE: This function is now deprecated in favor of convertReadingToKatakana
+   * which should be called BEFORE splitting into morae for proper long vowel conversion.
+   */
+  function convertWithProtection(text) {
+    if (!CONVERT_PITCH_TO_KATAKANA) {
+      return text; // Conversion disabled
+    }
+
+    let result = '';
+    let protected = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      // Check for protection marker
+      if (char === '.') {
+        protected = true;
+        continue; // Skip the . character itself
+      }
+
+      // If this character is protected, keep it as-is
+      if (protected) {
+        result += char;
+        protected = false;
+        continue;
+      }
+
+      // Convert to katakana
+      const katakana = toKatakana(char);
+      result += katakana;
+    }
+
+    // Apply long vowel conversion to the entire result
+    return convertLongVowels(result);
+  }
+
+  /**
+   * Convert a full reading to katakana with long vowel conversion
+   * This should be called BEFORE splitting into morae to ensure proper long vowel detection
+   * Handles protection markers (.) to prevent specific characters from conversion
+   *
+   * Example: "きょう" → "キョー", "こうこう" → "コーコー", "せんせい" → "センセー"
+   * With protection: "め.いん" → "メイン" (keeps イ as イ, dot is hidden)
+   * Particle conversion: "は" → "ワ", "へ" → "エ" when isParticle=true (reflects pronunciation)
+   */
+  function convertReadingToKatakana(reading, isParticle = false) {
+    if (!CONVERT_PITCH_TO_KATAKANA) {
+      return reading; // Conversion disabled
+    }
+
+    let katakanaReading = '';
+    let protected = false;
+    const protectedIndices = [];  // Track which positions were protected
+
+    // First pass: Convert to katakana while respecting protection markers
+    for (let i = 0; i < reading.length; i++) {
+      const char = reading[i];
+
+      // Check for devoicing marker - preserve it in output before next character
+      if (char === '*') {
+        katakanaReading += '*';  // Keep asterisk in output
+        continue; // Skip to next character
+      }
+
+      // Check for protection marker
+      if (char === '.') {
+        protected = true;
+        continue; // Skip the . character itself (won't appear in output)
+      }
+
+      // If this character is protected, convert to katakana directly
+      // bypassing special rules (を→オ, は→ワ) and long vowel conversion
+      if (protected) {
+        katakanaReading += toKatakana(char);  // Direct conversion
+        protectedIndices.push(katakanaReading.length - 1);  // Mark this position as protected
+        protected = false;
+        continue;
+      }
+
+      // Convert to katakana (special cases for particles and phonetic equivalents)
+      if (char === 'づ') {
+        katakanaReading += 'ズ';  // づ becomes ズ (phonetic equivalent)
+      } else if (char === 'ぢ') {
+        katakanaReading += 'ジ';  // ぢ becomes ジ (phonetic equivalent)
+      } else if (char === 'を') {
+        katakanaReading += 'オ';  // を always becomes オ, not ヲ
+      } else if (char === 'は' && isParticle) {
+        katakanaReading += 'ワ';  // は becomes ワ when used as particle (reflects pronunciation)
+      } else if (char === 'へ' && isParticle) {
+        katakanaReading += 'エ';  // へ becomes エ when used as particle (reflects pronunciation)
+      } else {
+        katakanaReading += toKatakana(char);
+      }
+    }
+
+    // Second pass: Apply long vowel conversion, but skip protected characters
+    return convertLongVowelsWithProtection(katakanaReading, protectedIndices);
+  }
+
+  /**
+   * Split reading into morae (mora = unit of pitch accent)
+   * Small kana (ゃゅょ etc.) combine with previous character
+   * Returns array of mora objects: {text: string, devoiced: boolean}
+   */
+  function splitToMorae(reading) {
+    if (!reading) return [];
+
+    // Remove protection markers (dots) before splitting into morae
+    // Dots are metadata for katakana conversion, not actual characters
+    const kana = reading.replace(/\./g, '');
+    console.log('[DEVOICE DEBUG splitToMorae] Input reading:', reading, '→ kana after dot removal:', kana);
+
+    // Match pattern: optional '*' prefix + character + optional small kana
+    const moraRegex = /\*?.[ァィゥェォャュョぁぃぅぇぉゃゅょ]?/g;
+    const morae = kana.match(moraRegex) || [];
+
+    // Convert to mora objects with devoicing info
+    return morae.filter(m => m.length > 0).map(mora => {
+      console.log('[DEVOICE DEBUG splitToMorae] Processing mora:', JSON.stringify(mora), 'starts with *?', mora.startsWith(DEVOICED_PREFIX));
+      if (mora.startsWith(DEVOICED_PREFIX)) {
+        return {
+          text: mora.substring(1), // Strip '*' prefix
+          devoiced: true
+        };
+      } else {
+        return {
+          text: mora,
+          devoiced: false
+        };
+      }
+    });
+  }
+
+  /**
+   * Check if a mora is small tsu (っ or ッ)
+   * Accepts both string and mora object {text, devoiced}
+   */
+  function isSmallTsu(mora) {
+    const text = typeof mora === 'string' ? mora : mora.text;
+    return text === 'っ' || text === 'ッ';
+  }
+
+  /**
+   * Calculate high/low pitch levels for each mora based on pitch number
+   * Returns array of 'h' (high) or 'l' (low) for each mora
+   */
+  function calculatePitchLevels(morae, pitchNum, forceAllLow = false) {
+    const levels = [];
+    const moraeCount = morae.length;
+
+    // If forceAllLow flag is set, return all low levels
+    if (forceAllLow) {
+      for (let i = 0; i < moraeCount; i++) {
+        levels.push('l');
+      }
+      return levels;
+    }
+
+    if (pitchNum === 0) {
+      // Heiban: L-H-H-H...
+      levels.push('l');
+      for (let i = 1; i < moraeCount; i++) {
+        levels.push('h');
+      }
+    } else if (pitchNum === 1) {
+      // Atamadaka: H-L-L-L...
+      levels.push('h');
+      for (let i = 1; i < moraeCount; i++) {
+        levels.push('l');
+      }
+    } else {
+      // Nakadaka or Odaka: L-H-H-L... (drop at pitchNum)
+      for (let i = 0; i < moraeCount; i++) {
+        if (i === 0) {
+          levels.push('l');
+        } else if (i < pitchNum) {
+          levels.push('h');
+        } else {
+          levels.push('l');
+        }
+      }
+    }
+
+    return levels;
+  }
+
+  /**
+   * Adjust pitch levels when rise would land on small tsu (っ/ッ).
+   * If a L-to-H transition would occur on small tsu, delay the rise by one mora.
+   * @param {Array} morae - Array of mora strings
+   * @param {Array} levels - Array of 'h' or 'l' pitch levels
+   * @returns {Array} Adjusted levels array
+   */
+  function adjustPitchLevelsForSmallTsu(morae, levels) {
+    // Clone array to avoid mutating original
+    const adjusted = [...levels];
+
+    for (let i = 0; i < adjusted.length - 1; i++) {
+      if (adjusted[i] === 'l' && adjusted[i + 1] === 'h') {
+        // Found L-to-H transition at position i+1
+        if (isSmallTsu(morae[i + 1])) {
+          // Rise lands on small tsu - delay the rise
+          adjusted[i + 1] = 'l';  // Keep small tsu low
+
+          if (i + 2 < adjusted.length) {
+            adjusted[i + 2] = 'h';  // Move rise to next mora
+          }
+          // Skip next iteration to avoid processing same transition twice
+          i++;
+        }
+      }
+    }
+
+    return adjusted;
+  }
+
+  /**
+   * Generate SVG circle element
+   */
+  function makeCircle(x, y, radius, strokeWidth) {
+    return `<circle fill="black" stroke="black" stroke-width="${strokeWidth}" cx="${x}" cy="${y}" r="${radius}"></circle>`;
+  }
+
+  /**
+   * Generate SVG line element
+   */
+  function makeLine(x1, y1, x2, y2, strokeWidth) {
+    return `<line stroke="black" stroke-width="${strokeWidth}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>`;
+  }
+
+  /**
+   * Generate SVG text element
+   */
+  function makeText(text, x, y, dx, fontSize) {
+    return `<text font-weight="normal" font-size="${fontSize}px" fill="black" x="${x}" y="${y}" dx="${dx}">${text}</text>`;
+  }
+
+  /**
+   * Generate SVG devoiced marker (dashed circle or rectangle)
+   * @param {string} moraText - The text of the mora (for length calculation)
+   * @param {number} x - X position (center for circle, center for rect)
+   * @param {number} y - Y position (center for circle, top for rect)
+   * @returns {string} SVG markup for devoiced shape
+   */
+  function makeDevoicedShape(moraText, x, y) {
+    const config = DEVOICED_CONFIG;
+    const graphConfig = GRAPH_CONFIG;
+
+    // Adjust Y position to center around kana text
+    // SVG text y is at the baseline, so we need to move up by ~35% of font size
+    // to center the circle/rect around the visual center of the text
+    const adjustedY = y - (graphConfig.fontSize * 0.35);
+
+    if (moraText.length === 1) {
+      // Single character mora - draw dashed circle
+      return `<circle class="devoiced" fill="none" ` +
+             `cx="${x}" cy="${adjustedY}" r="${config.circleRadius}" ` +
+             `stroke-width="${config.strokeWidth}" ` +
+             `stroke-dasharray="${config.strokeDasharray}" />`;
+    } else {
+      // Two-character mora (きょ, しゅ, etc.) - draw dashed rounded rectangle
+      const fontSize = graphConfig.fontSize;
+      const padding = config.rectanglePadding;
+      const width = fontSize * 2 + padding * 2;
+      const height = config.circleRadius * 2;
+      const rectX = x - fontSize - padding;
+      const rectY = adjustedY - config.circleRadius;
+
+      return `<rect class="devoiced" fill="none" ` +
+             `x="${rectX}" y="${rectY}" width="${width}" height="${height}" ` +
+             `rx="11" ` +
+             `stroke-width="${config.strokeWidth}" ` +
+             `stroke-dasharray="${config.strokeDasharray}" />`;
+    }
+  }
+
+  /**
+   * Adjust line coordinates to account for circle radius
+   * Uses trigonometry to find connection points on circle edge
+   */
+  function adjustLineToRadius(x1, y1, x2, y2, radius) {
+    const config = GRAPH_CONFIG;
+    const tan = config.graphHeight / config.xStep;
+    const sin = tan / Math.sqrt(1 + tan * tan);
+    const cos = 1 / Math.sqrt(1 + tan * tan);
+
+    const offsetY = radius * sin;
+    const offsetX = radius * cos;
+
+    if (y1 === y2) {
+      // Horizontal line
+      return {
+        x1: x1 + radius,
+        y1: y1,
+        x2: x2 - radius,
+        y2: y2
+      };
+    } else if (y1 > y2) {
+      // Going up
+      return {
+        x1: x1 + offsetX,
+        y1: y1 - offsetY,
+        x2: x2 - offsetX,
+        y2: y2 + offsetY
+      };
+    } else {
+      // Going down
+      return {
+        x1: x1 + offsetX,
+        y1: y1 + offsetY,
+        x2: x2 - offsetX,
+        y2: y2 - offsetY
+      };
+    }
+  }
+
+  /**
+   * Generate SVG elements for a single pitch graph
+   * @param {Array} morae - Array of mora objects {text, devoiced}
+   * @param {Array} levels - Array of 'h' or 'l' levels
+   * @param {string} pattern - Pitch pattern for CSS coloring
+   * @param {number} startX - Starting X position
+   * @param {number} heightHigh - Y position for high pitch
+   * @param {number} heightLow - Y position for low pitch
+   * @param {number} heightKana - Y position for kana text
+   * @returns {Object} Object with {svgContent: string, lastX: number, lastY: number}
+   */
+  function generateGraphElements(morae, levels, pattern, startX, heightHigh, heightLow, heightKana) {
+    const config = GRAPH_CONFIG;
+    const circles = [];
+    const lines = [];
+    const texts = [];
+    const devoicedShapes = [];
+
+    let xPos = startX;
+    const xStep = config.xStep;
+
+    for (let i = 0; i < morae.length; i++) {
+      const mora = morae[i];
+      const moraText = typeof mora === 'string' ? mora : mora.text;
+      const isDevoiced = typeof mora === 'object' && mora.devoiced;
+      const level = levels[i];
+      const yPos = level === 'h' ? heightHigh : heightLow;
+
+      // Add circle
+      circles.push(makeCircle(xPos, yPos, config.circleRadius, config.strokeWidth));
+
+      // Add line to next mora (if not last)
+      if (i < morae.length - 1) {
+        const nextLevel = levels[i + 1];
+        const nextYPos = nextLevel === 'h' ? heightHigh : heightLow;
+        const nextXPos = xPos + xStep;
+
+        const adjusted = adjustLineToRadius(xPos, yPos, nextXPos, nextYPos, config.circleRadius);
+        lines.push(makeLine(adjusted.x1, adjusted.y1, adjusted.x2, adjusted.y2, config.strokeWidth));
+      }
+
+      // Add devoiced shape if this mora is devoiced
+      if (isDevoiced) {
+        devoicedShapes.push(makeDevoicedShape(moraText, xPos, heightKana));
+      }
+
+      // Add kana text (use different offset for 2-character morae to center them)
+      // Note: moraText is already converted to katakana by convertReadingToKatakana()
+      const dx = moraText.length === 2 ? config.textDxTwoChar : config.textDx;
+      texts.push(makeText(moraText, xPos, heightKana, dx, config.fontSize));
+
+      xPos += xStep;
+    }
+
+    // Wrap in colored group - devoiced shapes go after circles so they appear on top
+    const svgContent = `<g class="pitch-${pattern}">${lines.join('')}${circles.join('')}${devoicedShapes.join('')}${texts.join('')}</g>`;
+
+    // Return content and last position for compound graphs
+    const lastLevel = levels[morae.length - 1];
+    const lastX = startX + (morae.length - 1) * xStep;
+    const lastY = lastLevel === 'h' ? heightHigh : heightLow;
+
+    return {
+      svgContent: svgContent,
+      lastX: lastX,
+      lastY: lastY,
+      endX: xPos  // Position after last mora
+    };
+  }
+
+  /**
+   * Generate gray connecting line between two graphs (for compound words)
+   * @param {number} x1 - Starting X (last mora of first graph)
+   * @param {number} y1 - Starting Y
+   * @param {number} x2 - Ending X (first mora of second graph)
+   * @param {number} y2 - Ending Y
+   * @returns {string} SVG line element (gray)
+   */
+  function generateConnectionLine(x1, y1, x2, y2, isDotted = false) {
+    const config = GRAPH_CONFIG;
+    const adjusted = adjustLineToRadius(x1, y1, x2, y2, config.circleRadius);
+
+    // Add stroke-dasharray for dotted lines (equals sign delimiters)
+    const dashArray = isDotted ? ' stroke-dasharray="3,3"' : '';
+
+    return `<line stroke="#808080" stroke-width="${config.strokeWidth}"${dashArray} x1="${adjusted.x1}" y1="${adjusted.y1}" x2="${adjusted.x2}" y2="${adjusted.y2}"></line>`;
+  }
+
+  /**
+   * Generate compound pitch accent graph SVG (two or more graphs connected)
+   * @param {Array} compoundParts - Array of {reading, pitch, pattern} objects
+   * @param {boolean} isLastGroup - Whether this is the last group in a manual split (default true)
+   * @returns {string} SVG markup with graphs connected by gray lines
+   */
+  function generateCompoundPitchGraph(compoundParts, isLastGroup = true) {
+    console.log('[DEBUG COMPOUND ENTRY] Function called with compoundParts:', compoundParts, 'isLastGroup:', isLastGroup);
+    if (!compoundParts || compoundParts.length < 2) return '';
+
+    const config = GRAPH_CONFIG;
+
+    // Prepare data for each part
+    const graphData = [];
+    for (let i = 0; i < compoundParts.length; i++) {
+      const part = compoundParts[i];
+
+      // Handle explicit particle parts
+      if (part.isParticle) {
+        // Check for + modifier (extra trailing particle)
+        const hasExtraParticle = part.pitch.includes('+');
+        // Remove both ~ and + modifiers for pitch parsing
+        const pitchWithoutModifiers = part.pitch.replace(/[~+]/g, '');
+
+        // Check if pitch spec contains an explicit number (e.g., p1, pk2 vs just pk, ph)
+        // This must be checked BEFORE setting forceAllLow
+        const hasExplicitNumber = /\d/.test(pitchWithoutModifiers);
+
+        // Check for ~ modifier (all low flag) - can be prefix or suffix
+        // Inherit forceAllLow from previous word ONLY for particles without explicit pitch
+        // Particles with explicit pitch (p1, p2, pn2, etc.) should behave as independent words
+        const prevPartHasForceAllLow = i > 0 && graphData[i-1].forceAllLow;
+        const forceAllLow = part.pitch.includes('~') ||
+                            (!hasExplicitNumber && prevPartHasForceAllLow);
+
+        // Extract pitch: 'p' -> null, 'p0' -> 0, 'p1' -> 1, 'pn' -> 2, 'pn0' -> 0, 'pb0' -> 0, etc.
+        // First check if particlePitch was already extracted and passed in
+        let particlePitch = null;
+        if (part.particlePitch !== undefined) {
+          // Use pre-extracted pitch (might be string, convert to number)
+          particlePitch = part.particlePitch !== null ? parseInt(part.particlePitch, 10) : null;
+          console.log('[DEBUG PARTICLE USE EXTRACTED] particlePitch from part:', particlePitch);
+        } else if (pitchWithoutModifiers.length > 1) {
+          const pitchPart = pitchWithoutModifiers.substring(1);
+          console.log('[DEBUG PARTICLE EXTRACT] pitchPart:', pitchPart);
+          // Check if it starts with a letter (colored particle)
+          const colorMatch = pitchPart.match(/^[hanokb](\d+)?$/i);
+          if (colorMatch && colorMatch[1]) {
+            // Colored particle with explicit number: pn2, pa1, pb0, etc.
+            particlePitch = parseInt(colorMatch[1], 10);
+            console.log('[DEBUG PARTICLE EXTRACT] Colored with number, particlePitch:', particlePitch);
+          } else if (colorMatch) {
+            // Colored particle without number: use defaults
+            const letter = pitchPart.toLowerCase();
+            if (letter === 'h') particlePitch = 0;
+            else if (letter === 'a') particlePitch = 1;
+            else if (letter === 'n') particlePitch = 2;
+            else if (letter === 'o') particlePitch = null;  // Auto from mora count
+            else if (letter === 'k') particlePitch = 2;
+            else if (letter === 'b') particlePitch = null;  // Black particle: flow behavior
+            console.log('[DEBUG PARTICLE EXTRACT] Colored without number, letter:', letter, 'particlePitch:', particlePitch);
+          } else {
+            // Numeric particle: p0, p1, etc.
+            particlePitch = parseInt(pitchPart, 10);
+          }
+        }
+
+        // Pre-convert particle reading to katakana with long vowels (if enabled)
+        // Pass isParticle=true to convert は→ワ for correct pronunciation
+        const processedReading = convertReadingToKatakana(part.reading, true);
+        console.log('[DEVOICE DEBUG] Particle reading:', part.reading, '→ processedReading:', processedReading);
+
+        // Calculate morae from particle reading
+        const morae = splitToMorae(processedReading);
+        console.log('[DEVOICE DEBUG] Morae:', morae);
+
+        // Calculate pitch levels for particle
+        let levels;
+        let effectivePitchNum = null;
+        if (hasExplicitNumber) {
+          // Explicit pitch: use standard pitch pattern calculation
+          // p0 = heiban, p1 = atamadaka, p2 = nakadaka, etc.
+          levels = calculatePitchLevels(morae, particlePitch, forceAllLow);
+          // Adjust for small tsu (but not if forceAllLow is true, since all will be 'l' anyway)
+          if (!forceAllLow) {
+            levels = adjustPitchLevelsForSmallTsu(morae, levels);
+          }
+          // Set effectivePitchNum based on ending pitch
+          // If particle ends HIGH, next heiban word should start HIGH (behaves like heiban)
+          if (levels[levels.length - 1] === 'h') {
+            effectivePitchNum = 0;  // Ends HIGH: behaves like heiban for next word
+          } else {
+            effectivePitchNum = particlePitch;  // Ends LOW: preserve original pitch number
+          }
+        } else {
+          // No explicit pitch (just 'p'): "go with the flow"
+          // After heiban: attach high and stay high
+          // After non-heiban: attach low and stay low
+          let shouldBeHigh = false;
+          effectivePitchNum = null;
+          // If particle has ~ modifier, force it to be low
+          if (!forceAllLow) {
+            // Check if previous word was heiban (0) WITHOUT ~ modifier
+            const prevPartHasForceAllLow = i > 0 && graphData[i - 1].forceAllLow;
+            if (i > 0 && graphData[i - 1].pitchNum === 0 && !graphData[i - 1].isParticle && !prevPartHasForceAllLow) {
+              shouldBeHigh = true;  // Previous word is heiban WITHOUT ~
+              effectivePitchNum = 0;  // Mark as effectively heiban for next word
+            }
+          }
+
+          levels = [];
+          for (let j = 0; j < morae.length; j++) {
+            levels.push(shouldBeHigh ? 'h' : 'l');
+          }
+          // Adjust for small tsu (but not if forceAllLow is true)
+          if (!forceAllLow) {
+            levels = adjustPitchLevelsForSmallTsu(morae, levels);
+          }
+        }
+
+        graphData.push({
+          morae: morae,
+          levels: levels,
+          pattern: part.particlePattern || null,  // Color pattern for colored particles (pn, pa, etc.)
+          pitchNum: particlePitch,  // null, 0, or 1
+          effectivePitchNum: effectivePitchNum,  // What this particle behaves as for next word
+          isParticle: true,     // Flag for rendering
+          reading: part.reading,  // Preserve reading for reference
+          forceAllLow: forceAllLow,  // Preserve forceAllLow flag
+          hasExtraParticle: hasExtraParticle  // True if + modifier present
+        });
+        console.log('[DEBUG PARTICLE DATA] Added to graphData:', {
+          reading: part.reading,
+          pitch: part.pitch,
+          pitchNum: particlePitch,
+          levels: levels,
+          isParticle: true,
+          hasExtraParticle: hasExtraParticle,
+          pattern: part.pattern
+        });
+        continue;
+      }
+
+      const pitchSpec = part.pitch;
+
+      // Check for ~ modifier (all low flag) - can be prefix or suffix
+      const forceAllLow = pitchSpec.includes('~');
+      // Extract + modifier - individual parts with explicit + should get trailing particles
+      const hasExtraParticle = pitchSpec.includes('+');
+
+      // Check if pitch uses letter notation (h, a, n, o, k, b) vs pure numeric
+      const cleanPitchSpec = pitchSpec.replace(/[+~]/g, '');
+      const isLetterSpec = /^[hanokb]/i.test(cleanPitchSpec);
+
+      console.log('[DEBUG] Non-particle:', part.reading, 'pitchSpec:', pitchSpec, 'hasExtraParticle:', hasExtraParticle, 'isLetterSpec:', isLetterSpec);
+
+      // Extract pitch number using helper function
+      const pitchNum = extractPitchNumber(pitchSpec, part.reading);
+      if (pitchNum === null) return '';  // Invalid pitch
+
+      // Pre-convert reading to katakana with long vowels (if enabled)
+      const processedReading = convertReadingToKatakana(part.reading);
+
+      const morae = splitToMorae(processedReading);
+      if (morae.length === 0) return '';  // Invalid reading
+
+      const levels = calculatePitchLevels(morae, pitchNum, forceAllLow);
+
+      graphData.push({
+        morae: morae,
+        levels: levels,
+        pattern: part.pattern,
+        pitchNum: pitchNum,
+        forceAllLow: forceAllLow,  // Store flag for particle connection logic
+        hasExtraParticle: hasExtraParticle,  // Store flag for trailing particle
+        isLetterSpec: isLetterSpec  // Store flag for letter vs numeric notation
+      });
+      console.log('[DEBUG] Pushed to graphData:', {reading: part.reading, hasExtraParticle: hasExtraParticle, pitchNum: pitchNum});
+    }
+
+    // Set up dimensions (same for all parts)
+    const heightHigh = config.sizeUnit;
+    const heightLow = heightHigh + config.graphHeight;
+    const heightKana = heightLow + config.xStep;
+
+    // Generate all graph parts
+    const allElements = [];
+    let xPos = config.graphHorizontalPadding;
+    let lastX = 0;
+    let lastY = 0;
+
+    for (let i = 0; i < graphData.length; i++) {
+      const data = graphData[i];
+
+      // Handle particle rendering
+      if (data.isParticle) {
+        // Apply heiban special rule for particles with explicit pitch
+        // BUT: Do not apply if forceAllLow flag is set (~ modifier)
+        if (i > 0 && graphData[i - 1].pitchNum === 0 && !graphData[i - 1].isParticle && data.pitchNum !== null && !data.forceAllLow) {
+          // Previous word is heiban: particle starts HIGH instead of LOW
+          if (data.levels[0] === 'l') {
+            data.levels[0] = 'h';
+          }
+        }
+
+        // Add connecting line from previous word (always gray, NOT part of colored particle group)
+        if (i > 0) {
+          const firstMoraLevel = data.levels[0];
+          const firstMoraY = firstMoraLevel === 'h' ? heightHigh : heightLow;
+          const adjusted = adjustLineToRadius(lastX, lastY, xPos, firstMoraY, config.circleRadius);
+          allElements.push(`<line stroke="#808080" stroke-width="${config.strokeWidth}" x1="${adjusted.x1}" y1="${adjusted.y1}" x2="${adjusted.x2}" y2="${adjusted.y2}"></line>`);
+        }
+
+        // Determine if this is a colored particle
+        const isColoredParticle = data.pattern !== null;
+
+        // Get stroke/fill colors for this particle
+        let strokeColor, fillColor;
+        if (isColoredParticle) {
+          // Detect dark mode for compound graphs
+          const isDarkMode = document.body.classList.contains('night_mode') ||
+                             document.documentElement.classList.contains('night_mode');
+
+          // Use pattern-specific colors for colored particles (match system colors)
+          const colorMap = {
+            'heiban': '#005CE6',      // Blue
+            'atamadaka': '#E60000',   // Red
+            'nakadaka': '#E68A00',    // Orange
+            'odaka': '#00802B',       // Green
+            'kifuku': '#AC00E6',      // Purple
+            'black': isDarkMode ? '#ffffff' : '#000000'  // White in dark mode, black in light mode
+          };
+          strokeColor = colorMap[data.pattern] || '#808080';
+          fillColor = strokeColor;
+        } else {
+          // Gray for regular particles
+          strokeColor = '#808080';
+          fillColor = '#808080';
+        }
+
+        const strokeAttr = ' stroke="' + strokeColor + '"';
+        const fillAttr = ' fill="' + fillColor + '"';
+
+        // Wrap particle in a group with pattern class for colored particles
+        const particleElements = [];
+
+        // Render each mora of the particle using its pitch level
+        for (let moraIdx = 0; moraIdx < data.morae.length; moraIdx++) {
+          const mora = data.morae[moraIdx];
+          console.log('[DEVOICE DEBUG PARTICLE] moraIdx:', moraIdx, 'mora:', mora);
+          const moraText = typeof mora === 'string' ? mora : mora.text;
+          const isDevoiced = typeof mora === 'object' && mora.devoiced;
+          console.log('[DEVOICE DEBUG PARTICLE] moraText:', moraText, 'isDevoiced:', isDevoiced);
+          const moraX = xPos;
+
+          // Determine Y position based on pitch level for this mora
+          const level = data.levels[moraIdx];
+          const moraY = level === 'h' ? heightHigh : heightLow;
+
+          // Add connecting lines BETWEEN particle morae (not from previous word)
+          if (moraIdx > 0) {
+            // Connect between particle morae
+            const prevMoraX = xPos - config.xStep;
+            const prevMoraY = data.levels[moraIdx - 1] === 'h' ? heightHigh : heightLow;
+            const adjusted = adjustLineToRadius(prevMoraX, prevMoraY, moraX, moraY, config.circleRadius);
+            particleElements.push(`<line${strokeAttr} stroke-width="${config.strokeWidth}" x1="${adjusted.x1}" y1="${adjusted.y1}" x2="${adjusted.x2}" y2="${adjusted.y2}"></line>`);
+          }
+
+          // Add particle circle (hollow, colored if pattern specified)
+          particleElements.push(`<circle fill="none"${strokeAttr} stroke-width="${config.strokeWidth}" cx="${moraX}" cy="${moraY}" r="${config.circleRadius}"></circle>`);
+
+          // Add devoiced shape if this mora is devoiced
+          if (isDevoiced) {
+            console.log('[DEVOICE DEBUG PARTICLE] Generating devoiced shape for:', moraText);
+            particleElements.push(makeDevoicedShape(moraText, moraX, heightKana));
+          }
+
+          // Add kana text label (colored to match pattern or gray)
+          // Use different offset for 2-character morae to center them
+          const particleDx = moraText.length === 2 ? config.textDxTwoChar : config.textDx;
+          particleElements.push(`<text font-weight="normal" font-size="${config.fontSize}px"${fillAttr} x="${moraX}" y="${heightKana}" dx="${particleDx}">${moraText}</text>`);
+
+          // Update position
+          lastX = moraX;
+          lastY = moraY;
+          xPos += config.xStep;
+        }
+
+        // Add particle elements directly (colors are inline, no CSS wrapper needed)
+        allElements.push(particleElements.join(''));
+
+        // If particle has + modifier, add extra trailing particle circle
+        if (data.hasExtraParticle) {
+          console.log('[DEBUG PARTICLE+] Adding extra particle for particle with +, isParticle:', data.isParticle);
+          const extraParticleX = xPos;
+
+          // Determine extra particle Y based on particle pitch pattern
+          let extraParticleY;
+          const particleMoraCount = data.levels.length;
+          const particlePitchNum = data.pitchNum;  // The actual pitch number for this particle
+
+          // For particles, determine the trailing particle position based on pitch pattern
+          if (particlePitchNum === particleMoraCount && particlePitchNum > 0) {
+            // Odaka particle (pitch = mora count): trailing particle goes LOW
+            extraParticleY = heightLow;
+            console.log('[DEBUG PARTICLE+] Odaka particle, extra particle LOW');
+          } else if (particlePitchNum === 0 || data.effectivePitchNum === 0) {
+            // Heiban or behaves like heiban (ends high): trailing particle goes HIGH
+            extraParticleY = heightHigh;
+            console.log('[DEBUG PARTICLE+] Heiban/ends-high particle, extra particle HIGH');
+          } else {
+            // Other patterns (atamadaka, nakadaka): trailing particle goes LOW
+            extraParticleY = heightLow;
+            console.log('[DEBUG PARTICLE+] Non-heiban particle, extra particle LOW');
+          }
+
+          // Add connecting line from last mora to extra particle (always gray)
+          const adjusted = adjustLineToRadius(lastX, lastY, extraParticleX, extraParticleY, config.circleRadius);
+          allElements.push(`<line stroke="#808080" stroke-width="${config.strokeWidth}" x1="${adjusted.x1}" y1="${adjusted.y1}" x2="${adjusted.x2}" y2="${adjusted.y2}"></line>`);
+
+          // Add extra particle circle (hollow, always gray)
+          allElements.push(`<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${extraParticleX}" cy="${extraParticleY}" r="${config.circleRadius}"></circle>`);
+
+          // Update position for next element
+          lastX = extraParticleX;
+          xPos += config.xStep;
+        }
+
+        continue;
+      }
+
+      // Apply heiban special rule: if previous entry is heiban (pitch 0) or
+      // a particle that behaved as heiban (effectivePitchNum 0),
+      // current word starts HIGH instead of LOW
+      // BUT: Do not apply if forceAllLow flag is set (~ modifier)
+      if (i > 0 && !data.forceAllLow) {
+        const prevData = graphData[i - 1];
+        const prevIsHeiban = (prevData.pitchNum === 0 && !prevData.isParticle) ||
+                             (prevData.isParticle && prevData.effectivePitchNum === 0);
+
+        if (prevIsHeiban) {
+          // Override first mora to be high
+          if (data.levels[0] === 'l') {
+            data.levels[0] = 'h';
+          }
+        }
+      }
+
+      // Adjust for small tsu (after heiban rule is applied)
+      data.levels = adjustPitchLevelsForSmallTsu(data.morae, data.levels);
+
+      // Generate graph elements
+      const result = generateGraphElements(
+        data.morae,
+        data.levels,
+        data.pattern,
+        xPos,
+        heightHigh,
+        heightLow,
+        heightKana
+      );
+
+      // Add connecting line from previous graph (if not first)
+      if (i > 0) {
+        const startY = lastY;
+        const endY = data.levels[0] === 'h' ? heightHigh : heightLow;
+
+        // Check if current part was preceded by forward slash delimiter (dotted line)
+        const currentPart = compoundParts[i];
+        const isDotted = currentPart && currentPart.hasSlashDelimiter;
+
+        allElements.push(generateConnectionLine(lastX, startY, xPos, endY, isDotted));
+      }
+
+      // Add this graph's elements
+      allElements.push(result.svgContent);
+
+      // Update position for next graph
+      lastX = result.lastX;
+      lastY = result.lastY;
+      xPos = result.endX;  // Standard mora spacing (endX is already one step past)
+
+      // Add trailing particle if this word has + modifier (but not if it's already a particle)
+      console.log('[DEBUG] Checking trailing particle for:', data.morae, 'hasExtraParticle:', data.hasExtraParticle, 'isParticle:', data.isParticle, 'pitchNum:', data.pitchNum);
+      if (data.hasExtraParticle && !data.isParticle) {
+        console.log('[DEBUG] RENDERING trailing particle! (isParticle was false)');
+        const particleX = xPos;
+
+        // Determine particle Y position based on word's pitch
+        let particleY;
+        if (data.forceAllLow) {
+          particleY = heightLow;  // ~ modifier forces LOW
+        } else if (data.pitchNum === 0) {
+          particleY = heightHigh;  // Heiban: particle HIGH
+        } else {
+          particleY = heightLow;  // All others: particle LOW
+        }
+
+        // Add connecting line from last mora to particle (gray)
+        const connectionLine = generateConnectionLine(lastX, lastY, particleX, particleY);
+        allElements.push(connectionLine);
+
+        // Add particle circle (gray, hollow)
+        allElements.push(`<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX}" cy="${particleY}" r="${config.circleRadius}"></circle>`);
+
+        // Update positions for next element
+        lastX = particleX;
+        lastY = particleY;
+        xPos += config.xStep;
+      }
+    }
+
+    // Check if all parts had numeric-only pitch specs (add particle if so)
+    // Letter specs (h, a, n, o, k) should NOT trigger trailing particle
+    // Also check that the last part is NOT an explicit particle
+    // Only add trailing particle if this is the last group in a manual split
+    const hasExplicitParticle = compoundParts.length > 0 && compoundParts[compoundParts.length - 1].isParticle;
+
+    // Check if last part has '+' suffix for extra particle
+    const lastPart = compoundParts.length > 0 ? compoundParts[compoundParts.length - 1] : null;
+    const hasExtraParticle = lastPart && lastPart.pitch && lastPart.pitch.endsWith('+');
+    console.log('[DEBUG COMPOUND EXTRA] lastPart.pitch:', lastPart?.pitch, 'hasExtraParticle:', hasExtraParticle);
+
+    // Check if LAST non-particle part has numeric pitch (not ALL parts)
+    // This determines if an automatic trailing particle should be added
+    let lastNumeric = false;
+    for (let i = compoundParts.length - 1; i >= 0; i--) {
+      const part = compoundParts[i];
+      if (part.isParticle) continue;  // Skip particles, find last actual word
+      // Found last non-particle word - check if it has numeric pitch
+      if (part.isLetterSpec) {
+        lastNumeric = false;  // Letter specs (h, a, n, o, k) don't get automatic particle
+      } else {
+        // Strip '+' and '~' modifiers and check if remaining pitch is numeric
+        const cleanPitch = part.pitch.replace(/[+~]/g, '');
+        lastNumeric = /^[0-9]+$/.test(cleanPitch);
+      }
+      break;  // Only check the last non-particle word
+    }
+    let finalWidth = lastX;  // Start with last mora position
+
+    if (isLastGroup && lastNumeric && !hasExplicitParticle) {
+      console.log('[DEBUG COMPOUND AUTO] Adding automatic particle. hasExtraParticle:', hasExtraParticle);
+      // Add trailing particle (gray hollow circle)
+      const lastGraphData = graphData[graphData.length - 1];
+
+      // Check if last part has ~ modifier (forceAllLow)
+      const lastPartHasForceAllLow = lastPart && lastPart.pitch && lastPart.pitch.includes('~');
+
+      // Determine particle position based on final pitch pattern
+      let particleY;
+      if (lastPartHasForceAllLow) {
+        // If last part has ~, particle is always LOW
+        particleY = heightLow;
+      } else if (lastGraphData.pitchNum === 0) {
+        // Heiban: particle HIGH
+        particleY = heightHigh;
+      } else {
+        // All others: particle LOW
+        particleY = heightLow;
+      }
+
+      // Position particle one step after last mora
+      const particleX = xPos;
+
+      // Add connecting line from last mora to particle (gray)
+      const connectionLine = generateConnectionLine(lastX, lastY, particleX, particleY);
+      allElements.push(connectionLine);
+
+      // Add particle circle (gray, hollow)
+      allElements.push(`<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX}" cy="${particleY}" r="${config.circleRadius}"></circle>`);
+
+      // Update final width to include particle
+      finalWidth = particleX;
+
+      // Add second particle if hasExtraParticle is true
+      if (hasExtraParticle) {
+        console.log('[DEBUG COMPOUND EXTRA] Adding EXTRA particle!');
+        const particleX2 = particleX + config.xStep;
+        const particleY2 = particleY;  // Same height as first particle
+
+        // Add connecting line from first particle to second particle (gray)
+        const connectionLine2 = generateConnectionLine(particleX, particleY, particleX2, particleY2);
+        allElements.push(connectionLine2);
+
+        // Add second particle circle (gray, hollow)
+        allElements.push(`<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX2}" cy="${particleY2}" r="${config.circleRadius}"></circle>`);
+
+        // Update final width to include second particle
+        finalWidth = particleX2;
+      }
+    } else if (hasExtraParticle && isLastGroup && !hasExplicitParticle) {
+      console.log('[DEBUG COMPOUND EXTRA ONLY] Adding particle (no automatic, not already particle)');
+      // hasExtraParticle but no automatic particle (e.g., letter specs with +)
+      // Add a single particle only if the last part isn't already a particle
+      const lastGraphData = graphData[graphData.length - 1];
+      const lastPartHasForceAllLow = lastPart && lastPart.pitch && lastPart.pitch.includes('~');
+
+      let particleY;
+      if (lastPartHasForceAllLow) {
+        particleY = heightLow;
+      } else if (lastGraphData.pitchNum === 0) {
+        particleY = heightHigh;
+      } else {
+        particleY = heightLow;
+      }
+
+      const particleX = xPos;
+      const connectionLine = generateConnectionLine(lastX, lastY, particleX, particleY);
+      allElements.push(connectionLine);
+      allElements.push(`<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX}" cy="${particleY}" r="${config.circleRadius}"></circle>`);
+      finalWidth = particleX;
+    }
+
+    // Calculate total SVG dimensions
+    const totalWidth = finalWidth + config.graphHorizontalPadding;
+    const svgHeight = heightKana + config.sizeUnit;
+
+    // Combine all elements
+    const allContent = allElements.join('');
+
+    return `<svg style="font-family: ${config.graphFont}" viewBox="0 0 ${totalWidth} ${svgHeight}" height="${config.graphVisibleHeight}px" xmlns="http://www.w3.org/2000/svg">${allContent}</svg>`;
+  }
+
+  /**
+   * Generate complete pitch accent graph SVG
+   * @param {string} reading - Kana reading (e.g., "にほん")
+   * @param {number} pitchNum - Pitch accent number (0, 1, 2, etc.)
+   * @param {string} pattern - Pitch pattern (heiban, atamadaka, nakadaka, odaka, kifuku)
+   * @param {boolean} showParticle - Whether to show trailing particle (for numeric-only pitch)
+   * @param {boolean} forceAllLow - Whether to render all morae at low position
+   * @returns {string} SVG markup
+   */
+  function generatePitchGraph(reading, pitchNum, pattern, showParticle = false, hasExtraParticle = false, forceAllLow = false) {
+    const config = GRAPH_CONFIG;
+
+    // Pre-convert reading to katakana with long vowels (if enabled)
+    // This must happen BEFORE splitting into morae for proper long vowel detection
+    const processedReading = convertReadingToKatakana(reading);
+
+    // Split into morae
+    const morae = splitToMorae(processedReading);
+    if (morae.length === 0) return '';
+
+    // Calculate pitch levels
+    const levels = calculatePitchLevels(morae, pitchNum, forceAllLow);
+
+    // Adjust for small tsu (but not if forceAllLow is true)
+    const adjustedLevels = forceAllLow ? levels : adjustPitchLevelsForSmallTsu(morae, levels);
+
+    // Set up dimensions
+    const heightHigh = config.sizeUnit;
+    const heightLow = heightHigh + config.graphHeight;
+    const heightKana = heightLow + config.xStep;
+
+    let xPos = config.graphHorizontalPadding;
+    const xStep = config.xStep;
+
+    const circles = [];
+    const lines = [];
+    const texts = [];
+    const particleElements = [];  // Separate array for gray particle line and circle
+
+    // Generate SVG elements for each mora
+    const devoicedShapes = [];
+    for (let i = 0; i < morae.length; i++) {
+      const mora = morae[i];
+      const moraText = typeof mora === 'string' ? mora : mora.text;
+      const isDevoiced = typeof mora === 'object' && mora.devoiced;
+      const level = adjustedLevels[i];
+      const yPos = level === 'h' ? heightHigh : heightLow;
+
+      // Add circle
+      circles.push(makeCircle(xPos, yPos, config.circleRadius, config.strokeWidth));
+
+      // Add line to next mora (if not last)
+      if (i < morae.length - 1) {
+        const nextLevel = adjustedLevels[i + 1];
+        const nextYPos = nextLevel === 'h' ? heightHigh : heightLow;
+        const nextXPos = xPos + xStep;
+
+        // Adjust line endpoints to circle radius
+        const adjusted = adjustLineToRadius(xPos, yPos, nextXPos, nextYPos, config.circleRadius);
+        lines.push(makeLine(adjusted.x1, adjusted.y1, adjusted.x2, adjusted.y2, config.strokeWidth));
+      }
+
+      // Add devoiced shape if this mora is devoiced
+      if (isDevoiced) {
+        devoicedShapes.push(makeDevoicedShape(moraText, xPos, heightKana));
+      }
+
+      // Add kana text (use different offset for 2-character morae to center them)
+      // Note: moraText is already converted to katakana by convertReadingToKatakana()
+      const dx = moraText.length === 2 ? config.textDxTwoChar : config.textDx;
+      texts.push(makeText(moraText, xPos, heightKana, dx, config.fontSize));
+
+      xPos += xStep;
+    }
+
+    // Add particle dot and connecting line if requested (numeric-only pitch or explicit +)
+    if (showParticle || hasExtraParticle) {
+      // Get last mora position and level
+      const lastLevel = adjustedLevels[morae.length - 1];
+      const lastYPos = lastLevel === 'h' ? heightHigh : heightLow;
+      const lastXPos = xPos - xStep;  // xPos is now one step past the last mora
+
+      // Determine particle position based on pitch pattern
+      let particleY;
+      if (forceAllLow) {
+        // If forceAllLow flag is set, particle is always LOW
+        particleY = heightLow;
+      } else if (pattern === 'heiban' || (pattern === 'black' && pitchNum === 0)) {
+        // Heiban (pitch 0): particle HIGH
+        // Black pattern with pitch 0 also gets HIGH particle
+        particleY = heightHigh;
+      } else {
+        // All other patterns (atamadaka, nakadaka, odaka): particle LOW
+        particleY = heightLow;
+      }
+
+      // Position particle after last mora with same spacing as other morae
+      const particleX = xPos;
+
+      // Add connecting line from last mora to particle (gray)
+      // Add to lines array so it renders BEFORE circles (prevents overlap with colored dot)
+      // Use class="particle-line" so CSS can keep it gray despite pitch pattern colors
+      const adjusted = adjustLineToRadius(lastXPos, lastYPos, particleX, particleY, config.circleRadius);
+      lines.push(
+        `<line class="particle-line" stroke="#808080" stroke-width="${config.strokeWidth}" x1="${adjusted.x1}" y1="${adjusted.y1}" x2="${adjusted.x2}" y2="${adjusted.y2}"></line>`
+      );
+
+      // Create first particle circle with gray stroke (#808080), no fill
+      particleElements.push(
+        `<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX}" cy="${particleY}" r="${config.circleRadius}"></circle>`
+      );
+
+      // Update xPos to include first particle in width calculation
+      xPos = particleX + xStep;
+
+      // Add second particle if both showParticle AND hasExtraParticle are true
+      if (showParticle && hasExtraParticle) {
+        const particleX2 = particleX + xStep;
+        const particleY2 = particleY;  // Same height as first particle
+
+        // Add connecting line from first particle to second particle (gray)
+        const adjusted2 = adjustLineToRadius(particleX, particleY, particleX2, particleY2, config.circleRadius);
+        lines.push(
+          `<line class="particle-line" stroke="#808080" stroke-width="${config.strokeWidth}" x1="${adjusted2.x1}" y1="${adjusted2.y1}" x2="${adjusted2.x2}" y2="${adjusted2.y2}"></line>`
+        );
+
+        // Create second particle circle with gray stroke, no fill
+        particleElements.push(
+          `<circle fill="none" stroke="#808080" stroke-width="${config.strokeWidth}" cx="${particleX2}" cy="${particleY2}" r="${config.circleRadius}"></circle>`
+        );
+
+        // Update xPos to include second particle in width calculation
+        xPos = particleX2 + xStep;
+      }
+    }
+
+    // Calculate SVG dimensions with symmetric padding
+    const rightmostX = xPos - xStep;
+    const svgWidth = rightmostX + config.graphHorizontalPadding;
+    const svgHeight = heightKana + config.sizeUnit;
+
+    // Wrap morae elements in a colored group based on pitch pattern
+    const coloredContent = `<g class="pitch-${pattern}">${lines.join('')}${circles.join('')}${devoicedShapes.join('')}${texts.join('')}</g>`;
+
+    // Add particle elements outside the colored group (so they stay gray)
+    const allContent = coloredContent + particleElements.join('');
+
+    // Generate SVG
+    return `<svg style="font-family: ${config.graphFont}" viewBox="0 0 ${svgWidth} ${svgHeight}" height="${config.graphVisibleHeight}px" xmlns="http://www.w3.org/2000/svg">${allContent}</svg>`;
+  }
+
+  /**
+   * Render pitch graph for the Word field
+   */
+  function renderWordPitchGraph() {
+    const container = document.getElementById('pitch-graph-container');
+    if (!container) return;  // Container removed from template when pitch graphs disabled
+
+    // Get raw word content
+    const rawField = document.querySelector('.MvJ-raw-word');
+    if (!rawField) return;
+
+    const rawContent = rawField.textContent;
+
+    // Extract pitch info (reuse existing function)
+    const pitchArray = extractAllPitchInfo(rawContent);
+    if (pitchArray.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Group pitch entries by hard breaks (for separate graph rendering)
+    const groups = [];
+    let currentGroup = [];
+
+    for (let i = 0; i < pitchArray.length; i++) {
+      const entry = pitchArray[i];
+
+      // If this entry has a hard break BEFORE it, finish the current group
+      if (entry.hasHardBreak && currentGroup.length > 0) {
+        groups.push(currentGroup);
+        currentGroup = [];
+      }
+
+      currentGroup.push(entry);
+    }
+
+    // Add the last group
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+
+    // Generate SVG for each group
+    // Each group is independent - all numeric groups get trailing particles
+    const svgElements = groups.map((group, index) => {
+      const isLastGroup = true;  // Treat each group independently
+      return generateGraphForGroup(group, isLastGroup);
+    }).filter(svg => svg);  // Remove nulls
+
+    if (svgElements.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Wrap each SVG in an inline-block span
+    const wrappedSvgs = svgElements.map(svg => {
+      return `<span class="pitch-graph-segment">${svg}</span>`;
+    });
+
+    container.innerHTML = wrappedSvgs.join('');
+    container.style.display = 'block';
+  }
+
+  /**
+   * Generate graph for a group of pitch entries
+   * @param {Array} group - Array of pitch entries to render together
+   * @param {boolean} isLastGroup - Whether this is the last group in a manual split (default true)
+   * @returns {string} SVG markup or null
+   */
+  function generateGraphForGroup(group, isLastGroup = true) {
+    if (!group || group.length === 0) return null;
+
+    // Check if we should treat multiple entries as a compound
+    if (group.length > 1) {
+      // Check if any entry is already a compound - if so, don't merge
+      const hasCompound = group.some(entry => entry.pitchInfo.isCompound);
+      console.log('[DEBUG GROUP] Group length:', group.length, 'hasCompound:', hasCompound);
+
+      if (!hasCompound) {
+        console.log('[DEBUG GROUP] Entering compound path');
+        // All entries are simple - combine them into a compound graph
+        const combinedParts = [];
+
+        for (let i = 0; i < group.length; i++) {
+          const entry = group[i];
+          const pitchInfo = entry.pitchInfo;
+
+          // Handle explicit particle entries
+          if (pitchInfo.isParticle) {
+            console.log('[DEBUG PARTICLE] Found particle:', pitchInfo.reading, 'pitchSpec:', pitchInfo.pitchSpec, 'particlePitch:', pitchInfo.particlePitch, 'hasExtraParticle:', pitchInfo.hasExtraParticle);
+            combinedParts.push({
+              base: null,
+              reading: pitchInfo.fullReading || pitchInfo.reading,  // Preserve particle kana text
+              pitch: pitchInfo.pitchSpec + (pitchInfo.hasExtraParticle ? '+' : ''),  // Include + modifier if present
+              pattern: null,  // Not used for particles (pattern comes from particlePattern field)
+              particlePattern: pitchInfo.particlePattern || null,  // Color pattern for colored particles
+              particlePitch: pitchInfo.particlePitch || null,  // Numeric pitch for particle (e.g., 0 for pb0)
+              isParticle: true,
+              hasSlashDelimiter: entry.hasSlashDelimiter
+            });
+            continue;  // Skip normal conversion
+          }
+
+          // Extract pitch number using helper function
+          const pitchSpec = pitchInfo.pitchSpec;
+          // Use raw reading (with '*' markers) for graph generation
+          const reading = pitchInfo.fullRawReading || pitchInfo.rawReading || pitchInfo.fullReading || pitchInfo.reading;
+          const pitchNum = extractPitchNumber(pitchSpec, reading);
+          // Preserve ~ and + modifiers when converting to numeric pitch
+          const hasForceAllLow = pitchSpec.includes('~');
+          const hasExtraParticle = pitchSpec.includes('+') || pitchInfo.hasExtraParticle || false;
+          const convertedPitch = pitchNum !== null ?
+            String(pitchNum) + (hasForceAllLow ? '~' : '') + (hasExtraParticle ? '+' : '') :
+            pitchSpec;
+
+          // Detect if original spec was letter-based (h, a, n, o, k, b)
+          const isLetterSpec = /^[hanokb]/i.test(pitchSpec);
+
+          combinedParts.push({
+            base: null,  // No base text available for separate entries
+            reading: pitchInfo.fullRawReading || pitchInfo.fullReading || pitchInfo.reading,
+            pitch: convertedPitch,
+            pattern: pitchInfo.pattern,
+            isLetterSpec: isLetterSpec,  // Track original format
+            hasSlashDelimiter: entry.hasSlashDelimiter
+          });
+        }
+
+        // Generate compound graph with heiban special rule
+        console.log('[DEBUG COMPOUND] About to generate compound graph. combinedParts:', combinedParts);
+        const svg = generateCompoundPitchGraph(combinedParts, isLastGroup);
+        console.log('[DEBUG COMPOUND] Generated SVG:', svg ? 'YES' : 'NO');
+        return svg;  // Return the SVG instead of setting container
+      } else if (hasCompound) {
+        // If has compound, need to handle it specially
+        // Group contains a compound word - may have additional entries after it
+        const firstEntry = group[0];
+        const firstPitchInfo = firstEntry.pitchInfo;
+
+        if (group.length === 1) {
+          // Single compound entry - use existing logic
+          if (firstPitchInfo.isCompound) {
+            console.log('[BLACK DEBUG] Handling single compound word');
+            const svg = generateCompoundPitchGraph(firstPitchInfo.compoundParts, isLastGroup);
+            return svg;
+          }
+        } else {
+          // Compound with additional entries - need to extend the compound
+          console.log('[DEBUG COMPOUND EXTEND] Extending compound with additional entries. Group length:', group.length);
+
+          // Find the compound entry (it might not be the first one)
+          let compoundIndex = -1;
+          let compoundEntry = null;
+          for (let i = 0; i < group.length; i++) {
+            if (group[i].pitchInfo.isCompound) {
+              compoundIndex = i;
+              compoundEntry = group[i];
+              break;
+            }
+          }
+
+          if (compoundIndex === -1) {
+            console.log('[DEBUG COMPOUND EXTEND] ERROR: No compound found despite hasCompound=true');
+            return null;
+          }
+
+          console.log('[DEBUG COMPOUND EXTEND] Found compound at index:', compoundIndex);
+
+          // Start with entries BEFORE the compound (if any)
+          const extendedParts = [];
+
+          // Add entries before the compound
+          for (let i = 0; i < compoundIndex; i++) {
+            const entry = group[i];
+            const pitchInfo = entry.pitchInfo;
+
+            console.log('[DEBUG COMPOUND EXTEND] Adding entry before compound', i, ':', pitchInfo.reading, 'isParticle:', pitchInfo.isParticle);
+
+            // Convert each entry to compound part format (BEFORE COMPOUND)
+            if (pitchInfo.isParticle) {
+              // Handle auto-detected particles (pitchSpec='p' with no particlePitch)
+              // vs explicit particles (p0, p1, p2, etc.)
+              let particlePitchSpec = pitchInfo.pitchSpec;
+
+              // For auto-detected particles, ensure we pass 'p' to maintain flow behavior
+              // The compound graph generator knows how to handle 'p' for flow particles
+              if (particlePitchSpec === 'p' && (pitchInfo.particlePitch === null || pitchInfo.particlePitch === undefined)) {
+                // Keep as 'p' for flow behavior
+                particlePitchSpec = 'p';
+                console.log('[DEBUG COMPOUND EXTEND] Auto-detected particle, using flow behavior:', pitchInfo.reading);
+              } else if (pitchInfo.particlePitch !== null && pitchInfo.particlePitch !== undefined) {
+                // Has explicit pitch number, ensure it's formatted correctly
+                particlePitchSpec = 'p' + pitchInfo.particlePitch;
+                console.log('[DEBUG COMPOUND EXTEND] Explicit particle pitch:', particlePitchSpec);
+              }
+
+              extendedParts.push({
+                base: null,
+                reading: pitchInfo.fullReading || pitchInfo.reading,
+                pitch: particlePitchSpec + (pitchInfo.hasExtraParticle ? '+' : ''),
+                pattern: null,
+                particlePattern: pitchInfo.particlePattern || null,
+                particlePitch: pitchInfo.particlePitch,  // May be null for auto-detected
+                isParticle: true,
+                hasSlashDelimiter: entry.hasSlashDelimiter
+              });
+            } else {
+              const pitchSpec = pitchInfo.pitchSpec;
+              const reading = pitchInfo.fullRawReading || pitchInfo.rawReading || pitchInfo.fullReading || pitchInfo.reading;
+
+              // Extract pitch number using the helper function
+              const pitchNum = extractPitchNumber(pitchSpec, reading);
+              const hasExtraParticle = pitchSpec.includes('+') || pitchInfo.hasExtraParticle || false;
+              const hasForceAllLow = pitchSpec.includes('~');  // Extract ~ modifier
+
+              // Check if pitch uses letter notation (h, a, n, o, k, b) vs pure numeric
+              const cleanPitchSpec = pitchSpec.replace(/[+~]/g, '');
+              const isLetterSpec = /^[hanokb]/i.test(cleanPitchSpec);
+
+              extendedParts.push({
+                base: null,
+                reading: reading,
+                pitch: pitchNum !== null ?
+                  String(pitchNum) + (hasForceAllLow ? '~' : '') + (hasExtraParticle ? '+' : '') :
+                  pitchSpec,
+                pattern: pitchInfo.pattern,
+                hasSlashDelimiter: entry.hasSlashDelimiter,
+                isLetterSpec: isLetterSpec  // Add flag for letter vs numeric notation
+              });
+            }
+          }
+
+          // Add the compound's own parts
+          console.log('[DEBUG COMPOUND EXTEND] Adding compound parts from index:', compoundIndex);
+          extendedParts.push(...compoundEntry.pitchInfo.compoundParts);
+
+          // Add entries AFTER the compound
+          for (let i = compoundIndex + 1; i < group.length; i++) {
+            const entry = group[i];
+            const pitchInfo = entry.pitchInfo;
+
+            console.log('[DEBUG COMPOUND EXTEND] Adding entry after compound', i, ':', pitchInfo.reading, 'isParticle:', pitchInfo.isParticle);
+
+            // Convert each entry to compound part format (AFTER COMPOUND)
+            if (pitchInfo.isParticle) {
+              // Handle auto-detected particles (pitchSpec='p' with no particlePitch)
+              // vs explicit particles (p0, p1, p2, etc.)
+              let particlePitchSpec = pitchInfo.pitchSpec;
+
+              // For auto-detected particles, ensure we pass 'p' to maintain flow behavior
+              // The compound graph generator knows how to handle 'p' for flow particles
+              if (particlePitchSpec === 'p' && (pitchInfo.particlePitch === null || pitchInfo.particlePitch === undefined)) {
+                // Keep as 'p' for flow behavior
+                particlePitchSpec = 'p';
+                console.log('[DEBUG COMPOUND EXTEND] Auto-detected particle, using flow behavior:', pitchInfo.reading);
+              } else if (pitchInfo.particlePitch !== null && pitchInfo.particlePitch !== undefined) {
+                // Has explicit pitch number, ensure it's formatted correctly
+                particlePitchSpec = 'p' + pitchInfo.particlePitch;
+                console.log('[DEBUG COMPOUND EXTEND] Explicit particle pitch:', particlePitchSpec);
+              }
+
+              extendedParts.push({
+                base: null,
+                reading: pitchInfo.fullReading || pitchInfo.reading,
+                pitch: particlePitchSpec + (pitchInfo.hasExtraParticle ? '+' : ''),
+                pattern: null,
+                particlePattern: pitchInfo.particlePattern || null,
+                particlePitch: pitchInfo.particlePitch,  // May be null for auto-detected
+                isParticle: true,
+                hasSlashDelimiter: entry.hasSlashDelimiter
+              });
+            } else {
+              const pitchSpec = pitchInfo.pitchSpec;
+              const reading = pitchInfo.fullRawReading || pitchInfo.rawReading || pitchInfo.fullReading || pitchInfo.reading;
+
+              // Extract pitch number using the helper function
+              const pitchNum = extractPitchNumber(pitchSpec, reading);
+              const hasExtraParticle = pitchSpec.includes('+') || pitchInfo.hasExtraParticle || false;
+              const hasForceAllLow = pitchSpec.includes('~');  // Extract ~ modifier
+
+              // Check if pitch uses letter notation (h, a, n, o, k, b) vs pure numeric
+              const cleanPitchSpec = pitchSpec.replace(/[+~]/g, '');
+              const isLetterSpec = /^[hanokb]/i.test(cleanPitchSpec);
+
+              extendedParts.push({
+                base: null,
+                reading: reading,
+                pitch: pitchNum !== null ?
+                  String(pitchNum) + (hasForceAllLow ? '~' : '') + (hasExtraParticle ? '+' : '') :
+                  pitchSpec,
+                pattern: pitchInfo.pattern,
+                hasSlashDelimiter: entry.hasSlashDelimiter,
+                isLetterSpec: isLetterSpec  // Add flag for letter vs numeric notation
+              });
+            }
+          }
+
+          console.log('[DEBUG COMPOUND EXTEND] Extended parts:', extendedParts);
+
+          // Generate compound graph with all parts
+          const svg = generateCompoundPitchGraph(extendedParts, isLastGroup);
+          return svg;
+        }
+      }
+    }
+
+    // Use first pitch entry for non-compound groups
+    const pitchEntry = group[0];
+    const pitchInfo = pitchEntry.pitchInfo;
+
+    console.log('[BLACK DEBUG] renderPitchGraphForWord called with pitchInfo:', pitchInfo);
+
+    // Handle standalone particle
+    // Particles with explicit pitch numbers (p0, p1, p2, etc.) should generate graphs
+    // Plain particles (just 'p') or colored particles without numbers may not need graphs
+    if (pitchInfo.isParticle) {
+      console.log('[BLACK DEBUG] Detected particle with particlePitch:', pitchInfo.particlePitch);
+
+      // If particle has an explicit pitch number, treat it like a word for graph generation
+      if (pitchInfo.particlePitch !== null && pitchInfo.particlePitch !== undefined) {
+        // Extract the reading and pitch number for graph generation
+        const reading = pitchInfo.fullRawReading || pitchInfo.rawReading || pitchInfo.fullReading || pitchInfo.reading;
+        const particlePitchNum = parseInt(pitchInfo.particlePitch, 10);
+
+        // Determine pattern based on pitch number and reading length
+        const moraCount = countMorae(reading);
+        let pattern;
+
+        if (particlePitchNum === 0) {
+          pattern = 'heiban';
+        } else if (particlePitchNum === 1) {
+          pattern = 'atamadaka';
+        } else if (particlePitchNum === moraCount) {
+          pattern = 'odaka';
+        } else {
+          pattern = 'nakadaka';
+        }
+
+        // Use particlePattern if it was explicitly set (colored particles)
+        if (pitchInfo.particlePattern) {
+          pattern = pitchInfo.particlePattern;
+        }
+
+        console.log('[BLACK DEBUG] Generating graph for particle:', reading, 'pitch:', particlePitchNum, 'pattern:', pattern);
+
+        // Check for extra particle flag
+        const hasExtraParticle = pitchInfo.hasExtraParticle || false;
+
+        // Generate the pitch graph
+        // For particles with explicit pitch, we need to show the trailing particle if hasExtraParticle is true
+        const svg = generatePitchGraph(reading, particlePitchNum, pattern, hasExtraParticle, hasExtraParticle, false);
+        return svg;
+      }
+
+      // Plain particles without pitch numbers don't get graphs
+      console.log('[BLACK DEBUG] Returning null - particle without explicit pitch');
+      return null;
+    }
+
+    // Handle compound words
+    if (pitchInfo.isCompound) {
+      console.log('[BLACK DEBUG] Handling compound word');
+      const svg = generateCompoundPitchGraph(pitchInfo.compoundParts, isLastGroup);
+      return svg;
+    }
+
+    // Get reading and pitch number
+    // Use raw reading (with 'd' markers) for graph generation
+    const reading = pitchInfo.fullRawReading || pitchInfo.rawReading || pitchInfo.fullReading || pitchInfo.reading;
+    const pitchSpec = pitchInfo.pitchSpec;
+    console.log('[BLACK DEBUG] reading:', reading, 'pitchSpec:', pitchSpec);
+
+    // Check for extra particle flag
+    const hasExtraParticle = pitchInfo.hasExtraParticle || false;
+
+    // Check for ~ modifier (all low flag) - can be prefix or suffix
+    const forceAllLow = pitchSpec.includes('~');
+    let pitchSpecWithoutTilde = pitchSpec.replace(/^~|~$/, '');
+
+    console.log('[BLACK DEBUG] pitchSpec:', pitchSpec);
+    console.log('[BLACK DEBUG] pitchSpecWithoutTilde:', pitchSpecWithoutTilde);
+
+    // Check for 'b' (black) modifier BEFORE stripping it
+    const hasBlackModifier = /b$/i.test(pitchSpecWithoutTilde.replace(/\+$/, ''));
+    console.log('[BLACK DEBUG] hasBlackModifier:', hasBlackModifier);
+
+    // Strip '+' from pitch spec if present (for pattern matching)
+    let cleanPitchSpec = pitchSpecWithoutTilde;
+    if (pitchSpecWithoutTilde.endsWith('+')) {
+      cleanPitchSpec = pitchSpecWithoutTilde.slice(0, -1);
+    }
+
+    // Strip 'b' (black) modifier from cleanPitchSpec for numeric parsing
+    if (hasBlackModifier) {
+      cleanPitchSpec = cleanPitchSpec.replace(/b$/i, '');
+    }
+
+    console.log('[BLACK DEBUG] cleanPitchSpec:', cleanPitchSpec);
+
+    // Detect if pitch is purely numeric (no letters) - for automatic particle addition
+    // Only add particle if this is the last group in a manual split
+    const isNumericOnly = isLastGroup && /^[0-9]+$/.test(cleanPitchSpec);
+
+    // Convert pitch spec to number and determine pattern
+    let pitchNum;
+    let pattern;
+
+    // Handle letter+number combinations FIRST (h2, a2, n2, o2, k2)
+    const letterNumMatch = cleanPitchSpec.toLowerCase().match(/^([hanok])(\d+)$/);
+    if (letterNumMatch) {
+      const letter = letterNumMatch[1];
+      pitchNum = parseInt(letterNumMatch[2], 10);
+
+      // Map letter to pattern
+      const patternMap = {
+        'h': 'heiban',
+        'a': 'atamadaka',
+        'n': 'nakadaka',
+        'o': 'odaka',
+        'k': 'kifuku'
+      };
+      pattern = patternMap[letter];
+    } else if (cleanPitchSpec === 'h' || cleanPitchSpec === 'H') {
+      pitchNum = 0;
+      pattern = 'heiban';
+    } else if (cleanPitchSpec === 'a' || cleanPitchSpec === 'A') {
+      pitchNum = 1;
+      pattern = 'atamadaka';
+    } else if (cleanPitchSpec === 'o' || cleanPitchSpec === 'O') {
+      pitchNum = countMorae(reading);
+      pattern = 'odaka';
+    } else if (cleanPitchSpec === 'n' || cleanPitchSpec === 'N') {
+      // For nakadaka, default to pitch 2
+      pitchNum = 2;
+      pattern = 'nakadaka';
+    } else if (cleanPitchSpec === 'b' || cleanPitchSpec === 'B') {
+      // Standalone 'b' - black with flow behavior
+      // For single mora, use pitch 0 (flat/low) to simulate particle-like behavior
+      pitchNum = 0;
+      pattern = 'black';
+    } else if (cleanPitchSpec.toLowerCase().match(/^b(\d+)$/)) {
+      // 'b' followed by number (b2, b1, etc.)
+      const match = cleanPitchSpec.toLowerCase().match(/^b(\d+)$/);
+      pitchNum = parseInt(match[1], 10);
+      pattern = 'black';
+    } else if (cleanPitchSpec.toLowerCase().startsWith('k')) {
+      // Kifuku pattern: k, k2, k3, K, K2, K3, etc.
+      pattern = 'kifuku';
+      const pitchPart = cleanPitchSpec.substring(1); // Get everything after 'k'
+      if (pitchPart === '') {
+        // Just 'k' or 'K' - default to pitch 2
+        pitchNum = 2;
+      } else {
+        // k2, k3, etc. - use the specified number
+        pitchNum = parseInt(pitchPart, 10);
+        if (isNaN(pitchNum)) {
+          // Invalid format, default to 2
+          pitchNum = 2;
+        }
+      }
+    } else {
+      // Numeric pitch - determine pattern based on number
+      pitchNum = parseInt(cleanPitchSpec, 10);
+      if (isNaN(pitchNum)) {
+        return null;
+      }
+
+      const moraeCount = countMorae(reading);
+      if (pitchNum === 0) {
+        pattern = 'heiban';
+      } else if (pitchNum === 1) {
+        pattern = 'atamadaka';
+      } else if (pitchNum === moraeCount) {
+        pattern = 'odaka';
+      } else {
+        pattern = 'nakadaka';
+      }
+    }
+
+    // Override pattern to 'black' if black modifier is present
+    if (hasBlackModifier) {
+      pattern = 'black';
+    }
+
+    console.log('[BLACK DEBUG] Final pitchNum:', pitchNum, 'pattern:', pattern);
+
+    // Generate and return graph (with particle if numeric-only, and extra particle if hasExtraParticle)
+    const svg = generatePitchGraph(reading, pitchNum, pattern, isNumericOnly, hasExtraParticle, forceAllLow);
+    console.log('[BLACK DEBUG] Generated SVG:', svg ? 'success' : 'null/failed');
+    return svg;
+  }
+
+  /**
+   * Remove compound delimiters and special markers from displayed word field
+   * Removes ALL equals signs (both intra-word and inter-word)
+   * Removes pipes, commas, and forward slashes used as delimiters
+   * Removes devoicing markers (* prefix) and protection markers (dots)
+   */
+  function removeCompoundDelimiters() {
+    const wordField = document.querySelector('.MvJ-field--word');
+    if (!wordField) {
+      return;
+    }
+
+    // Walk through all text nodes
+    const walker = document.createTreeWalker(
+      wordField,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+
+    // Remove ALL delimiters from text nodes
+    for (let i = 0; i < textNodes.length; i++) {
+      const textNode = textNodes[i];
+
+      if (textNode.textContent.includes('=')) {
+        textNode.textContent = textNode.textContent.replace(/=/g, '');
+      }
+      if (textNode.textContent.includes('|')) {
+        // Remove pipe and surrounding whitespace entirely
+        textNode.textContent = textNode.textContent.replace(/\s*\|\s*/g, '');
+      }
+      // Note: Japanese comma (、) is NOT removed - it should remain visible as a separator
+      if (textNode.textContent.includes('/')) {
+        // Remove forward slash and surrounding whitespace entirely
+        textNode.textContent = textNode.textContent.replace(/\s*\/\s*/g, '');
+      }
+      if (textNode.textContent.includes('*')) {
+        // Remove devoicing markers (* prefix before kana characters)
+        textNode.textContent = textNode.textContent.replace(/\*([ぁ-んァ-ンー])/g, '$1');
+      }
+      if (textNode.textContent.includes('+')) {
+        // Remove trailing particle markers (+ suffix after kana or brackets)
+        textNode.textContent = textNode.textContent.replace(/\+/g, '');
+      }
+      if (textNode.textContent.includes('.')) {
+        // Remove protection markers (dots used for katakana conversion protection)
+        textNode.textContent = textNode.textContent.replace(/\./g, '');
+      }
+    }
+  }
+
+  /**
+   * Main initialization function
+   */
+  function initializePitchAccent() {
+    // Remove compound delimiters from display
+    removeCompoundDelimiters();
+
+    // Apply color coding
+    applyAllColorCoding();
+
+    // Render pitch graph
+    renderWordPitchGraph();
+  }
+
+  // Run immediately when DOM is ready (no setTimeout delay)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePitchAccent);
+  } else {
+    initializePitchAccent();
+  }
+
+  // Click-to-Reveal: Selectively wrap bilingual definitions
+  function applyClickToReveal() {
+    // Only apply to Definition text fields, not Definition Audio
+    const allFields = document.querySelectorAll('.MvJ-field--explanation');
+
+    allFields.forEach(field => {
+      let html = field.innerHTML;
+      let modified = false;
+
+      // Step 1: Check if bilingual definition exists
+      const hasBilingual = /\x3C!-- def-type="bilingual"/.test(html);
+
+      if (hasBilingual) {
+        // Step 2: Count valid monolingual definitions (excluding LOCKED_monolingual)
+        // Check TEXT definitions in current field
+        const monoCount = (html.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+        const disabledCount = (html.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+        const validMonoTextCount = monoCount - disabledCount;
+
+        // Check AUDIO definitions in Definition Audio field (#snd3)
+        const audioField = document.getElementById('snd3');
+        let validMonoAudioCount = 0;
+        if (audioField) {
+          const audioHtml = audioField.innerHTML;
+          const audioMonoCount = (audioHtml.match(/\x3C!-- def-type="monolingual"/g) || []).length;
+          const audioDisabledCount = (audioHtml.match(/\x3C!-- def-type="LOCKED_monolingual"/g) || []).length;
+          validMonoAudioCount = audioMonoCount - audioDisabledCount;
+        }
+
+        const validMonoCount = validMonoTextCount + validMonoAudioCount;
+
+        // Step 3: Only wrap bilingual if valid monolingual exists (text OR audio)
+        if (validMonoCount > 0) {
+          // Find and wrap bilingual definition sections (including nearby separators) so we can restore
+          // the exact original HTML after reveal.
+          const originals = [];
+
+          // Check if this field had LOCKED_monolingual blocks removed
+          const hadDisabledMono = field.getAttribute('data-had-disabled-mono') === 'true';
+
+          // Match: [optional <br> block before] <!-- def-type="bilingual"... --> ... <!-- def-end --> [optional <br> after]
+          html = html.replace(
+            /(\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E\s*)?\x3C!-- def-type="bilingual".*?--\x3E[\s\S]*?\x3C!-- def-end --\x3E(\s*\x3C!-- def-br-start --\x3E[\s\S]*?\x3C!-- def-br-end --\x3E)?/g,
+            function(match, leadingBr, trailingBr) {
+              const idx = originals.length;
+              // Preserve the original HTML including any BR separators.
+              // BR separators between active definitions should be maintained for proper spacing.
+              // (BR separators after LOCKED_monolingual blocks are already removed by hideDisabledMonolingual)
+              originals.push(match);
+
+              const classes = ['MvJ-definition-revealer'];
+              // Apply class based on context (3 cases):
+              // Case 1: Mono above, bi below (standard case)
+              // Case 2: Bi above, mono below
+              // Case 3: Bi only, no mono
+              if (leadingBr || hadDisabledMono) {
+                // Mono definition was above this bilingual block
+                classes.push('MvJ-definition-revealer--mono-above-bi');
+              } else if (validMonoTextCount > 0) {
+                // Mono definition exists in field but not above, so must be below
+                classes.push('MvJ-definition-revealer--bi-above-mono');
+              } else {
+                // No mono text (only mono audio exists, or no mono at all)
+                classes.push('MvJ-definition-revealer--bi-only');
+              }
+
+              return '' +
+                '<div class="' + classes.join(' ') + '" data-original-index="' + idx + '">' +
+                  '<div class="MvJ-reveal-button" role="button" tabindex="0">Show Bilingual Definition</div>' +
+                '</div>';
+            }
+          );
+
+          field.innerHTML = html;
+
+          // Delegate reveal handling to the field so listeners survive other innerHTML changes
+          const handler = event => {
+            const isClick = event.type === 'click';
+            const isKey = event.type === 'keydown' && (event.key === 'Enter' || event.key === ' ');
+            if (!isClick && !isKey) {
+              return;
+            }
+
+            const wrapper = event.target.closest('.MvJ-definition-revealer');
+            if (!wrapper || !field.contains(wrapper)) {
+              return;
+            }
+
+            const idx = Number(wrapper.getAttribute('data-original-index'));
+            const originalHtml = originals[idx];
+            if (!originalHtml) {
+              return;
+            }
+
+            event.preventDefault();
+            wrapper.insertAdjacentHTML('beforebegin', originalHtml);
+            wrapper.remove();
+          };
+
+          // Avoid attaching multiple listeners if this code ever re-runs for the same field
+          if (!field.__mvjRevealBound) {
+            field.addEventListener('click', handler);
+            field.addEventListener('keydown', handler);
+            field.__mvjRevealBound = true;
+          }
+
+          modified = true;
+        }
+        // Else: validMonoCount = 0, leave bilingual unwrapped (visible normally)
+      }
+      // If we didn't rewrite the field (no modifications needed), ensure content remains unchanged
+      if (!modified) {
+        field.innerHTML = html;
+      }
+    });
+  }
+
+  // Run click-to-reveal logic BEFORE monolingual transition mode
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClickToReveal);
+  } else {
+    applyClickToReveal();
+  }
+})();
+</script>
+</div>

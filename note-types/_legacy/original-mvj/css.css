@@ -1,0 +1,688 @@
+/* -------------------- FONT EMBEDDING -------------------- */
+@font-face {
+    font-family: 'Noto Serif JP';
+    src: url('_NotoSerifJP.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* -------------------- MODE TOGGLE -------------------- */
+  /* Toggle which fields to show by commenting/uncommenting lines below */
+  /* COMMENT OUT a line to HIDE that field/group on all cards */
+  
+  /* Show Word and Sentence fields */
+  /* .MvJ-field--word, .MvJ-field--sentence { display: block !important; } */
+  
+  /* Show Definition text field (always, regardless of Definition Audio) */
+  /* .MvJ-field--explanation-conditional { display: none !important; } .MvJ-field--explanation-always { display: block !important; } */
+  
+  /* Default: hide toggleable fields unless explicitly shown above */
+  .MvJ-field--word,
+  .MvJ-field--sentence {
+    display: none;
+  }
+  
+  /* Default: show conditional definition (for variants 1 & 2), hide always-show definition */
+  .MvJ-field--explanation-conditional {
+    display: block;
+  }
+  .MvJ-field--explanation-conditional.hide-definition {
+    display: none;
+  }
+  .MvJ-field--explanation-always {
+    display: none !important;
+  }
+  
+  /* Hide <br> tags in all audio fields */
+  #snd1 br,
+  #snd2 br,
+  #snd3 br {
+    display: none !important;
+  }
+  
+  /* Hide all text content in audio fields, show only play buttons */
+  /* Audio containers - hide text, show only buttons, no extra space */
+  #snd1, #snd2, #snd3 {
+    font-size: 0 !important;
+    display: block;
+    line-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Reset font-size for buttons inside audio containers */
+  #snd1 .replay-button,
+  #snd2 .replay-button,
+  #snd3 .replay-button {
+    font-size: initial !important;
+    display: inline-block;
+    margin: 0 0.5em 1.5em 0;
+  }
+  
+  /* Tighter spacing between Word Audio and Sentence Audio when both present */
+  #snd1 .replay-button,
+  #snd2 .replay-button {
+    margin: 0 0.75em 0.75em 0;  /* Extra right space between multiple word audios; reduced bottom space to sentence audio */
+  }
+  
+  #snd3 .replay-button {
+    margin-right: 0.75em;  /* Space between multiple definition audio buttons */
+  }
+  
+  /* Remove empty audio containers */
+  #snd1:empty, #snd2:empty, #snd3:empty {
+    display: none;
+  }
+  
+  /* -------------------- PREFERENCES -------------------- */
+  :root {
+    /* ---------- LAYOUT & SPACING ---------- */
+    --card-max-width: 50em;                  /* Restricts max width of card for readability */
+    --spacing-regular: 3em;                  /* Standard spacing value for padding/margins */
+    --spacing-small: 1em;                    /* Smaller spacing for mobile and compact elements */
+    --card-radius: 0.75em;                   /* Rounded corners on the card */
+    --card-padding: 1.25em;                  /* Padding inside the card */
+  
+    /* ---------- ALIGNMENT ---------- */
+    --card-text-align: center;               /* Center-align content by default */
+  
+    /* ---------- TYPOGRAPHY ---------- */
+    --japanese-font: 'Noto Serif JP', serif; /* Font for Japanese text */
+    --word-font-size: 4em;                   /* Large font size for Word field */
+    --sentence-font-size: 1.6em;             /* Regular font size for Sentence field */
+    --explanation-font-size: 1.1em;          /* Font size for Definition field */
+    --word-margin-bottom: 0.1em;             /* Space below Word field */
+    --sentence-margin-bottom: 1.25em;        /* Space below Sentence field */
+    --field-margin-bottom: 0.3em;            /* Standard bottom margin for front fields */
+    --pitch-graph-margin-bottom: 0.25em;     /* Bottom margin for pitch graph container */
+  
+    /* ---------- FURIGANA (RUBY) SETTINGS ---------- */
+    --ruby-font-size: 0.35em;                /* Size of furigana relative to base text */
+    --ruby-line-height: 1.2;                 /* Line height for ruby text */
+    --ruby-color: inherit;                   /* Color of furigana (inherit = same as text) */
+    --ruby-position: over;                   /* Position: 'over' or 'under' */
+    --ruby-spacing: 0.1em;                   /* Space between furigana and base text */
+  
+    /* ---------- IMAGE DISPLAY ---------- */
+    --image-max-height: 300px;               /* Limits image height */
+    --image-max-width: 300px;                /* Limits image width */
+    --image-border-radius: 0.5em;            /* Rounded corners on images */
+    --image-margin-bottom: 1em;              /* Bottom margin for images */
+    --img-transition-speed: 0.3s;            /* Animation speed for image scaling */
+    --img-hover-scale: 1.05;                 /* Slight zoom effect on hover */
+    --img-hover-glow-color: rgba(255, 255, 255, 0.3); /* Glow color on image hover */
+    --img-hover-transition-speed: 0.4s;      /* Transition time for hover effect */
+  
+    /* ---------- REPLAY BUTTON SETTINGS ---------- */
+    --replay-button-size: 48px;              /* Default replay button size */
+    --replay-button-size-mobile: 35px;       /* Smaller size for mobile */
+    --replay-icon-scale: 0.6;                /* Scales the play icon inside the button */
+    --replay-icon-translate-x: 20px;         /* Horizontal position adjustment */
+    --replay-icon-translate-y: 20px;         /* Vertical position adjustment */
+    --replay-hover-scale: 1.1;               /* Slight enlarge effect on hover */
+    --replay-transition-speed: 0.3s;         /* Button animation timing */
+  
+    /* ---------- DIVIDER SETTINGS ---------- */
+    --divider-thickness: 2px;
+    --divider-width: 100%;
+    --divider-bar-margin-bottom: 1.5em;      /* Spacing after the horizontal divider bar */
+    --divider-margin-bottom: 2em;            /* Spacing for content fields (definition, etc) */
+    --divider-margin-horizontal: auto;
+    --divider-bg: transparent;
+    --divider-border-style: solid;
+  
+    /* ---------- THEME COLORS ---------- */
+    --theme-bg: #3f0002;                     /* Background behind the card */
+    --card-bg: #ffffff;                      /* Card background color */
+    --card-border: #DEC8C8;                  /* Card border color */
+    --card-shadow: rgba(69, 17, 17, 0.5);    /* Card shadow with transparency */
+    --divider: #DEC8C8;
+    --replay-button-bg: #F0EBEB;
+    --replay-button-stroke: #DEC8C8;
+    --replay-button-fill: #4D0505;
+    --reveal-button-bg: #F0EBEB;
+    --reveal-button-hover-bg: #DEC8C8;
+    --reveal-button-border: #DEC8C8;
+    --reveal-button-text-color: #4D0505;
+    --reveal-button-padding-vertical: 0.5em; /* Vertical padding for reveal button */
+    --reveal-button-padding-horizontal: 1em; /* Horizontal padding for reveal button */
+  }
+  
+  /* -------------------- CARD STYLING -------------------- */
+  .card {
+    background-color: var(--theme-bg) !important;
+    cursor: default;
+    padding: var(--card-padding);
+  }
+  
+  /* Larger padding on desktop */
+  html:not(.mobile) .card {
+    padding: var(--spacing-regular);
+  }
+  
+  /* -------------------- FLASHCARD CONTAINER -------------------- */
+  .MvJ-flashcard {
+    margin: 0 auto;                              /* Centers horizontally */
+    max-width: var(--card-max-width);
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 6px var(--card-shadow);
+    text-align: var(--card-text-align);
+    padding: var(--spacing-regular);
+    transition: opacity 0.4s ease;              /* QoL: smooth transition on card flip */
+    opacity: 1;
+  }
+  
+  /* Hide Definition Audio on the front side */
+  .front .MvJ-field--ExplanationAudio {
+    visibility: hidden;
+  }
+  
+  /* Show Definition Audio on the back side */
+  .back .MvJ-field--ExplanationAudio {
+    visibility: visible;
+  }
+  
+  /* -------------------- WORD & SENTENCE FIELDS -------------------- */
+  .MvJ-field--word {
+    font-size: var(--word-font-size);
+    font-weight: 400;  /* Normal/Regular weight */
+    margin-top: -0.05em;
+    margin-bottom: var(--word-margin-bottom);
+    color: #000000 !important;
+    font-family: var(--japanese-font);
+  }
+  
+  .MvJ-field--word * {
+    color: #000000 !important;
+  }
+  
+  /* -------------------- PITCH ACCENT GRAPH -------------------- */
+  .MvJ-pitch-graph-container {
+    margin: 0 auto var(--pitch-graph-margin-bottom) auto;
+    text-align: center;
+    display: none; /* Hidden by default, shown by JavaScript when graph is rendered */
+  }
+  
+  .MvJ-pitch-graph-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Color SVG graph elements based on pitch pattern */
+  .pitch-heiban circle,
+  .pitch-heiban line {
+    fill: #005CE6 !important;
+    stroke: #005CE6 !important;
+  }
+  
+  .pitch-heiban text {
+    fill: #005CE6 !important;
+  }
+  
+  .pitch-atamadaka circle,
+  .pitch-atamadaka line {
+    fill: #E60000 !important;
+    stroke: #E60000 !important;
+  }
+  
+  .pitch-atamadaka text {
+    fill: #E60000 !important;
+  }
+  
+  .pitch-nakadaka circle,
+  .pitch-nakadaka line {
+    fill: #E68A00 !important;
+    stroke: #E68A00 !important;
+  }
+  
+  .pitch-nakadaka text {
+    fill: #E68A00 !important;
+  }
+  
+  .pitch-odaka circle,
+  .pitch-odaka line {
+    fill: #00802B !important;
+    stroke: #00802B !important;
+  }
+  
+  .pitch-odaka text {
+    fill: #00802B !important;
+  }
+  
+  .pitch-kifuku circle,
+  .pitch-kifuku line {
+    fill: #AC00E6 !important;
+    stroke: #AC00E6 !important;
+  }
+  
+  .pitch-kifuku text {
+    fill: #AC00E6 !important;
+  }
+  
+  .pitch-black circle,
+  .pitch-black line {
+    fill: #000000 !important;
+    stroke: #000000 !important;
+  }
+  
+  .pitch-black text {
+    fill: #000000 !important;
+  }
+  
+  /* Particle styling - gray stroke, no fill (overrides pitch pattern colors) */
+  .pitch-heiban circle[fill="none"],
+  .pitch-atamadaka circle[fill="none"],
+  .pitch-nakadaka circle[fill="none"],
+  .pitch-odaka circle[fill="none"],
+  .pitch-kifuku circle[fill="none"] {
+    stroke: #808080 !important;
+    fill: none !important;
+  }
+  
+  /* Black particle styling - black stroke, no fill (hollow black dot) */
+  .pitch-black circle[fill="none"] {
+    stroke: #000000 !important;
+    fill: none !important;
+  }
+  
+  /* Devoiced mora styling - dashed outlines in pitch accent colors */
+  .pitch-heiban circle.devoiced,
+  .pitch-heiban rect.devoiced {
+    stroke: #005CE6 !important;
+    fill: none !important;
+  }
+  
+  .pitch-atamadaka circle.devoiced,
+  .pitch-atamadaka rect.devoiced {
+    stroke: #E60000 !important;
+    fill: none !important;
+  }
+  
+  .pitch-nakadaka circle.devoiced,
+  .pitch-nakadaka rect.devoiced {
+    stroke: #E68A00 !important;
+    fill: none !important;
+  }
+  
+  .pitch-odaka circle.devoiced,
+  .pitch-odaka rect.devoiced {
+    stroke: #00802B !important;
+    fill: none !important;
+  }
+  
+  .pitch-kifuku circle.devoiced,
+  .pitch-kifuku rect.devoiced {
+    stroke: #AC00E6 !important;
+    fill: none !important;
+  }
+  
+  .pitch-black circle.devoiced,
+  .pitch-black rect.devoiced {
+    stroke: #000000 !important;
+    fill: none !important;
+  }
+  
+  /* Particle line styling - always gray, overrides pitch pattern colors */
+  .pitch-heiban line.particle-line,
+  .pitch-atamadaka line.particle-line,
+  .pitch-nakadaka line.particle-line,
+  .pitch-odaka line.particle-line,
+  .pitch-kifuku line.particle-line,
+  .pitch-black line.particle-line {
+    stroke: #808080 !important;
+  }
+  
+  /* Pitch graph segment styling - inline-block for horizontal flow with wrapping */
+  .pitch-graph-segment {
+    display: inline-block;
+    vertical-align: top;
+  }
+  
+  .MvJ-field--sentence {
+    font-size: var(--sentence-font-size);
+    margin-bottom: var(--sentence-margin-bottom);
+    color: #000000 !important;
+    font-family: var(--japanese-font);
+  }
+  
+  .MvJ-field--sentence * {
+    color: #000000 !important;
+  }
+  
+  /* Larger ruby for sentence field for better readability */
+  .MvJ-field--sentence rt {
+    font-size: 0.5em;
+  }
+  
+  .MvJ-field--explanation {
+    font-size: var(--explanation-font-size);
+    margin-bottom: var(--divider-margin-bottom);
+    color: #000000 !important;
+    font-family: var(--japanese-font);
+    line-height: 1.6;
+  }
+  
+  .MvJ-field--explanation * {
+    color: #000000 !important;
+  }
+  
+  /* Ruby for definition field */
+  .MvJ-field--explanation rt {
+    font-size: 0.45em;
+  }
+  
+  /* -------------------- FURIGANA (RUBY) STYLING -------------------- */
+  ruby {
+    ruby-position: var(--ruby-position);
+  }
+  
+  rt {
+    font-size: var(--ruby-font-size);
+    line-height: var(--ruby-line-height);
+    color: var(--ruby-color);
+    user-select: none;                       /* Prevents selecting furigana when copying */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+  
+  /* Add spacing between ruby and base text */
+  ruby > rt {
+    margin-top: var(--ruby-spacing);
+  }
+  
+  /* -------------------- DIVIDERS -------------------- */
+  .MvJ-divider,
+  .MvJ-divider--answer {
+    height: 0;
+    border: none;
+    border-bottom-width: var(--divider-thickness);
+    border-bottom-style: var(--divider-border-style);
+    border-bottom-color: var(--divider);
+    background-color: var(--divider-bg);
+    width: var(--divider-width);
+    margin: 0 var(--divider-margin-horizontal) var(--divider-bar-margin-bottom);
+  }
+  
+  /* -------------------- IMAGE STYLES -------------------- */
+  img {
+    border-radius: var(--image-border-radius);
+    display: block;
+    margin-bottom: var(--image-margin-bottom);
+    margin-left: auto;
+    margin-right: auto;
+    max-width: min(var(--image-max-width), 100%); /* Shrink to fit viewport when smaller than max-width */
+    max-height: var(--image-max-height);
+    width: auto;                             /* Maintain aspect ratio when shrinking */
+    object-fit: contain;
+    transition: transform var(--img-transition-speed), box-shadow var(--img-hover-transition-speed);
+  }
+  
+  img:hover {
+    transform: scale(var(--img-hover-scale));
+    box-shadow: 0 0 10px var(--img-hover-glow-color);
+  }
+  
+  /* -------------------- REPLAY BUTTON -------------------- */
+  .replay-button {
+    display: inline-block;
+  }
+  
+  .replay-button svg {
+    width: var(--replay-button-size);
+    height: var(--replay-button-size);
+    transition: transform var(--replay-transition-speed) ease;
+  }
+  
+  .replay-button svg circle {
+    fill: var(--replay-button-bg);
+    stroke: var(--replay-button-stroke);
+    stroke-width: 1;
+    transition: fill var(--replay-transition-speed), stroke var(--replay-transition-speed);
+  }
+  
+  .replay-button svg path {
+    fill: var(--replay-button-fill);
+    transform: scale(var(--replay-icon-scale))
+               translate(var(--replay-icon-translate-x), var(--replay-icon-translate-y));
+  }
+  
+  .replay-button svg:hover {
+    transform: scale(var(--replay-hover-scale));
+  }
+  
+  /* QoL: Replay button focus outline for accessibility */
+  .replay-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+  }
+  
+  /* QoL: Fade-out effect when flipping cards (for a smoother UX) */
+  .card.flipping .MvJ-flashcard {
+    opacity: 0;
+  }
+  
+  /* -------------------- RESPONSIVE DESIGN -------------------- */
+  @media (max-width: 600px) {
+    .card {
+      padding: var(--spacing-small);
+    }
+  
+    .MvJ-flashcard {
+      padding: var(--spacing-small);
+      max-width: 90%;
+    }
+  
+    .replay-button svg {
+      width: var(--replay-button-size-mobile);
+      height: var(--replay-button-size-mobile);
+    }
+  
+    .MvJ-field--word {
+      font-size: 2.5em;  /* Adjusted for mobile */
+    }
+  
+    .MvJ-field--sentence {
+      font-size: 1.3em;  /* Larger on mobile for better readability */
+    }
+  
+    .MvJ-field--explanation {
+      font-size: 1em;  /* Slightly smaller on mobile */
+    }
+  
+    /* Slightly larger furigana on mobile for better readability */
+    rt {
+      font-size: 0.4em;
+    }
+  }
+  
+  /* -------------------- PITCH ACCENT COLORS -------------------- */
+  /* Color classes for automatic pitch accent coloring */
+  /* IMPORTANT: Must come after all other color rules to override them */
+  .pitch-heiban, .pitch-heiban * {
+    color: #005CE6 !important;
+  }
+  
+  .pitch-atamadaka, .pitch-atamadaka * {
+    color: #E60000 !important;
+  }
+  
+  .pitch-nakadaka, .pitch-nakadaka * {
+    color: #E68A00 !important;
+  }
+  
+  .pitch-odaka, .pitch-odaka * {
+    color: #00802B !important;
+  }
+  
+  .pitch-kifuku, .pitch-kifuku * {
+    color: #AC00E6 !important;
+  }
+  
+  .pitch-black, .pitch-black * {
+    color: #000000 !important;
+  }
+  
+  .pitch-particle, .pitch-particle * {
+    color: #808080 !important;
+  }
+  
+  /* -------------------- COMPOUND WORD STYLES -------------------- */
+  /* Mode 1: Compound words without pipes - keep base text uncolored */
+  .compound-word {
+    color: inherit !important;
+  }
+  
+  /* Mode 2: Compound words with delimiters - each ruby element gets its pitch color */
+  .compound-word-split {
+    display: inline;
+  }
+  
+  .compound-word-split ruby {
+    display: inline-ruby;
+  }
+  
+  /* Compound word delimiter (nakaten between parts) - remains uncolored */
+  .compound-delimiter {
+    color: inherit !important;
+    font-weight: normal;
+  }
+  
+  /* -------------------- DARK MODE -------------------- */
+  /* Dark mode: black background with white text and themed buttons */
+  /* Must be last to override all default color rules */
+  /*
+  :root {
+    --theme-bg: #252525 !important;
+    --card-bg: #1a1a1a !important;
+    --card-border: #3a3a3a !important;
+    --card-shadow: rgba(0, 0, 0, 0.2) !important;
+    --divider: #3a3a3a !important;
+    --replay-button-bg: #2a2a2a !important;
+    --replay-button-stroke: #5a5a5a !important;
+    --replay-button-fill: #ffffff !important;
+  }
+  
+  .MvJ-field--word,
+  .MvJ-field--word * {
+    color: #ffffff !important;
+  }
+  
+  .MvJ-field--sentence,
+  .MvJ-field--sentence * {
+    color: #ffffff !important;
+  }
+  
+  .MvJ-field--explanation,
+  .MvJ-field--explanation * {
+    color: #ffffff !important;
+  }
+  
+  /* Pitch accent colors (must come after field colors to override) */
+  .pitch-heiban, .pitch-heiban * {
+    color: #005CE6 !important;
+  }
+  
+  .pitch-atamadaka, .pitch-atamadaka * {
+    color: #E60000 !important;
+  }
+  
+  .pitch-nakadaka, .pitch-nakadaka * {
+    color: #E68A00 !important;
+  }
+  
+  .pitch-odaka, .pitch-odaka * {
+    color: #00802B !important;
+  }
+  
+  .pitch-kifuku, .pitch-kifuku * {
+    color: #AC00E6 !important;
+  }
+  */
+  
+  /* -------------------- DARK MODE RULES FOR BLACK PATTERN -------------------- */
+  /* Make black pattern white in dark mode for visibility */
+  
+  /* Black pattern SVG elements become white in dark mode */
+  .night_mode .pitch-black circle,
+  .night_mode .pitch-black line {
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+  }
+  
+  .night_mode .pitch-black text {
+    fill: #ffffff !important;
+  }
+  
+  /* Black particle styling (hollow dots) becomes white in dark mode */
+  .night_mode .pitch-black circle[fill="none"] {
+    stroke: #ffffff !important;
+    fill: none !important;
+  }
+  
+  /* Devoiced markers for black pattern become white in dark mode */
+  .night_mode .pitch-black circle.devoiced,
+  .night_mode .pitch-black rect.devoiced {
+    stroke: #ffffff !important;
+    fill: none !important;
+  }
+  
+  /* Text color for black pattern becomes white in dark mode */
+  .night_mode .pitch-black,
+  .night_mode .pitch-black * {
+    color: #ffffff !important;
+  }
+  
+  /* Gray particles stay gray in dark mode */
+  .night_mode .pitch-particle,
+  .night_mode .pitch-particle * {
+    color: #808080 !important;
+  }
+  
+  /* Click-to-reveal definition styles */
+  .MvJ-definition-revealer {
+    position: relative;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .MvJ-definition-revealer .MvJ-reveal-button {
+    display: inline-block;
+    padding: var(--reveal-button-padding-vertical) var(--reveal-button-padding-horizontal);
+    margin: 0 0 2em 0;
+    background-color: var(--reveal-button-bg);
+    color: var(--reveal-button-text-color);
+    border: 1px solid var(--reveal-button-border, transparent);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    user-select: none;
+  }
+  
+  /* Case 1: Mono above, bi below (standard case) */
+  .MvJ-definition-revealer--mono-above-bi {
+    margin-top: 1.6em;
+    margin-bottom: 0.2em;
+  }
+  
+  .MvJ-definition-revealer--mono-above-bi .MvJ-reveal-button {
+    margin-bottom: 0.4em;
+  }
+  
+  /* Case 2: Bi above, mono below */
+  .MvJ-definition-revealer--bi-above-mono .MvJ-reveal-button {
+    margin-bottom: 2em;
+  }
+  
+  /* Case 3: Bi only, no mono */
+  .MvJ-definition-revealer--bi-only .MvJ-reveal-button {
+    margin-bottom: 0.4em;
+  }
+  
+  .MvJ-definition-revealer .MvJ-reveal-button:hover {
+    background-color: var(--reveal-button-hover-bg);
+  }
+  

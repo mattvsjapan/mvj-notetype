@@ -1,0 +1,72 @@
+<div class="MvJ-flashcard">
+  <div class="MvJ-field MvJ-field--front">
+    <span id="snd1">{{Word Audio}}</span>
+    <span id="snd2">{{Sentence Audio}}</span>
+
+<script>
+(() => {
+  const HANDLER_KEY = "__mvjAudioHotkeys";
+
+  function getSound(id) {
+    const link = document.querySelector(`#${id} .soundLink`);
+    if (!link) return null;
+
+    // Prefer explicit data attribute if present
+    const df = link.getAttribute('data-filename') || (link.dataset && link.dataset.filename);
+    if (df) return df;
+
+    // Fallback: parse onclick tolerant of quote styles
+    const onclick = link.getAttribute('onclick') || '';
+    const m = onclick.match(/play:([^"'()\s;]+)/);
+    return m ? m[1] : null;
+  }
+
+  function playFile(f) {
+    if (!f) return;
+    try {
+      if (typeof pycmd === "function") pycmd(`play:${f}`);
+    } catch (_) {}
+  }
+
+  function shouldIgnore(ev) {
+    const t = ev.target;
+    return ev.isComposing || ev.repeat ||
+      (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable));
+  }
+
+  function handler(ev) {
+    if (shouldIgnore(ev)) return;
+
+    let file = null;
+    switch (ev.code) {
+      case "KeyZ": file = getSound("snd1"); break;
+      case "KeyX": file = getSound("snd2"); break;
+      case "KeyC": file = getSound("snd3"); break;
+      case "KeyG": {
+        // Reveal bilingual definition
+        const revealBtn = document.querySelector('.MvJ-reveal-button');
+        if (revealBtn) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          revealBtn.click();
+        }
+        return;
+      }
+      default: return;
+    }
+
+    if (file) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      playFile(file);
+    }
+  }
+
+  // Prevent accumulation across card sides
+  if (window[HANDLER_KEY]) {
+    window.removeEventListener("keydown", window[HANDLER_KEY], true);
+  }
+  window[HANDLER_KEY] = handler;
+  window.addEventListener("keydown", handler, { capture: true });
+})();
+</script>
