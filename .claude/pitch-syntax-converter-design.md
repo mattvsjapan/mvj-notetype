@@ -163,8 +163,8 @@ These only appear in user-override data, not auto-generated. They're rare but mu
 | `b2` | `:b2` | Same — role `b`, pitch `2` |
 | `~0`, `0~` | `:0~` or `:~0` | All-low modifier, both positions work in new syntax |
 | `2+` | `:2` + trailing ` -` | `+` meant extra particle mora → becomes ghost particle `-` |
-| `p`, `p0` | `:p`, `:ph` | Particle marker → `p` prefix in new accent |
-| `p1` | `:pa` | Particle with atamadaka |
+| `p`, `p0` | `:p`, `:p0` | Particle marker → `p` prefix in new accent |
+| `p1` | `:p1` | Particle with atamadaka |
 | `ph` | `:ph` | Particle with heiban |
 | `pb` | `:pb` | Particle with black/neutral coloring |
 | `*き` in reading | `*き` in reading | Devoiced mora — no change needed, same prefix in both systems |
@@ -199,6 +199,8 @@ In old sentence syntax, compound words have **every** bracket tagged with a lett
 - Its bracket contains `;` followed by a single letter (`h`, `a`, `n`, `k`) matching the group's letter
 - OR it's a pitch-only bracket (e.g., `[n]`, `[h]`) on a bare kana token with the same letter
 The run ends when a token has a different pitch letter, a numeric pitch, no pitch, or is a particle/punctuation.
+
+**Stripping pitch from compound members**: For brackets with a reading and pitch letter (e.g., `[かんが;n]`), remove the `;letter` to leave just `[かんが]`. For pitch-only brackets (e.g., `[n]` on a kana-only token like `お[n]`), remove the entire bracket — the kana token becomes bare text (e.g., `お`).
 
 **Known limitation — false positives with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. In practice this is rare (adjacent verbs usually have a particle between them), but the implementation should add a heuristic: only group `h`/`k` tokens when their structure looks like a compound (e.g., no token in the group has okurigana after its bracket, or the group contains a mix of kanji-bracket and kana-only tokens). The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
 
@@ -436,8 +438,11 @@ If the split produces a kanji segment with an empty reading (0 characters), that
 3. Identify compound groups (consecutive tokens sharing the same pitch letter)
 4. Convert each token/group:
    a. Compound group → strip pitch from all but last, add :letter to last
-   b. Single pitched token → move pitch from bracket to colon
-   c. Bare token → leave as-is for now
+   b. Any remaining token with old-syntax pitch (numeric or letter) → move pitch
+      from bracket to colon. This includes both 'single' groups from step 3 AND
+      tokens that step 3 classified as non-compound because they have numeric
+      pitch (e.g., 日本[にほん;2]) or kana-only pitch brackets (e.g., あう[0,1]).
+   c. Bare token (no pitch at all) → leave as-is for now
 5. Add :p to bare tokens between two accented tokens
 6. Rejoin with spaces
 ```
@@ -500,12 +505,16 @@ def add_particle_colons(tokens):
     Splits on sentence-ending punctuation first, then processes each
     clause independently to avoid adding :p across clause boundaries.
     """
-    # Split token list into clauses at sentence-ending punctuation
+    # Split token list into clauses at sentence-ending punctuation.
+    # Check whether the token ends with a sentence-ending character,
+    # not whether the whole token IS one — old syntax fuses trailing
+    # kana with punctuation (e.g., "ですね。" is one token).
     clauses = []
     current = []
     for token in tokens:
         current.append(token)
-        if token.strip() in SENTENCE_ENDING:
+        stripped = token.strip()
+        if stripped and stripped[-1] in SENTENCE_ENDING:
             clauses.append(current)
             current = []
     if current:
@@ -524,8 +533,11 @@ def _add_particle_colons_clause(tokens):
     for i in range(len(result)):
         if ':' in result[i]:
             continue  # already accented
-        if result[i].strip() in NON_PARTICLE:
-            continue  # don't add :p to punctuation
+        stripped = result[i].strip()
+        if stripped in NON_PARTICLE:
+            continue  # don't add :p to standalone punctuation
+        if stripped and stripped[-1] in SENTENCE_ENDING:
+            continue  # don't add :p to tokens ending with punctuation (e.g., ですね。)
 
         # Look for accented token before and after within this clause
         has_before = any(':' in result[j] for j in range(i - 1, -1, -1))
