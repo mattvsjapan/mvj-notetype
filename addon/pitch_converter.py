@@ -592,6 +592,10 @@ def _convert_preserving_html(text, converter_fn):
 # Word field conversion pipeline
 # ---------------------------------------------------------------------------
 
+# Matches tokens ending with a numeric-only pitch (no verb/adjective letter)
+_NUMERIC_PITCH_END_RE = re.compile(r':[0-9,~]+$')
+
+
 def _convert_word_text(text):
     """Convert a plain-text word field segment (no HTML).
 
@@ -602,6 +606,8 @@ def _convert_word_text(text):
     converted_tokens = []
     for token in tokens:
         conv, w = _convert_single_token(token)
+        if _NUMERIC_PITCH_END_RE.search(conv):
+            conv = conv + '-'
         converted_tokens.append(conv)
         warnings.extend(w)
     return ' '.join(converted_tokens), warnings
