@@ -621,10 +621,11 @@ def _convert_word_text(text):
     for token in tokens:
         conv, w = _convert_single_token(token)
         conv = _escape_trailing_i(conv)
-        if _NUMERIC_PITCH_END_RE.search(conv):
-            conv = conv + '-'
         converted_tokens.append(conv)
         warnings.extend(w)
+    # Ghost particle dash on the last token only (nouns, not verbs/adj)
+    if converted_tokens and _NUMERIC_PITCH_END_RE.search(converted_tokens[-1]):
+        converted_tokens[-1] += '-'
     return ' '.join(converted_tokens), warnings
 
 
