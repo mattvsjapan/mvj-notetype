@@ -6,7 +6,7 @@ from anki.hooks import wrap
 from aqt import gui_hooks, mw
 from aqt.editor import Editor
 from aqt.qt import QAction
-from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES
+from .notetype import NOTE_TYPE_NAME
 
 _SOUND_RE = re.compile(r"\[sound:([^\]]+)\]")
 
@@ -52,12 +52,8 @@ from .notetype import install_notetype
 from aqt.utils import showInfo
 
 
-def _has_old_notetype():
-    return any(mw.col.models.by_name(n) for n in _OLD_NOTE_TYPE_NAMES)
-
-
 def _on_tools_action():
-    if mw.col and (mw.col.models.by_name(NOTE_TYPE_NAME) or _has_old_notetype()):
+    if mw.col and mw.col.models.by_name(NOTE_TYPE_NAME):
         SettingsDialog(mw).exec()
     else:
         install_notetype(on_success=lambda: showInfo(
@@ -75,8 +71,7 @@ def _update_tools_label():
     if mw.col is None:
         return
     installed = mw.col.models.by_name(NOTE_TYPE_NAME) is not None
-    has_old = _has_old_notetype()
-    if installed or has_old:
+    if installed:
         _tools_action.setText("\U0001f1ef\U0001f1f5 MvJ Note Type")
     else:
         _tools_action.setText("Install \U0001f1ef\U0001f1f5 MvJ Note Type")
