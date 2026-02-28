@@ -130,9 +130,81 @@ The new syntax has no equivalent for compound pitch with hyphens. The hyphenated
 
 **Rule**: Use the nakaten positions to split both reading and pitch into corresponding segments. The `・` delimiters in the reading and `-` delimiters in the pitch align 1:1, giving us natural split points. Each pitch segment is treated as a full pitch value (it may be a plain number like `1`, or a prefixed value like `k2` or `h`).
 
-For each reading segment, attempt to run the furigana distribution algorithm (§5) against the corresponding portion of the word text to produce separate accented sections. However, this requires knowing which characters in the word belong to which segment, which is only possible when kana anchors exist between segments. For all-kanji words (like `十人十色`), the algorithm cannot determine the character boundaries and will fail.
+**Splitting algorithm**: Rather than trying to determine which word characters belong to which reading segment upfront, run the furigana distribution algorithm (§5) on the full word with the full concatenated reading (all `・` removed). If distribution succeeds, use the mora counts of each original nakaten-separated reading segment to partition the distributed result into separate accented sections, each with its corresponding pitch value.
 
-**Fallback**: When the segments can't be distributed across the word text (typically because the word is all kanji with no kana anchors), keep the combined bracket with the **last** pitch value and strip the nakaten from the reading:
+```python
+def convert_nakaten_compound(word, reading_with_dots, pitch_with_hyphens, okurigana=''):
+    """Convert a nakaten compound to new syntax with per-segment accents.
+
+    Returns (new_text, warnings) or falls back to combined bracket.
+    """
+    reading_segments = reading_with_dots.split('・')
+    pitch_segments = pitch_with_hyphens.split('-')
+    full_reading = ''.join(reading_segments)
+
+    # Try distributing the full reading across the word
+    distributed = distribute_furigana(word, full_reading)
+    if distributed is None:
+        # Fallback: can't split — keep combined bracket, use last pitch
+        return f'{word}[{full_reading}]{okurigana}:{pitch_segments[-1]}', ['nakaten_fallback']
+
+    # Partition distributed segments by reading segment boundaries.
+    # Walk through the distributed segments, consuming characters from
+    # each reading segment in order. When one reading segment's worth
+    # of characters is consumed, start a new accented group.
+    groups = []          # list of (segments_list, pitch_value)
+    current_group = []
+    seg_idx = 0          # index into reading_segments
+    chars_consumed = 0   # characters consumed from current reading segment
+    target_len = len(reading_segments[seg_idx])
+
+    for seg in distributed:
+        current_group.append(seg)
+        if seg[0] == 'kana':
+            chars_consumed += len(seg[1])
+        else:  # kanji
+            chars_consumed += len(seg[2])  # reading length
+
+        if chars_consumed >= target_len:
+            groups.append((current_group, pitch_segments[seg_idx]))
+            current_group = []
+            seg_idx += 1
+            chars_consumed = 0
+            if seg_idx < len(reading_segments):
+                target_len = len(reading_segments[seg_idx])
+
+    # Any remaining segments go into the last group
+    if current_group:
+        groups.append((current_group, pitch_segments[-1]))
+
+    # Build output: each group becomes segments + :pitch
+    parts = []
+    for group_segs, pitch in groups:
+        text_parts = []
+        for seg in group_segs:
+            if seg[0] == 'kana':
+                text_parts.append(seg[1])
+            else:
+                text_parts.append(f'{seg[1]}[{seg[2]}]')
+        parts.append(' '.join(text_parts) + f':{pitch}')
+
+    # Last group gets any trailing okurigana (insert before :pitch)
+    if okurigana and parts:
+        last = parts[-1]
+        colon_pos = last.rfind(':')
+        parts[-1] = last[:colon_pos] + okurigana + last[colon_pos:]
+
+    return ' '.join(parts), ['nakaten_split']
+```
+
+Example with kana anchors — `取り替え物[とりかえ・もの;2-0]`:
+- Reading segments: `とりかえ`, `もの` → full reading: `とりかえもの`
+- Distribute `取り替え物` with `とりかえもの` → `[取(と), り, 替(か), え, 物(もの)]`
+- Segment 1 target: `とりかえ` (4 chars). Consume: `と`(1) + `り`(1) + `か`(1) + `え`(1) = 4 → group 1 done
+- Segment 2 target: `もの` (2 chars). Consume: `もの`(2) = 2 → group 2 done
+- Result: `取[と] り 替[か] え:2 物[もの]:0`
+
+**Fallback**: When the furigana distribution fails (typically because the word is all kanji with no kana anchors, like `十人十色`), keep the combined bracket with the **last** pitch value and strip the nakaten from the reading. The last pitch is used because in Japanese compounds the final component's pitch typically determines the overall accent pattern:
 ```
 十人十色[じゅうにん・といろ;1-1] → 十人十色[じゅうにんといろ]:1
 ```
@@ -162,12 +234,49 @@ These only appear in user-override data, not auto-generated. They're rare but mu
 | `0b`, `2b` | `:b0`, `:b2` | `b` was a suffix/prefix modifier → becomes `b` role letter with pitch digit |
 | `b2` | `:b2` | Same — role `b`, pitch `2` |
 | `~0`, `0~` | `:0~` or `:~0` | All-low modifier, both positions work in new syntax |
-| `2+` | `:2` + trailing ` -` | `+` meant extra particle mora → becomes ghost particle `-` |
+| `2+`, `k2+`, `0+` | `:2 -`, `:k2 -`, `:0 -` | `+` meant extra particle mora → strip `+` from pitch, append ghost particle ` -` as a separate trailing token |
 | `p`, `p0` | `:p`, `:p0` | Particle marker → `p` prefix in new accent |
 | `p1` | `:p1` | Particle with atamadaka |
 | `ph` | `:ph` | Particle with heiban |
 | `pb` | `:pb` | Particle with black/neutral coloring |
 | `*き` in reading | `*き` in reading | Devoiced mora — no change needed, same prefix in both systems |
+
+**Handling `+` and `b` during pitch extraction**: After extracting the raw pitch string from the bracket (everything after the first `;`), apply these transformations before placing it after the colon:
+
+```python
+def normalize_pitch_for_new_syntax(raw_pitch: str) -> tuple[str, str]:
+    """Normalize an old-syntax pitch value for new colon syntax.
+
+    Returns (new_pitch, suffix) where suffix is appended after the
+    colon+pitch (e.g., ' -' for ghost particle).
+    """
+    pitch = raw_pitch
+    suffix = ''
+
+    # Handle + modifier: strip it, add ghost particle
+    if '+' in pitch:
+        pitch = pitch.replace('+', '')
+        suffix = ' -'
+
+    # Handle b modifier: reorder to role-before-digit
+    # Old allows b as prefix or suffix: 0b, 2b, b2, pb
+    # New requires: b as role letter before digit: b0, b2, pb
+    if 'b' in pitch and pitch != 'b':
+        # Extract the b and any p prefix
+        has_p = pitch.startswith('p')
+        rest = pitch.lstrip('p').replace('b', '')
+        pitch = ('p' if has_p else '') + 'b' + rest
+
+    return pitch, suffix
+```
+
+Example applications:
+- `2+` → pitch=`2`, suffix=` -` → `:2 -`
+- `k2+` → pitch=`k2`, suffix=` -` → `:k2 -`
+- `0b` → pitch=`b0`, suffix=`` → `:b0`
+- `2b` → pitch=`b2`, suffix=`` → `:b2`
+- `pb` → pitch=`pb`, suffix=`` → `:pb`
+- `b2` → pitch=`b2`, suffix=`` → `:b2` (already correct order)
 
 ---
 
@@ -202,7 +311,32 @@ The run ends when a token has a different pitch letter, a numeric pitch, no pitc
 
 **Stripping pitch from compound members**: For brackets with a reading and pitch letter (e.g., `[かんが;n]`), remove the `;letter` to leave just `[かんが]`. For pitch-only brackets (e.g., `[n]` on a kana-only token like `お[n]`), remove the entire bracket — the kana token becomes bare text (e.g., `お`).
 
-**Known limitation — false positives with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. In practice this is rare (adjacent verbs usually have a particle between them), but the implementation should add a heuristic: only group `h`/`k` tokens when their structure looks like a compound (e.g., no token in the group has okurigana after its bracket, or the group contains a mix of kanji-bracket and kana-only tokens). The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
+**Avoiding false positives with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
+
+For `h`/`k` groups, apply this heuristic: a group of 2+ tokens sharing `h` or `k` is treated as a compound **only if** at most one token in the group has trailing kana after its bracket (the final token's okurigana). If two or more tokens have post-bracket kana, they are likely separate inflected verbs/adjectives, not compound segments.
+
+Rationale: In old sentence compound notation, the MvJ addon breaks a compound into bracket groups aligned to kanji boundaries: `取[と;k]り 替[か;k]える`. Here `り` is an intermediate kana run between kanji, not verb okurigana — it appears on a token whose bracket is followed by kana, but only one other token (the last) has post-bracket kana (`える`). In contrast, two separate verbs like `食[た;k]べ 終[お;k]わった` have post-bracket kana on **both** tokens (`べ` and `わった`).
+
+```python
+def should_group_hk(tokens: list[str], letter: str) -> bool:
+    """Decide whether h/k tokens form a compound or separate verbs."""
+    if letter not in ('h', 'k'):
+        return True  # a/n always group
+
+    # Count tokens that have trailing kana after their bracket
+    POST_BRACKET_RE = re.compile(r'\][^\[\]]+$')  # ] followed by non-bracket chars
+    tokens_with_tail = sum(
+        1 for t in tokens
+        if POST_BRACKET_RE.search(t) and
+           any(is_kana(ch) for ch in POST_BRACKET_RE.search(t).group())
+    )
+
+    # 0 or 1 token with trailing kana → compound
+    # 2+ tokens with trailing kana → separate verbs
+    return tokens_with_tail <= 1
+```
+
+When the heuristic says "not a compound," emit each token as a separate single-pitch conversion (§3.3) instead of grouping them.
 
 ### 3.3 Inflected verbs/adjectives in sentences
 
@@ -326,6 +460,18 @@ def is_kana(ch):
     return ('\u3040' <= ch <= '\u309f' or  # hiragana
             '\u30a0' <= ch <= '\u30ff')     # katakana
 
+# Katakana → hiragana offset (ア=0x30A1, あ=0x3041, delta=0x60)
+def to_hiragana(text):
+    """Normalize text to hiragana for comparison."""
+    result = []
+    for ch in text:
+        cp = ord(ch)
+        if 0x30A1 <= cp <= 0x30F6:  # katakana ァ–ヶ
+            result.append(chr(cp - 0x60))
+        else:
+            result.append(ch)
+    return ''.join(result)
+
 def distribute_furigana(word, reading):
     # Split word into alternating kanji/kana segments
     segments = []
@@ -349,9 +495,15 @@ def distribute_furigana(word, reading):
     r_pos = 0
     for idx, (seg_type, seg_text) in enumerate(segments):
         if seg_type == 'kana':
-            # This kana should appear in the reading — advance past it
+            # This kana should appear in the reading — advance past it.
+            # Normalize both sides to hiragana for matching, since the
+            # word text may contain katakana while the reading is hiragana
+            # (e.g., word=取リ替 vs reading=とりか — rare but possible).
             kana_len = len(seg_text)
-            # Verify match (katakana/hiragana normalization may be needed)
+            expected = to_hiragana(seg_text)
+            actual = to_hiragana(reading[r_pos:r_pos + kana_len])
+            if expected != actual:
+                return None  # kana anchor mismatch — can't distribute
             r_pos += kana_len
             result.append(('kana', seg_text))
         else:
@@ -364,8 +516,12 @@ def distribute_furigana(word, reading):
                     break
 
             if next_kana is not None:
-                # Find where next_kana appears in remaining reading
-                anchor_pos = reading.find(next_kana, r_pos)
+                # Find where next_kana appears in remaining reading.
+                # Normalize to hiragana for the search in case the word
+                # has katakana kana runs but the reading is all hiragana.
+                anchor_hira = to_hiragana(next_kana)
+                reading_hira = to_hiragana(reading)
+                anchor_pos = reading_hira.find(anchor_hira, r_pos)
                 if anchor_pos == -1:
                     # Fallback: can't split, return None
                     return None
@@ -376,6 +532,8 @@ def distribute_furigana(word, reading):
                 kanji_reading = reading[r_pos:]
                 r_pos = len(reading)
 
+            if not kanji_reading:
+                return None  # empty reading for a kanji segment — bad match
             result.append(('kanji', seg_text, kanji_reading))
 
     return result
@@ -463,19 +621,33 @@ def get_pitch_letter(token):
     return None
 
 def group_compound_tokens(tokens):
-    """Group consecutive tokens sharing the same pitch letter."""
+    """Group consecutive tokens sharing the same pitch letter.
+
+    For h/k groups, applies the should_group_hk() heuristic (§3.2)
+    to avoid falsely merging adjacent inflected verbs/adjectives.
+    """
     groups = []
     current_group = []
     current_letter = None
+
+    def flush_group():
+        if not current_group:
+            return
+        if len(current_group) > 1 and should_group_hk(current_group, current_letter):
+            groups.append(('compound', current_letter, current_group[:]))
+        elif len(current_group) > 1:
+            # h/k heuristic rejected grouping — emit each as single
+            for t in current_group:
+                groups.append(('single', current_letter, [t]))
+        else:
+            groups.append(('single', current_letter, current_group[:]))
 
     for token in tokens:
         letter = get_pitch_letter(token)
         if letter is not None and letter == current_letter:
             current_group.append(token)
         else:
-            if current_group:
-                groups.append(('compound' if len(current_group) > 1 else 'single',
-                              current_letter, current_group))
+            flush_group()
             if letter is not None:
                 current_group = [token]
                 current_letter = letter
@@ -484,10 +656,7 @@ def group_compound_tokens(tokens):
                 current_group = []
                 current_letter = None
 
-    if current_group:
-        groups.append(('compound' if len(current_group) > 1 else 'single',
-                      current_letter, current_group))
-
+    flush_group()
     return groups
 ```
 
