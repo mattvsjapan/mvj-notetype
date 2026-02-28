@@ -16,6 +16,7 @@
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --debug: off;                  /* on | off                            */
     --audio-labels: on;            /* on | off                            */
+    --card-transparency: on;       /* on | off                            */
 
     /* Word */
     --word-text: back;                 /* front | back | off                  */
@@ -229,6 +230,23 @@
         0 1px 3px rgba(0,0,0,0.05),
         0 4px 12px rgba(0,0,0,0.04),
         0 16px 36px rgba(0,0,0,0.025);
+}
+
+/* — Card Transparency off: opaque card backgrounds — */
+:root[data-card-transparency="off"] .card-inner {
+    background: rgb(21, 22, 28);
+}
+:root[data-card-transparency="off"][data-color-scheme="black"] .card-inner {
+    background: rgb(20, 20, 20);
+}
+:root[data-card-transparency="off"][data-color-scheme="red"] .card-inner {
+    background: rgb(26, 16, 16);
+}
+:root[data-card-transparency="off"][data-color-scheme="purple"] .card-inner {
+    background: rgb(23, 19, 32);
+}
+:root[data-card-transparency="off"][data-color-scheme="white"] .card-inner {
+    background: rgb(253, 251, 246);
 }
 
 /* — White scheme: flip dark-mode shimmer to light-mode — */
