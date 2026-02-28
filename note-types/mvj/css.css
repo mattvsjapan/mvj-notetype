@@ -57,23 +57,49 @@
        from defaults above). Lower modes beat higher modes,
        and tag matches unconditionally beat deck matches.
        ═══════════════════════════════════════════════════════ */
-
-    /* —— Mode 1 —————————————————————————————————————— */
-    --mode-1-name: sentence;
-    --mode-1-tag: _jp::sentence;
+    /* —— Mode 1: Word Audio Only ——————————————————————————————— */
+    --mode-1-name: Word Audio Only;
+    --mode-1-tag: _jp::word;
     --mode-1-deck: ;
-    --mode-1-tategaki: on;
-    --mode-1-word-text: back;
-    --mode-1-word-furigana: back;
-    --mode-1-sentence-furigana: back;
+    --mode-1-sentence-audio: back;
 
-    /* —— Mode 2 ————————————————————————————————————————— */
-    --mode-2-name: image;
-    --mode-2-tag: _jp::image;
+    /* —— Mode 2: Sentence Audio Only ——————————————————————————— */
+    --mode-2-name: Sentence Audio Only;
+    --mode-2-tag: _jp::sentence;
     --mode-2-deck: ;
-    --mode-2-word-text: back;
-    --mode-2-image: front;
+    --mode-2-word-audio: back;
 
+    /* —— Mode 3: Image ————————————————————————————————————————— */
+    --mode-3-name: Image;
+    --mode-3-tag: _jp::image;
+    --mode-3-deck: ;
+    --mode-3-word-audio: back;
+    --mode-3-sentence-audio: back;
+    --mode-3-image: front;
+
+    /* —— Mode 4: Reading ——————————————————————————————————————— */
+    --mode-4-name: Reading;
+    --mode-4-tag: _jp::reading;
+    --mode-4-deck: ;
+    --mode-4-tategaki: on;
+    --mode-4-word-audio: back;
+    --mode-4-sentence-text: front;
+    --mode-4-sentence-audio: back;
+
+    /* —— Mode 5: Vocab ————————————————————————————————————————— */
+    --mode-5-name: Vocab;
+    --mode-5-tag: _jp::vocab;
+    --mode-5-deck: ;
+    --mode-5-word-text: front;
+    --mode-5-word-audio: back;
+    --mode-5-sentence-audio: back;
+
+    /* —— Mode 6: Furigana —————————————————————————————————————— */
+    --mode-6-name: Furigana;
+    --mode-6-tag: jp_::furigana;
+    --mode-6-deck: ;
+    --mode-6-word-furigana: front;
+    --mode-6-sentence-furigana: front;
 
     /* ═══════════════════════════════════════════════════════ */
 
