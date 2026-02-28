@@ -311,32 +311,16 @@ The run ends when a token has a different pitch letter, a numeric pitch, no pitc
 
 **Stripping pitch from compound members**: For brackets with a reading and pitch letter (e.g., `[かんが;n]`), remove the `;letter` to leave just `[かんが]`. For pitch-only brackets (e.g., `[n]` on a kana-only token like `お[n]`), remove the entire bracket — the kana token becomes bare text (e.g., `お`).
 
-**Avoiding false positives with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
+**Ambiguity with `h`/`k`**: The letters `h` and `k` are used both for sentence compounds and for inflected verbs/adjectives (§3.3). Two adjacent verbs that happen to share the same letter (e.g., `食[た;k]べ 終[お;k]わった`) would be falsely grouped as a compound, producing `食[た]べ 終[お]わった:k` instead of the correct `食[た]べ:k 終[お]わった:k`. The letters `a` and `n` are safe to group unconditionally since they're only used for compounds in sentence notation.
 
-For `h`/`k` groups, apply this heuristic: a group of 2+ tokens sharing `h` or `k` is treated as a compound **only if** at most one token in the group has trailing kana after its bracket (the final token's okurigana). If two or more tokens have post-bracket kana, they are likely separate inflected verbs/adjectives, not compound segments.
+Unfortunately, there is no reliable heuristic to distinguish compound verbs from adjacent verbs based on token structure alone. Both cases look identical — compound verbs like 取り替える produce `取[と;k]り 替[か;k]える` where multiple tokens have post-bracket kana, exactly like adjacent verbs `食[た;k]べ 終[お;k]わった`.
 
-Rationale: In old sentence compound notation, the MvJ addon breaks a compound into bracket groups aligned to kanji boundaries: `取[と;k]り 替[か;k]える`. Here `り` is an intermediate kana run between kanji, not verb okurigana — it appears on a token whose bracket is followed by kana, but only one other token (the last) has post-bracket kana (`える`). In contrast, two separate verbs like `食[た;k]べ 終[お;k]わった` have post-bracket kana on **both** tokens (`べ` and `わった`).
+**Strategy**: Always group consecutive same-letter tokens as compounds (same behavior as `a`/`n`), and flag all `h`/`k` compound groups for manual review. This favors false positives (adjacent verbs merged) over false negatives (compound verbs split apart). The false negative is worse because it creates two short accented words with wrong mora counts, producing incorrect pitch graphs. The false positive produces one longer merged word — also wrong, but more obviously so during review.
 
 ```python
-def should_group_hk(tokens: list[str], letter: str) -> bool:
-    """Decide whether h/k tokens form a compound or separate verbs."""
-    if letter not in ('h', 'k'):
-        return True  # a/n always group
-
-    # Count tokens that have trailing kana after their bracket
-    POST_BRACKET_RE = re.compile(r'\][^\[\]]+$')  # ] followed by non-bracket chars
-    tokens_with_tail = sum(
-        1 for t in tokens
-        if POST_BRACKET_RE.search(t) and
-           any(is_kana(ch) for ch in POST_BRACKET_RE.search(t).group())
-    )
-
-    # 0 or 1 token with trailing kana → compound
-    # 2+ tokens with trailing kana → separate verbs
-    return tokens_with_tail <= 1
+# No special h/k heuristic needed — all letters grouped uniformly.
+# h/k compound groups are flagged for review (see group_compound_tokens).
 ```
-
-When the heuristic says "not a compound," emit each token as a separate single-pitch conversion (§3.3) instead of grouping them.
 
 ### 3.3 Inflected verbs/adjectives in sentences
 
@@ -623,8 +607,9 @@ def get_pitch_letter(token):
 def group_compound_tokens(tokens):
     """Group consecutive tokens sharing the same pitch letter.
 
-    For h/k groups, applies the should_group_hk() heuristic (§3.2)
-    to avoid falsely merging adjacent inflected verbs/adjectives.
+    All letter groups (h/a/n/k) are grouped as compounds uniformly.
+    h/k compound groups are flagged for review since they could be
+    adjacent verbs rather than true compounds (see §3.2).
     """
     groups = []
     current_group = []
@@ -633,14 +618,12 @@ def group_compound_tokens(tokens):
     def flush_group():
         if not current_group:
             return
-        if len(current_group) > 1 and should_group_hk(current_group, current_letter):
-            groups.append(('compound', current_letter, current_group[:]))
-        elif len(current_group) > 1:
-            # h/k heuristic rejected grouping — emit each as single
-            for t in current_group:
-                groups.append(('single', current_letter, [t]))
+        if len(current_group) > 1:
+            # Flag h/k groups for review (ambiguous — could be adjacent verbs)
+            flag = 'hk_compound_review' if current_letter in ('h', 'k') else None
+            groups.append(('compound', current_letter, current_group[:], flag))
         else:
-            groups.append(('single', current_letter, current_group[:]))
+            groups.append(('single', current_letter, current_group[:], None))
 
     for token in tokens:
         letter = get_pitch_letter(token)
@@ -652,7 +635,7 @@ def group_compound_tokens(tokens):
                 current_group = [token]
                 current_letter = letter
             else:
-                groups.append(('bare', None, [token]))
+                groups.append(('bare', None, [token], None))
                 current_group = []
                 current_letter = None
 
@@ -732,6 +715,7 @@ These cases lose information or have no clean equivalent. Flag all of them for m
 | Sentence `k` (simplified) | Original pitch number lost | Keep as `k` — new system defaults to pitch 2 |
 | `+` modifier (extra particle) | Explicit extra mora | Convert to ghost particle ` -` after the word |
 | Consecutive kanji compounds | Can't split reading per-kanji | Keep combined bracket, move pitch to colon |
+| Sentence `h`/`k` compound groups | May be adjacent verbs, not a true compound | Always group as compound, flag for review |
 
 ---
 
