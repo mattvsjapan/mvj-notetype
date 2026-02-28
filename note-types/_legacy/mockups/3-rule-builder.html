@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup 3: If-Then Rule Builder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 20px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #cba6f7; }
+  .subtitle { font-size: 13px; color: #a6adc8; margin-bottom: 16px; }
+
+  .rules-list {
+    display: flex; flex-direction: column; gap: 12px;
+    max-height: calc(100vh - 160px); overflow-y: auto; padding-right: 8px;
+  }
+
+  .rule-card {
+    background: #313244; border-radius: 10px; border: 1px solid #45475a;
+    overflow: hidden; transition: border-color 0.15s;
+  }
+  .rule-card:hover { border-color: #585b70; }
+  .rule-card.expanded { border-color: #cba6f7; }
+
+  .rule-header {
+    display: flex; align-items: stretch; cursor: pointer;
+  }
+
+  .rule-priority {
+    width: 40px; display: flex; align-items: center; justify-content: center;
+    background: #45475a; font-weight: 800; font-size: 16px; color: #f9e2af;
+    flex-shrink: 0;
+  }
+
+  .rule-summary {
+    flex: 1; padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .rule-keyword {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .kw-if { background: #89b4fa33; color: #89b4fa; }
+  .kw-then { background: #a6e3a133; color: #a6e3a1; }
+  .kw-and { background: #f9e2af33; color: #f9e2af; }
+
+  .rule-chip {
+    background: #45475a; padding: 4px 10px; border-radius: 12px;
+    font-size: 13px; font-family: 'SF Mono', 'Consolas', monospace;
+  }
+  .rule-chip.trigger { color: #89b4fa; }
+  .rule-chip.action { color: #a6e3a1; }
+  .rule-chip.empty { color: #6c7086; font-style: italic; font-family: inherit; }
+
+  .rule-actions-right {
+    display: flex; align-items: center; gap: 4px; padding: 0 8px;
+  }
+  .rule-actions-right button {
+    background: none; border: none; color: #6c7086; cursor: pointer;
+    font-size: 16px; padding: 4px; border-radius: 4px;
+  }
+  .rule-actions-right button:hover { color: #cdd6f4; background: #45475a; }
+
+  /* Expanded editor */
+  .rule-editor { padding: 0 16px 16px 56px; display: none; }
+  .rule-card.expanded .rule-editor { display: block; }
+
+  .editor-section {
+    margin-top: 12px; padding: 12px; background: #1e1e2e; border-radius: 8px;
+    border: 1px solid #45475a;
+  }
+  .editor-section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .editor-section-label.if-label { color: #89b4fa; }
+  .editor-section-label.then-label { color: #a6e3a1; }
+
+  .condition-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 6px;
+  }
+  .condition-row label { font-size: 12px; color: #a6adc8; width: 50px; }
+  .condition-row input {
+    flex: 1; background: #45475a; border: 1px solid #585b70; border-radius: 6px;
+    color: #cdd6f4; padding: 6px 10px; font-size: 13px;
+  }
+  .condition-row input:focus { border-color: #89b4fa; outline: none; }
+
+  .overrides-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px;
+  }
+  .override-item {
+    display: flex; align-items: center; gap: 6px; padding: 4px 8px;
+    border-radius: 6px; background: #313244;
+  }
+  .override-item input[type="checkbox"] {
+    accent-color: #a6e3a1; width: 14px; height: 14px; cursor: pointer;
+  }
+  .override-item label { font-size: 12px; flex: 1; cursor: pointer; }
+  .override-item select {
+    background: #45475a; border: 1px solid #585b70; color: #cdd6f4;
+    padding: 2px 6px; border-radius: 4px; font-size: 11px;
+  }
+  .override-item select:disabled { opacity: 0.3; }
+  .override-item select.active { border-color: #a6e3a1; color: #a6e3a1; }
+  .override-item.inactive { opacity: 0.4; }
+
+  .add-rule-btn {
+    margin-top: 12px; padding: 12px; background: none; border: 2px dashed #45475a;
+    border-radius: 10px; color: #cba6f7; cursor: pointer; font-size: 14px;
+    width: 100%; text-align: center;
+  }
+  .add-rule-btn:hover { border-color: #cba6f7; background: #31324444; }
+
+  .priority-note {
+    margin-top: 8px; font-size: 12px; color: #a6adc8; text-align: center;
+  }
+
+  .concept-note {
+    margin-top: 16px; padding: 12px 16px; background: #313244;
+    border-radius: 8px; border-left: 3px solid #cba6f7; font-size: 13px; line-height: 1.5;
+  }
+  .concept-note strong { color: #cba6f7; }
+</style>
+</head>
+<body>
+
+<h1>Concept 3: If-Then Rule Builder</h1>
+<p class="subtitle">Each mode reads like a sentence: "IF tag is X, THEN set A=1, B=2." Click to expand and edit.</p>
+
+<div class="rules-list" id="rulesList"></div>
+<button class="add-rule-btn" onclick="addRule()">+ Add Rule</button>
+<p class="priority-note">Rules are applied top-to-bottom. Lower rules override higher ones for conflicting settings. Tag rules always beat deck rules.</p>
+
+<div class="concept-note">
+  <strong>How it works:</strong> Each mode is a natural-language "if/then" rule.
+  The collapsed view reads like a sentence, showing the trigger condition and what settings it changes.
+  Click to expand and edit the full rule with all available overrides.
+  <br><br>
+  <strong>Pros:</strong> Very readable at a glance — the collapsed view tells you exactly what each mode does.
+  Intuitive "condition → action" mental model. Less overwhelming than a full grid.<br>
+  <strong>Cons:</strong> Still requires expanding each rule to edit. Harder to compare rules against each other.
+</div>
+
+<script>
+const ALL_SETTINGS = [
+  { key: 'tategaki', label: 'Tategaki', opts: ['off','on'], def: 'off', group: 'Layout' },
+  { key: 'color-scheme', label: 'Color Scheme', opts: ['blue','black','red','purple','white'], def: 'blue', group: 'Layout' },
+  { key: 'audio-labels', label: 'Audio Labels', opts: ['on','off'], def: 'on', group: 'Layout' },
+  { key: 'word', label: 'Word', opts: ['front','back','off'], def: 'front', group: 'Word' },
+  { key: 'word-audio', label: 'Word Audio', opts: ['front','back','off'], def: 'back', group: 'Word' },
+  { key: 'word-furigana', label: 'Word Furigana', opts: ['front','back','off'], def: 'front', group: 'Word' },
+  { key: 'word-pitch-color', label: 'Word Pitch Color', opts: ['front','back','off'], def: 'back', group: 'Word' },
+  { key: 'pitch-graph', label: 'Pitch Graph', opts: ['on','off'], def: 'on', group: 'Word' },
+  { key: 'sentence', label: 'Sentence', opts: ['front','back','off'], def: 'front', group: 'Sentence' },
+  { key: 'sentence-audio', label: 'Sentence Audio', opts: ['front','back','off'], def: 'back', group: 'Sentence' },
+  { key: 'sentence-furigana', label: 'Sentence Furigana', opts: ['front','back','off'], def: 'front', group: 'Sentence' },
+  { key: 'sentence-pitch-color', label: 'Sentence Pitch Color', opts: ['front','back','off'], def: 'back', group: 'Sentence' },
+  { key: 'image', label: 'Image', opts: ['front','back','off'], def: 'back', group: 'Image' },
+  { key: 'definition-mode', label: 'Definition Mode', opts: ['all','bilingual','monolingual','unlocked'], def: 'all', group: 'Definitions' },
+  { key: 'definition-text', label: 'Definition Text', opts: ['on','off'], def: 'on', group: 'Definitions' },
+  { key: 'definition-furigana', label: 'Definition Furigana', opts: ['front','back','off'], def: 'back', group: 'Definitions' },
+  { key: 'definition-pitch-color', label: 'Definition Pitch Color', opts: ['front','back','off'], def: 'back', group: 'Definitions' },
+];
+
+let rules = [
+  { tag: '_jp::sentence', deck: '1. 🇯🇵::📖 例文', overrides: { tategaki:'on', 'word-furigana':'back', 'sentence-furigana':'back' } },
+  { tag: '_jp::image', deck: '', overrides: { image:'front' } },
+  { tag: '_jp::knowledge', deck: '1. 🇯🇵::📚 雑学', overrides: { tategaki:'on', 'definition-mode':'monolingual' } },
+  { tag: '_jp::keihan', deck: '', overrides: { 'color-scheme':'red' } },
+  { tag: '_jp::furigana', deck: '', overrides: { 'word-furigana':'front', 'sentence-furigana':'front', 'definition-furigana':'front' } },
+];
+
+let expandedIdx = -1;
+
+function formatOverrides(overrides) {
+  return Object.entries(overrides).map(([k, v]) => {
+    const s = ALL_SETTINGS.find(s => s.key === k);
+    return `${s ? s.label : k} → ${v}`;
+  });
+}
+
+function render() {
+  const list = document.getElementById('rulesList');
+  list.innerHTML = '';
+
+  rules.forEach((rule, idx) => {
+    const card = document.createElement('div');
+    card.className = 'rule-card' + (expandedIdx === idx ? ' expanded' : '');
+
+    const overrideLabels = formatOverrides(rule.overrides);
+
+    // Build summary chips
+    let summaryHTML = '';
+    if (rule.tag) {
+      summaryHTML += `<span class="rule-keyword kw-if">IF</span>`;
+      summaryHTML += `<span class="rule-chip trigger">tag = ${rule.tag}</span>`;
+    }
+    if (rule.tag && rule.deck) {
+      summaryHTML += `<span class="rule-keyword kw-and">OR</span>`;
+    }
+    if (rule.deck) {
+      if (!rule.tag) summaryHTML += `<span class="rule-keyword kw-if">IF</span>`;
+      summaryHTML += `<span class="rule-chip trigger">deck ⊇ ${rule.deck}</span>`;
+    }
+    if (!rule.tag && !rule.deck) {
+      summaryHTML += `<span class="rule-keyword kw-if">IF</span><span class="rule-chip empty">no trigger set</span>`;
+    }
+
+    summaryHTML += `<span class="rule-keyword kw-then">THEN</span>`;
+    if (overrideLabels.length > 0) {
+      overrideLabels.forEach(label => {
+        summaryHTML += `<span class="rule-chip action">${label}</span>`;
+      });
+    } else {
+      summaryHTML += `<span class="rule-chip empty">no overrides set</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="rule-header" onclick="toggleExpand(${idx})">
+        <div class="rule-priority">${idx + 1}</div>
+        <div class="rule-summary">${summaryHTML}</div>
+        <div class="rule-actions-right">
+          <button onclick="event.stopPropagation(); moveRule(${idx},-1)" title="Move up">▲</button>
+          <button onclick="event.stopPropagation(); moveRule(${idx},1)" title="Move down">▼</button>
+          <button onclick="event.stopPropagation(); deleteRule(${idx})" title="Delete" style="color:#f38ba8">✕</button>
+        </div>
+      </div>
+      <div class="rule-editor">
+        <div class="editor-section">
+          <div class="editor-section-label if-label">Condition — when does this rule activate?</div>
+          <div class="condition-row">
+            <label>Tag</label>
+            <input type="text" value="${rule.tag}" oninput="rules[${idx}].tag=this.value; updateSummary(${idx})" placeholder="e.g. _jp::sentence">
+          </div>
+          <div class="condition-row">
+            <label>Deck</label>
+            <input type="text" value="${rule.deck}" oninput="rules[${idx}].deck=this.value; updateSummary(${idx})" placeholder="e.g. 1. 🇯🇵::📖 例文 (prefix match)">
+          </div>
+        </div>
+        <div class="editor-section">
+          <div class="editor-section-label then-label">Actions — which settings to override?</div>
+          <div class="overrides-grid">
+            ${ALL_SETTINGS.map(s => {
+              const isActive = s.key in rule.overrides;
+              return `
+                <div class="override-item ${isActive ? '' : 'inactive'}">
+                  <input type="checkbox" id="cb-${idx}-${s.key}" ${isActive ? 'checked' : ''}
+                    onchange="toggleSetting(${idx},'${s.key}','${s.def}',this.checked)">
+                  <label for="cb-${idx}-${s.key}">${s.label}</label>
+                  <select ${isActive ? 'class="active"' : 'disabled'}
+                    onchange="rules[${idx}].overrides['${s.key}']=this.value; render();">
+                    ${s.opts.map(o => `<option value="${o}" ${isActive && rule.overrides[s.key]===o ? 'selected' : ''}>${o}</option>`).join('')}
+                  </select>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+function toggleExpand(idx) {
+  expandedIdx = expandedIdx === idx ? -1 : idx;
+  render();
+}
+
+function toggleSetting(ruleIdx, key, def, checked) {
+  if (checked) {
+    rules[ruleIdx].overrides[key] = def;
+  } else {
+    delete rules[ruleIdx].overrides[key];
+  }
+  render();
+  expandedIdx = ruleIdx;
+  render();
+}
+
+function updateSummary(idx) {
+  // Just re-render to update the summary chips
+  const wasExpanded = expandedIdx;
+  expandedIdx = idx;
+  render();
+}
+
+function moveRule(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= rules.length) return;
+  [rules[idx], rules[newIdx]] = [rules[newIdx], rules[idx]];
+  if (expandedIdx === idx) expandedIdx = newIdx;
+  else if (expandedIdx === newIdx) expandedIdx = idx;
+  render();
+}
+
+function deleteRule(idx) {
+  rules.splice(idx, 1);
+  expandedIdx = -1;
+  render();
+}
+
+function addRule() {
+  rules.push({ tag: '', deck: '', overrides: {} });
+  expandedIdx = rules.length - 1;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

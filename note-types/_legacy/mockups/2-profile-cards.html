@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup 2: Profile Cards</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 20px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #cba6f7; }
+  .subtitle { font-size: 13px; color: #a6adc8; margin-bottom: 16px; }
+
+  .modes-container { display: flex; gap: 16px; height: calc(100vh - 120px); }
+
+  /* Left: Mode List */
+  .mode-list {
+    width: 220px; min-width: 220px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .mode-list-header { font-size: 12px; color: #a6adc8; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .mode-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; background: #313244; border-radius: 8px;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+  }
+  .mode-item:hover { background: #45475a; }
+  .mode-item.active { border-color: #cba6f7; background: #45475a; }
+  .mode-item .priority {
+    width: 24px; height: 24px; line-height: 24px; border-radius: 50%;
+    background: #f9e2af; color: #1e1e2e; font-weight: 700; font-size: 12px;
+    text-align: center; flex-shrink: 0;
+  }
+  .mode-item .mode-name {
+    font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mode-item .mode-triggers {
+    font-size: 10px; color: #a6adc8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mode-item .drag-handle { color: #585b70; cursor: grab; margin-left: auto; flex-shrink: 0; }
+
+  .add-mode-btn {
+    padding: 10px 12px; background: none; border: 2px dashed #45475a; border-radius: 8px;
+    color: #cba6f7; cursor: pointer; font-size: 13px; text-align: center; margin-top: 4px;
+  }
+  .add-mode-btn:hover { border-color: #cba6f7; background: #31324488; }
+
+  /* Right: Mode Detail / Profile Card */
+  .mode-detail {
+    flex: 1; background: #313244; border-radius: 12px; padding: 24px;
+    overflow-y: auto;
+  }
+  .mode-detail.empty {
+    display: flex; align-items: center; justify-content: center;
+    color: #585b70; font-size: 14px; font-style: italic;
+  }
+
+  .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .detail-header .priority-big {
+    width: 40px; height: 40px; line-height: 40px; border-radius: 50%;
+    background: #cba6f7; color: #1e1e2e; font-weight: 800; font-size: 18px;
+    text-align: center;
+  }
+  .detail-header input {
+    flex: 1; background: #45475a; border: 1px solid #585b70; border-radius: 6px;
+    color: #cdd6f4; padding: 8px 12px; font-size: 16px; font-weight: 600;
+  }
+  .detail-header input:focus { border-color: #cba6f7; outline: none; }
+  .delete-btn {
+    background: none; border: 1px solid #f38ba8; color: #f38ba8; padding: 8px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .delete-btn:hover { background: #f38ba8; color: #1e1e2e; }
+
+  /* Trigger Section */
+  .section-label {
+    font-size: 11px; color: #a6adc8; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px; margin-top: 16px;
+  }
+  .trigger-row {
+    display: flex; gap: 12px; margin-bottom: 8px;
+  }
+  .trigger-field { flex: 1; }
+  .trigger-field label { display: block; font-size: 12px; color: #a6adc8; margin-bottom: 4px; }
+  .trigger-field input {
+    width: 100%; background: #45475a; border: 1px solid #585b70; border-radius: 6px;
+    color: #cdd6f4; padding: 6px 10px; font-size: 13px;
+  }
+  .trigger-field input:focus { border-color: #cba6f7; outline: none; }
+
+  /* Settings Override Sections */
+  .settings-section {
+    margin-top: 16px; border: 1px solid #45475a; border-radius: 8px; overflow: hidden;
+  }
+  .settings-section-header {
+    background: #45475a; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+  }
+  .settings-section-header:hover { background: #585b70; }
+  .settings-section-header .override-count {
+    background: #a6e3a1; color: #1e1e2e; padding: 1px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 700;
+  }
+  .settings-section-header .override-count.none { background: #45475a; color: #6c7086; }
+
+  .settings-section-body { padding: 12px 14px; display: none; }
+  .settings-section.open .settings-section-body { display: block; }
+
+  .setting-row {
+    display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #31324488;
+  }
+  .setting-row:last-child { border-bottom: none; }
+
+  .setting-row .toggle-override {
+    width: 18px; height: 18px; border-radius: 4px; border: 2px solid #585b70;
+    background: none; cursor: pointer; margin-right: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent;
+  }
+  .setting-row .toggle-override.active { border-color: #a6e3a1; background: #a6e3a1; color: #1e1e2e; }
+  .setting-row .setting-name { flex: 1; font-size: 13px; }
+  .setting-row .setting-default { font-size: 12px; color: #6c7086; margin-right: 12px; }
+
+  .setting-row select {
+    background: #45475a; border: 1px solid #585b70; color: #cdd6f4;
+    padding: 4px 8px; border-radius: 4px; font-size: 12px;
+  }
+  .setting-row select:disabled { opacity: 0.3; }
+  .setting-row select.active { border-color: #a6e3a1; background: #2a3a2a; color: #a6e3a1; }
+
+  .concept-note {
+    margin-top: 16px; padding: 12px 16px; background: #313244;
+    border-radius: 8px; border-left: 3px solid #cba6f7; font-size: 13px; line-height: 1.5;
+  }
+  .concept-note strong { color: #cba6f7; }
+</style>
+</head>
+<body>
+
+<h1>Concept 2: Profile Cards</h1>
+<p class="subtitle">Modes shown as a list on the left, detailed profile editor on the right. Check individual settings to override.</p>
+
+<div class="modes-container">
+  <div class="mode-list" id="modeList"></div>
+  <div class="mode-detail" id="modeDetail">
+    <div class="empty">Select a mode from the list, or create a new one</div>
+  </div>
+</div>
+
+<div class="concept-note">
+  <strong>How it works:</strong> A list/detail split view (like a mail client). The left sidebar shows all modes as compact items
+  with priority numbers. Clicking one opens a full "profile card" on the right showing triggers and settings.
+  Each setting has a checkbox — unchecked means "inherit default," checked means "override."
+  <br><br>
+  <strong>Pros:</strong> Clean, familiar pattern. Easy to focus on one mode at a time. Settings are grouped and collapsible.<br>
+  <strong>Cons:</strong> Can't compare modes side-by-side. You see one mode at a time, so conflicts may not be obvious.
+</div>
+
+<script>
+const SECTIONS = {
+  'Layout': [
+    { key: 'tategaki', label: 'Tategaki (Vertical)', opts: ['off','on'], def: 'off' },
+    { key: 'color-scheme', label: 'Color Scheme', opts: ['blue','black','red','purple','white'], def: 'blue' },
+    { key: 'audio-labels', label: 'Audio Labels', opts: ['on','off'], def: 'on' },
+  ],
+  'Word': [
+    { key: 'word', label: 'Word', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-audio', label: 'Word Audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'word-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+    { key: 'pitch-graph', label: 'Pitch Graph', opts: ['on','off'], def: 'on' },
+  ],
+  'Sentence': [
+    { key: 'sentence', label: 'Sentence', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-audio', label: 'Sentence Audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'sentence-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+  ],
+  'Image': [
+    { key: 'image', label: 'Image', opts: ['front','back','off'], def: 'back' },
+  ],
+  'Definitions': [
+    { key: 'definition-mode', label: 'Definition Mode', opts: ['all','bilingual','monolingual','unlocked'], def: 'all' },
+    { key: 'definition-text', label: 'Definition Text', opts: ['on','off'], def: 'on' },
+    { key: 'definition-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'back' },
+    { key: 'definition-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+  ],
+};
+
+let modes = [
+  { name: 'Sentence', tag: '_jp::sentence', deck: '1. 🇯🇵::📖 例文', overrides: { tategaki:'on', 'word-furigana':'back', 'sentence-furigana':'back' } },
+  { name: 'Image Front', tag: '_jp::image', deck: '', overrides: { image:'front' } },
+  { name: 'Knowledge', tag: '_jp::knowledge', deck: '1. 🇯🇵::📚 雑学', overrides: { tategaki:'on', 'definition-mode':'monolingual' } },
+  { name: 'Keihan', tag: '_jp::keihan', deck: '', overrides: { 'color-scheme':'red' } },
+  { name: 'Furigana', tag: '_jp::furigana', deck: '', overrides: { 'word-furigana':'front', 'sentence-furigana':'front', 'definition-furigana':'front' } },
+];
+
+let activeIdx = -1;
+
+function renderList() {
+  const list = document.getElementById('modeList');
+  list.innerHTML = '<div class="mode-list-header">Modes (drag to reorder)</div>';
+
+  modes.forEach((mode, idx) => {
+    const item = document.createElement('div');
+    item.className = 'mode-item' + (idx === activeIdx ? ' active' : '');
+    item.draggable = true;
+    item.dataset.idx = idx;
+
+    const triggers = [mode.tag, mode.deck].filter(Boolean).join(' / ') || 'No triggers set';
+    const overrideCount = Object.keys(mode.overrides).length;
+
+    item.innerHTML = `
+      <div class="priority">${idx + 1}</div>
+      <div style="overflow:hidden;flex:1">
+        <div class="mode-name">${mode.name || 'Untitled'}</div>
+        <div class="mode-triggers">${triggers} · ${overrideCount} override${overrideCount !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="drag-handle">⠿</div>
+    `;
+
+    item.onclick = () => { activeIdx = idx; renderList(); renderDetail(); };
+
+    // Drag & drop
+    item.ondragstart = (e) => { e.dataTransfer.setData('text/plain', idx); };
+    item.ondragover = (e) => { e.preventDefault(); item.style.borderTopColor = '#cba6f7'; };
+    item.ondragleave = () => { item.style.borderTopColor = 'transparent'; };
+    item.ondrop = (e) => {
+      e.preventDefault();
+      item.style.borderTopColor = 'transparent';
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      const to = idx;
+      if (from !== to) {
+        const [moved] = modes.splice(from, 1);
+        modes.splice(to, 0, moved);
+        activeIdx = to;
+        renderList();
+        renderDetail();
+      }
+    };
+
+    list.appendChild(item);
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-mode-btn';
+  addBtn.textContent = '+ Add Mode';
+  addBtn.onclick = () => {
+    modes.push({ name: 'New Mode', tag: '', deck: '', overrides: {} });
+    activeIdx = modes.length - 1;
+    renderList();
+    renderDetail();
+  };
+  list.appendChild(addBtn);
+}
+
+function renderDetail() {
+  const detail = document.getElementById('modeDetail');
+  if (activeIdx < 0 || activeIdx >= modes.length) {
+    detail.innerHTML = '<div class="empty">Select a mode from the list, or create a new one</div>';
+    detail.className = 'mode-detail empty';
+    return;
+  }
+  detail.className = 'mode-detail';
+  const mode = modes[activeIdx];
+
+  let html = `
+    <div class="detail-header">
+      <div class="priority-big">${activeIdx + 1}</div>
+      <input type="text" value="${mode.name}" oninput="modes[${activeIdx}].name=this.value; renderList();" placeholder="Mode name">
+      <button class="delete-btn" onclick="modes.splice(${activeIdx},1); activeIdx=-1; renderList(); renderDetail();">Delete</button>
+    </div>
+
+    <div class="section-label">Triggers — when does this mode activate?</div>
+    <div class="trigger-row">
+      <div class="trigger-field">
+        <label>Tag (exact match)</label>
+        <input type="text" value="${mode.tag}" oninput="modes[${activeIdx}].tag=this.value; renderList();" placeholder="e.g. _jp::sentence">
+      </div>
+      <div class="trigger-field">
+        <label>Deck (prefix match, comma-separated)</label>
+        <input type="text" value="${mode.deck}" oninput="modes[${activeIdx}].deck=this.value; renderList();" placeholder="e.g. 1. 🇯🇵::📖 例文">
+      </div>
+    </div>
+
+    <div class="section-label">Setting Overrides — check a box to override the default</div>
+  `;
+
+  for (const [sectionName, settings] of Object.entries(SECTIONS)) {
+    const overrideCount = settings.filter(s => s.key in mode.overrides).length;
+    const isOpen = overrideCount > 0;
+    html += `
+      <div class="settings-section ${isOpen ? 'open' : ''}" data-section="${sectionName}">
+        <div class="settings-section-header" onclick="this.parentElement.classList.toggle('open')">
+          <span>${sectionName}</span>
+          <span class="override-count ${overrideCount === 0 ? 'none' : ''}">${overrideCount} override${overrideCount !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="settings-section-body">
+    `;
+
+    for (const s of settings) {
+      const isOverridden = s.key in mode.overrides;
+      html += `
+        <div class="setting-row">
+          <button class="toggle-override ${isOverridden ? 'active' : ''}"
+                  onclick="toggleOverride(${activeIdx}, '${s.key}', '${s.def}', this)">✓</button>
+          <span class="setting-name">${s.label}</span>
+          <span class="setting-default">default: ${s.def}</span>
+          <select ${isOverridden ? 'class="active"' : 'disabled'}
+                  onchange="modes[${activeIdx}].overrides['${s.key}']=this.value; renderList();">
+      `;
+      for (const opt of s.opts) {
+        const sel = isOverridden && mode.overrides[s.key] === opt ? 'selected' : '';
+        html += `<option value="${opt}" ${sel}>${opt}</option>`;
+      }
+      html += `</select></div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  detail.innerHTML = html;
+}
+
+function toggleOverride(modeIdx, key, def, btn) {
+  if (key in modes[modeIdx].overrides) {
+    delete modes[modeIdx].overrides[key];
+  } else {
+    modes[modeIdx].overrides[key] = def;
+  }
+  renderDetail();
+  renderList();
+}
+
+renderList();
+</script>
+</body>
+</html>

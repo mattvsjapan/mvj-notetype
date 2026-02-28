@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup 4: Visual Diff / Override Painter</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 20px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #cba6f7; }
+  .subtitle { font-size: 13px; color: #a6adc8; margin-bottom: 16px; }
+
+  .main-layout { display: flex; gap: 16px; height: calc(100vh - 140px); }
+
+  /* Mode tabs along the top */
+  .mode-tabs {
+    display: flex; gap: 2px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .mode-tab {
+    padding: 8px 16px; background: #313244; border-radius: 8px 8px 0 0;
+    cursor: pointer; font-size: 13px; border: 1px solid #45475a;
+    border-bottom: none; color: #a6adc8; position: relative;
+  }
+  .mode-tab:hover { background: #45475a; }
+  .mode-tab.active { background: #45475a; color: #cba6f7; border-color: #cba6f7; }
+  .mode-tab .tab-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #a6e3a1; color: #1e1e2e; font-size: 9px; font-weight: 700;
+    padding: 1px 5px; border-radius: 8px;
+  }
+  .mode-tab.defaults-tab { color: #cba6f7; font-weight: 600; }
+  .mode-tab.add-tab { color: #cba6f7; border-style: dashed; }
+
+  /* Settings panel that mirrors the existing settings layout */
+  .settings-panel {
+    flex: 1; background: #313244; border-radius: 0 12px 12px 12px;
+    border: 1px solid #45475a; padding: 20px; overflow-y: auto;
+  }
+  .settings-panel.defaults-view { border-color: #cba6f7; }
+
+  .trigger-bar {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
+    padding: 10px 14px; background: #1e1e2e; border-radius: 8px; border: 1px solid #45475a;
+  }
+  .trigger-bar label { font-size: 12px; color: #a6adc8; font-weight: 600; }
+  .trigger-bar input {
+    flex: 1; background: #45475a; border: 1px solid #585b70; border-radius: 6px;
+    color: #cdd6f4; padding: 6px 10px; font-size: 13px;
+  }
+  .trigger-bar input:focus { border-color: #cba6f7; outline: none; }
+
+  .diff-summary {
+    margin-bottom: 16px; padding: 8px 14px; border-radius: 6px;
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .diff-summary.has-changes { background: #a6e3a122; border: 1px solid #a6e3a144; color: #a6e3a1; }
+  .diff-summary.no-changes { background: #45475a44; border: 1px solid #45475a; color: #6c7086; }
+
+  /* Settings groups that mirror the main settings tab */
+  .settings-group {
+    margin-bottom: 16px;
+  }
+  .settings-group-title {
+    font-size: 13px; font-weight: 700; color: #cba6f7; margin-bottom: 8px;
+    padding-bottom: 4px; border-bottom: 1px solid #45475a;
+  }
+
+  .setting-item {
+    display: flex; align-items: center; padding: 8px 12px; margin-bottom: 2px;
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .setting-item.default-view { background: #1e1e2e; }
+  .setting-item.inherited { background: #1e1e2e; }
+  .setting-item.overridden { background: #2a3a2a; border: 1px solid #a6e3a144; }
+
+  .setting-label { font-size: 13px; flex: 1; }
+  .setting-label .diff-indicator {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px;
+  }
+  .setting-label .diff-indicator.changed { background: #a6e3a1; }
+  .setting-label .diff-indicator.unchanged { background: transparent; }
+
+  .setting-value-group {
+    display: flex; gap: 4px;
+  }
+  .setting-value-group .radio-btn {
+    padding: 4px 10px; border-radius: 4px; font-size: 12px;
+    border: 1px solid #585b70; background: #45475a; color: #a6adc8;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .setting-value-group .radio-btn:hover { border-color: #cba6f7; }
+  .setting-value-group .radio-btn.selected {
+    background: #cba6f7; color: #1e1e2e; border-color: #cba6f7; font-weight: 600;
+  }
+  .setting-value-group .radio-btn.selected.overridden-val {
+    background: #a6e3a1; border-color: #a6e3a1;
+  }
+  .setting-value-group .radio-btn.default-ghost {
+    border-style: dashed; color: #6c7086;
+  }
+
+  .reset-btn {
+    margin-left: 8px; background: none; border: none; color: #f38ba8;
+    cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .setting-item.overridden .reset-btn { opacity: 1; }
+  .reset-btn:hover { background: #f38ba822; }
+
+  .delete-mode-bar {
+    margin-top: 12px; text-align: right;
+  }
+  .delete-mode-bar button {
+    background: none; border: 1px solid #f38ba8; color: #f38ba8;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .delete-mode-bar button:hover { background: #f38ba8; color: #1e1e2e; }
+
+  .concept-note {
+    margin-top: 16px; padding: 12px 16px; background: #313244;
+    border-radius: 8px; border-left: 3px solid #cba6f7; font-size: 13px; line-height: 1.5;
+  }
+  .concept-note strong { color: #cba6f7; }
+</style>
+</head>
+<body>
+
+<h1>Concept 4: Visual Diff / Override Painter</h1>
+<p class="subtitle">The modes tab mirrors the exact layout of the defaults tab. Override settings by clicking — changed values glow green against the default.</p>
+
+<div id="app"></div>
+
+<div class="concept-note">
+  <strong>How it works:</strong> Each mode tab shows the same settings layout as the "defaults" tab,
+  so it feels familiar. Settings start out inherited (showing the default value faintly).
+  Click a different option to override it — it turns green. Click the reset button (✕) to go back to inherited.
+  A diff summary at the top tells you how many settings this mode overrides.
+  <br><br>
+  <strong>Pros:</strong> Maximally familiar — same UI as the settings users already know. Green highlights
+  make it immediately clear what's different. Reset individual overrides easily.<br>
+  <strong>Cons:</strong> Requires switching tabs to compare. Duplicate UI could feel redundant.
+  Might not feel "different enough" from the main settings.
+</div>
+
+<script>
+const GROUPS = {
+  'Layout': [
+    { key: 'tategaki', label: 'Tategaki (Vertical)', opts: ['off','on'], def: 'off' },
+    { key: 'color-scheme', label: 'Color Scheme', opts: ['blue','black','red','purple','white'], def: 'blue' },
+    { key: 'audio-labels', label: 'Audio Labels', opts: ['on','off'], def: 'on' },
+  ],
+  'Word': [
+    { key: 'word', label: 'Word', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-audio', label: 'Word Audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'word-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+    { key: 'pitch-graph', label: 'Pitch Graph', opts: ['on','off'], def: 'on' },
+  ],
+  'Sentence': [
+    { key: 'sentence', label: 'Sentence', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-audio', label: 'Sentence Audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'sentence-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+  ],
+  'Image': [
+    { key: 'image', label: 'Image', opts: ['front','back','off'], def: 'back' },
+  ],
+  'Definitions': [
+    { key: 'definition-mode', label: 'Definition Mode', opts: ['all','bilingual','monolingual','unlocked'], def: 'all' },
+    { key: 'definition-text', label: 'Definition Text', opts: ['on','off'], def: 'on' },
+    { key: 'definition-furigana', label: 'Furigana', opts: ['front','back','off'], def: 'back' },
+    { key: 'definition-pitch-color', label: 'Pitch Color', opts: ['front','back','off'], def: 'back' },
+  ],
+};
+
+let modes = [
+  { name: 'Sentence', tag: '_jp::sentence', deck: '1. 🇯🇵::📖 例文', overrides: { tategaki:'on', 'word-furigana':'back', 'sentence-furigana':'back' } },
+  { name: 'Image Front', tag: '_jp::image', deck: '', overrides: { image:'front' } },
+  { name: 'Knowledge', tag: '_jp::knowledge', deck: '1. 🇯🇵::📚 雑学', overrides: { tategaki:'on', 'definition-mode':'monolingual' } },
+  { name: 'Keihan', tag: '_jp::keihan', deck: '', overrides: { 'color-scheme':'red' } },
+];
+
+let activeTab = 0; // 0 = defaults, 1..N = modes
+
+function render() {
+  const app = document.getElementById('app');
+
+  // Tabs
+  let tabsHTML = `<div class="mode-tabs">`;
+  tabsHTML += `<div class="mode-tab defaults-tab ${activeTab===0?'active':''}" onclick="activeTab=0;render()">Defaults</div>`;
+  modes.forEach((m, i) => {
+    const count = Object.keys(m.overrides).length;
+    tabsHTML += `<div class="mode-tab ${activeTab===i+1?'active':''}" onclick="activeTab=${i+1};render()">
+      ${i+1}. ${m.name || 'Untitled'}
+      ${count > 0 ? `<span class="tab-badge">${count}</span>` : ''}
+    </div>`;
+  });
+  tabsHTML += `<div class="mode-tab add-tab" onclick="addMode()">+ Add</div>`;
+  tabsHTML += `</div>`;
+
+  // Panel content
+  let panelHTML = '';
+
+  if (activeTab === 0) {
+    // Defaults view
+    panelHTML = `<div class="settings-panel defaults-view">`;
+    for (const [groupName, settings] of Object.entries(GROUPS)) {
+      panelHTML += `<div class="settings-group"><div class="settings-group-title">${groupName}</div>`;
+      for (const s of settings) {
+        panelHTML += `
+          <div class="setting-item default-view">
+            <span class="setting-label">
+              <span class="diff-indicator unchanged"></span>${s.label}
+            </span>
+            <div class="setting-value-group">
+              ${s.opts.map(o => `<span class="radio-btn ${s.def===o?'selected':''}">${o}</span>`).join('')}
+            </div>
+          </div>`;
+      }
+      panelHTML += `</div>`;
+    }
+    panelHTML += `</div>`;
+  } else {
+    const mode = modes[activeTab - 1];
+    const mIdx = activeTab - 1;
+    const changeCount = Object.keys(mode.overrides).length;
+
+    panelHTML = `<div class="settings-panel">`;
+
+    // Trigger bar
+    panelHTML += `
+      <div class="trigger-bar">
+        <label>Tag:</label>
+        <input type="text" value="${mode.tag}" oninput="modes[${mIdx}].tag=this.value" placeholder="e.g. _jp::sentence">
+        <label>Deck:</label>
+        <input type="text" value="${mode.deck}" oninput="modes[${mIdx}].deck=this.value" placeholder="e.g. 1. 🇯🇵::📖 例文">
+        <label style="margin-left:8px">Name:</label>
+        <input type="text" value="${mode.name}" oninput="modes[${mIdx}].name=this.value" placeholder="Mode name" style="max-width:130px">
+      </div>
+    `;
+
+    // Diff summary
+    panelHTML += changeCount > 0
+      ? `<div class="diff-summary has-changes">${changeCount} setting${changeCount!==1?'s':''} overridden in this mode — shown in green below</div>`
+      : `<div class="diff-summary no-changes">No overrides — this mode inherits all defaults. Click a different value below to override it.</div>`;
+
+    // Settings groups
+    for (const [groupName, settings] of Object.entries(GROUPS)) {
+      panelHTML += `<div class="settings-group"><div class="settings-group-title">${groupName}</div>`;
+      for (const s of settings) {
+        const isOverridden = s.key in mode.overrides;
+        const currentVal = isOverridden ? mode.overrides[s.key] : s.def;
+        panelHTML += `
+          <div class="setting-item ${isOverridden ? 'overridden' : 'inherited'}">
+            <span class="setting-label">
+              <span class="diff-indicator ${isOverridden ? 'changed' : 'unchanged'}"></span>${s.label}
+            </span>
+            <div class="setting-value-group">
+              ${s.opts.map(o => {
+                let cls = 'radio-btn';
+                if (currentVal === o) {
+                  cls += ' selected';
+                  if (isOverridden) cls += ' overridden-val';
+                }
+                if (!isOverridden && s.def !== o) cls += ' default-ghost';
+                return `<span class="${cls}" onclick="setOverride(${mIdx},'${s.key}','${o}','${s.def}')">${o}</span>`;
+              }).join('')}
+            </div>
+            <button class="reset-btn" onclick="resetOverride(${mIdx},'${s.key}')" title="Reset to default">✕</button>
+          </div>`;
+      }
+      panelHTML += `</div>`;
+    }
+
+    panelHTML += `<div class="delete-mode-bar"><button onclick="deleteMode(${mIdx})">Delete This Mode</button></div>`;
+    panelHTML += `</div>`;
+  }
+
+  app.innerHTML = tabsHTML + panelHTML;
+}
+
+function setOverride(mIdx, key, val, def) {
+  if (val === def) {
+    delete modes[mIdx].overrides[key];
+  } else {
+    modes[mIdx].overrides[key] = val;
+  }
+  render();
+}
+
+function resetOverride(mIdx, key) {
+  delete modes[mIdx].overrides[key];
+  render();
+}
+
+function addMode() {
+  modes.push({ name: 'New Mode', tag: '', deck: '', overrides: {} });
+  activeTab = modes.length;
+  render();
+}
+
+function deleteMode(mIdx) {
+  modes.splice(mIdx, 1);
+  activeTab = 0;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

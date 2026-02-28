@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup 1: Spreadsheet Grid</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 20px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #cba6f7; }
+  .subtitle { font-size: 13px; color: #a6adc8; margin-bottom: 16px; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .toolbar button { background: #45475a; border: 1px solid #585b70; color: #cdd6f4; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .toolbar button:hover { background: #585b70; }
+  .toolbar button.primary { background: #cba6f7; color: #1e1e2e; border-color: #cba6f7; font-weight: 600; }
+  .toolbar button.primary:hover { background: #b4befe; }
+  .toolbar button.danger { color: #f38ba8; }
+  .toolbar button.danger:hover { background: #f38ba8; color: #1e1e2e; }
+
+  .grid-wrapper { overflow: auto; max-height: calc(100vh - 140px); border: 1px solid #45475a; border-radius: 8px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+
+  thead th {
+    background: #313244; position: sticky; top: 0; z-index: 2;
+    padding: 6px 8px; text-align: center; border-bottom: 2px solid #585b70;
+    font-weight: 600; font-size: 11px; color: #a6adc8; white-space: nowrap;
+  }
+  thead th:first-child { z-index: 3; left: 0; min-width: 36px; }
+  thead th:nth-child(2) { z-index: 3; left: 36px; min-width: 130px; }
+  thead th:nth-child(3) { z-index: 3; left: 166px; min-width: 130px; }
+
+  thead th.section-start { border-left: 2px solid #585b70; }
+
+  .section-header {
+    background: #313244; color: #cba6f7; font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px; text-align: center;
+    padding: 4px 8px; border-bottom: 1px solid #45475a;
+  }
+
+  tbody tr { border-bottom: 1px solid #313244; }
+  tbody tr:hover { background: #313244; }
+  tbody tr.selected { background: #31324499; outline: 1px solid #cba6f7; }
+  tbody tr.defaults-row { background: #1a1a2e; border-bottom: 2px solid #cba6f7; }
+  tbody tr.defaults-row td { font-weight: 600; color: #cba6f7; }
+
+  td { padding: 4px 6px; text-align: center; border-right: 1px solid #31324488; white-space: nowrap; }
+  td:first-child {
+    background: #1e1e2e; position: sticky; left: 0; z-index: 1;
+    font-weight: 700; color: #f9e2af; width: 36px; text-align: center;
+  }
+  td:nth-child(2) { background: #1e1e2e; position: sticky; left: 36px; z-index: 1; text-align: left; }
+  td:nth-child(3) { background: #1e1e2e; position: sticky; left: 166px; z-index: 1; text-align: left; }
+  td.section-start { border-left: 2px solid #45475a; }
+
+  td input[type="text"] {
+    background: #45475a; border: 1px solid #585b70; color: #cdd6f4;
+    padding: 2px 6px; border-radius: 4px; width: 110px; font-size: 12px;
+  }
+  td input[type="text"]:focus { border-color: #cba6f7; outline: none; }
+
+  td select {
+    background: #45475a; border: 1px solid #585b70; color: #cdd6f4;
+    padding: 2px 4px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  }
+  td select:focus { border-color: #cba6f7; outline: none; }
+
+  td select.inherited { color: #6c7086; font-style: italic; }
+  td select.overridden { color: #a6e3a1; font-weight: 600; background: #2a3a2a; border-color: #a6e3a1; }
+
+  .priority-badge {
+    display: inline-block; background: #f9e2af; color: #1e1e2e;
+    width: 22px; height: 22px; line-height: 22px; border-radius: 50%;
+    font-weight: 700; font-size: 11px; text-align: center;
+  }
+  .defaults-row .priority-badge { background: #cba6f7; }
+
+  .legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: #a6adc8; }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #585b70; }
+  .legend-swatch.inherited-swatch { background: #45475a; }
+  .legend-swatch.overridden-swatch { background: #2a3a2a; border-color: #a6e3a1; }
+
+  .concept-note {
+    margin-top: 12px; padding: 12px 16px; background: #313244;
+    border-radius: 8px; border-left: 3px solid #cba6f7; font-size: 13px; line-height: 1.5;
+  }
+  .concept-note strong { color: #cba6f7; }
+</style>
+</head>
+<body>
+
+<h1>Concept 1: Spreadsheet Grid</h1>
+<p class="subtitle">Each row is a mode. Each column is a setting. Cells show inherited (gray) or overridden (green) values.</p>
+
+<div class="toolbar">
+  <button class="primary" onclick="addMode()">+ Add Mode</button>
+  <button class="danger" onclick="deleteSelected()">Delete Selected</button>
+  <button onclick="moveUp()">↑ Move Up</button>
+  <button onclick="moveDown()">↓ Move Down</button>
+  <span style="flex:1"></span>
+  <span style="font-size: 12px; color: #a6adc8;">Priority: Row 1 = highest. Tags always beat decks.</span>
+</div>
+
+<div class="grid-wrapper" id="gridWrapper">
+  <table id="modeTable">
+    <thead>
+      <tr class="section-labels">
+        <th rowspan="2">#</th>
+        <th rowspan="2">Tag Match</th>
+        <th rowspan="2">Deck Match</th>
+        <th colspan="3" class="section-start section-header">Layout</th>
+        <th colspan="5" class="section-start section-header">Word</th>
+        <th colspan="4" class="section-start section-header">Sentence</th>
+        <th class="section-start section-header">Image</th>
+        <th colspan="4" class="section-start section-header">Definitions</th>
+      </tr>
+      <tr>
+        <th class="section-start">Tategaki</th>
+        <th>Color</th>
+        <th>Audio Labels</th>
+        <th class="section-start">Word</th>
+        <th>Word Audio</th>
+        <th>Furigana</th>
+        <th>Pitch Color</th>
+        <th>Pitch Graph</th>
+        <th class="section-start">Sentence</th>
+        <th>Sent Audio</th>
+        <th>Furigana</th>
+        <th>Pitch Color</th>
+        <th class="section-start">Image</th>
+        <th class="section-start">Def Mode</th>
+        <th>Def Text</th>
+        <th>Furigana</th>
+        <th>Pitch Color</th>
+      </tr>
+    </thead>
+    <tbody id="modeBody"></tbody>
+  </table>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch inherited-swatch"></div> Inherited (uses default)</div>
+  <div class="legend-item"><div class="legend-swatch overridden-swatch"></div> Overridden by this mode</div>
+</div>
+
+<div class="concept-note">
+  <strong>How it works:</strong> A dense spreadsheet where every mode is a row and every setting is a column.
+  Dropdowns are gray/italic when inheriting the default, and turn green when overridden.
+  Right-click a cell to reset it to inherited. Reorder rows to change priority.
+  <br><br>
+  <strong>Pros:</strong> Maximum information density — see everything at once. Power users love this.<br>
+  <strong>Cons:</strong> Can be overwhelming. Horizontal scrolling required. Hard to read on smaller screens.
+</div>
+
+<script>
+const SETTINGS = {
+  layout: [
+    { key: 'tategaki', opts: ['off','on'], def: 'off' },
+    { key: 'color', opts: ['blue','black','red','purple','white'], def: 'blue' },
+    { key: 'audio-labels', opts: ['on','off'], def: 'on' },
+  ],
+  word: [
+    { key: 'word', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'word-furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'word-pitch-color', opts: ['front','back','off'], def: 'back' },
+    { key: 'pitch-graph', opts: ['on','off'], def: 'on' },
+  ],
+  sentence: [
+    { key: 'sentence', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-audio', opts: ['front','back','off'], def: 'back' },
+    { key: 'sentence-furigana', opts: ['front','back','off'], def: 'front' },
+    { key: 'sentence-pitch-color', opts: ['front','back','off'], def: 'back' },
+  ],
+  image: [
+    { key: 'image', opts: ['front','back','off'], def: 'back' },
+  ],
+  definition: [
+    { key: 'def-mode', opts: ['all','bilingual','monolingual','unlocked'], def: 'all' },
+    { key: 'def-text', opts: ['on','off'], def: 'on' },
+    { key: 'def-furigana', opts: ['front','back','off'], def: 'back' },
+    { key: 'def-pitch-color', opts: ['front','back','off'], def: 'back' },
+  ],
+};
+
+const ALL_SETTINGS = [].concat(...Object.values(SETTINGS));
+
+const sampleModes = [
+  { tag: '_jp::sentence', deck: '1. 🇯🇵::📖 例文', overrides: { tategaki:'on', 'word-furigana':'back', 'sentence-furigana':'back' } },
+  { tag: '_jp::image', deck: '', overrides: { image:'front' } },
+  { tag: '_jp::knowledge', deck: '1. 🇯🇵::📚 雑学', overrides: { tategaki:'on', 'def-mode':'monolingual' } },
+  { tag: '_jp::keihan', deck: '', overrides: { color:'red' } },
+  { tag: '_jp::furigana', deck: '', overrides: { 'word-furigana':'front', 'sentence-furigana':'front', 'def-furigana':'front' } },
+];
+
+let modes = sampleModes.map(m => ({...m, overrides: {...m.overrides}}));
+let selectedRow = -1;
+
+function renderTable() {
+  const body = document.getElementById('modeBody');
+  body.innerHTML = '';
+
+  // Defaults row
+  const defRow = document.createElement('tr');
+  defRow.className = 'defaults-row';
+  defRow.innerHTML = `
+    <td><span class="priority-badge defaults">★</span></td>
+    <td style="color:#cba6f7;font-style:italic">— defaults —</td>
+    <td style="color:#cba6f7;font-style:italic">— defaults —</td>
+  `;
+  let sectionIdx = 0;
+  for (const section of Object.keys(SETTINGS)) {
+    SETTINGS[section].forEach((s, i) => {
+      const td = document.createElement('td');
+      if (i === 0) td.className = 'section-start';
+      td.textContent = s.def;
+      defRow.appendChild(td);
+    });
+    sectionIdx++;
+  }
+  body.appendChild(defRow);
+
+  // Mode rows
+  modes.forEach((mode, idx) => {
+    const tr = document.createElement('tr');
+    if (idx === selectedRow) tr.className = 'selected';
+    tr.onclick = () => { selectedRow = idx; renderTable(); };
+
+    tr.innerHTML = `
+      <td><span class="priority-badge">${idx + 1}</span></td>
+      <td><input type="text" value="${mode.tag}" onchange="modes[${idx}].tag=this.value" onclick="event.stopPropagation()"></td>
+      <td><input type="text" value="${mode.deck}" onchange="modes[${idx}].deck=this.value" onclick="event.stopPropagation()"></td>
+    `;
+
+    for (const section of Object.keys(SETTINGS)) {
+      SETTINGS[section].forEach((s, i) => {
+        const td = document.createElement('td');
+        if (i === 0) td.className = 'section-start';
+
+        const sel = document.createElement('select');
+        const isOverridden = s.key in mode.overrides;
+        sel.className = isOverridden ? 'overridden' : 'inherited';
+
+        // Add inherit option
+        const inheritOpt = document.createElement('option');
+        inheritOpt.value = '__inherit__';
+        inheritOpt.textContent = `(${s.def})`;
+        if (!isOverridden) inheritOpt.selected = true;
+        sel.appendChild(inheritOpt);
+
+        s.opts.forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          if (isOverridden && mode.overrides[s.key] === opt) o.selected = true;
+          sel.appendChild(o);
+        });
+
+        sel.onchange = function() {
+          if (this.value === '__inherit__') {
+            delete modes[idx].overrides[s.key];
+          } else {
+            modes[idx].overrides[s.key] = this.value;
+          }
+          renderTable();
+        };
+        sel.onclick = (e) => e.stopPropagation();
+
+        td.appendChild(sel);
+        tr.appendChild(td);
+      });
+    }
+
+    body.appendChild(tr);
+  });
+}
+
+function addMode() {
+  modes.push({ tag: '', deck: '', overrides: {} });
+  selectedRow = modes.length - 1;
+  renderTable();
+}
+
+function deleteSelected() {
+  if (selectedRow >= 0 && selectedRow < modes.length) {
+    modes.splice(selectedRow, 1);
+    selectedRow = -1;
+    renderTable();
+  }
+}
+
+function moveUp() {
+  if (selectedRow > 0) {
+    [modes[selectedRow-1], modes[selectedRow]] = [modes[selectedRow], modes[selectedRow-1]];
+    selectedRow--;
+    renderTable();
+  }
+}
+
+function moveDown() {
+  if (selectedRow >= 0 && selectedRow < modes.length - 1) {
+    [modes[selectedRow], modes[selectedRow+1]] = [modes[selectedRow+1], modes[selectedRow]];
+    selectedRow++;
+    renderTable();
+  }
+}
+
+renderTable();
+</script>
+</body>
+</html>
