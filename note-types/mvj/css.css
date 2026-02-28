@@ -1870,6 +1870,18 @@ html.tategaki:has(.back) {
     object-fit: cover;
 }
 
+.tategaki .image-wrap.image-full {
+    width: fit-content;
+}
+
+.tategaki .image-wrap.image-full img {
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: 220px;
+    max-width: 391px;
+}
+
 @media (hover: none) {
     .tategaki .word-pitch-group {
         max-width: 100%;
@@ -1883,6 +1895,16 @@ html.tategaki:has(.back) {
         height: clamp(140px, 45vw, 220px);
         max-height: none;
         object-fit: cover;
+    }
+    .tategaki .image-wrap.image-full {
+        width: fit-content;
+    }
+    .tategaki .image-wrap.image-full img {
+        width: auto !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: clamp(140px, 45vw, 220px);
+        max-width: clamp(249px, 80vw, 391px);
     }
     .tategaki .pitch-graph svg {
         max-width: clamp(249px, 80vw, 391px);
