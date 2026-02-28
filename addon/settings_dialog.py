@@ -37,7 +37,7 @@ from aqt.theme import theme_manager
 from aqt.utils import showInfo, showWarning, tooltip
 from aqt.webview import AnkiWebView, AnkiWebViewKind
 
-from .notetype import NOTE_TYPE_NAME, install_notetype
+from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, migrate_old_notetype
 
 _SAMPLE_IMAGE = "_mvj_sample.jpg"
 
@@ -418,6 +418,12 @@ class SettingsDialog(QDialog):
         convert_btn = QPushButton("Convert [sound:] \u2192 [audio:]")
         convert_btn.clicked.connect(self._convert_sound_to_audio)
         btn_box.addButton(convert_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        if any(mw.col.models.by_name(n) for n in _OLD_NOTE_TYPE_NAMES):
+            migrate_btn = QPushButton(
+                "Convert \u201cMvJ Listening\u201d \u2192 \u201c\U0001f1ef\U0001f1f5 MvJ\u201d"
+            )
+            migrate_btn.clicked.connect(self._convert_japanese_to_mvj)
+            btn_box.addButton(migrate_btn, QDialogButtonBox.ButtonRole.ActionRole)
         outer.addWidget(btn_box)
 
         # --- Populate mode list & detail panel ---
@@ -895,6 +901,135 @@ class SettingsDialog(QDialog):
         mw.progress.start(
             max=len(note_ids),
             label="Scanning notes...",
+            parent=self,
+        )
+        mw.taskman.run_in_background(task, on_done)
+
+    def _convert_japanese_to_mvj(self):
+        """Orchestrate migration from old Japanese note type to MvJ."""
+        from aqt.qt import QMessageBox
+        from .notetype import _find_old_notetype
+
+        old_model = _find_old_notetype()
+        if not old_model:
+            showWarning("No old note type found.")
+            return
+
+        old_name = old_model["name"]
+        note_count = len(mw.col.find_notes(f'"note:{old_name}"'))
+
+        msg = (
+            f'This will convert \u201c{old_name}\u201d ({note_count} notes) to '
+            f'\u201c{NOTE_TYPE_NAME}\u201d:\n\n'
+            f"\u2022 Rename the note type\n"
+            f"\u2022 Add missing fields (Context, Translation)\n"
+            f"\u2022 Download and update templates\n"
+            f"\u2022 Convert old pitch syntax \u2192 new\n"
+            f"\u2022 Convert [sound:] \u2192 [audio:]\n\n"
+            f"Notes with lossy conversions will be tagged 'mvj-review'.\n"
+            f"You can undo this operation afterward.\n\n"
+            f"Continue?"
+        )
+        reply = QMessageBox.question(
+            self, "Convert to MvJ", msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        def on_success(migrated_old_name):
+            self._run_field_conversions()
+
+        def on_error(error_msg):
+            showWarning(error_msg)
+
+        migrate_old_notetype(on_success=on_success, on_error=on_error)
+
+    def _run_field_conversions(self):
+        """Convert pitch syntax and [sound:] → [audio:] in all MvJ notes."""
+        from .pitch_converter import convert_word_field, convert_sentence_field
+
+        sound_re = re.compile(r"\[sound:([^\]]+)\]")
+        note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
+        if not note_ids:
+            tooltip("No notes to convert.", parent=self)
+            self._build_ui()
+            return
+
+        converted_count = 0
+        flagged_count = 0
+
+        def task():
+            nonlocal converted_count, flagged_count
+            modified = []
+            total = len(note_ids)
+
+            for i, nid in enumerate(note_ids):
+                note = mw.col.get_note(nid)
+                changed = False
+                note_warnings = []
+
+                for j, fld_value in enumerate(note.fields):
+                    field_name = note.keys()[j] if j < len(note.keys()) else ""
+                    new_value = fld_value
+
+                    # Pitch conversion based on field type
+                    if field_name == "Word":
+                        new_value, w = convert_word_field(new_value)
+                        note_warnings.extend(w)
+                    elif field_name in ("Sentence", "Definition"):
+                        new_value, w = convert_sentence_field(new_value)
+                        note_warnings.extend(w)
+
+                    # [sound:] → [audio:] for all fields
+                    new_value = sound_re.sub(r"[audio:\1]", new_value)
+
+                    if new_value != fld_value:
+                        note.fields[j] = new_value
+                        changed = True
+
+                if note_warnings:
+                    note.tags.append("mvj-review")
+                    flagged_count += 1
+                    changed = True
+
+                if changed:
+                    modified.append(note)
+
+                if i % 10 == 0:
+                    mw.taskman.run_on_main(
+                        lambda v=i + 1: mw.progress.update(
+                            label=f"Converting note {v}/{total}...",
+                            value=v,
+                        )
+                    )
+
+            converted_count = len(modified)
+            if modified:
+                pos = mw.col.add_custom_undo_entry(
+                    f"Convert {converted_count} notes to MvJ format"
+                )
+                mw.col.update_notes(modified)
+                mw.col.merge_undo_entries(pos)
+
+        def on_done(future):
+            mw.progress.finish()
+            try:
+                future.result()
+            except Exception as e:
+                showWarning(f"Conversion failed: {e}")
+                return
+
+            msg = f"Migration complete!\n\n\u2022 {converted_count} notes converted"
+            if flagged_count:
+                msg += f"\n\u2022 {flagged_count} notes tagged 'mvj-review' for manual check"
+            msg += "\n\nYou can undo this with Edit \u2192 Undo."
+            showInfo(msg)
+            self._build_ui()
+
+        mw.progress.start(
+            max=len(note_ids),
+            label="Converting notes...",
             parent=self,
         )
         mw.taskman.run_in_background(task, on_done)
