@@ -697,12 +697,16 @@ function clearLastMargin(el) {
     if (wordFurigana !== 'back') frontWord.classList.add('furigana-' + wordFurigana);
     if (sentFurigana !== 'back') frontSent.classList.add('furigana-' + sentFurigana);
 
-    clearLastMargin(document.querySelector('.front'));
+    // Only clear last margins when front has visible content — in the
+    // audio-only case the audio-row's margin-bottom provides symmetric
+    // spacing and must be preserved.
+    var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
+    if (hasFrontContent) clearLastMargin(document.querySelector('.front'));
     // Only clear inside .front-content when it is itself the last visible
     // child of .front (no audio row below it); otherwise the sentence
     // needs its margin to separate from the audio row.
     var fc = document.querySelector('.front-content');
-    if (fc && fc.classList.contains('debug-last')) {
+    if (hasFrontContent && fc && fc.classList.contains('debug-last')) {
         // In tategaki the audio row sits to the LEFT of front-content,
         // which is the visual terminal position. clearLastMargin can't
         // detect this (both children share order:0, DOM tiebreak picks

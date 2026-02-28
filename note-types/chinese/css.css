@@ -386,7 +386,7 @@ html {
    ================================================ */
 
 .back .audio-row {
-    padding: 4px 0 0;
+    padding: 0;
     gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
 }

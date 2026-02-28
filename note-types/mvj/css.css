@@ -797,7 +797,7 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
    ================================================ */
 
 .back .audio-row {
-    padding: 4px 0 0;
+    padding: 0;
     margin-bottom: 24px;
     gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
