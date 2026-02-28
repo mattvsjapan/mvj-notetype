@@ -550,7 +550,7 @@ def _add_particle_colons_clause(tokens):
         has_after = any(':' in result[j] for j in range(i + 1, len(result)))
 
         if has_before and has_after:
-            result[i] = result[i] + ':p'
+            result[i] = result[i] + ':'
 
     return result
 
