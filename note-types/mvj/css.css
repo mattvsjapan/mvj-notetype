@@ -1000,6 +1000,19 @@ rt {
     display: block;
 }
 
+.image-wrap.image-full {
+    width: fit-content;
+    margin-inline: auto;
+}
+
+.image-wrap.image-full img {
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: clamp(140px, 45vw, 220px);
+    max-width: 100%;
+}
+
 .image-wrap br {
     display: none;
 }

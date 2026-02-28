@@ -951,6 +951,7 @@
       var answerImage = document.querySelector('.answer .image-wrap');
       if (answerImage) answerImage.setAttribute('data-show', 'off');
     }
+    if (window.__checkImageFit) window.__checkImageFit();
 
     // Definition → bilingual + monolingual
     function colorizeText(raw, el) {

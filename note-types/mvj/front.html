@@ -432,6 +432,20 @@ window.__freshPlay = function(src, btn) {
 
 window.__stopDefAudio = window.__stopAllAudio;
 
+window.__checkImageFit = function() {
+    var THRESHOLD = 16 / 9;
+    document.querySelectorAll('.image-wrap img').forEach(function(img) {
+        function check() {
+            if (!img.naturalWidth || !img.naturalHeight) return;
+            var wrap = img.closest('.image-wrap');
+            if (!wrap) return;
+            wrap.classList.toggle('image-full', img.naturalWidth / img.naturalHeight < THRESHOLD);
+        }
+        if (img.complete && img.naturalWidth) check();
+        else img.addEventListener('load', check);
+    });
+};
+
 window.__webAudioPlay = function(src, btn, gen) {
     return fetch(src)
         .then(function(r) { return r.arrayBuffer(); })
@@ -699,6 +713,7 @@ function clearLastMargin(el) {
         if (ri && ri.innerHTML.trim()) { frontImage.innerHTML = ri.innerHTML; }
         else { frontImage.setAttribute('data-side', 'back'); }
     }
+    if (window.__checkImageFit) window.__checkImageFit();
 
     if (wordFurigana !== 'back') frontWord.classList.add('furigana-' + wordFurigana);
     if (sentFurigana !== 'back') frontSent.classList.add('furigana-' + sentFurigana);
