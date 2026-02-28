@@ -18,17 +18,17 @@
     --audio-labels: on;            /* on | off                            */
 
     /* Word */
-    --word-text: front;             /* front | back | off                  */
-    --word-audio: back;            /* front | back | off                  */
-    --word-furigana: front;         /* front | back | off                  */
+    --word-text: back;                 /* front | back | off                  */
+    --word-audio: front;            /* front | back | off                  */
+    --word-furigana: back;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence-text: front;         /* front | back | off                  */
-    --sentence-audio: back;        /* front | back | off                  */
-    --sentence-furigana: front;     /* front | back | off                  */
-    --sentence-pitch-color: back;  /* front | back | off                  */
+    --sentence-text: back;             /* front | back | off                  */
+    --sentence-audio: front;        /* front | back | off                  */
+    --sentence-furigana: back;     /* front | back | off                  */
+    --sentence-pitch-color: off;  /* front | back | off                  */
 
     /* Image */
     --image: back;                /* front | back | off                  */
@@ -41,12 +41,12 @@
     --definition-pitch-color: back;/* front | back | off                  */
 
     /* Hotkeys */
-    --hotkey-word-audio: n;        /* keyboard key                        */
-    --hotkey-sentence-audio: h;    /* keyboard key                        */
-    --hotkey-definition-audio: ,;  /* keyboard key (back only)            */
-    --hotkey-play-all: z;          /* keyboard key                        */
-    --hotkey-stop-all: ?;          /* keyboard key                        */
-    --hotkey-jp-toggle: .;         /* keyboard key (back only)            */
+    --hotkey-word-audio: z;        /* keyboard key                        */
+    --hotkey-sentence-audio: x;    /* keyboard key                        */
+    --hotkey-definition-audio: c;  /* keyboard key (back only)            */
+    --hotkey-play-all: ,;          /* keyboard key                        */
+    --hotkey-stop-all: .;          /* keyboard key                        */
+    --hotkey-jp-toggle: h;         /* keyboard key (back only)            */
 
     /* ═══════════════════════════════════════════════════════
        ⚙  MODES — Tag & deck-based settings overrides.
@@ -58,52 +58,21 @@
        and tag matches unconditionally beat deck matches.
        ═══════════════════════════════════════════════════════ */
 
-    /* —— Mode 1: sentence ——————————————————————————————————————————— */
+    /* —— Mode 1 —————————————————————————————————————— */
+    --mode-1-name: sentence;
     --mode-1-tag: _jp::sentence;
-    --mode-1-deck: 1. 🇯🇵::📖 例文, 1. 🇯🇵::💬 語録;
-    --mode-1-tategaki: on;               /* on | off                            */
-    --mode-1-word-furigana: back;             /* front | back | off                  */
-    --mode-1-sentence-furigana: back;             /* front | back | off                  */
-    --mode-1-word-text: back;             /* front | back | off                  */
+    --mode-1-deck: ;
+    --mode-1-tategaki: on;
+    --mode-1-word-text: back;
+    --mode-1-word-furigana: back;
+    --mode-1-sentence-furigana: back;
 
-    /* —— Mode 2: image ——————————————————————————————————————————— */
+    /* —— Mode 2 ————————————————————————————————————————— */
+    --mode-2-name: image;
     --mode-2-tag: _jp::image;
     --mode-2-deck: ;
-    --mode-2-image: front;               /* on | off                            */
-    --mode-2-word-text: back;             /* front | back | off                  */
-
-    /* —— Mode 3: knowledge ——————————————————————————————————————————— */
-    --mode-3-tag: _jp::knowledge;
-    --mode-3-deck: 1. 🇯🇵::📚 雑学;
-    --mode-3-word-text: back;             /* front | back | off                  */
-    --mode-3-sentence-text: front;         /* front | back | off                  */
-    --mode-3-color-scheme: black;          /* blue | black | red | purple | white */
-
-    /* —— Mode 4: keihan ——————————————————————————————————————————— */
-    --mode-4-tag: _jp::keihan;
-    --mode-4-deck: ;
-    --mode-4-color-scheme: red;          /* blue | black | red | purple | white */
-
-    /* —— Mode 5: furigana ——————————————————————————————————————————— */
-    --mode-5-tag: _jp::furigana;
-    --mode-5-deck: ;
-    --mode-5-word-furigana: front;
-    --mode-5-sentence-furigana: front;
-
-    /* —— Mode 6 ——————————————————————————————————————————— */
-    --mode-6-tag: _jp::tate;
-    --mode-6-deck: ;
-    --mode-6-tategaki: on;               /* on | off                            */
-
-    /* —— Mode 7 ——————————————————————————————————————————— */
-    --mode-7-tag: _jp::yoko;
-    --mode-7-deck: ;
-    --mode-7-tategaki: off;               /* on | off                            */
-
-    /* —— Mode 8 ——————————————————————————————————————————— */
-    --mode-8-tag: _jp::debug;
-    --mode-8-deck: ;
-    --mode-8-debug: on;                  /* on | off                            */
+    --mode-2-word-text: back;
+    --mode-2-image: front;
 
 
     /* ═══════════════════════════════════════════════════════ */
