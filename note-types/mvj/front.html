@@ -773,41 +773,57 @@ function clearLastMargin(el) {
   document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
     // [audio:] custom tags — extract filename, create Audio + button
     var text = item.textContent;
-    var audioMatch = text.match(/\[audio:([^\]]+)\]/);
+    var audioRe = /\[audio:([^\]]+)\]/g;
+    var audioMatch = audioRe.exec(text);
     if (audioMatch) {
-      var audio = document.createElement('audio');
-      audio.preload = 'auto';
-      audio.src = audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F');
-      document.body.appendChild(audio);
-      item._jsAudio = audio;
-      // Remove raw [audio:...] text nodes, keep <span> label
+      var filenames = [];
+      do { filenames.push(audioMatch[1].replace(/#/g, '%23').replace(/\?/g, '%3F')); }
+      while ((audioMatch = audioRe.exec(text)) !== null);
+      // Remove everything except .audio-label (text nodes, <br>, stray HTML)
       Array.from(item.childNodes).forEach(function(n) {
-        if (n.nodeType === 3) item.removeChild(n);
+        if (n.nodeType === 3 || !n.classList || !n.classList.contains('audio-label'))
+          item.removeChild(n);
       });
-      var btn = document.createElement('a');
-      btn.className = 'replay-button soundLink';
-      btn.href = '#';
-      btn.innerHTML = SVG;
-      item.insertBefore(btn, item.firstChild);
-      window.__onTap(btn, function() {
-        if (window.matchMedia('(hover: none)').matches) {
-          window.__stopAllAudio();
-          animateBtn(btn);
-          window.__playMobile(audio.src, btn);
-        } else {
-          window.__stopAllAudio(audio);
-          audio.currentTime = 0;
-          window.__safePlay(audio);
-          animateBtn(btn);
-          window.__startPlaying(audio, btn);
-        }
-      }, function() { window.__stopAllAudio(); });
+      item._jsAudios = [];
+      for (var k = 0; k < filenames.length; k++) {
+        var audio = document.createElement('audio');
+        audio.preload = 'auto';
+        audio.src = filenames[k];
+        document.body.appendChild(audio);
+        item._jsAudios.push(audio);
+        var btn = document.createElement('a');
+        btn.className = 'replay-button soundLink';
+        btn.href = '#';
+        btn.innerHTML = SVG;
+        item.insertBefore(btn, item.firstChild);
+        (function(a, b) {
+          window.__onTap(b, function() {
+            if (window.matchMedia('(hover: none)').matches) {
+              window.__stopAllAudio();
+              animateBtn(b);
+              window.__playMobile(a.src, b);
+            } else {
+              window.__stopAllAudio(a);
+              a.currentTime = 0;
+              window.__safePlay(a);
+              animateBtn(b);
+              window.__startPlaying(a, b);
+            }
+          }, function() { window.__stopAllAudio(); });
+        })(audio, btn);
+      }
       return;
     }
-    // [sound:] native — existing code unchanged
+    // [sound:] native
     if (item.querySelector('.replay-button')) return;
     var nativeAudio = item.querySelector('audio');
     if (!nativeAudio) return;
+    // Remove non-audio junk (text nodes, <br>, stray HTML)
+    Array.from(item.childNodes).forEach(function(n) {
+      if (n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'AUDIO'
+          && (!n.classList || !n.classList.contains('audio-label'))))
+        item.removeChild(n);
+    });
     nativeAudio.style.display = 'none';
     nativeAudio.removeAttribute('controls');
     var btn = document.createElement('a');
@@ -840,9 +856,15 @@ function clearLastMargin(el) {
   var queue = [];
   var animateBtn = window.__animateBtn;
   items.forEach(function(item) {
-    var audio = item._jsAudio || item.querySelector('audio');
-    var btn = item.querySelector('.replay-button');
-    if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+    if (item._jsAudios) {
+      var btns = item.querySelectorAll('.replay-button');
+      for (var j = 0; j < item._jsAudios.length; j++)
+        queue.push({ audio: item._jsAudios[j], btn: btns[j], js: true });
+    } else {
+      var audio = item.querySelector('audio');
+      var btn = item.querySelector('.replay-button');
+      if (audio) queue.push({ audio: audio, btn: btn, js: false });
+    }
   });
   if (!queue.length) return;
   var i = 0;
@@ -893,9 +915,15 @@ function clearLastMargin(el) {
     var items = document.querySelectorAll('.audio-row .audio-item' + (isBack ? '' : '[data-side="front"]'));
     var queue = [];
     items.forEach(function(item) {
-      var audio = item._jsAudio || item.querySelector('audio');
-      var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+      if (item._jsAudios) {
+        var btns = item.querySelectorAll('.replay-button');
+        for (var j = 0; j < item._jsAudios.length; j++)
+          queue.push({ audio: item._jsAudios[j], btn: btns[j], js: true });
+      } else {
+        var audio = item.querySelector('audio');
+        var btn = item.querySelector('.replay-button');
+        if (audio) queue.push({ audio: audio, btn: btn, js: false });
+      }
     });
     if (!queue.length) return false;
     window.__stopAllAudio();
