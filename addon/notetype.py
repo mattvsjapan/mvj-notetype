@@ -188,7 +188,7 @@ def install_notetype(on_success=None) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Migration from old "🇯🇵 Japanese" / "Japanese" note types
+# Migration from old "🇯🇵 MvJ Listening" / "MvJ Listening" note types
 # ---------------------------------------------------------------------------
 
 
@@ -201,120 +201,42 @@ def _find_old_notetype():
     return None
 
 
-def _resolve_name_conflict():
-    """If a '🇯🇵 MvJ' note type already exists, resolve the conflict.
-
-    Returns None on success, or an error string if the conflict can't be resolved.
-    """
-    existing = mw.col.models.by_name(NOTE_TYPE_NAME)
-    if not existing:
-        return None
-    # Check if it has notes
-    note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
-    if note_ids:
-        return (
-            f'A "{NOTE_TYPE_NAME}" note type already exists with '
-            f"{len(note_ids)} notes. Please rename or remove it first."
-        )
-    # Empty — safe to delete
-    mw.col.models.remove(existing["id"])
-    return None
-
-
-def _add_missing_fields(model):
-    """Add any fields from _FIELDS that don't exist in the model yet."""
-    mm = mw.col.models
-    existing_names = {fld["name"] for fld in model["flds"]}
-    for field_name, description, font, font_size in _FIELDS:
-        if field_name not in existing_names:
-            fld = mm.new_field(field_name)
-            fld["description"] = description
-            if font:
-                fld["font"] = font
-            if font_size:
-                fld["size"] = font_size
-            mm.add_field(model, fld)
-
-
-def migrate_old_notetype(on_success=None, on_error=None):
-    """Rename old note type to MvJ, add missing fields, download & update templates.
+def change_notes_to_mvj(on_success=None, on_error=None):
+    """Move all notes from old note type into 🇯🇵 MvJ, then delete old type.
 
     Args:
-        on_success: Callback(old_name: str) on the main thread after success.
-        on_error: Callback(error_msg: str) on the main thread on failure.
+        on_success: Callback(old_name, count) on main thread after success.
+        on_error: Callback(error_msg) on main thread on failure.
     """
     old_model = _find_old_notetype()
-    if not old_model:
+    new_model = mw.col.models.by_name(NOTE_TYPE_NAME)
+    if not old_model or not new_model:
         if on_error:
-            on_error("No old note type found.")
+            on_error("Old or new note type not found.")
         return
 
     old_name = old_model["name"]
-
-    # Resolve name conflict
-    conflict = _resolve_name_conflict()
-    if conflict:
-        if on_error:
-            on_error(conflict)
+    note_ids = mw.col.find_notes(f'"note:{old_name}"')
+    if not note_ids:
+        # No notes — just delete the empty old type
+        mw.col.models.remove(old_model["id"])
+        if on_success:
+            on_success(old_name, 0)
         return
 
-    # Rename
-    old_model["name"] = NOTE_TYPE_NAME
-    mw.col.models.update_dict(old_model)
+    # Get auto-matched field mapping (matches by name)
+    info = mw.col.models.change_notetype_info(
+        old_notetype_id=old_model["id"],
+        new_notetype_id=new_model["id"],
+    )
+    req = info.input
+    req.note_ids.extend(note_ids)
 
-    # Add missing fields
-    # Re-fetch after rename
-    model = mw.col.models.by_name(NOTE_TYPE_NAME)
-    _add_missing_fields(model)
-    mw.col.models.update_dict(model)
+    # Execute the change
+    mw.col.models.change_notetype_of_notes(req)
 
-    # Download templates and update
-    skip_fonts = _fonts_exist()
-    total_files = len(_TEMPLATE_FILES) + (0 if skip_fonts else len(_FONT_FILES))
-    mw.progress.start(max=total_files, label="Downloading templates...", parent=mw)
+    # Delete the now-empty old note type
+    mw.col.models.remove(old_model["id"])
 
-    def task():
-        return _download_all(skip_fonts=skip_fonts)
-
-    def on_done(future):
-        mw.progress.finish()
-        try:
-            files = future.result()
-        except HTTPError as e:
-            if on_error:
-                on_error(f"Download failed: HTTP {e.code} for {e.url}")
-            return
-        except URLError as e:
-            if on_error:
-                on_error(f"Connection failed: {e.reason}")
-            return
-        except Exception as e:
-            if on_error:
-                on_error(f"Download failed: {e}")
-            return
-
-        if not skip_fonts:
-            try:
-                _install_fonts(files)
-            except Exception as e:
-                if on_error:
-                    on_error(f"Failed to install fonts: {e}")
-                return
-
-        front = files["front.html"].decode("utf-8")
-        back = files["back.html"].decode("utf-8")
-        css = files["css.css"].decode("utf-8")
-
-        try:
-            model = mw.col.models.by_name(NOTE_TYPE_NAME)
-            if model:
-                _update_notetype(model, front, back, css)
-        except Exception as e:
-            if on_error:
-                on_error(f"Failed to update note type: {e}")
-            return
-
-        if on_success:
-            on_success(old_name)
-
-    mw.taskman.run_in_background(task, on_done)
+    if on_success:
+        on_success(old_name, len(note_ids))

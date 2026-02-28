@@ -37,7 +37,7 @@ from aqt.theme import theme_manager
 from aqt.utils import showInfo, showWarning, tooltip
 from aqt.webview import AnkiWebView, AnkiWebViewKind
 
-from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, migrate_old_notetype
+from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, change_notes_to_mvj
 
 _SAMPLE_IMAGE = "_mvj_sample.jpg"
 
@@ -906,7 +906,7 @@ class SettingsDialog(QDialog):
         mw.taskman.run_in_background(task, on_done)
 
     def _convert_japanese_to_mvj(self):
-        """Orchestrate migration from old Japanese note type to MvJ."""
+        """Orchestrate migration: convert fields → move notes → delete old type."""
         from aqt.qt import QMessageBox
         from .notetype import _find_old_notetype
 
@@ -921,11 +921,10 @@ class SettingsDialog(QDialog):
         msg = (
             f'This will convert \u201c{old_name}\u201d ({note_count} notes) to '
             f'\u201c{NOTE_TYPE_NAME}\u201d:\n\n'
-            f"\u2022 Rename the note type\n"
-            f"\u2022 Add missing fields (Context, Translation)\n"
-            f"\u2022 Download and update templates\n"
             f"\u2022 Convert old pitch syntax \u2192 new\n"
-            f"\u2022 Convert [sound:] \u2192 [audio:]\n\n"
+            f"\u2022 Convert [sound:] \u2192 [audio:]\n"
+            f"\u2022 Move notes into {NOTE_TYPE_NAME} note type\n"
+            f"\u2022 Delete old note type\n\n"
             f"Notes with lossy conversions will be tagged 'mvj-review'.\n"
             f"You can undo this operation afterward.\n\n"
             f"Continue?"
@@ -937,23 +936,21 @@ class SettingsDialog(QDialog):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        def on_success(migrated_old_name):
-            self._run_field_conversions()
+        # Phase 1: convert field contents in the old note type's notes
+        self._run_field_conversions(old_name)
 
-        def on_error(error_msg):
-            showWarning(error_msg)
+    def _run_field_conversions(self, old_note_type_name):
+        """Convert pitch syntax and [sound:] → [audio:] in old note type's notes.
 
-        migrate_old_notetype(on_success=on_success, on_error=on_error)
-
-    def _run_field_conversions(self):
-        """Convert pitch syntax and [sound:] → [audio:] in all MvJ notes."""
+        After completion, proceeds to Phase 2: change_notes_to_mvj().
+        """
         from .pitch_converter import convert_word_field, convert_sentence_field
 
         sound_re = re.compile(r"\[sound:([^\]]+)\]")
-        note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
+        note_ids = mw.col.find_notes(f'"note:{old_note_type_name}"')
         if not note_ids:
-            tooltip("No notes to convert.", parent=self)
-            self._build_ui()
+            # No notes to convert — skip straight to note type change
+            self._finish_migration(old_note_type_name)
             return
 
         converted_count = 0
@@ -1017,15 +1014,11 @@ class SettingsDialog(QDialog):
             try:
                 future.result()
             except Exception as e:
-                showWarning(f"Conversion failed: {e}")
+                showWarning(f"Field conversion failed: {e}")
                 return
 
-            msg = f"Migration complete!\n\n\u2022 {converted_count} notes converted"
-            if flagged_count:
-                msg += f"\n\u2022 {flagged_count} notes tagged 'mvj-review' for manual check"
-            msg += "\n\nYou can undo this with Edit \u2192 Undo."
-            showInfo(msg)
-            self._build_ui()
+            # Phase 2: move notes into MvJ note type and delete old type
+            self._finish_migration(old_note_type_name, converted_count, flagged_count)
 
         mw.progress.start(
             max=len(note_ids),
@@ -1033,6 +1026,24 @@ class SettingsDialog(QDialog):
             parent=self,
         )
         mw.taskman.run_in_background(task, on_done)
+
+    def _finish_migration(self, old_name, converted_count=0, flagged_count=0):
+        """Phase 2: move notes to MvJ note type, delete old type, show summary."""
+        def on_success(migrated_old_name, count):
+            msg = f"Migration complete!\n\n\u2022 {count} notes moved to {NOTE_TYPE_NAME}"
+            if converted_count:
+                msg += f"\n\u2022 {converted_count} notes had fields converted"
+            if flagged_count:
+                msg += f"\n\u2022 {flagged_count} notes tagged 'mvj-review' for manual check"
+            msg += f"\n\u2022 \u201c{migrated_old_name}\u201d note type deleted"
+            msg += "\n\nYou can undo this with Edit \u2192 Undo."
+            showInfo(msg)
+            self._build_ui()
+
+        def on_error(error_msg):
+            showWarning(error_msg)
+
+        change_notes_to_mvj(on_success=on_success, on_error=on_error)
 
     def _save(self):
         # Re-fetch in case something changed
