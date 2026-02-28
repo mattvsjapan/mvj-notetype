@@ -14,9 +14,9 @@
     /* Layout */
     --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
-    --debug: off;                  /* on | off                            */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
+    --debug: off;                  /* on | off                            */
 
     /* Word */
     --word-text: back;                 /* front | back | off                  */

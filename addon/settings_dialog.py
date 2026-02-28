@@ -82,8 +82,8 @@ _SETTINGS = {
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", ["blue", "black", "red", "purple", "white"], "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
-        ("--debug", "Debug Mode", ["on", "off"], "off"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
+        ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [
         ("--word-text", "Word Text", ["front", "back", "off"], "front"),
