@@ -85,6 +85,7 @@
     --mode-4-word-audio: back;
     --mode-4-sentence-text: front;
     --mode-4-sentence-audio: back;
+    --mode-4-definition-text: on;
 
     /* —— Mode 5: Vocab ————————————————————————————————————————— */
     --mode-5-name: Vocab;
