@@ -564,11 +564,13 @@ class SettingsDialog(QDialog):
 
         self._mode_name_input = QLineEdit(mode.name)
         self._mode_name_input.setPlaceholderText("e.g. Sentence")
+        self._mode_name_input.setMinimumWidth(250)
         self._mode_name_input.textChanged.connect(self._on_mode_name_changed)
         triggers_form.addRow("Name:", self._mode_name_input)
 
         self._mode_tag_input = QLineEdit(mode.tag)
         self._mode_tag_input.setPlaceholderText("e.g. _jp::sentence")
+        self._mode_tag_input.setMinimumWidth(250)
         self._mode_tag_input.textChanged.connect(self._on_setting_changed)
         triggers_form.addRow("Tag:", self._mode_tag_input)
 
