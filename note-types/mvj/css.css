@@ -38,6 +38,7 @@
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
+    --definition-default: monolingual; /* monolingual | bilingual             */
     --definition-furigana: back;   /* front | back | off                  */
     --definition-pitch-color: back;/* front | back | off                  */
 

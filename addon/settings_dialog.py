@@ -105,6 +105,7 @@ _SETTINGS = {
         ("--definition-text", "Definition Text", ["on", "off"], "on"),
         ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
         ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
+        ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["front", "back", "off"], "back"),
         ("--definition-pitch-color", "Definition Pitch Color", ["front", "back", "off"], "back"),
     ],
@@ -116,7 +117,7 @@ _OVERRIDABLE = [
     "word-text", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-mode",
+    "definition-text", "definition-audio", "definition-mode", "definition-default",
     "definition-furigana", "definition-pitch-color",
 ]
 

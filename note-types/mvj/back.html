@@ -965,9 +965,10 @@
       return colored.join('<br>');
     }
     var defs = parseDefinitions(defHtml);
-    // Plain definition without comment markers → treat as monolingual
+    // Plain definition without comment markers → use --definition-default
     if (!Object.keys(defs).length && defHtml.trim()) {
-      defs.monolingual = defHtml.trim();
+      var defDefault = _rootStyle.getPropertyValue('--definition-default').trim() || 'monolingual';
+      defs[defDefault] = defHtml.trim();
     }
     applyDefModeFilter(defs, defMode);
     var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
