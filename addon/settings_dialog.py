@@ -25,8 +25,10 @@ from aqt.qt import (
     QPalette,
     QPushButton,
     QScrollArea,
+    QShortcut,
     QSplitter,
     Qt,
+    QKeySequence,
     QTimer,
     QVBoxLayout,
     QWidget,
@@ -386,6 +388,8 @@ class SettingsDialog(QDialog):
         self._btn_back.setChecked(True)  # default to showing back
         self._btn_front.clicked.connect(self._on_front_clicked)
         self._btn_back.clicked.connect(self._on_back_clicked)
+        QShortcut(QKeySequence("Ctrl+1"), self).activated.connect(self._on_front_clicked)
+        QShortcut(QKeySequence("Ctrl+2"), self).activated.connect(self._on_back_clicked)
         toggle_row.addStretch()
         toggle_row.addWidget(self._btn_front)
         toggle_row.addSpacing(6)
