@@ -463,7 +463,14 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
     textEl.classList.add('text-play');
     textEl.setAttribute('data-text-play', audioKey);
 
+    var downTime = 0;
+    textEl.addEventListener('mousedown', function() { downTime = Date.now(); });
+    textEl.addEventListener('touchstart', function() { downTime = Date.now(); }, { passive: true });
+
     window.__onTap(textEl, function() {
+        if (Date.now() - downTime > 300) return;
+        var sel = window.getSelection();
+        if (sel && sel.toString().length > 0) return;
         if (opts.play) {
             opts.play();
             return;
