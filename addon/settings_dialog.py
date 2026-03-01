@@ -81,15 +81,15 @@ _SETTINGS = {
     "Layout": [
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", None, "blue"),
-        ("--audio-buttons", "Audio Buttons", ["on", "off"], "on"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
-        ("--text-play", "Text Play", ["on", "off"], "on"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [
         ("--word-text", "Word Text", ["front", "back", "off"], "front"),
         ("--word-audio", "Word Audio", ["front", "back", "off"], "back"),
+        ("--word-audio-buttons", "Word Audio Buttons", ["on", "off"], "on"),
+        ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front", "back", "off"], "front"),
         ("--word-pitch-color", "Word Pitch Color", ["front", "back", "off"], "back"),
         ("--pitch-graph", "Pitch Graph", ["on", "off"], "on"),
@@ -97,6 +97,8 @@ _SETTINGS = {
     "Sentence Text": [
         ("--sentence-text", "Sentence Text", ["front", "back", "off"], "front"),
         ("--sentence-audio", "Sentence Audio", ["front", "back", "off"], "back"),
+        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["on", "off"], "on"),
+        ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front", "back", "off"], "front"),
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front", "back", "off"], "back"),
     ],
@@ -106,6 +108,8 @@ _SETTINGS = {
     "Definitions": [
         ("--definition-text", "Definition Text", ["on", "off"], "on"),
         ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
+        ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "off"], "on"),
+        ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
         ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["front", "back", "off"], "back"),
@@ -115,11 +119,11 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
-    "tategaki", "color-scheme", "debug", "audio-labels", "audio-buttons", "text-play", "card-transparency",
-    "word-text", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
-    "sentence-text", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
+    "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
+    "word-text", "word-audio", "word-audio-buttons", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
+    "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-mode", "definition-default",
+    "definition-text", "definition-audio", "definition-audio-buttons", "definition-text-play", "definition-mode", "definition-default",
     "definition-furigana", "definition-pitch-color",
 ]
 

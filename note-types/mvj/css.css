@@ -14,15 +14,15 @@
     /* Layout */
     --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
-    --audio-buttons: on;           /* on | off                            */
     --audio-labels: on;            /* on | off                            */
-    --text-play: on;               /* on | off                            */
     --card-transparency: on;       /* on | off                            */
     --debug: off;                  /* on | off                            */
 
     /* Word */
     --word-text: front;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
+    --word-audio-buttons: on;      /* on | off                            */
+    --word-text-play: on;          /* on | off                            */
     --word-furigana: back;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
@@ -30,6 +30,8 @@
     /* Sentence */
     --sentence-text: front;             /* front | back | off                  */
     --sentence-audio: front;        /* front | back | off                  */
+    --sentence-audio-buttons: on;  /* on | off                            */
+    --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back;     /* front | back | off                  */
     --sentence-pitch-color: off;  /* front | back | off                  */
 
@@ -39,6 +41,8 @@
     /* Definitions */
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
+    --definition-audio-buttons: on;/* on | off                            */
+    --definition-text-play: on;    /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: back;   /* front | back | off                  */
@@ -848,19 +852,8 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     display: none;
 }
 
-/* Hide audio buttons — keep autoplay & text-play functional */
-:root[data-audio-buttons="off"] :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .audio-row {
-    display: none;
-}
-:root[data-audio-buttons="off"] .back .audio-row {
-    display: none;
-}
-:root[data-audio-buttons="off"] .audio-row-bottom {
-    display: none;
-}
-:root[data-audio-buttons="off"] .mid-audio-row {
-    display: none;
-}
+/* Hide per-section audio buttons — keep autoplay & text-play functional */
+.audio-item[data-btn-off] { display: none; }
 
 /* Playing/highlight state — accent colors while audio is playing or button animating */
 .replay-button.playing,
@@ -1094,22 +1087,22 @@ html:not(.tategaki) .back {
     flex-direction: column;
 }
 
-.back .audio-row:not(:has([data-side="front"])) {
+.back .audio-row:not(:has([data-side="front"]:not([data-btn-off]))) {
     display: none;
 }
 
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom {
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: clamp(8px, 4vw, 20px);
     margin-bottom: 20px;
 }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"])) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
     order: -1;
@@ -1431,7 +1424,7 @@ rt {
 :not(.back) > .card-inner > .front [data-side="off"] {
     display: none;
 }
-:not(.back) > .card-inner > .front .audio-row:not(:has(.audio-item[data-side="front"])) {
+:not(.back) > .card-inner > .front .audio-row:not(:has(.audio-item[data-side="front"]:not([data-btn-off]))) {
     display: none;
 }
 /* Front-content base layout */

@@ -45,11 +45,11 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'audio-buttons', 'text-play', 'card-transparency',
-        'word-text', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
-        'sentence-text', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
+        'word-text', 'word-audio', 'word-audio-buttons', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
+        'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
         'image',
-        'definition-text', 'definition-audio', 'definition-mode', 'definition-default', 'definition-furigana', 'definition-pitch-color'
+        'definition-text', 'definition-audio', 'definition-audio-buttons', 'definition-text-play', 'definition-mode', 'definition-default', 'definition-furigana', 'definition-pitch-color'
     ];
 
     // Find last defined mode
@@ -114,16 +114,14 @@
     if (v) document.documentElement.setAttribute('data-audio-labels', v.trim() || 'on');
 })();
 
-// Audio buttons — read CSS variable and set data attribute
+// Text-play — read per-section CSS variables and cache
 (function() {
-    var v = getComputedStyle(document.documentElement).getPropertyValue('--audio-buttons');
-    if (v) document.documentElement.setAttribute('data-audio-buttons', v.trim() || 'on');
-})();
-
-// Text-play — read CSS variable and cache
-(function() {
-    var v = getComputedStyle(document.documentElement).getPropertyValue('--text-play');
-    window.__textPlayEnabled = !v || v.trim() !== 'off';
+    var rs = getComputedStyle(document.documentElement);
+    window.__textPlayEnabled = {
+        word: rs.getPropertyValue('--word-text-play').trim() !== 'off',
+        sentence: rs.getPropertyValue('--sentence-text-play').trim() !== 'off',
+        definition: rs.getPropertyValue('--definition-text-play').trim() !== 'off'
+    };
 })();
 
 // Card transparency — read CSS variable and set data attribute
@@ -457,7 +455,8 @@ window.__freshPlay = function(src, btn) {
 window.__stopDefAudio = window.__stopAllAudio;
 
 window.__linkTextPlay = function(textEl, audioKey, opts) {
-    if (!window.__textPlayEnabled) return;
+    var _sec = audioKey.indexOf('def') === 0 ? 'definition' : audioKey;
+    if (window.__textPlayEnabled && !window.__textPlayEnabled[_sec]) return;
     if (!textEl || (!opts.getAudioSrc && !opts.play)) return;
 
     textEl.classList.add('text-play');
@@ -719,6 +718,13 @@ function clearLastMargin(el) {
     var sentAI = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
     if (wordAI) wordAI.setAttribute('data-side', wordAudioSide);
     if (sentAI) sentAI.setAttribute('data-side', sentAudioSide);
+
+    // Per-section audio button hiding
+    var rs = getComputedStyle(document.documentElement);
+    if (wordAI && rs.getPropertyValue('--word-audio-buttons').trim() === 'off')
+        wordAI.setAttribute('data-btn-off', '');
+    if (sentAI && rs.getPropertyValue('--sentence-audio-buttons').trim() === 'off')
+        sentAI.setAttribute('data-btn-off', '');
 
     // ── Shared: available on both front and back (via window) ──
     window.escapeBrackets = function(text) {

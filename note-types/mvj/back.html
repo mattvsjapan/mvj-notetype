@@ -1443,6 +1443,15 @@
       });
     }
 
+    // ── Per-section audio button hiding for definitions ──
+    var _defBtnOff = getComputedStyle(document.documentElement)
+        .getPropertyValue('--definition-audio-buttons').trim() === 'off';
+    if (_defBtnOff) {
+        document.querySelectorAll('.audio-item[data-audio="def"]').forEach(function(item) {
+            item.setAttribute('data-btn-off', '');
+        });
+    }
+
     // ── Mirror audio buttons to bottom row (mobile) ──
     var bottomRow = document.getElementById('audio-row-bottom');
     if (bottomRow) {
@@ -1501,9 +1510,9 @@
         }
         if (origBtns.length > 0) targetRow.appendChild(clone);
       }
-      var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
+      var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"]):not([data-btn-off])');
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
-      var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]');
+      var hasAnyFrontAudio = !!document.querySelector('.audio-row .audio-item[data-side="front"]:not([data-btn-off])');
       if (isTategaki && !hasFrontContent && hasAnyFrontAudio) {
         bottomRow.setAttribute('data-zone', 'front');
       }
@@ -1591,7 +1600,13 @@
     }
   
     // Hide empty audio-row-bottom so clearLastMargin targets the real last element
-    if (bottomRow && !bottomRow.children.length) bottomRow.style.display = 'none';
+    if (bottomRow && !bottomRow.querySelector('.audio-item:not([data-btn-off])'))
+        bottomRow.style.display = 'none';
+
+    // Hide top audio-row if all visible items are hidden by btn-off
+    var topRow = document.querySelector('.front .audio-row');
+    if (topRow && !topRow.querySelector('.audio-item:not([data-btn-off]):not([data-side="off"])'))
+        topRow.style.display = 'none';
 
     // Hide word-column when all its content is off/on-front (0-dimension placeholder eats margin)
     var wcEl = document.querySelector('.answer .word-column');
