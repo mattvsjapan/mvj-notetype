@@ -1425,9 +1425,12 @@
           if (defEl.innerHTML) window.__linkTextPlay(defEl, defKey, _defTextPlayOpts(defIsBi ? 'bi' : 'mono'));
           if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, jpKey, _defTextPlayOpts(defIsBi ? 'mono' : 'bi'));
         } else {
-          // Dual text but single/no audio — link primary def to 'def'
+          // Dual text but single/no audio — link both defs to same audio
           if (defEl.innerHTML) {
             window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+          }
+          if (jpDefEl.innerHTML) {
+            window.__linkTextPlay(jpDefEl, 'def', _defTextPlayOpts(null));
           }
         }
       }

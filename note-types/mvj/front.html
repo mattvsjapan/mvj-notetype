@@ -407,12 +407,12 @@ window.__startPlaying = function(audio, btn) {
         if (audioType === 'def' && defLang) textKey = 'def-' + defLang;
         else if (audioType) textKey = audioType;
     }
-    var linkedText = textKey ? document.querySelector('.text-play[data-text-play="' + textKey + '"]') : null;
-    if (linkedText) linkedText.classList.add('playing');
+    var linkedTexts = textKey ? document.querySelectorAll('.text-play[data-text-play="' + textKey + '"]') : [];
+    for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.add('playing');
 
     function done() {
         if (btn._currentAudio === audio) btn.classList.remove('playing');
-        if (linkedText) linkedText.classList.remove('playing');
+        for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.remove('playing');
         audio.removeEventListener('ended', done);
         audio.removeEventListener('pause', done);
     }
@@ -421,7 +421,7 @@ window.__startPlaying = function(audio, btn) {
     setTimeout(function() {
         if (btn._currentAudio === audio && audio.paused) {
             btn.classList.remove('playing');
-            if (linkedText) linkedText.classList.remove('playing');
+            for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.remove('playing');
         }
     }, 1000);
 };
@@ -452,8 +452,6 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
 
     window.__onTap(textEl, function() {
         if (opts.play) {
-            // Delegate to existing button handler (used for definitions
-            // where audio elements aren't stored on the audio-item)
             opts.play();
             return;
         }
@@ -502,13 +500,13 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
 
 window.__linkBtnHoverToText = function(btn, audioKey) {
     if (!window.matchMedia('(hover: hover)').matches) return;
-    var textEl = document.querySelector('.text-play[data-text-play="' + audioKey + '"]');
-    if (!textEl) return;
+    var textEls = document.querySelectorAll('.text-play[data-text-play="' + audioKey + '"]');
+    if (!textEls.length) return;
     btn.addEventListener('mouseenter', function() {
-        textEl.classList.add('hover-linked');
+        for (var ti = 0; ti < textEls.length; ti++) textEls[ti].classList.add('hover-linked');
     });
     btn.addEventListener('mouseleave', function() {
-        textEl.classList.remove('hover-linked');
+        for (var ti = 0; ti < textEls.length; ti++) textEls[ti].classList.remove('hover-linked');
     });
 };
 
@@ -539,7 +537,7 @@ window.__webAudioPlay = function(src, btn, gen) {
                 source.start();
                 window.__webAudioSource = source;
 
-                var linkedText = null;
+                var linkedTexts = [];
                 if (btn) {
                     btn.classList.add('playing');
                     btn._currentAudio = source;
@@ -548,15 +546,15 @@ window.__webAudioPlay = function(src, btn, gen) {
                         var audioType = audioItem.getAttribute('data-audio');
                         var defLang = audioItem.getAttribute('data-def-lang');
                         var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
-                        if (textKey) linkedText = document.querySelector('.text-play[data-text-play="' + textKey + '"]');
+                        if (textKey) linkedTexts = document.querySelectorAll('.text-play[data-text-play="' + textKey + '"]');
                     }
-                    if (linkedText) linkedText.classList.add('playing');
+                    for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.add('playing');
                 }
 
                 source.onended = function() {
                     if (window.__webAudioSource === source) window.__webAudioSource = null;
                     if (btn && btn._currentAudio === source) btn.classList.remove('playing');
-                    if (linkedText) linkedText.classList.remove('playing');
+                    for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.remove('playing');
                     resolve();
                 };
             });
