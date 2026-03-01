@@ -80,7 +80,7 @@ _HOTKEYS = [
 _SETTINGS = {
     "Layout": [
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
-        ("--color-scheme", "Color Scheme", ["blue", "black", "red", "purple", "white"], "blue"),
+        ("--color-scheme", "Color Scheme", None, "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
@@ -128,6 +128,24 @@ _MODES_CONTENT_RE = re.compile(
     r"(\n[ \t]*/\*\s*═+\s*\*/)",    # closing ═══ banner    (group 3 — kept)
     re.DOTALL,
 )
+
+_COLOR_SCHEME_RE = re.compile(r':root\[data-color-scheme="([^"]+)"\]')
+
+def _parse_color_schemes(css: str) -> list[str]:
+    """Extract color scheme names from CSS selectors, with the default first."""
+    fallback = ["blue", "black", "red", "purple", "white"]
+    default_m = re.search(r"--color-scheme:\s*(\S+?)\s*;", css)
+    default_name = default_m.group(1) if default_m else "blue"
+    seen = {default_name}
+    others = []
+    for m in _COLOR_SCHEME_RE.finditer(css):
+        name = m.group(1)
+        if name not in seen:
+            seen.add(name)
+            others.append(name)
+    if not others:
+        return fallback
+    return [default_name] + others
 
 _OVERRIDE_ACTIVE_COLOR = QColor(76, 175, 80, 25)
 
@@ -317,6 +335,7 @@ class SettingsDialog(QDialog):
         self.resize(1200, min(1200, available_h - 50))
 
         css = self._model["css"]
+        self._color_schemes = _parse_color_schemes(css)
         self._defaults = _parse_settings(css)
         self._modes = _parse_modes(css)
         self._selected_index = -1  # -1 = Defaults
@@ -524,7 +543,7 @@ class SettingsDialog(QDialog):
             )
             for var, label, options, default in entries:
                 combo = QComboBox()
-                combo.addItems(options)
+                combo.addItems(options if options is not None else self._color_schemes)
                 combo.setCurrentText(self._defaults.get(var, default))
                 combo.currentTextChanged.connect(self._on_setting_changed)
                 form.addRow(label + ":", combo)
@@ -610,7 +629,7 @@ class SettingsDialog(QDialog):
                 row = QHBoxLayout()
                 cb = QCheckBox()
                 combo = QComboBox()
-                combo.addItems(options)
+                combo.addItems(options if options is not None else self._color_schemes)
 
                 is_overridden = var in mode.overrides
                 cb.setChecked(is_overridden)
