@@ -887,12 +887,9 @@
       var wordTextPlayEl = wordIsOnFront ? document.getElementById('front-word') : targetEl;
       if (wordTextPlayEl && wordTextPlayEl.innerHTML) {
         window.__linkTextPlay(wordTextPlayEl, 'word', {
-          getAudioSrc: function() {
+          play: function() {
             var item = document.querySelector('.audio-item[data-audio="word"]');
-            if (!item) return null;
-            if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
-            var a = item.querySelector('audio');
-            return a ? a.src : null;
+            window.__playItemAudios(item);
           },
           getBtn: function() {
             return document.querySelector('.audio-item[data-audio="word"] .replay-button');
@@ -966,12 +963,9 @@
       if (sentTextPlayEl && sentTextPlayEl.innerHTML
           && sentTextPlayEl.getAttribute('data-show') !== 'off') {
         window.__linkTextPlay(sentTextPlayEl, 'sentence', {
-          getAudioSrc: function() {
+          play: function() {
             var item = document.querySelector('.audio-item[data-audio="sentence"]');
-            if (!item) return null;
-            if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
-            var a = item.querySelector('audio');
-            return a ? a.src : null;
+            window.__playItemAudios(item);
           },
           getBtn: function() {
             return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
@@ -1634,9 +1628,17 @@
       var queue = [];
       var animateBtn = window.__animateBtn;
       items.forEach(function(item) {
-        var audio = item._jsAudio || item.querySelector('audio');
-        var btn = item.querySelector('.replay-button');
-        if (audio) queue.push({ audio: audio, btn: btn });
+        var btns = item.querySelectorAll('.replay-button');
+        if (item._jsAudios && item._jsAudios.length) {
+          for (var j = 0; j < item._jsAudios.length; j++) {
+            queue.push({ audio: item._jsAudios[j], btn: btns[j] });
+          }
+        } else {
+          var els = item.querySelectorAll('audio');
+          for (var j = 0; j < els.length; j++) {
+            queue.push({ audio: els[j], btn: btns[j] });
+          }
+        }
       });
       var gen = window.__webAudioGen;
       var i = 0;
@@ -1676,24 +1678,23 @@
     }
     function play(item) {
       if (!item) return;
-      window.__stopAllAudio();
-      var link = item.querySelector('.soundLink');
-      if (link) {
-        link.click();
-        var btn = item.querySelector('.replay-button');
-        if (btn) animateBtn(btn);
-        return;
-      }
-      var audio = item.querySelector('audio');
-      if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
+      window.__playItemAudios(item);
     }
     function playAll() {
       var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var queue = [];
       items.forEach(function(item) {
-        var audio = item._jsAudio || item.querySelector('audio');
-        var btn = item.querySelector('.replay-button');
-        if (audio) queue.push({ audio: audio, btn: btn, js: !!item._jsAudio });
+        var btns = item.querySelectorAll('.replay-button');
+        if (item._jsAudios && item._jsAudios.length) {
+          for (var j = 0; j < item._jsAudios.length; j++) {
+            queue.push({ audio: item._jsAudios[j], btn: btns[j], js: true });
+          }
+        } else {
+          var els = item.querySelectorAll('audio');
+          for (var j = 0; j < els.length; j++) {
+            queue.push({ audio: els[j], btn: btns[j], js: false });
+          }
+        }
       });
       if (!queue.length) return false;
       window.__stopAllAudio();

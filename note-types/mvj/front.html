@@ -589,6 +589,34 @@ window.__playMobile = function(src, btn) {
     window.__startPlaying(fa, btn);
     return new Promise(function(resolve) { fa.onended = resolve; });
 };
+
+window.__playItemAudios = function(item) {
+    if (!item) return;
+    window.__stopAllAudio();
+    var queue = [];
+    var btns = item.querySelectorAll('.replay-button');
+    if (item._jsAudios && item._jsAudios.length) {
+        for (var i = 0; i < item._jsAudios.length; i++) {
+            queue.push({ src: item._jsAudios[i].src, btn: btns[i] });
+        }
+    } else {
+        var els = item.querySelectorAll('audio');
+        for (var i = 0; i < els.length; i++) {
+            queue.push({ src: els[i].src, btn: btns[i] });
+        }
+    }
+    if (!queue.length) return;
+    var gen = window.__webAudioGen;
+    var idx = 0;
+    (function next() {
+        if (idx >= queue.length || gen !== window.__webAudioGen) return;
+        var entry = queue[idx++];
+        if (entry.btn) window.__animateBtn(entry.btn);
+        window.__playMobile(entry.src, entry.btn)
+            .then(function() { if (gen === window.__webAudioGen) next(); })
+            ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+    })();
+};
 </script>
 
 <script>
@@ -834,12 +862,9 @@ function clearLastMargin(el) {
     // ── Front-side text-play linkage ──
     if (wordSide === 'front' && wordAudioSide === 'front' && frontWord.innerHTML) {
         window.__linkTextPlay(frontWord, 'word', {
-            getAudioSrc: function() {
+            play: function() {
                 var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
-                if (!item) return null;
-                if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
-                var a = item.querySelector('audio');
-                return a ? a.src : null;
+                window.__playItemAudios(item);
             },
             getBtn: function() {
                 return document.querySelector('.audio-item[data-audio="word"] .replay-button');
@@ -852,12 +877,9 @@ function clearLastMargin(el) {
 
     if (sentSide === 'front' && sentAudioSide === 'front' && frontSent.innerHTML) {
         window.__linkTextPlay(frontSent, 'sentence', {
-            getAudioSrc: function() {
+            play: function() {
                 var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
-                if (!item) return null;
-                if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
-                var a = item.querySelector('audio');
-                return a ? a.src : null;
+                window.__playItemAudios(item);
             },
             getBtn: function() {
                 return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
@@ -1081,16 +1103,7 @@ function clearLastMargin(el) {
   }
   function play(item) {
     if (!item) return;
-    window.__stopAllAudio();
-    var link = item.querySelector('.soundLink');
-    if (link) {
-      link.click();
-      var btn = item.querySelector('.replay-button');
-      if (btn) animateBtn(btn);
-      return;
-    }
-    var audio = item.querySelector('audio');
-    if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
+    window.__playItemAudios(item);
   }
   function playAll() {
     var isBack = !!document.querySelector('.back');
@@ -1102,9 +1115,10 @@ function clearLastMargin(el) {
         for (var j = 0; j < item._jsAudios.length; j++)
           queue.push({ audio: item._jsAudios[j], btn: btns[j], js: true });
       } else {
-        var audio = item.querySelector('audio');
-        var btn = item.querySelector('.replay-button');
-        if (audio) queue.push({ audio: audio, btn: btn, js: false });
+        var els = item.querySelectorAll('audio');
+        var btns = item.querySelectorAll('.replay-button');
+        for (var j = 0; j < els.length; j++)
+          queue.push({ audio: els[j], btn: btns[j], js: false });
       }
     });
     if (!queue.length) return false;
