@@ -132,7 +132,7 @@
     --accent-text: #8d9bbe;
     --accent-soft: rgba(107, 126, 168, 0.10);
     --accent-glow: rgba(107, 126, 168, 0.18);
-    --accent-soft-bright: rgba(107, 126, 168, 0.15);
+    --accent-soft-bright: rgba(107, 126, 168, 0.20);
     --flash-border: rgba(255, 255, 255, 0.10);
     --flash-bg: rgba(255, 255, 255, 0.04);
 
@@ -257,7 +257,7 @@
     --accent-text: #929db5;
     --accent-soft: rgba(112, 128, 160, 0.10);
     --accent-glow: rgba(112, 128, 160, 0.18);
-    --accent-soft-bright: rgba(112, 128, 160, 0.15);
+    --accent-soft-bright: rgba(112, 128, 160, 0.20);
     --card-bg: rgba(20, 20, 20, 0.58);
     --card-bg-solid: rgb(20, 20, 20);
     --card-shadow:
@@ -278,7 +278,7 @@
     --accent-text: #959bbe;
     --accent-soft: rgba(116, 120, 168, 0.10);
     --accent-glow: rgba(116, 120, 168, 0.18);
-    --accent-soft-bright: rgba(116, 120, 168, 0.15);
+    --accent-soft-bright: rgba(116, 120, 168, 0.20);
     --card-bg: rgba(26, 16, 16, 0.58);
     --card-bg-solid: rgb(26, 16, 16);
     --card-shadow:
@@ -299,7 +299,7 @@
     --accent-text: #999fbe;
     --accent-soft: rgba(120, 120, 168, 0.10);
     --accent-glow: rgba(120, 120, 168, 0.18);
-    --accent-soft-bright: rgba(120, 120, 168, 0.15);
+    --accent-soft-bright: rgba(120, 120, 168, 0.20);
     --card-bg: rgba(23, 19, 32, 0.58);
     --card-bg-solid: rgb(23, 19, 32);
     --card-shadow:
@@ -325,7 +325,7 @@
     --accent-text: #4a5a78;
     --accent-soft: rgba(90, 106, 138, 0.10);
     --accent-glow: rgba(90, 106, 138, 0.18);
-    --accent-soft-bright: rgba(90, 106, 138, 0.15);
+    --accent-soft-bright: rgba(90, 106, 138, 0.20);
     --flash-border: rgba(0, 0, 0, 0.12);
     --flash-bg: rgba(0, 0, 0, 0.03);
     --card-bg: rgba(253, 251, 246, 0.85);
@@ -944,25 +944,8 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 .text-play.playing {
-    transition: none;
-    background: transparent;
+    background: var(--accent-soft-bright);
     box-shadow: inset 0 0 0 1px var(--accent-glow);
-}
-
-.text-play.playing::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: var(--accent-soft);
-    animation: text-play-breathe 1.6s ease-in-out infinite;
-    pointer-events: none;
-    z-index: -1;
-}
-
-@keyframes text-play-breathe {
-    0%, 100% { background: var(--accent-soft); }
-    50%      { background: var(--accent-soft-bright); }
 }
 
 /* Front entrance */
