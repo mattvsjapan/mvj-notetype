@@ -232,26 +232,19 @@ window.__observers = [];
 window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
 
 window.__animateBtn = function(btn) {
-    var circle = btn.querySelector('circle, .replayCircle');
-    var path = btn.querySelector('path, .replayTriangle');
     var isTouch = window.matchMedia('(hover: none)').matches;
     if (isTouch) {
-        // Touch: subtle fill only (matches native [sound:] button feedback)
-        if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; }
-        setTimeout(function() {
-            if (circle) { circle.style.fill = ''; }
-        }, 350);
+        btn.classList.add('highlight-touch');
+        setTimeout(function() { btn.classList.remove('highlight-touch'); }, 350);
         return;
     }
     btn.style.transform = 'scale(0.95)';
     btn.style.transitionDuration = '80ms';
-    if (circle) { circle.style.fill = 'var(--bg-surface-hover)'; circle.style.stroke = 'var(--accent-glow)'; }
-    if (path) { path.style.fill = 'var(--accent)'; }
+    btn.classList.add('highlight');
     setTimeout(function() { btn.style.transform = 'scale(1.06)'; btn.style.transitionDuration = ''; }, 100);
     setTimeout(function() {
         btn.style.transform = '';
-        if (circle) { circle.style.fill = ''; circle.style.stroke = ''; }
-        if (path) { path.style.fill = ''; }
+        btn.classList.remove('highlight');
     }, 350);
 };
 

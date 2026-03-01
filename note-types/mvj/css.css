@@ -693,6 +693,9 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 /* — Replay button (targets Anki's generated .replay-button) — */
 
 .replay-button {
+    --rb-fill: var(--bg-surface);
+    --rb-stroke: var(--replay-stroke);
+    --rb-triangle: var(--text-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -721,8 +724,8 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 /* Circle */
 .replay-button svg circle,
 .replay-button .replayCircle {
-    fill: var(--bg-surface);
-    stroke: var(--replay-stroke);
+    fill: var(--rb-fill);
+    stroke: var(--rb-stroke);
     stroke-width: 1.5;
     transition: stroke 200ms ease, fill 200ms ease;
 }
@@ -730,7 +733,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 /* Triangle — scale down Anki's oversized default path */
 .replay-button svg path,
 .replay-button .replayTriangle {
-    fill: var(--text-2);
+    fill: var(--rb-triangle);
     stroke: none;
     transition: fill 200ms ease;
     transform: scale(0.55);
@@ -740,29 +743,24 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 @media (hover: hover) {
     .replay-button:hover {
         transform: scale(1.06);
+        --rb-fill: var(--bg-surface-hover);
+        --rb-stroke: var(--accent-glow);
+        --rb-triangle: var(--accent);
     }
 
     .replay-button:active {
         transform: scale(0.95);
         transition-duration: 80ms;
     }
+}
 
-    .replay-button:hover svg circle,
-    .replay-button:hover .replayCircle {
-        fill: var(--bg-surface-hover);
-        stroke: var(--accent-glow);
-    }
-
-    .replay-button:hover svg path,
-    .replay-button:hover .replayTriangle {
-        fill: var(--accent);
-    }
+.replay-button.highlight-touch {
+    --rb-fill: var(--bg-surface-hover);
 }
 
 @media (hover: none) {
-    .replay-button:active svg circle,
-    .replay-button:active .replayCircle {
-        fill: var(--bg-surface-hover);
+    .replay-button:active {
+        --rb-fill: var(--bg-surface-hover);
     }
 }
 
@@ -814,14 +812,12 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     display: none;
 }
 
-/* Playing state — keeps accent colors while audio is playing */
-.replay-button.playing svg circle {
-    fill: var(--bg-surface-hover);
-    stroke: var(--accent-glow);
-}
-
-.replay-button.playing svg path {
-    fill: var(--accent);
+/* Playing/highlight state — accent colors while audio is playing or button animating */
+.replay-button.playing,
+.replay-button.highlight {
+    --rb-fill: var(--bg-surface-hover);
+    --rb-stroke: var(--accent-glow);
+    --rb-triangle: var(--accent);
 }
 
 /* Front entrance */
