@@ -83,6 +83,7 @@ _SETTINGS = {
         ("--color-scheme", "Color Scheme", None, "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
         ("--audio-buttons", "Audio Buttons", ["on", "off"], "on"),
+        ("--text-play", "Text Play", ["on", "off"], "on"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
@@ -114,7 +115,7 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
-    "tategaki", "color-scheme", "debug", "audio-labels", "audio-buttons", "card-transparency",
+    "tategaki", "color-scheme", "debug", "audio-labels", "audio-buttons", "text-play", "card-transparency",
     "word-text", "word-audio", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-furigana", "sentence-pitch-color",
     "image",

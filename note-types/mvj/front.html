@@ -45,7 +45,7 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'audio-buttons', 'card-transparency',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'audio-buttons', 'text-play', 'card-transparency',
         'word-text', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
         'image',
@@ -118,6 +118,12 @@
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--audio-buttons');
     if (v) document.documentElement.setAttribute('data-audio-buttons', v.trim() || 'on');
+})();
+
+// Text-play — read CSS variable and cache
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--text-play');
+    window.__textPlayEnabled = !v || v.trim() !== 'off';
 })();
 
 // Card transparency — read CSS variable and set data attribute
@@ -451,6 +457,7 @@ window.__freshPlay = function(src, btn) {
 window.__stopDefAudio = window.__stopAllAudio;
 
 window.__linkTextPlay = function(textEl, audioKey, opts) {
+    if (!window.__textPlayEnabled) return;
     if (!textEl || (!opts.getAudioSrc && !opts.play)) return;
 
     textEl.classList.add('text-play');

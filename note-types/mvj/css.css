@@ -16,6 +16,7 @@
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --audio-buttons: on;           /* on | off                            */
+    --text-play: on;               /* on | off                            */
     --card-transparency: on;       /* on | off                            */
     --debug: off;                  /* on | off                            */
 
