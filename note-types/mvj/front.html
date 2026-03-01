@@ -45,7 +45,7 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'audio-buttons', 'card-transparency',
         'word-text', 'word-audio', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-furigana', 'sentence-pitch-color',
         'image',
@@ -112,6 +112,12 @@
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--audio-labels');
     if (v) document.documentElement.setAttribute('data-audio-labels', v.trim() || 'on');
+})();
+
+// Audio buttons — read CSS variable and set data attribute
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--audio-buttons');
+    if (v) document.documentElement.setAttribute('data-audio-buttons', v.trim() || 'on');
 })();
 
 // Card transparency — read CSS variable and set data attribute

@@ -15,18 +15,19 @@
     --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
+    --audio-buttons: on;           /* on | off                            */
     --card-transparency: on;       /* on | off                            */
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: back;                 /* front | back | off                  */
+    --word-text: front;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
     --word-furigana: back;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence-text: back;             /* front | back | off                  */
+    --sentence-text: front;             /* front | back | off                  */
     --sentence-audio: front;        /* front | back | off                  */
     --sentence-furigana: back;     /* front | back | off                  */
     --sentence-pitch-color: off;  /* front | back | off                  */
@@ -843,6 +844,20 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 [data-audio-labels="off"] .audio-label {
+    display: none;
+}
+
+/* Hide audio buttons — keep autoplay & text-play functional */
+:root[data-audio-buttons="off"] :not(.back) > .card-inner > .front:has(.front-content [data-side="front"]) .audio-row {
+    display: none;
+}
+:root[data-audio-buttons="off"] .back .audio-row {
+    display: none;
+}
+:root[data-audio-buttons="off"] .audio-row-bottom {
+    display: none;
+}
+:root[data-audio-buttons="off"] .mid-audio-row {
     display: none;
 }
 
