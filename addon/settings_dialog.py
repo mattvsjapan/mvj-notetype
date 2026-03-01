@@ -81,8 +81,8 @@ _SETTINGS = {
     "Layout": [
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", None, "blue"),
-        ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
         ("--audio-buttons", "Audio Buttons", ["on", "off"], "on"),
+        ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
         ("--text-play", "Text Play", ["on", "off"], "on"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
