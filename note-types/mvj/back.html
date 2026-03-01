@@ -882,6 +882,28 @@
       }
     }
 
+    // Word text-play on back
+    if (wordOn && wordRaw) {
+      var wordTextPlayEl = wordIsOnFront ? document.getElementById('front-word') : targetEl;
+      if (wordTextPlayEl && wordTextPlayEl.innerHTML) {
+        window.__linkTextPlay(wordTextPlayEl, 'word', {
+          getAudioSrc: function() {
+            var item = document.querySelector('.audio-item[data-audio="word"]');
+            if (!item) return null;
+            if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
+            var a = item.querySelector('audio');
+            return a ? a.src : null;
+          },
+          getBtn: function() {
+            return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+          },
+          getAllBtns: function() {
+            return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+          }
+        });
+      }
+    }
+
     if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
@@ -934,6 +956,31 @@
     } else if (sentIsOnFront) {
       var frontSentEl = document.getElementById('front-sentence');
       if (frontSentEl) frontSentEl.setAttribute('data-side', 'back');
+    }
+
+    // Sentence text-play on back
+    if (sentOn && sentRaw) {
+      var sentTextPlayEl = sentIsOnFront
+        ? document.getElementById('front-sentence')
+        : sentEl;
+      if (sentTextPlayEl && sentTextPlayEl.innerHTML
+          && sentTextPlayEl.getAttribute('data-show') !== 'off') {
+        window.__linkTextPlay(sentTextPlayEl, 'sentence', {
+          getAudioSrc: function() {
+            var item = document.querySelector('.audio-item[data-audio="sentence"]');
+            if (!item) return null;
+            if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
+            var a = item.querySelector('audio');
+            return a ? a.src : null;
+          },
+          getBtn: function() {
+            return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
+          },
+          getAllBtns: function() {
+            return Array.from(document.querySelectorAll('.audio-item[data-audio="sentence"] .replay-button'));
+          }
+        });
+      }
     }
 
     // Image → hide answer copy when image is on front or off
@@ -1336,6 +1383,69 @@
       window.__defAudioRawHtml = null;
     }
 
+    // ── Definition text-play ──
+    if (defAudio && defText) {
+      var defLayout = answerEl.getAttribute('data-def-layout');
+      var hasDualAudio = !!document.querySelector('.audio-item[data-audio="def"][data-def-lang]');
+
+      function _defTextPlayOpts(lang) {
+        var sel = lang
+          ? '.audio-item[data-audio="def"][data-def-lang="' + lang + '"]'
+          : '.audio-item[data-audio="def"]';
+        return {
+          play: function() {
+            // Delegate to the button's existing tap handler — definition
+            // audio elements live in document.body, not inside the audio-item
+            var item = document.querySelector(sel);
+            if (!item) return;
+            var btn = item.querySelector('.replay-button');
+            if (btn && btn._tapHandler) btn._tapHandler();
+            else if (btn) btn.click();
+          },
+          getBtn: function() {
+            var item = document.querySelector(sel);
+            return item ? item.querySelector('.replay-button') : null;
+          },
+          getAllBtns: function() {
+            var item = document.querySelector(sel);
+            return item ? Array.from(item.querySelectorAll('.replay-button')) : [];
+          }
+        };
+      }
+
+      if (defLayout === 'bi-only' || defLayout === 'mono-only') {
+        if (defEl.innerHTML) {
+          window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+        }
+      } else if (defLayout === 'dual-bi' || defLayout === 'dual-mono') {
+        if (hasDualAudio) {
+          var defIsBi = (defLayout === 'dual-bi');
+          var defKey = defIsBi ? 'def-bi' : 'def-mono';
+          var jpKey = defIsBi ? 'def-mono' : 'def-bi';
+          if (defEl.innerHTML) window.__linkTextPlay(defEl, defKey, _defTextPlayOpts(defIsBi ? 'bi' : 'mono'));
+          if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, jpKey, _defTextPlayOpts(defIsBi ? 'mono' : 'bi'));
+        } else {
+          // Dual text but single/no audio — link primary def to 'def'
+          if (defEl.innerHTML) {
+            window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+          }
+        }
+      }
+    }
+
+    // ── Button → text hover linkage for all audio items ──
+    if (window.__linkBtnHoverToText) {
+      document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+        var audioType = item.getAttribute('data-audio');
+        var defLang = item.getAttribute('data-def-lang');
+        var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
+        if (!textKey) return;
+        item.querySelectorAll('.replay-button').forEach(function(btn) {
+          window.__linkBtnHoverToText(btn, textKey);
+        });
+      });
+    }
+
     // ── Mirror audio buttons to bottom row (mobile) ──
     var bottomRow = document.getElementById('audio-row-bottom');
     if (bottomRow) {
@@ -1372,9 +1482,17 @@
             }, function() { if (origBtn._dblHandler) origBtn._dblHandler(); });
             var obs = new MutationObserver(function() {
               btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+              btn.classList.toggle('hover-linked', origBtn.classList.contains('hover-linked'));
             });
             obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
             window.__observers.push(obs);
+            // Button→text hover linkage for cloned button
+            var cloneAudioType = origItem.getAttribute('data-audio');
+            var cloneDefLang = origItem.getAttribute('data-def-lang');
+            var cloneTextKey = (cloneAudioType === 'def' && cloneDefLang) ? 'def-' + cloneDefLang : cloneAudioType;
+            if (cloneTextKey && window.__linkBtnHoverToText) {
+              window.__linkBtnHoverToText(btn, cloneTextKey);
+            }
           })(origBtns[bj]);
         }
         var origLabel = origItem.querySelector('.audio-label');

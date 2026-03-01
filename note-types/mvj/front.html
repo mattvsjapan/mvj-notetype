@@ -364,6 +364,9 @@ window.__stopAllAudio = function(except) {
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
+    document.querySelectorAll('.text-play.playing').forEach(function(t) {
+        t.classList.remove('playing');
+    });
     var els = window.__defAudioEls || [];
     for (var i = 0; i < els.length; i++) {
         if (els[i] !== except) { els[i].pause(); els[i].currentTime = 0; }
@@ -395,15 +398,31 @@ window.__startPlaying = function(audio, btn) {
     if (!btn) return;
     btn.classList.add('playing');
     btn._currentAudio = audio;
+
+    var audioItem = btn.closest('.audio-item');
+    var textKey = null;
+    if (audioItem) {
+        var audioType = audioItem.getAttribute('data-audio');
+        var defLang = audioItem.getAttribute('data-def-lang');
+        if (audioType === 'def' && defLang) textKey = 'def-' + defLang;
+        else if (audioType) textKey = audioType;
+    }
+    var linkedText = textKey ? document.querySelector('.text-play[data-text-play="' + textKey + '"]') : null;
+    if (linkedText) linkedText.classList.add('playing');
+
     function done() {
         if (btn._currentAudio === audio) btn.classList.remove('playing');
+        if (linkedText) linkedText.classList.remove('playing');
         audio.removeEventListener('ended', done);
         audio.removeEventListener('pause', done);
     }
     audio.addEventListener('ended', done);
     audio.addEventListener('pause', done);
     setTimeout(function() {
-        if (btn._currentAudio === audio && audio.paused) btn.classList.remove('playing');
+        if (btn._currentAudio === audio && audio.paused) {
+            btn.classList.remove('playing');
+            if (linkedText) linkedText.classList.remove('playing');
+        }
     }, 1000);
 };
 
@@ -424,6 +443,74 @@ window.__freshPlay = function(src, btn) {
 };
 
 window.__stopDefAudio = window.__stopAllAudio;
+
+window.__linkTextPlay = function(textEl, audioKey, opts) {
+    if (!textEl || (!opts.getAudioSrc && !opts.play)) return;
+
+    textEl.classList.add('text-play');
+    textEl.setAttribute('data-text-play', audioKey);
+
+    window.__onTap(textEl, function() {
+        if (opts.play) {
+            // Delegate to existing button handler (used for definitions
+            // where audio elements aren't stored on the audio-item)
+            opts.play();
+            return;
+        }
+        var src = opts.getAudioSrc();
+        if (!src) return;
+        window.__stopAllAudio();
+        var btn = opts.getBtn ? opts.getBtn() : null;
+        if (btn) window.__animateBtn(btn);
+
+        textEl.classList.add('playing');
+        var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
+        for (var i = 0; i < allBtns.length; i++) {
+            allBtns[i].classList.add('playing');
+        }
+
+        var gen = window.__webAudioGen;
+        window.__playMobile(src, null).then(function() {
+            if (gen === window.__webAudioGen) {
+                textEl.classList.remove('playing');
+                for (var i = 0; i < allBtns.length; i++) {
+                    allBtns[i].classList.remove('playing');
+                }
+            }
+        })['catch'](function() {
+            textEl.classList.remove('playing');
+        });
+    }, function() {
+        window.__stopAllAudio();
+    });
+
+    if (window.matchMedia('(hover: hover)').matches) {
+        textEl.addEventListener('mouseenter', function() {
+            var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
+            for (var i = 0; i < allBtns.length; i++) {
+                allBtns[i].classList.add('hover-linked');
+            }
+        });
+        textEl.addEventListener('mouseleave', function() {
+            var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
+            for (var i = 0; i < allBtns.length; i++) {
+                allBtns[i].classList.remove('hover-linked');
+            }
+        });
+    }
+};
+
+window.__linkBtnHoverToText = function(btn, audioKey) {
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    var textEl = document.querySelector('.text-play[data-text-play="' + audioKey + '"]');
+    if (!textEl) return;
+    btn.addEventListener('mouseenter', function() {
+        textEl.classList.add('hover-linked');
+    });
+    btn.addEventListener('mouseleave', function() {
+        textEl.classList.remove('hover-linked');
+    });
+};
 
 window.__checkImageFit = function() {
     var THRESHOLD = 16 / 9;
@@ -451,10 +538,25 @@ window.__webAudioPlay = function(src, btn, gen) {
                 source.connect(window.__audioCtx.destination);
                 source.start();
                 window.__webAudioSource = source;
-                if (btn) { btn.classList.add('playing'); btn._currentAudio = source; }
+
+                var linkedText = null;
+                if (btn) {
+                    btn.classList.add('playing');
+                    btn._currentAudio = source;
+                    var audioItem = btn.closest('.audio-item');
+                    if (audioItem) {
+                        var audioType = audioItem.getAttribute('data-audio');
+                        var defLang = audioItem.getAttribute('data-def-lang');
+                        var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
+                        if (textKey) linkedText = document.querySelector('.text-play[data-text-play="' + textKey + '"]');
+                    }
+                    if (linkedText) linkedText.classList.add('playing');
+                }
+
                 source.onended = function() {
                     if (window.__webAudioSource === source) window.__webAudioSource = null;
                     if (btn && btn._currentAudio === source) btn.classList.remove('playing');
+                    if (linkedText) linkedText.classList.remove('playing');
                     resolve();
                 };
             });
@@ -711,6 +813,43 @@ function clearLastMargin(el) {
     if (wordFurigana !== 'back') frontWord.classList.add('furigana-' + wordFurigana);
     if (sentFurigana !== 'back') frontSent.classList.add('furigana-' + sentFurigana);
 
+    // ── Front-side text-play linkage ──
+    if (wordSide === 'front' && wordAudioSide === 'front' && frontWord.innerHTML) {
+        window.__linkTextPlay(frontWord, 'word', {
+            getAudioSrc: function() {
+                var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
+                if (!item) return null;
+                if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
+                var a = item.querySelector('audio');
+                return a ? a.src : null;
+            },
+            getBtn: function() {
+                return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+            },
+            getAllBtns: function() {
+                return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+            }
+        });
+    }
+
+    if (sentSide === 'front' && sentAudioSide === 'front' && frontSent.innerHTML) {
+        window.__linkTextPlay(frontSent, 'sentence', {
+            getAudioSrc: function() {
+                var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
+                if (!item) return null;
+                if (item._jsAudios && item._jsAudios[0]) return item._jsAudios[0].src;
+                var a = item.querySelector('audio');
+                return a ? a.src : null;
+            },
+            getBtn: function() {
+                return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
+            },
+            getAllBtns: function() {
+                return Array.from(document.querySelectorAll('.audio-item[data-audio="sentence"] .replay-button'));
+            }
+        });
+    }
+
     // Only clear last margins when front has visible content — in the
     // audio-only case the audio-row's margin-bottom provides symmetric
     // spacing and must be preserved.
@@ -859,6 +998,17 @@ function clearLastMargin(el) {
       }
     }, function() { window.__stopAllAudio(); });
   });
+
+  // Link button→text hover for front-side text-play
+  if (window.__linkBtnHoverToText) {
+    document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+      var audioType = item.getAttribute('data-audio');
+      if (!audioType) return;
+      item.querySelectorAll('.replay-button').forEach(function(btn) {
+        window.__linkBtnHoverToText(btn, audioType);
+      });
+    });
+  }
 })();
 </script>
 
