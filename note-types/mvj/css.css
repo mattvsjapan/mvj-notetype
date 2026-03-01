@@ -126,12 +126,12 @@
     --text-2: rgba(255, 255, 255, 0.56);
     --text-3: rgba(255, 255, 255, 0.30);
 
-    /* Accent — warm copper */
-    --accent: #c8805a;
-    --accent-text: #dba07e;
-    --accent-soft: rgba(200, 128, 90, 0.12);
-    --accent-glow: rgba(200, 128, 90, 0.22);
-    --accent-soft-bright: rgba(200, 128, 90, 0.20);
+    /* Accent — muted indigo */
+    --accent: #6b7ea8;
+    --accent-text: #8d9bbe;
+    --accent-soft: rgba(107, 126, 168, 0.10);
+    --accent-glow: rgba(107, 126, 168, 0.18);
+    --accent-soft-bright: rgba(107, 126, 168, 0.15);
     --flash-border: rgba(255, 255, 255, 0.10);
     --flash-bg: rgba(255, 255, 255, 0.04);
 
@@ -252,11 +252,11 @@
     --bg-surface: #1c1c1c;
     --bg-surface-hover: #242424;
     --bg-overlay: rgba(10, 10, 10, 0.96);
-    --accent: #b0956e;
-    --accent-text: #c9b08a;
-    --accent-soft: rgba(176, 149, 110, 0.12);
-    --accent-glow: rgba(176, 149, 110, 0.22);
-    --accent-soft-bright: rgba(176, 149, 110, 0.20);
+    --accent: #7080a0;
+    --accent-text: #929db5;
+    --accent-soft: rgba(112, 128, 160, 0.10);
+    --accent-glow: rgba(112, 128, 160, 0.18);
+    --accent-soft-bright: rgba(112, 128, 160, 0.15);
     --card-bg: rgba(20, 20, 20, 0.58);
     --card-bg-solid: rgb(20, 20, 20);
     --card-shadow:
@@ -273,11 +273,11 @@
     --bg-surface: #231818;
     --bg-surface-hover: #2b1f1f;
     --bg-overlay: rgba(16, 8, 8, 0.96);
-    --accent: #c8564a;
-    --accent-text: #db7e6e;
-    --accent-soft: rgba(200, 86, 74, 0.12);
-    --accent-glow: rgba(200, 86, 74, 0.22);
-    --accent-soft-bright: rgba(200, 86, 74, 0.20);
+    --accent: #7478a8;
+    --accent-text: #959bbe;
+    --accent-soft: rgba(116, 120, 168, 0.10);
+    --accent-glow: rgba(116, 120, 168, 0.18);
+    --accent-soft-bright: rgba(116, 120, 168, 0.15);
     --card-bg: rgba(26, 16, 16, 0.58);
     --card-bg-solid: rgb(26, 16, 16);
     --card-shadow:
@@ -294,11 +294,11 @@
     --bg-surface: #201b2a;
     --bg-surface-hover: #282332;
     --bg-overlay: rgba(14, 10, 20, 0.96);
-    --accent: #9b78c8;
-    --accent-text: #bfa0db;
-    --accent-soft: rgba(155, 120, 200, 0.12);
-    --accent-glow: rgba(155, 120, 200, 0.22);
-    --accent-soft-bright: rgba(155, 120, 200, 0.20);
+    --accent: #7878a8;
+    --accent-text: #999fbe;
+    --accent-soft: rgba(120, 120, 168, 0.10);
+    --accent-glow: rgba(120, 120, 168, 0.18);
+    --accent-soft-bright: rgba(120, 120, 168, 0.15);
     --card-bg: rgba(23, 19, 32, 0.58);
     --card-bg-solid: rgb(23, 19, 32);
     --card-shadow:
@@ -320,11 +320,11 @@
     --text-1: rgba(0, 0, 0, 0.85);
     --text-2: rgba(0, 0, 0, 0.45);
     --text-3: rgba(0, 0, 0, 0.28);
-    --accent: #7d6145;
-    --accent-text: #5a4230;
-    --accent-soft: rgba(125, 97, 69, 0.12);
-    --accent-glow: rgba(125, 97, 69, 0.20);
-    --accent-soft-bright: rgba(125, 97, 69, 0.18);
+    --accent: #5a6a8a;
+    --accent-text: #4a5a78;
+    --accent-soft: rgba(90, 106, 138, 0.10);
+    --accent-glow: rgba(90, 106, 138, 0.18);
+    --accent-soft-bright: rgba(90, 106, 138, 0.15);
     --flash-border: rgba(0, 0, 0, 0.12);
     --flash-bg: rgba(0, 0, 0, 0.03);
     --card-bg: rgba(253, 251, 246, 0.85);
@@ -908,6 +908,11 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 .tategaki .text-play:has(ruby) {
     padding-right: 10px;
     margin-right: -10px;
+}
+
+.tategaki .target-word.text-play:has(ruby) {
+    padding-right: 17px;
+    margin-right: -17px;
 }
 
 @media (hover: hover) {
