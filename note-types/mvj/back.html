@@ -782,7 +782,7 @@
     const defs = {};
     var CMT = '<' + '!--';
     var END = '--' + '>';
-    const re = new RegExp(CMT + '\\s*def-type="(\\w+)".*?' + END + '([\\s\\S]*?)' + CMT + '\\s*def-end\\s*' + END, 'g');
+    const re = new RegExp(CMT + '\\s*def-type="(\\w+)"[\\s\\S]*?' + END + '([\\s\\S]*?)' + CMT + '\\s*def-end\\s*' + END, 'g');
     let m;
     while ((m = re.exec(html)) !== null) {
       defs[m[1]] = m[2].trim();
