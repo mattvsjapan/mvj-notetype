@@ -205,6 +205,44 @@
     --flash-bg: rgba(0, 0, 0, 0.03);
 }
 
+:root[data-color-scheme="solarized"] {
+    --canvas: #002d38;
+    --bg: #002d38;
+    --bg-card: #093946;
+    --bg-surface: #184855;
+    --bg-surface-hover: #205060;
+    --bg-overlay: rgba(0, 45, 56, 0.96);
+    --border: rgba(143, 170, 171, 0.10);
+    --border-light: rgba(143, 170, 171, 0.14);
+    --text-1: #98a8a8;
+    --text-2: #657377;
+    --text-3: rgba(101, 115, 119, 0.55);
+    --accent: #2b90d8;
+    --accent-text: #5aafe8;
+    --accent-soft: rgba(43, 144, 216, 0.12);
+    --accent-glow: rgba(43, 144, 216, 0.22);
+}
+
+:root[data-color-scheme="solarized-light"] {
+    --canvas: #fbf7ef;
+    --bg: #fbf7ef;
+    --bg-card: #fefdf9;
+    --bg-surface: #f1e9d2;
+    --bg-surface-hover: #e8dfc8;
+    --bg-overlay: rgba(251, 247, 239, 0.96);
+    --border: rgba(0, 0, 0, 0.10);
+    --border-light: rgba(0, 0, 0, 0.06);
+    --text-1: #5b7279;
+    --text-2: #657377;
+    --text-3: #8faaab;
+    --accent: #2b90d8;
+    --accent-text: #1a7abb;
+    --accent-soft: rgba(43, 144, 216, 0.10);
+    --accent-glow: rgba(43, 144, 216, 0.18);
+    --flash-border: rgba(0, 0, 0, 0.12);
+    --flash-bg: rgba(0, 0, 0, 0.03);
+}
+
 :root[data-color-scheme="black"] .card-inner {
     background: rgba(20, 20, 20, 0.58);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
@@ -237,6 +275,22 @@
         0 16px 36px rgba(0,0,0,0.025);
 }
 
+:root[data-color-scheme="solarized"] .card-inner {
+    background: rgba(9, 57, 70, 0.58);
+    box-shadow: inset 0 1px 0 rgba(143,170,171,0.06),
+        0 1px 3px rgba(0,30,38,0.40),
+        0 4px 12px rgba(0,30,38,0.28),
+        0 16px 36px rgba(0,30,38,0.16);
+}
+
+:root[data-color-scheme="solarized-light"] .card-inner {
+    background: rgba(254, 253, 249, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.60),
+        0 1px 3px rgba(0,0,0,0.05),
+        0 4px 12px rgba(0,0,0,0.04),
+        0 16px 36px rgba(0,0,0,0.025);
+}
+
 /* — Card Transparency off: opaque card backgrounds — */
 :root[data-card-transparency="off"] .card-inner {
     background: rgb(21, 22, 28);
@@ -252,6 +306,12 @@
 }
 :root[data-card-transparency="off"][data-color-scheme="white"] .card-inner {
     background: rgb(253, 251, 246);
+}
+:root[data-card-transparency="off"][data-color-scheme="solarized"] .card-inner {
+    background: rgb(9, 57, 70);
+}
+:root[data-card-transparency="off"][data-color-scheme="solarized-light"] .card-inner {
+    background: rgb(254, 253, 249);
 }
 
 /* — White scheme: flip dark-mode shimmer to light-mode — */
@@ -305,6 +365,60 @@
 }
 
 html:not(.tategaki)[data-color-scheme="white"] .back:has(.front-content [data-side="front"]) .answer::before {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 25%, rgba(0, 0, 0, 0.15) 75%, transparent);
+}
+
+/* — Solarized-light scheme overrides — */
+
+:root[data-color-scheme="solarized-light"] .card-inner::after {
+    background: radial-gradient(300px 250px at 50% 120px, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+}
+
+:root[data-color-scheme="solarized-light"].tategaki .card-inner::after {
+    background: radial-gradient(300px 250px at 50% 50%, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+}
+
+:root[data-color-scheme="solarized-light"] .replay-button svg circle,
+:root[data-color-scheme="solarized-light"] .replay-button .replayCircle {
+    stroke: rgba(0, 0, 0, 0.14);
+}
+
+:root[data-color-scheme="solarized-light"] .connector line { stroke: #5b7279; }
+:root[data-color-scheme="solarized-light"] .particle circle { fill: none; stroke: #5b7279; }
+:root[data-color-scheme="solarized-light"] .particle line { stroke: #5b7279; }
+:root[data-color-scheme="solarized-light"] .particle text { fill: #5b7279; }
+:root[data-color-scheme="solarized-light"] .particle { color: #5b7279; }
+:root[data-color-scheme="solarized-light"] .sentence .particle { color: inherit; }
+:root[data-color-scheme="solarized-light"] .def .particle,
+:root[data-color-scheme="solarized-light"] .jp-def .particle { color: inherit; }
+
+:root[data-color-scheme="solarized-light"] .image-wrap::after {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06),
+               inset 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+:root[data-color-scheme="solarized-light"] .jp-def-toggle {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+@media (hover: hover) {
+    :root[data-color-scheme="solarized-light"] .jp-def-toggle:hover {
+        color: var(--text-1);
+        border-color: rgba(0, 0, 0, 0.12);
+        background: rgba(0, 0, 0, 0.03);
+    }
+}
+
+:root[data-color-scheme="solarized-light"] .divider {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
+}
+
+:root[data-color-scheme="solarized-light"].tategaki .divider {
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.12) 25%, rgba(0, 0, 0, 0.12) 75%, transparent);
+}
+
+html:not(.tategaki)[data-color-scheme="solarized-light"] .back:has(.front-content [data-side="front"]) .answer::before {
     background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 25%, rgba(0, 0, 0, 0.15) 75%, transparent);
 }
 
