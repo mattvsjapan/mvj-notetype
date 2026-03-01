@@ -156,6 +156,19 @@
     --divider-color: rgba(255, 255, 255, 0.50);
     --answer-divider-color: transparent;
 
+    /* Pitch accent colors */
+    --pitch-atamadaka: #d94040;
+    --pitch-heiban: #3350e8;
+    --pitch-nakadaka: #e89b33;
+    --pitch-kifuku: #9b40d9;
+    --pitch-odaka: #2db852;
+    --pitch-keihan-heiban: #3bb2ed;
+    --pitch-keihan-low-heiban: #096999;
+    --pitch-keihan-atamadaka: #f76d94;
+    --pitch-keihan-nakadaka: #a89c0f;
+    --pitch-keihan-low-nakadaka: #876333;
+    --pitch-keihan-odaka: #658065;
+
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', -apple-system, system-ui, sans-serif;
@@ -209,10 +222,23 @@
        --toggle-hover-border:rgba(...);          (dark default: white 0.10)
        --divider-color:      rgba(...);          (dark default: white 0.50)
        --answer-divider-color:rgba(...);         (dark default: transparent)
+       -- Pitch accent (only override if colors need adjustment) --
+       --pitch-atamadaka:    #...;               (default: #d94040)
+       --pitch-heiban:       #...;               (default: #3350e8)
+       --pitch-nakadaka:     #...;               (default: #e89b33)
+       --pitch-kifuku:       #...;               (default: #9b40d9)
+       --pitch-odaka:        #...;               (default: #2db852)
+       --pitch-keihan-heiban:#...;               (default: #3bb2ed)
+       --pitch-keihan-low-heiban:#...;           (default: #096999)
+       --pitch-keihan-atamadaka:#...;            (default: #f76d94)
+       --pitch-keihan-nakadaka:#...;             (default: #a89c0f)
+       --pitch-keihan-low-nakadaka:#...;         (default: #876333)
+       --pitch-keihan-odaka: #...;               (default: #658065)
    }
 
    Dark themes only need: surface palette + accent + card surface (3 vars).
    Light themes should also override the UI element group (10 vars).
+   Pitch accent colors rarely need overriding — only if contrast is poor.
    Any variable you omit inherits the blue/dark default from :root.
 */
 
@@ -594,53 +620,53 @@ html {
 /* Pitch accent colors (SVG) */
 
 .atamadaka circle,
-.atamadaka line { fill: #d94040; stroke: #d94040; }
-.atamadaka text { fill: #d94040; }
+.atamadaka line { fill: var(--pitch-atamadaka); stroke: var(--pitch-atamadaka); }
+.atamadaka text { fill: var(--pitch-atamadaka); }
 
 .heiban circle,
-.heiban line { fill: #3350e8; stroke: #3350e8; }
-.heiban text { fill: #3350e8; }
+.heiban line { fill: var(--pitch-heiban); stroke: var(--pitch-heiban); }
+.heiban text { fill: var(--pitch-heiban); }
 
 .nakadaka circle,
-.nakadaka line { fill: #e89b33; stroke: #e89b33; }
-.nakadaka text { fill: #e89b33; }
+.nakadaka line { fill: var(--pitch-nakadaka); stroke: var(--pitch-nakadaka); }
+.nakadaka text { fill: var(--pitch-nakadaka); }
 
 .kifuku circle,
-.kifuku line { fill: #9b40d9; stroke: #9b40d9; }
-.kifuku text { fill: #9b40d9; }
+.kifuku line { fill: var(--pitch-kifuku); stroke: var(--pitch-kifuku); }
+.kifuku text { fill: var(--pitch-kifuku); }
 
 .odaka circle,
-.odaka line { fill: #2db852; stroke: #2db852; }
-.odaka text { fill: #2db852; }
+.odaka line { fill: var(--pitch-odaka); stroke: var(--pitch-odaka); }
+.odaka text { fill: var(--pitch-odaka); }
 
 /* Keihan pitch accent colors (SVG) */
 
 .keihan_heiban circle,
-.keihan_heiban line { fill: #3bb2ed; stroke: #3bb2ed; }
-.keihan_heiban text { fill: #3bb2ed; }
+.keihan_heiban line { fill: var(--pitch-keihan-heiban); stroke: var(--pitch-keihan-heiban); }
+.keihan_heiban text { fill: var(--pitch-keihan-heiban); }
 
 .keihan_low_heiban circle,
-.keihan_low_heiban line { fill: #096999; stroke: #096999; }
-.keihan_low_heiban text { fill: #096999; }
+.keihan_low_heiban line { fill: var(--pitch-keihan-low-heiban); stroke: var(--pitch-keihan-low-heiban); }
+.keihan_low_heiban text { fill: var(--pitch-keihan-low-heiban); }
 
 .keihan_atamadaka circle,
-.keihan_atamadaka line { fill: #f76d94; stroke: #f76d94; }
-.keihan_atamadaka text { fill: #f76d94; }
+.keihan_atamadaka line { fill: var(--pitch-keihan-atamadaka); stroke: var(--pitch-keihan-atamadaka); }
+.keihan_atamadaka text { fill: var(--pitch-keihan-atamadaka); }
 
 .keihan_nakadaka circle,
-.keihan_nakadaka line { fill: #a89c0f; stroke: #a89c0f; }
-.keihan_nakadaka text { fill: #a89c0f; }
+.keihan_nakadaka line { fill: var(--pitch-keihan-nakadaka); stroke: var(--pitch-keihan-nakadaka); }
+.keihan_nakadaka text { fill: var(--pitch-keihan-nakadaka); }
 
 .keihan_low_nakadaka circle,
-.keihan_low_nakadaka line { fill: #876333; stroke: #876333; }
-.keihan_low_nakadaka text { fill: #876333; }
+.keihan_low_nakadaka line { fill: var(--pitch-keihan-low-nakadaka); stroke: var(--pitch-keihan-low-nakadaka); }
+.keihan_low_nakadaka text { fill: var(--pitch-keihan-low-nakadaka); }
 
 .keihan_odaka circle,
 .keihan_odaka line,
 .keihan_low_odaka circle,
-.keihan_low_odaka line { fill: #658065; stroke: #658065; }
+.keihan_low_odaka line { fill: var(--pitch-keihan-odaka); stroke: var(--pitch-keihan-odaka); }
 .keihan_odaka text,
-.keihan_low_odaka text { fill: #658065; }
+.keihan_low_odaka text { fill: var(--pitch-keihan-odaka); }
 
 .connector line { stroke: var(--graph-color); }
 .particle circle { fill: none; stroke: var(--graph-color); }
@@ -665,18 +691,18 @@ html {
 
 /* Pitch accent colors (HTML spans) */
 
-.atamadaka { color: #d94040; }
-.heiban { color: #3350e8; }
-.nakadaka { color: #e89b33; }
-.kifuku { color: #9b40d9; }
-.odaka { color: #2db852; }
-.keihan_heiban { color: #3bb2ed; }
-.keihan_low_heiban { color: #096999; }
-.keihan_atamadaka { color: #f76d94; }
-.keihan_nakadaka { color: #a89c0f; }
-.keihan_low_nakadaka { color: #876333; }
+.atamadaka { color: var(--pitch-atamadaka); }
+.heiban { color: var(--pitch-heiban); }
+.nakadaka { color: var(--pitch-nakadaka); }
+.kifuku { color: var(--pitch-kifuku); }
+.odaka { color: var(--pitch-odaka); }
+.keihan_heiban { color: var(--pitch-keihan-heiban); }
+.keihan_low_heiban { color: var(--pitch-keihan-low-heiban); }
+.keihan_atamadaka { color: var(--pitch-keihan-atamadaka); }
+.keihan_nakadaka { color: var(--pitch-keihan-nakadaka); }
+.keihan_low_nakadaka { color: var(--pitch-keihan-low-nakadaka); }
 .keihan_odaka,
-.keihan_low_odaka { color: #658065; }
+.keihan_low_odaka { color: var(--pitch-keihan-odaka); }
 .particle { color: var(--graph-color); }
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
