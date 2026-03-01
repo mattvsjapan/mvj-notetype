@@ -130,6 +130,8 @@
     --accent-text: #dba07e;
     --accent-soft: rgba(200, 128, 90, 0.12);
     --accent-glow: rgba(200, 128, 90, 0.22);
+    --flash-border: rgba(255, 255, 255, 0.10);
+    --flash-bg: rgba(255, 255, 255, 0.04);
 
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
@@ -199,6 +201,8 @@
     --accent-text: #5a4230;
     --accent-soft: rgba(125, 97, 69, 0.12);
     --accent-glow: rgba(125, 97, 69, 0.20);
+    --flash-border: rgba(0, 0, 0, 0.12);
+    --flash-bg: rgba(0, 0, 0, 0.03);
 }
 
 :root[data-color-scheme="black"] .card-inner {
