@@ -464,6 +464,7 @@ class SettingsDialog(QDialog):
         self._btn_down = QPushButton("\u25bc")  # ▼
         for btn in (self._btn_add, self._btn_del, self._btn_up, self._btn_down):
             btn.setFixedWidth(36)
+            btn.setStyleSheet("QPushButton { padding-left: 0px; padding-right: 0px; }")
             btn_row.addWidget(btn)
         btn_row.addStretch()
         self._btn_add.clicked.connect(self._add_mode)
