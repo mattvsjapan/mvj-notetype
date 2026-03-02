@@ -472,6 +472,8 @@ html {
    ================================================ */
 
 .back .audio-row {
+    /* display: flex; — uncomment to restore back audio buttons */
+    display: none;
     padding: 0;
     gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
@@ -513,9 +515,7 @@ html {
         display: none;
     }
 
-    .back > .answer {
-        margin-top: -20px;
-    }
+    /* .back > .answer { margin-top: -20px; } — restore when back audio buttons are restored */
 
     .back .audio-row,
     .back .audio-item,
@@ -552,14 +552,9 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 24px;
+    /* margin-top: 24px; — restore when back audio buttons are restored */
+    margin-top: 0;
     padding-bottom: 8px;
-}
-
-@media (hover: none) {
-    .answer {
-        margin-top: 0;
-    }
 }
 
 /* Target word — Chinese serif with vertical bopomofo */
@@ -849,7 +844,8 @@ rt {
 
 @media (hover: none) {
     .audio-row-bottom {
-        display: flex;
+        /* display: flex; — uncomment to restore bottom audio buttons */
+        display: none;
         align-items: center;
         justify-content: center;
         gap: clamp(8px, 4vw, 20px);
