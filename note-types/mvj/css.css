@@ -1505,6 +1505,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .target-word {
     color: var(--text-1);
     margin: 0 0 12px;
+    align-self: stretch;
 }
 
 .front-content .target-word rt {
