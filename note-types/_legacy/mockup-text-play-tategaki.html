@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text-as-Play-Button Mockup — Tategaki (Multi-line)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+JP:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0c0d12;
+    --bg-card: #15161c;
+    --bg-surface: #1e1f27;
+    --bg-surface-hover: #26272f;
+    --text-1: rgba(255, 255, 255, 0.92);
+    --text-2: rgba(255, 255, 255, 0.56);
+    --text-3: rgba(255, 255, 255, 0.30);
+    --accent: #c8805a;
+    --accent-text: #dba07e;
+    --accent-soft: rgba(200, 128, 90, 0.12);
+    --accent-glow: rgba(200, 128, 90, 0.22);
+    --border: rgba(255, 255, 255, 0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: Inter, -apple-system, system-ui, sans-serif;
+    padding: 40px 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .variations {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 20px;
+  }
+
+  .states {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .state-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .state-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Vertical writing container for each state preview */
+  .tate-preview {
+    writing-mode: vertical-rl;
+    height: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .tate-preview .word {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .tate-preview .sentence {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    line-height: 1.8;
+    color: var(--text-2);
+  }
+
+  .tate-preview .definition {
+    font-family: Inter, -apple-system, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+
+  /* ============================================
+     VARIATION 1: Side-Line Reveal
+     Single accent line on the right (reading-start)
+     edge of each text element. For multi-column
+     text, this marks the first column only.
+     ============================================ */
+  .v1-tate {
+    cursor: pointer;
+    position: relative;
+    transition: color 250ms ease;
+  }
+  .v1-tate::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 0;
+    background: var(--accent);
+    border-radius: 1px;
+    transition: height 280ms ease-out, box-shadow 300ms ease;
+  }
+  .v1-tate.hover { color: var(--accent-text); }
+  .v1-tate.hover::after { height: 90%; }
+  .v1-tate.playing { color: var(--accent-text); }
+  .v1-tate.playing::after {
+    height: 90%;
+    animation: v1t-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes v1t-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(200, 128, 90, 0.3); }
+    50% { box-shadow: 0 0 14px rgba(200, 128, 90, 0.6); }
+  }
+
+
+  /* ============================================
+     VARIATION 2: Soft Background Pill
+     Background + inset border around the entire
+     text element. For multi-column text, the pill
+     encompasses all columns as one unit.
+     ============================================ */
+  .v2-tate {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 6px 4px;
+    margin: -6px -4px;
+    transition: background 250ms ease, color 250ms ease, box-shadow 250ms ease;
+  }
+  .v2-tate.hover {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
+  }
+  .v2-tate.playing {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
+    animation: v2-breathe 1.6s ease-in-out infinite;
+  }
+  @keyframes v2-breathe {
+    0%, 100% { background: var(--accent-soft); }
+    50% { background: rgba(200, 128, 90, 0.20); }
+  }
+
+
+  /* ============================================
+     VARIATION 3: Opacity Lift + Glow
+     Per-glyph text-shadow glow. Naturally works
+     across all columns with no adaptation needed.
+     ============================================ */
+  .v3-tate {
+    cursor: pointer;
+    transition: color 200ms ease, text-shadow 250ms ease;
+  }
+  .v3-tate.sentence,
+  .v3-tate.definition { opacity: 0.85; transition: color 200ms ease, text-shadow 250ms ease, opacity 200ms ease; }
+  .v3-tate.hover { color: var(--text-1) !important; text-shadow: 0 0 20px rgba(255, 255, 255, 0.10); opacity: 1; }
+  .v3-tate.playing { color: var(--accent) !important; opacity: 1; animation: v3-glow 1.4s ease-in-out infinite; }
+  @keyframes v3-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(200, 128, 90, 0.25); }
+    50% { text-shadow: 0 0 24px rgba(200, 128, 90, 0.5), 0 0 48px rgba(200, 128, 90, 0.15); }
+  }
+
+
+  /* ============================================
+     VARIATION 4: Top-Edge Bar
+     Horizontal accent bar at the top of each text
+     element. For multi-column text, the bar spans
+     across all columns as a header/bracket.
+     ============================================ */
+  .v4-tate {
+    cursor: pointer;
+    position: relative;
+    transition: color 250ms ease;
+  }
+  .v4-tate::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 3px;
+    width: 0;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 250ms ease;
+  }
+  .v4-tate.hover { color: var(--accent-text); }
+  .v4-tate.hover::before { width: 70%; }
+  .v4-tate.playing { color: var(--accent-text); }
+  .v4-tate.playing::before {
+    width: 70%;
+    animation: v4t-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes v4t-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(200, 128, 90, 0.3); opacity: 1; }
+    50% { box-shadow: 0 0 12px rgba(200, 128, 90, 0.6); opacity: 0.7; }
+  }
+
+
+  /* ============================================
+     VARIATION 5: Per-Column Dots
+     text-decoration underline on the right side
+     of the text. In vertical-rl this draws a line
+     alongside EACH column individually — the only
+     variation that decorates every column.
+     Hover: dotted   Playing: solid + glow
+     ============================================ */
+  .v5-tate {
+    cursor: pointer;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-position: right;
+    text-underline-offset: 3px;
+    transition: color 250ms ease, text-decoration-color 250ms ease, text-shadow 300ms ease;
+  }
+  .v5-tate.hover {
+    color: var(--accent-text);
+    text-decoration-style: dotted;
+    text-decoration-color: var(--accent);
+  }
+  .v5-tate.playing {
+    color: var(--accent-text);
+    text-decoration-style: solid;
+    text-decoration-color: var(--accent);
+    animation: v5t-glow 1.4s ease-in-out infinite;
+  }
+  @keyframes v5t-glow {
+    0%, 100% { text-shadow: 0 0 6px rgba(200, 128, 90, 0.2); }
+    50% { text-shadow: 0 0 16px rgba(200, 128, 90, 0.45); }
+  }
+  /* Idle state needs dotted set so transition from transparent works */
+  .v5-tate { text-decoration-style: dotted; }
+
+
+  /* ============================================
+     INTERACTIVE DEMO
+     ============================================ */
+  .demo-section {
+    max-width: 980px;
+    margin: 48px auto 0;
+  }
+
+  .demo-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+  }
+  .demo-card .card-title { margin-bottom: 14px; }
+
+  .switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .switcher button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--bg-surface);
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .switcher button:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-2);
+  }
+  .switcher button.active {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-color: var(--accent-glow);
+  }
+
+  .demo-tate-container {
+    writing-mode: vertical-rl;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    height: 440px;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .demo-word {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .demo-sentence {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    line-height: 1.8;
+    color: var(--text-2);
+  }
+  .demo-definition {
+    font-family: Inter, -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+  .demo-status {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* --- V1 interactive --- */
+  .demo-v1 .demo-word, .demo-v1 .demo-sentence, .demo-v1 .demo-definition {
+    cursor: pointer;
+    position: relative;
+    transition: color 250ms ease;
+  }
+  .demo-v1 .demo-word::after, .demo-v1 .demo-sentence::after, .demo-v1 .demo-definition::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 0;
+    background: var(--accent);
+    border-radius: 1px;
+    transition: height 280ms ease-out, box-shadow 300ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v1 .demo-word:hover, .demo-v1 .demo-sentence:hover, .demo-v1 .demo-definition:hover {
+      color: var(--accent-text);
+    }
+    .demo-v1 .demo-word:hover::after, .demo-v1 .demo-sentence:hover::after, .demo-v1 .demo-definition:hover::after {
+      height: 90%;
+    }
+  }
+  .demo-v1 .playing { color: var(--accent-text) !important; }
+  .demo-v1 .playing::after {
+    height: 90% !important;
+    animation: v1t-pulse 1.2s ease-in-out infinite;
+  }
+
+  /* --- V2 interactive --- */
+  .demo-v2 .demo-word, .demo-v2 .demo-sentence, .demo-v2 .demo-definition {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 6px 4px;
+    margin: -6px -4px;
+    transition: background 250ms ease, color 250ms ease, box-shadow 250ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v2 .demo-word:hover, .demo-v2 .demo-sentence:hover, .demo-v2 .demo-definition:hover {
+      background: var(--accent-soft);
+      color: var(--accent-text);
+      box-shadow: inset 0 0 0 1px var(--accent-glow);
+    }
+  }
+  .demo-v2 .playing {
+    background: var(--accent-soft) !important;
+    color: var(--accent-text) !important;
+    box-shadow: inset 0 0 0 1px var(--accent-glow) !important;
+    animation: v2-breathe 1.6s ease-in-out infinite;
+  }
+
+  /* --- V3 interactive --- */
+  .demo-v3 .demo-word, .demo-v3 .demo-sentence, .demo-v3 .demo-definition {
+    cursor: pointer;
+    transition: color 200ms ease, text-shadow 250ms ease, opacity 200ms ease;
+  }
+  .demo-v3 .demo-sentence, .demo-v3 .demo-definition { opacity: 0.85; }
+  @media (hover: hover) {
+    .demo-v3 .demo-word:hover {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.10);
+    }
+    .demo-v3 .demo-sentence:hover, .demo-v3 .demo-definition:hover {
+      color: var(--text-1);
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+      opacity: 1;
+    }
+  }
+  .demo-v3 .playing {
+    color: var(--accent) !important;
+    opacity: 1 !important;
+    animation: v3-glow 1.4s ease-in-out infinite;
+  }
+
+  /* --- V4 interactive --- */
+  .demo-v4 .demo-word, .demo-v4 .demo-sentence, .demo-v4 .demo-definition {
+    cursor: pointer;
+    position: relative;
+    transition: color 250ms ease;
+  }
+  .demo-v4 .demo-word::before, .demo-v4 .demo-sentence::before, .demo-v4 .demo-definition::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 3px;
+    width: 0;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 250ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v4 .demo-word:hover, .demo-v4 .demo-sentence:hover, .demo-v4 .demo-definition:hover {
+      color: var(--accent-text);
+    }
+    .demo-v4 .demo-word:hover::before, .demo-v4 .demo-sentence:hover::before, .demo-v4 .demo-definition:hover::before {
+      width: 70%;
+    }
+  }
+  .demo-v4 .playing { color: var(--accent-text) !important; }
+  .demo-v4 .playing::before {
+    width: 70% !important;
+    animation: v4t-pulse 1.2s ease-in-out infinite;
+  }
+
+  /* --- V5 interactive --- */
+  .demo-v5 .demo-word, .demo-v5 .demo-sentence, .demo-v5 .demo-definition {
+    cursor: pointer;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-position: right;
+    text-underline-offset: 3px;
+    transition: color 250ms ease, text-decoration-color 250ms ease, text-shadow 300ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v5 .demo-word:hover, .demo-v5 .demo-sentence:hover, .demo-v5 .demo-definition:hover {
+      color: var(--accent-text);
+      text-decoration-color: var(--accent);
+    }
+  }
+  .demo-v5 .playing {
+    color: var(--accent-text) !important;
+    text-decoration-color: var(--accent) !important;
+    text-decoration-style: solid !important;
+    animation: v5t-glow 1.4s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<h1>Text-as-Play-Button — Tategaki with Multi-line Wrapping</h1>
+
+<div class="variations">
+
+  <!-- VARIATION 1 -->
+  <div class="card">
+    <div class="card-label">Variation 1</div>
+    <div class="card-title">Side-Line Reveal — accent line on reading-start edge (right side). For multi-column text, marks the first column only.</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="tate-preview">
+          <div class="word v1-tate">食べ物</div>
+          <div class="sentence v1-tate">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v1-tate">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="tate-preview">
+          <div class="word v1-tate hover">食べ物</div>
+          <div class="sentence v1-tate hover">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v1-tate hover">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="tate-preview">
+          <div class="word v1-tate playing">食べ物</div>
+          <div class="sentence v1-tate playing">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v1-tate playing">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 2 -->
+  <div class="card">
+    <div class="card-label">Variation 2</div>
+    <div class="card-title">Soft Background Pill — tinted rectangle wraps all columns of each text element as a single unit.</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="tate-preview">
+          <div class="word v2-tate">食べ物</div>
+          <div class="sentence v2-tate">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v2-tate">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="tate-preview">
+          <div class="word v2-tate hover">食べ物</div>
+          <div class="sentence v2-tate hover">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v2-tate hover">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="tate-preview">
+          <div class="word v2-tate playing">食べ物</div>
+          <div class="sentence v2-tate playing">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v2-tate playing">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 3 -->
+  <div class="card">
+    <div class="card-label">Variation 3</div>
+    <div class="card-title">Opacity Lift + Glow — per-glyph text-shadow. Works identically on all columns with zero adaptation.</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="tate-preview">
+          <div class="word v3-tate">食べ物</div>
+          <div class="sentence v3-tate">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v3-tate">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="tate-preview">
+          <div class="word v3-tate hover">食べ物</div>
+          <div class="sentence v3-tate hover">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v3-tate hover">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="tate-preview">
+          <div class="word v3-tate playing">食べ物</div>
+          <div class="sentence v3-tate playing">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v3-tate playing">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 4 -->
+  <div class="card">
+    <div class="card-label">Variation 4</div>
+    <div class="card-title">Top-Edge Bar — horizontal accent bar spans across the top of all columns as a bracket/header.</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="tate-preview">
+          <div class="word v4-tate">食べ物</div>
+          <div class="sentence v4-tate">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v4-tate">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="tate-preview">
+          <div class="word v4-tate hover">食べ物</div>
+          <div class="sentence v4-tate hover">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v4-tate hover">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="tate-preview">
+          <div class="word v4-tate playing">食べ物</div>
+          <div class="sentence v4-tate playing">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v4-tate playing">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 5 -->
+  <div class="card">
+    <div class="card-label">Variation 5</div>
+    <div class="card-title">Per-Column Dots — text-decoration underline on the right side of EACH column individually. Dotted on hover, solid while playing.</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="tate-preview">
+          <div class="word v5-tate">食べ物</div>
+          <div class="sentence v5-tate">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v5-tate">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="tate-preview">
+          <div class="word v5-tate hover">食べ物</div>
+          <div class="sentence v5-tate hover">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v5-tate hover">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="tate-preview">
+          <div class="word v5-tate playing">食べ物</div>
+          <div class="sentence v5-tate playing">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+          <div class="definition v5-tate playing">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- INTERACTIVE DEMO -->
+<div class="demo-section">
+  <h1>Interactive Demo — Hover &amp; Click</h1>
+
+  <div class="switcher" id="switcher">
+    <button class="active" data-v="1">1 · Side Line</button>
+    <button data-v="2">2 · Pill</button>
+    <button data-v="3">3 · Glow</button>
+    <button data-v="4">4 · Top Bar</button>
+    <button data-v="5">5 · Dots</button>
+  </div>
+
+  <div class="demo-card" id="demo">
+    <div class="card-title">Click any text to simulate 1.5s audio playback. Hover to preview.</div>
+    <div class="demo-v1 demo-tate-container" id="demo-container">
+      <div class="demo-word" id="demo-word">食べ物</div>
+      <div class="demo-sentence" id="demo-sentence">好きな食べ物は何ですか。日本料理が大好きで、寿司が一番です。</div>
+      <div class="demo-definition" id="demo-definition">Food; foodstuff. Items prepared or used for eating, especially as part of a meal.</div>
+    </div>
+    <div class="demo-status" id="demo-status">State: idle</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var playingTimers = {};
+
+  var switcher = document.getElementById('switcher');
+  var container = document.getElementById('demo-container');
+  var word = document.getElementById('demo-word');
+  var sentence = document.getElementById('demo-sentence');
+  var definition = document.getElementById('demo-definition');
+  var status = document.getElementById('demo-status');
+
+  var targets = [word, sentence, definition];
+
+  function setVariation(v) {
+    container.className = 'demo-v' + v + ' demo-tate-container';
+    targets.forEach(function(el) { el.classList.remove('playing'); });
+    Object.keys(playingTimers).forEach(function(k) { clearTimeout(playingTimers[k]); });
+    status.textContent = 'State: idle';
+
+    var btns = switcher.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-v') === v);
+    }
+  }
+
+  switcher.addEventListener('click', function(e) {
+    var btn = e.target.closest('button');
+    if (btn) setVariation(btn.getAttribute('data-v'));
+  });
+
+  function simulatePlay(el, label) {
+    targets.forEach(function(t) { t.classList.remove('playing'); });
+    Object.keys(playingTimers).forEach(function(k) { clearTimeout(playingTimers[k]); });
+
+    el.classList.add('playing');
+    status.textContent = 'State: playing ' + label + '...';
+
+    playingTimers[label] = setTimeout(function() {
+      el.classList.remove('playing');
+      status.textContent = 'State: idle';
+    }, 1500);
+  }
+
+  word.addEventListener('click', function() { simulatePlay(word, 'word audio'); });
+  sentence.addEventListener('click', function() { simulatePlay(sentence, 'sentence audio'); });
+  definition.addEventListener('click', function() { simulatePlay(definition, 'definition audio'); });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text-as-Play-Button Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+JP:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0c0d12;
+    --bg-card: #15161c;
+    --bg-surface: #1e1f27;
+    --bg-surface-hover: #26272f;
+    --text-1: rgba(255, 255, 255, 0.92);
+    --text-2: rgba(255, 255, 255, 0.56);
+    --text-3: rgba(255, 255, 255, 0.30);
+    --accent: #c8805a;
+    --accent-text: #dba07e;
+    --accent-soft: rgba(200, 128, 90, 0.12);
+    --accent-glow: rgba(200, 128, 90, 0.22);
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.09);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: Inter, -apple-system, system-ui, sans-serif;
+    padding: 40px 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .variations {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    position: relative;
+  }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 20px;
+  }
+
+  .word {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 14px;
+  }
+
+  .sentence {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 0;
+  }
+
+  .states {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .states .state-col {
+    flex: 1;
+    text-align: center;
+  }
+  .states .state-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ============================================
+     VARIATION 1: Underline Reveal
+     Hover: accent underline fades in
+     Playing: underline pulses with glow
+     ============================================ */
+  .v1-idle {
+    cursor: pointer;
+    text-decoration: none;
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 0% 2px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    transition: background-size 280ms ease-out, color 250ms ease;
+    padding-bottom: 2px;
+  }
+  .v1-hover {
+    cursor: pointer;
+    color: var(--accent-text);
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 100% 2px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 2px;
+  }
+  .v1-playing {
+    cursor: pointer;
+    color: var(--accent-text);
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 100% 2px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 2px;
+    animation: v1-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes v1-pulse {
+    0%, 100% { text-shadow: none; }
+    50% { text-shadow: 0 0 12px rgba(200, 128, 90, 0.4); }
+  }
+
+  /* ============================================
+     VARIATION 2: Soft Background Pill
+     Hover: accent-soft bg with rounded shape
+     Playing: bg brightens + subtle scale breathe
+     ============================================ */
+  .v2-base {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    transition: background 250ms ease, color 250ms ease, box-shadow 250ms ease;
+  }
+  .v2-idle {
+    background: transparent;
+  }
+  .v2-hover {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
+  }
+  .v2-playing {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
+    animation: v2-breathe 1.6s ease-in-out infinite;
+  }
+  @keyframes v2-breathe {
+    0%, 100% { background: var(--accent-soft); }
+    50% { background: rgba(200, 128, 90, 0.20); }
+  }
+
+  /* ============================================
+     VARIATION 3: Opacity Lift + Glow
+     Hover: text brightens from text-2 to text-1, subtle glow
+     Playing: accent color + radiating glow
+     ============================================ */
+  .v3-idle {
+    cursor: pointer;
+    transition: color 200ms ease, text-shadow 200ms ease, opacity 200ms ease;
+  }
+  .v3-idle.sentence { opacity: 0.85; }
+  .v3-hover {
+    cursor: pointer;
+    color: var(--text-1) !important;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  }
+  .v3-playing {
+    cursor: pointer;
+    color: var(--accent) !important;
+    animation: v3-glow 1.4s ease-in-out infinite;
+  }
+  @keyframes v3-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(200, 128, 90, 0.25); }
+    50% { text-shadow: 0 0 24px rgba(200, 128, 90, 0.5), 0 0 48px rgba(200, 128, 90, 0.15); }
+  }
+
+  /* ============================================
+     VARIATION 4: Left-Edge Bar
+     Hover: vertical accent bar slides in from left
+     Playing: bar pulses, text shifts accent
+     ============================================ */
+  .v4-base {
+    cursor: pointer;
+    position: relative;
+    padding-left: 14px;
+    transition: color 250ms ease;
+  }
+  .v4-base::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    border-radius: 2px;
+    transition: height 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 250ms ease,
+                box-shadow 250ms ease;
+  }
+  .v4-idle {
+    padding-left: 0;
+  }
+  .v4-idle::before {
+    height: 0;
+    background: transparent;
+  }
+  .v4-hover {
+    color: var(--accent-text);
+  }
+  .v4-hover::before {
+    height: 70%;
+    background: var(--accent);
+  }
+  .v4-playing {
+    color: var(--accent-text);
+  }
+  .v4-playing::before {
+    height: 70%;
+    background: var(--accent);
+    animation: v4-bar-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes v4-bar-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(200, 128, 90, 0.3); opacity: 1; }
+    50% { box-shadow: 0 0 12px rgba(200, 128, 90, 0.6); opacity: 0.7; }
+  }
+
+  /* ============================================
+     VARIATION 5: Dotted Underline + Wave
+     Hover: dotted accent underline appears
+     Playing: underline becomes animated dashes (marching ants)
+     ============================================ */
+  .v5-base {
+    cursor: pointer;
+    padding-bottom: 4px;
+    transition: color 250ms ease;
+  }
+  .v5-idle {
+    border-bottom: 2px solid transparent;
+  }
+  .v5-hover {
+    color: var(--accent-text);
+    border-bottom: 2px dotted var(--accent);
+  }
+  .v5-playing {
+    color: var(--accent-text);
+    background-image: linear-gradient(90deg,
+      var(--accent) 50%, transparent 50%);
+    background-size: 8px 2px;
+    background-position: 0% 100%;
+    background-repeat: repeat-x;
+    animation: v5-march 400ms linear infinite;
+  }
+  @keyframes v5-march {
+    to { background-position: 8px 100%; }
+  }
+
+  /* ============================================
+     INTERACTIVE DEMO SECTION
+     ============================================ */
+  .demo-section {
+    max-width: 520px;
+    margin: 48px auto 0;
+  }
+  .demo-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+  }
+  .demo-card .card-title { margin-bottom: 14px; }
+
+  /* Switcher */
+  .switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .switcher button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--bg-surface);
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .switcher button:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-2);
+  }
+  .switcher button.active {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-color: var(--accent-glow);
+  }
+
+  .demo-word, .demo-sentence {
+    transition: all 280ms ease-out;
+  }
+  .demo-word {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 14px;
+    display: inline-block;
+  }
+  .demo-sentence {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    line-height: 1.7;
+    color: var(--text-2);
+    display: block;
+  }
+  .demo-status {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* V1 demo */
+  .demo-v1 .demo-word, .demo-v1 .demo-sentence {
+    cursor: pointer;
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 0% 2px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 2px;
+    transition: background-size 280ms ease-out, color 250ms ease, text-shadow 300ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v1 .demo-word:hover, .demo-v1 .demo-sentence:hover {
+      color: var(--accent-text);
+      background-size: 100% 2px;
+    }
+  }
+  .demo-v1 .demo-word.playing, .demo-v1 .demo-sentence.playing {
+    color: var(--accent-text);
+    background-size: 100% 2px;
+    animation: v1-pulse 1.2s ease-in-out infinite;
+  }
+
+  /* V2 demo */
+  .demo-v2 .demo-word, .demo-v2 .demo-sentence {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-left: -8px;
+    transition: background 250ms ease, color 250ms ease, box-shadow 250ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v2 .demo-word:hover, .demo-v2 .demo-sentence:hover {
+      background: var(--accent-soft);
+      color: var(--accent-text);
+      box-shadow: inset 0 0 0 1px var(--accent-glow);
+    }
+  }
+  .demo-v2 .demo-word.playing, .demo-v2 .demo-sentence.playing {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
+    animation: v2-breathe 1.6s ease-in-out infinite;
+  }
+
+  /* V3 demo */
+  .demo-v3 .demo-word, .demo-v3 .demo-sentence {
+    cursor: pointer;
+    transition: color 200ms ease, text-shadow 250ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v3 .demo-word:hover {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.10);
+    }
+    .demo-v3 .demo-sentence:hover {
+      color: var(--text-1);
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+    }
+  }
+  .demo-v3 .demo-word.playing, .demo-v3 .demo-sentence.playing {
+    color: var(--accent) !important;
+    animation: v3-glow 1.4s ease-in-out infinite;
+  }
+
+  /* V4 demo */
+  .demo-v4 .demo-word, .demo-v4 .demo-sentence {
+    cursor: pointer;
+    position: relative;
+    padding-left: 0;
+    transition: color 250ms ease, padding-left 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .demo-v4 .demo-word::before, .demo-v4 .demo-sentence::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: height 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 250ms ease;
+  }
+  @media (hover: hover) {
+    .demo-v4 .demo-word:hover, .demo-v4 .demo-sentence:hover {
+      color: var(--accent-text);
+      padding-left: 14px;
+    }
+    .demo-v4 .demo-word:hover::before, .demo-v4 .demo-sentence:hover::before {
+      height: 70%;
+    }
+  }
+  .demo-v4 .demo-word.playing, .demo-v4 .demo-sentence.playing {
+    color: var(--accent-text);
+    padding-left: 14px;
+  }
+  .demo-v4 .demo-word.playing::before, .demo-v4 .demo-sentence.playing::before {
+    height: 70%;
+    animation: v4-bar-pulse 1.2s ease-in-out infinite;
+  }
+
+  /* V5 demo */
+  .demo-v5 .demo-word, .demo-v5 .demo-sentence {
+    cursor: pointer;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+    transition: color 250ms ease, border-color 250ms ease;
+    /* Reset background for playing state */
+    background-image: none;
+    background-size: auto;
+    background-position: initial;
+    background-repeat: initial;
+  }
+  @media (hover: hover) {
+    .demo-v5 .demo-word:hover, .demo-v5 .demo-sentence:hover {
+      color: var(--accent-text);
+      border-bottom: 2px dotted var(--accent);
+    }
+  }
+  .demo-v5 .demo-word.playing, .demo-v5 .demo-sentence.playing {
+    color: var(--accent-text);
+    border-bottom-color: transparent;
+    background-image: linear-gradient(90deg, var(--accent) 50%, transparent 50%);
+    background-size: 8px 2px;
+    background-position: 0% 100%;
+    background-repeat: repeat-x;
+    animation: v5-march 400ms linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<h1>Text-as-Play-Button &mdash; 5 Variations</h1>
+
+<div class="variations">
+
+  <!-- VARIATION 1 -->
+  <div class="card">
+    <div class="card-label">Variation 1</div>
+    <div class="card-title">Underline Reveal &mdash; accent underline sweeps in on hover, pulses with glow while playing</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="word v1-idle">食べ物</div>
+        <div class="sentence v1-idle">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="word v1-hover">食べ物</div>
+        <div class="sentence v1-hover">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="word v1-playing">食べ物</div>
+        <div class="sentence v1-playing">好きな食べ物は何ですか。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 2 -->
+  <div class="card">
+    <div class="card-label">Variation 2</div>
+    <div class="card-title">Soft Background Pill &mdash; tinted pill on hover, breathing brightness while playing</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="word v2-base v2-idle">食べ物</div>
+        <div class="sentence v2-base v2-idle">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="word v2-base v2-hover">食べ物</div>
+        <div class="sentence v2-base v2-hover">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="word v2-base v2-playing">食べ物</div>
+        <div class="sentence v2-base v2-playing">好きな食べ物は何ですか。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 3 -->
+  <div class="card">
+    <div class="card-label">Variation 3</div>
+    <div class="card-title">Opacity Lift + Glow &mdash; text brightens on hover, accent color with radiating glow while playing</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="word v3-idle">食べ物</div>
+        <div class="sentence v3-idle">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="word v3-hover">食べ物</div>
+        <div class="sentence v3-hover">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="word v3-playing">食べ物</div>
+        <div class="sentence v3-playing">好きな食べ物は何ですか。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 4 -->
+  <div class="card">
+    <div class="card-label">Variation 4</div>
+    <div class="card-title">Left-Edge Bar &mdash; accent bar slides in from left on hover, pulses while playing</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="word v4-base v4-idle">食べ物</div>
+        <div class="sentence v4-base v4-idle">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="word v4-base v4-hover">食べ物</div>
+        <div class="sentence v4-base v4-hover">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="word v4-base v4-playing">食べ物</div>
+        <div class="sentence v4-base v4-playing">好きな食べ物は何ですか。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIATION 5 -->
+  <div class="card">
+    <div class="card-label">Variation 5</div>
+    <div class="card-title">Dotted Underline + Marching Ants &mdash; dotted accent line on hover, animated dashes while playing</div>
+    <div class="states">
+      <div class="state-col">
+        <div class="state-label">Idle</div>
+        <div class="word v5-base v5-idle">食べ物</div>
+        <div class="sentence v5-base v5-idle">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Hover</div>
+        <div class="word v5-base v5-hover">食べ物</div>
+        <div class="sentence v5-base v5-hover">好きな食べ物は何ですか。</div>
+      </div>
+      <div class="state-col">
+        <div class="state-label">Playing</div>
+        <div class="word v5-base v5-playing">食べ物</div>
+        <div class="sentence v5-base v5-playing">好きな食べ物は何ですか。</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- INTERACTIVE DEMO -->
+<div class="demo-section">
+  <h1>Interactive Demo &mdash; Hover &amp; Click</h1>
+
+  <div class="switcher" id="switcher">
+    <button class="active" data-v="1">1 &middot; Underline</button>
+    <button data-v="2">2 &middot; Pill</button>
+    <button data-v="3">3 &middot; Glow</button>
+    <button data-v="4">4 &middot; Bar</button>
+    <button data-v="5">5 &middot; Dots</button>
+  </div>
+
+  <div class="demo-card" id="demo">
+    <div class="card-title">Click text to simulate audio playback (1.5s). Hover to see hover state.</div>
+    <div class="demo-v1" id="demo-container">
+      <span class="demo-word" id="demo-word">食べ物</span>
+      <span class="demo-sentence" id="demo-sentence">好きな食べ物は何ですか。</span>
+    </div>
+    <div class="demo-status" id="demo-status">State: idle</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var current = '1';
+  var playingTimers = {};
+
+  var switcher = document.getElementById('switcher');
+  var container = document.getElementById('demo-container');
+  var word = document.getElementById('demo-word');
+  var sentence = document.getElementById('demo-sentence');
+  var status = document.getElementById('demo-status');
+
+  function setVariation(v) {
+    current = v;
+    container.className = 'demo-v' + v;
+
+    // Clear playing states
+    word.classList.remove('playing');
+    sentence.classList.remove('playing');
+    Object.keys(playingTimers).forEach(function(k) { clearTimeout(playingTimers[k]); });
+    status.textContent = 'State: idle';
+
+    // Update switcher buttons
+    var btns = switcher.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-v') === v);
+    }
+  }
+
+  switcher.addEventListener('click', function(e) {
+    var btn = e.target.closest('button');
+    if (btn) setVariation(btn.getAttribute('data-v'));
+  });
+
+  function simulatePlay(el, label) {
+    // Stop any other playing elements
+    word.classList.remove('playing');
+    sentence.classList.remove('playing');
+    Object.keys(playingTimers).forEach(function(k) { clearTimeout(playingTimers[k]); });
+
+    el.classList.add('playing');
+    status.textContent = 'State: playing ' + label + '...';
+
+    playingTimers[label] = setTimeout(function() {
+      el.classList.remove('playing');
+      status.textContent = 'State: idle';
+    }, 1500);
+  }
+
+  word.addEventListener('click', function() { simulatePlay(word, 'word audio'); });
+  sentence.addEventListener('click', function() { simulatePlay(sentence, 'sentence audio'); });
+})();
+</script>
+
+</body>
+</html>
