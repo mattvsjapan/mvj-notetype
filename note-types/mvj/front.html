@@ -1171,4 +1171,50 @@ function clearLastMargin(el) {
   }
 })();
 </script>
+<script>
+// Pinch-to-zoom on .card-inner (mobile only)
+(function() {
+    if (!window.matchMedia('(hover: none)').matches) return;
+    var ci = document.querySelector('.card-inner');
+    if (!ci) return;
+
+    var scale = 1, startDist = 0, startScale = 1;
+    var originX = '50%', originY = '50%';
+
+    function dist(t) {
+        var dx = t[0].clientX - t[1].clientX;
+        var dy = t[0].clientY - t[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    ci.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+            startDist = dist(e.touches);
+            startScale = scale;
+            var rect = ci.getBoundingClientRect();
+            var mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            var my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            originX = ((mx - rect.left) / scale) + 'px';
+            originY = ((my - rect.top) / scale) + 'px';
+            ci.style.transformOrigin = originX + ' ' + originY;
+        }
+    }, { passive: true });
+
+    ci.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+            var d = dist(e.touches);
+            scale = Math.max(1, Math.min(3, startScale * (d / startDist)));
+            ci.style.transform = scale === 1 ? '' : 'scale(' + scale + ')';
+        }
+    }, { passive: true });
+
+    ci.addEventListener('touchend', function() {
+        if (scale <= 1.05) {
+            scale = 1;
+            ci.style.transform = '';
+            ci.style.transformOrigin = '';
+        }
+    }, { passive: true });
+})();
+</script>
 </div>
