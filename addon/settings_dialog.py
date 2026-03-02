@@ -95,7 +95,7 @@ _SETTINGS = {
     "Word Text": [
         ("--word-text", "Word Text", ["front", "back", "off"], "front"),
         ("--word-audio", "Word Audio", ["front", "back", "off"], "back"),
-        ("--word-audio-buttons", "Word Audio Buttons", ["on", "off"], "on"),
+        ("--word-audio-buttons", "Word Audio Buttons", ["front", "back", "off"], "front"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front", "back", "off"], "front"),
         ("--word-pitch-color", "Word Pitch Color", ["front", "back", "off"], "back"),
@@ -104,7 +104,7 @@ _SETTINGS = {
     "Sentence Text": [
         ("--sentence-text", "Sentence Text", ["front", "back", "off"], "front"),
         ("--sentence-audio", "Sentence Audio", ["front", "back", "off"], "back"),
-        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["on", "off"], "on"),
+        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front", "back", "off"], "front"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front", "back", "off"], "front"),
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front", "back", "off"], "back"),

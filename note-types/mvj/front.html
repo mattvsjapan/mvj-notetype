@@ -721,9 +721,12 @@ function clearLastMargin(el) {
 
     // Per-section audio button hiding
     var rs = getComputedStyle(document.documentElement);
-    if (wordAI && rs.getPropertyValue('--word-audio-buttons').trim() === 'off')
+    var _isBack = !!document.querySelector('.back');
+    var _wab = rs.getPropertyValue('--word-audio-buttons').trim();
+    var _sab = rs.getPropertyValue('--sentence-audio-buttons').trim();
+    if (wordAI && (_wab === 'off' || (!_isBack && _wab === 'back')))
         wordAI.setAttribute('data-btn-off', '');
-    if (sentAI && rs.getPropertyValue('--sentence-audio-buttons').trim() === 'off')
+    if (sentAI && (_sab === 'off' || (!_isBack && _sab === 'back')))
         sentAI.setAttribute('data-btn-off', '');
 
     // ── Shared: available on both front and back (via window) ──
