@@ -1,5 +1,7 @@
 """Settings dialog for the MvJ note type — exposes CSS custom properties as dropdowns."""
 
+from __future__ import annotations
+
 import copy
 import json
 import os
