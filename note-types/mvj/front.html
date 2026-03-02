@@ -724,10 +724,14 @@ function clearLastMargin(el) {
     var _isBack = !!document.querySelector('.back');
     var _wab = rs.getPropertyValue('--word-audio-buttons').trim();
     var _sab = rs.getPropertyValue('--sentence-audio-buttons').trim();
-    if (wordAI && (_wab === 'off' || (!_isBack && _wab === 'back')))
-        wordAI.setAttribute('data-btn-off', '');
-    if (sentAI && (_sab === 'off' || (!_isBack && _sab === 'back')))
-        sentAI.setAttribute('data-btn-off', '');
+    function _btnOff(v) {
+        if (v === 'none' || v === 'off') return true;
+        if (!_isBack && (v === 'back only' || v === 'back')) return true;
+        if (_isBack && v === 'front only') return true;
+        return false;
+    }
+    if (wordAI && _btnOff(_wab)) wordAI.setAttribute('data-btn-off', '');
+    if (sentAI && _btnOff(_sab)) sentAI.setAttribute('data-btn-off', '');
 
     // ── Shared: available on both front and back (via window) ──
     window.escapeBrackets = function(text) {

@@ -21,7 +21,7 @@
     /* Word */
     --word-text: back;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
-    --word-audio-buttons: front;   /* front | back | off                  */
+    --word-audio-buttons: both;    /* front only | back only | both | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back;         /* front | back | off                  */
     --word-pitch-color: back;      /* front | back | off                  */
@@ -30,7 +30,7 @@
     /* Sentence */
     --sentence-text: back;             /* front | back | off                  */
     --sentence-audio: front;        /* front | back | off                  */
-    --sentence-audio-buttons: front;/* front | back | off                  */
+    --sentence-audio-buttons: both;/* front only | back only | both | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back;     /* front | back | off                  */
     --sentence-pitch-color: off;  /* front | back | off                  */

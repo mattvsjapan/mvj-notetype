@@ -95,7 +95,7 @@ _SETTINGS = {
     "Word Text": [
         ("--word-text", "Word Text", ["front", "back", "off"], "front"),
         ("--word-audio", "Word Audio", ["front", "back", "off"], "back"),
-        ("--word-audio-buttons", "Word Audio Buttons", ["front", "back", "off"], "front"),
+        ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "both", "none"], "both"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front", "back", "off"], "front"),
         ("--word-pitch-color", "Word Pitch Color", ["front", "back", "off"], "back"),
@@ -104,7 +104,7 @@ _SETTINGS = {
     "Sentence Text": [
         ("--sentence-text", "Sentence Text", ["front", "back", "off"], "front"),
         ("--sentence-audio", "Sentence Audio", ["front", "back", "off"], "back"),
-        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front", "back", "off"], "front"),
+        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "both", "none"], "both"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front", "back", "off"], "front"),
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front", "back", "off"], "back"),
@@ -184,10 +184,10 @@ def _parse_settings(css: str) -> dict[str, str]:
     for entries in _SETTINGS.values():
         for var, _label, _options, default in entries:
             # Match e.g.  --tategaki: off;  (with optional whitespace/comments)
-            m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
+            m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
             values[var] = m.group(1) if m else default
     for var, _label, default in _HOTKEYS:
-        m = re.search(rf"{re.escape(var)}:\s*(\S+?)\s*;", css)
+        m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
         values[var] = m.group(1) if m else default
     return values
 
@@ -196,7 +196,7 @@ def _apply_settings(css: str, settings: dict[str, str]) -> str:
     """Replace setting values in the CSS string in-place."""
     for var, value in settings.items():
         css = re.sub(
-            rf"({re.escape(var)}:\s*)\S+(;)",
+            rf"({re.escape(var)}:\s*).+?(;)",
             rf"\g<1>{value}\2",
             css,
             count=1,
@@ -229,7 +229,7 @@ def _parse_modes(css: str) -> list[Mode]:
         overrides: dict[str, str] = {}
         for setting in _OVERRIDABLE:
             m = re.search(
-                rf"--mode-{i}-{re.escape(setting)}:\s*(\S+?)\s*;", css
+                rf"--mode-{i}-{re.escape(setting)}:\s*(.+?)\s*;", css
             )
             if m:
                 overrides[f"--{setting}"] = m.group(1)
