@@ -461,6 +461,13 @@ class SettingsDialog(QDialog):
             )
             migrate_btn.clicked.connect(self._convert_japanese_to_mvj)
             btn_box.addButton(migrate_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        try:
+            from . import dev_sync
+            sync_btn = QPushButton("Sync Local Templates")
+            sync_btn.clicked.connect(lambda: self._sync_local(dev_sync))
+            btn_box.addButton(sync_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        except ImportError:
+            pass
         outer.addWidget(btn_box)
 
         # --- Populate mode list & detail panel ---
@@ -890,6 +897,10 @@ class SettingsDialog(QDialog):
 
     def _install(self):
         install_notetype(on_success=self._build_ui)
+
+    def _sync_local(self, dev_sync):
+        dev_sync.sync_local_templates()
+        self._build_ui()
 
     def _convert_sound_to_audio(self):
         sound_re = re.compile(r"\[sound:([^\]]+)\]")
