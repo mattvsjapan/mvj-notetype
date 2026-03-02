@@ -916,7 +916,12 @@
     } else {
       graphEl.setAttribute('data-state', 'empty');
     }
-  
+
+    // Tighten gap when word sits directly above pitch graph
+    if (!targetEl.hasAttribute('data-show') && !graphEl.hasAttribute('data-state')) {
+      answerEl.setAttribute('data-word-graph', 'adjacent');
+    }
+
     // Sentence → colored sentence
     if (!sentOn) {
       sentEl.setAttribute('data-show', 'off');

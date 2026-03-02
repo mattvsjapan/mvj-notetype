@@ -1185,6 +1185,10 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
     text-rendering: optimizeLegibility;
 }
 
+.answer[data-word-graph="adjacent"] .target-word {
+    margin-bottom: 8px;
+}
+
 /* Ruby (furigana) base styles */
 
 ruby {
