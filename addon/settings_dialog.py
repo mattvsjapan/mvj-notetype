@@ -409,7 +409,7 @@ class SettingsDialog(QDialog):
         self._btn_up = QPushButton("\u25b2")    # ▲
         self._btn_down = QPushButton("\u25bc")  # ▼
         for btn in (self._btn_add, self._btn_del, self._btn_up, self._btn_down):
-            btn.setFixedWidth(30)
+            btn.setFixedWidth(36)
             btn_row.addWidget(btn)
         btn_row.addStretch()
         self._btn_add.clicked.connect(self._add_mode)
