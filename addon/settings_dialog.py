@@ -138,21 +138,28 @@ _MODES_CONTENT_RE = re.compile(
 
 _COLOR_SCHEME_RE = re.compile(r':root\[data-color-scheme="([^"]+)"\]')
 
+def _strip_css_comments(css: str) -> str:
+    """Remove /* ... */ comments so regexes don't match template examples."""
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+
 def _parse_color_schemes(css: str) -> list[str]:
-    """Extract color scheme names from CSS selectors, with the default first."""
+    """Extract color scheme names from CSS selectors, in stable order.
+
+    Always returns "blue" first (the built-in default whose values live in
+    :root), followed by the other themes in CSS source order.
+    """
     fallback = ["blue", "black", "red", "purple", "white"]
-    default_m = re.search(r"--color-scheme:\s*(\S+?)\s*;", css)
-    default_name = default_m.group(1) if default_m else "blue"
-    seen = {default_name}
-    others = []
-    for m in _COLOR_SCHEME_RE.finditer(css):
+    stripped = _strip_css_comments(css)
+    seen: set[str] = set()
+    others: list[str] = []
+    for m in _COLOR_SCHEME_RE.finditer(stripped):
         name = m.group(1)
         if name not in seen:
             seen.add(name)
             others.append(name)
     if not others:
         return fallback
-    return [default_name] + others
+    return ["blue"] + [n for n in others if n != "blue"]
 
 _OVERRIDE_ACTIVE_COLOR = QColor(76, 175, 80, 25)
 
