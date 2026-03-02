@@ -443,7 +443,6 @@
     outline: 3px solid rgba(255, 0, 80, 0.8) !important;
     background-color: rgba(255, 0, 80, 0.12) !important;
 }
-
 /* ── END DEBUG ── */
 
 /* — Anki page background —
@@ -2130,6 +2129,7 @@ html.tategaki:has(.back) {
 
 /* Definition — placed right after audio buttons in R→L flow */
 .tategaki .def {
+    box-sizing: border-box;
     margin: 0 0 0 16px;
     order: -2;
     height: 100%;
