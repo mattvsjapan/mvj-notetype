@@ -2343,7 +2343,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
     content: '';
     display: block;
     height: 1px;
-    margin: 0 0 20px;
+    margin: 0;
     background: linear-gradient(90deg, transparent, var(--answer-divider-color) 25%, var(--answer-divider-color) 75%, transparent);
     order: -2;
 }

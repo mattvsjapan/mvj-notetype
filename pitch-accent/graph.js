@@ -83,7 +83,7 @@ function makeGraph(sequence) {
 
   let xPos = config.size_unit + config.graph_horizontal_padding;
   let yPos = config.size_unit;
-  const heightHigh = config.size_unit;
+  const heightHigh = config.graph_padding_top;
   const heightLow = heightHigh + config.graph_height;
   const xStep = config.x_step;
   const heightKana = heightLow + xStep;
@@ -140,8 +140,8 @@ function makeGraph(sequence) {
 
   const content = [makeGroup(paths, 'paths'), makeGroup(circles, 'circles')];
   const svgWidth = calcSvgWidth(sequence, xStep);
-  const svgHeightText = heightKana + config.size_unit;
-  const svgHeightNoText = heightLow + config.size_unit;
+  const svgHeightText = heightKana + config.graph_padding_bottom;
+  const svgHeightNoText = heightLow + config.graph_padding_bottom;
 
   let svgHeight, visibleHeight;
   if (config.no_text) {
