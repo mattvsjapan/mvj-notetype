@@ -31,6 +31,7 @@
     --accent-text: #db7e7e;
     --accent-soft: rgba(200, 90, 90, 0.12);
     --accent-glow: rgba(200, 90, 90, 0.22);
+    --accent-soft-bright: rgba(200, 90, 90, 0.20);
 
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
@@ -307,6 +308,69 @@ html {
 .replay-button.playing svg path,
 .replay-button.playing .replayTriangle {
     fill: var(--accent);
+}
+
+@media (hover: hover) {
+    .replay-button.hover-linked svg circle,
+    .replay-button.hover-linked .replayCircle {
+        fill: var(--bg-surface-hover);
+        stroke: var(--accent-glow);
+    }
+
+    .replay-button.hover-linked svg path,
+    .replay-button.hover-linked .replayTriangle {
+        fill: var(--accent);
+    }
+}
+
+/* ── Text-as-play-button ── */
+
+.text-play {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    transition: background 600ms ease, box-shadow 600ms ease;
+    position: relative;
+    isolation: isolate;
+}
+
+/* Extra padding to encompass sentence-level ruby annotations (above characters).
+   Target-word bopomofo uses inline-grid beside characters, so no extra top padding needed. */
+.text-play:not(.target-word):has(ruby) {
+    padding-top: 10px;
+    margin-top: -10px;
+}
+
+@media (hover: none) {
+    .text-play:not(.target-word):has(ruby) {
+        padding-top: 1px;
+        margin-top: -1px;
+    }
+    @supports not (-webkit-touch-callout: none) {
+        .sentence.text-play:has(ruby) {
+            padding-top: 0.45em;
+            margin-top: 0;
+        }
+        .def.text-play:has(ruby),
+        .jp-def.text-play:has(ruby) {
+            padding-top: 0.45em;
+            margin-top: 0;
+        }
+    }
+}
+
+@media (hover: hover) {
+    .text-play:hover,
+    .text-play.hover-linked {
+        background: color-mix(in srgb, var(--accent-soft) 75%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-glow) 75%, transparent);
+    }
+}
+
+.text-play.playing {
+    background: var(--accent-soft-bright);
+    box-shadow: inset 0 0 0 1px var(--accent-glow);
 }
 
 /* ================================================

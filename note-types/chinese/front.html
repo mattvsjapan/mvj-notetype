@@ -259,6 +259,9 @@ window.__stopAllAudio = function(except) {
     document.querySelectorAll('.replay-button.playing').forEach(function(b) {
         b.classList.remove('playing');
     });
+    document.querySelectorAll('.text-play.playing').forEach(function(t) {
+        t.classList.remove('playing');
+    });
     var els = window.__defAudioEls || [];
     for (var i = 0; i < els.length; i++) {
         if (els[i] !== except) { els[i].pause(); els[i].currentTime = 0; }
@@ -319,6 +322,63 @@ window.__freshPlay = function(src, btn) {
 };
 
 window.__stopDefAudio = window.__stopAllAudio;
+
+window.__linkTextPlay = function(textEl, audioKey, opts) {
+    if (!textEl || !opts.play) return;
+
+    textEl.classList.add('text-play');
+    textEl.setAttribute('data-text-play', audioKey);
+
+    var downTime = 0;
+    textEl.addEventListener('mousedown', function() { downTime = Date.now(); });
+    textEl.addEventListener('touchstart', function() { downTime = Date.now(); }, { passive: true });
+
+    window.__onTap(textEl, function() {
+        if (Date.now() - downTime > 300) return;
+        var sel = window.getSelection();
+        if (sel && sel.toString().length > 0) return;
+        opts.play();
+    }, function() {
+        window.__stopAllAudio();
+    });
+
+    // Persistent sync: mirror button .playing state to text
+    var syncBtn = opts.getBtn ? opts.getBtn() : null;
+    if (syncBtn) {
+        var obs = new MutationObserver(function() {
+            textEl.classList.toggle('playing', syncBtn.classList.contains('playing'));
+        });
+        obs.observe(syncBtn, { attributes: true, attributeFilter: ['class'] });
+        if (window.__observers) window.__observers.push(obs);
+    }
+
+    if (window.matchMedia('(hover: hover)').matches) {
+        textEl.addEventListener('mouseenter', function() {
+            var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
+            for (var i = 0; i < allBtns.length; i++) {
+                allBtns[i].classList.add('hover-linked');
+            }
+        });
+        textEl.addEventListener('mouseleave', function() {
+            var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
+            for (var i = 0; i < allBtns.length; i++) {
+                allBtns[i].classList.remove('hover-linked');
+            }
+        });
+    }
+};
+
+window.__linkBtnHoverToText = function(btn, audioKey) {
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    var textEls = document.querySelectorAll('.text-play[data-text-play="' + audioKey + '"]');
+    if (!textEls.length) return;
+    btn.addEventListener('mouseenter', function() {
+        for (var ti = 0; ti < textEls.length; ti++) textEls[ti].classList.add('hover-linked');
+    });
+    btn.addEventListener('mouseleave', function() {
+        for (var ti = 0; ti < textEls.length; ti++) textEls[ti].classList.remove('hover-linked');
+    });
+};
 
 window.__webAudioPlay = function(src, btn, gen) {
     return fetch(src)

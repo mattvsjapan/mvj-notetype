@@ -673,6 +673,104 @@ function _renderBack() {
     }, 0);
   }
 
+  // ── Text-play linkage ──
+  if (targetEl.innerHTML && document.querySelector('.audio-item[data-audio="word"]')) {
+    window.__linkTextPlay(targetEl, 'word', {
+      play: function() {
+        var item = document.querySelector('.audio-item[data-audio="word"]');
+        if (!item) return;
+        var btn = item.querySelector('.replay-button');
+        if (btn && btn._tapHandler) btn._tapHandler();
+        else if (btn) btn.click();
+      },
+      getBtn: function() {
+        return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+      },
+      getAllBtns: function() {
+        return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+      }
+    });
+  }
+
+  if (sentEl.innerHTML && document.querySelector('.audio-item[data-audio="sentence"]')) {
+    window.__linkTextPlay(sentEl, 'sentence', {
+      play: function() {
+        var item = document.querySelector('.audio-item[data-audio="sentence"]');
+        if (!item) return;
+        var btn = item.querySelector('.replay-button');
+        if (btn && btn._tapHandler) btn._tapHandler();
+        else if (btn) btn.click();
+      },
+      getBtn: function() {
+        return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
+      },
+      getAllBtns: function() {
+        return Array.from(document.querySelectorAll('.audio-item[data-audio="sentence"] .replay-button'));
+      }
+    });
+  }
+
+  // Definition text-play
+  var _defLayout = answerEl.getAttribute('data-def-layout');
+  var _hasDualDefAudio = !!document.querySelector('.audio-item[data-audio="def"][data-def-lang]');
+
+  function _defTextPlayOpts(lang) {
+    var sel = lang
+      ? '.audio-item[data-audio="def"][data-def-lang="' + lang + '"]'
+      : '.audio-item[data-audio="def"]';
+    return {
+      play: function() {
+        var item = document.querySelector(sel);
+        if (!item) return;
+        var btn = item.querySelector('.replay-button');
+        if (btn && btn._tapHandler) btn._tapHandler();
+        else if (btn) btn.click();
+      },
+      getBtn: function() {
+        var item = document.querySelector(sel);
+        return item ? item.querySelector('.replay-button') : null;
+      },
+      getAllBtns: function() {
+        var item = document.querySelector(sel);
+        return item ? Array.from(item.querySelectorAll('.replay-button')) : [];
+      }
+    };
+  }
+
+  if (_defLayout === 'bi-only' || _defLayout === 'mono-only') {
+    if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"]')) {
+      window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+    }
+  } else if (_defLayout === 'dual-bi' || _defLayout === 'dual-mono') {
+    if (_hasDualDefAudio) {
+      var _defIsBi = (_defLayout === 'dual-bi');
+      var _defKey = _defIsBi ? 'def-bi' : 'def-mono';
+      var _jpKey = _defIsBi ? 'def-mono' : 'def-bi';
+      if (defEl.innerHTML) window.__linkTextPlay(defEl, _defKey, _defTextPlayOpts(_defIsBi ? 'bi' : 'mono'));
+      if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, _jpKey, _defTextPlayOpts(_defIsBi ? 'mono' : 'bi'));
+    } else {
+      if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"]')) {
+        window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+      }
+      if (jpDefEl.innerHTML && document.querySelector('.audio-item[data-audio="def"]')) {
+        window.__linkTextPlay(jpDefEl, 'def', _defTextPlayOpts(null));
+      }
+    }
+  }
+
+  // ── Button → text hover linkage for all audio items ──
+  if (window.__linkBtnHoverToText) {
+    document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+      var audioType = item.getAttribute('data-audio');
+      var defLang = item.getAttribute('data-def-lang');
+      var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
+      if (!textKey) return;
+      item.querySelectorAll('.replay-button').forEach(function(btn) {
+        window.__linkBtnHoverToText(btn, textKey);
+      });
+    });
+  }
+
   // ── Mirror audio buttons to bottom row (mobile) ──
   var bottomRow = document.getElementById('audio-row-bottom');
   if (bottomRow) {
@@ -704,9 +802,17 @@ function _renderBack() {
             }, function() { if (origBtn._dblHandler) origBtn._dblHandler(); });
             var obs = new MutationObserver(function() {
               btn.classList.toggle('playing', origBtn.classList.contains('playing'));
+              btn.classList.toggle('hover-linked', origBtn.classList.contains('hover-linked'));
             });
             obs.observe(origBtn, { attributes: true, attributeFilter: ['class'] });
             window.__observers.push(obs);
+            // Button→text hover linkage for cloned button
+            var cloneAudioType = origItem.getAttribute('data-audio');
+            var cloneDefLang = origItem.getAttribute('data-def-lang');
+            var cloneTextKey = (cloneAudioType === 'def' && cloneDefLang) ? 'def-' + cloneDefLang : cloneAudioType;
+            if (cloneTextKey && window.__linkBtnHoverToText) {
+              window.__linkBtnHoverToText(btn, cloneTextKey);
+            }
           })(origBtns[bj]);
         }
         var origLabel = origItem.querySelector('.audio-label');
