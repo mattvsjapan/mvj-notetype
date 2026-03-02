@@ -615,7 +615,7 @@ html {
 
 .pitch-graph {
     text-align: center;
-    margin: 0 0 14px;
+    margin: -10px 0 14px;
     line-height: 0;
 }
 
@@ -626,7 +626,7 @@ html {
 
 @media (hover: none) {
     .pitch-graph {
-        margin: 0 0 5px;
+        margin: -10px 0 5px;
     }
 }
 
