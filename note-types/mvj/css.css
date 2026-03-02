@@ -1887,7 +1887,7 @@ html.tategaki:has(.back) {
     .tategaki .card {
         overflow-y: hidden;
         overscroll-behavior-y: none;
-        touch-action: pan-x pinch-zoom;
+        touch-action: pan-x;
         padding-bottom: 20px;
     }
     .tategaki #content {
