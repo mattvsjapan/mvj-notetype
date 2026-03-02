@@ -78,3 +78,9 @@ def _update_tools_label():
 
 
 mw.form.menuTools.aboutToShow.connect(_update_tools_label)
+
+# Dev-only local template sync (file is .gitignored and excluded from packaging)
+try:
+    from . import dev_sync  # noqa: F401
+except ImportError:
+    pass

@@ -28,7 +28,8 @@ zip -r "$OUTPUT_PATH" . \
     -x "__pycache__/*" \
     -x "*/__pycache__/*" \
     -x ".DS_Store" \
-    -x "*/.DS_Store"
+    -x "*/.DS_Store" \
+    -x "dev_sync.py"
 
 echo ""
 echo "Packaged: $OUTPUT_PATH"

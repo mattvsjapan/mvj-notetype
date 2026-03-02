@@ -6,3 +6,4 @@ __pycache__/
 note-types/mvj/my_settings.css
 addon/meta.json
 *.ankiaddon
+addon/dev_sync.py
