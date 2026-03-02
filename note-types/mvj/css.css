@@ -908,6 +908,17 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
     margin-right: 0;
 }
 
+.tategaki .sentence.text-play:has(ruby):not(.furigana-off) {
+    padding-right: 0.5em;
+    margin-right: 0;
+}
+
+.tategaki .def.text-play:has(ruby):not(.furigana-off),
+.tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
+    padding-right: 0.47em;
+    margin-right: 0;
+}
+
 @media (hover: none) {
     .text-play:has(ruby) {
         padding-top: 1px;
@@ -923,6 +934,15 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
     }
     .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
         padding-right: 0.33em;
+        margin-right: 0;
+    }
+    .tategaki .sentence.text-play:has(ruby):not(.furigana-off) {
+        padding-right: 0.4em;
+        margin-right: 0;
+    }
+    .tategaki .def.text-play:has(ruby):not(.furigana-off),
+    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
+        padding-right: 0.47em;
         margin-right: 0;
     }
 }
@@ -1994,11 +2014,32 @@ html.tategaki:has(.back) {
     padding-right: 0.33em;
 }
 
+.tategaki .sentence:has(ruby):not(.furigana-off) {
+    padding-right: 0.5em;
+}
+
+.tategaki .def:has(ruby):not(.furigana-off),
+.tategaki .jp-def:has(ruby):not(.furigana-off) {
+    padding-right: 0.47em;
+}
+
+@media (hover: none) {
+    .tategaki .sentence:has(ruby):not(.furigana-off) {
+        padding-right: 0.4em;
+    }
+}
+
 /* WebKit (AnkiMobile) already expands the content area for ruby in
    vertical writing mode, so the extra padding is redundant. */
 @supports (-webkit-touch-callout: none) {
     .tategaki .target-word:has(ruby):not(.furigana-off),
-    .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
+    .tategaki .target-word.text-play:has(ruby):not(.furigana-off),
+    .tategaki .sentence:has(ruby):not(.furigana-off),
+    .tategaki .sentence.text-play:has(ruby):not(.furigana-off),
+    .tategaki .def:has(ruby):not(.furigana-off),
+    .tategaki .def.text-play:has(ruby):not(.furigana-off),
+    .tategaki .jp-def:has(ruby):not(.furigana-off),
+    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
         padding-right: 0;
     }
 }
