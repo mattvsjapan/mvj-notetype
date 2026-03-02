@@ -706,7 +706,7 @@ rt {
 }
 
 .def:not([data-font]) {
-    padding: 8px;
+    padding: 6px;
 }
 
 /* Japanese definition — pure CSS toggle */

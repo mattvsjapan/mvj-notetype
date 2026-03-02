@@ -1331,6 +1331,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     text-align: left;
 }
 
+.def:not([data-font]) {
+    padding: 6px;
+}
+
 .def rt, .jp-def rt {
     color: inherit;
     transform: translateY(-1px);
@@ -1420,6 +1424,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     grid-template-rows: 0fr;
     opacity: 0;
     pointer-events: none;
+    margin-top: 2px;
     transition: grid-template-rows 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms ease 50ms;
 }
 
@@ -1680,8 +1685,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     display: contents;
 }
 
-/* Non-tategaki: show image after sentence (image is before sentence in DOM) */
-html:not(.tategaki) .answer .image-wrap,
+/* Non-tategaki: show image at top of card */
+html:not(.tategaki) .answer .image-wrap {
+    order: -1;
+}
 html:not(.tategaki) .answer .audio-row-bottom,
 html:not(.tategaki) .answer .def,
 html:not(.tategaki) .answer .jp-def-section {
@@ -2285,6 +2292,11 @@ html.tategaki:has(.back) {
     }
 }
 
+.tategaki .jp-def-wrap {
+    margin-top: 0;
+    margin-left: 2px;
+}
+
 .tategaki .jp-def-toggle {
     writing-mode: vertical-rl;
     padding: 14px 3px;
@@ -2299,12 +2311,7 @@ html.tategaki:has(.back) {
 }
 
 /* Divider */
-html:not(.tategaki) .divider {
-    display: none;
-}
-
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
-    display: block;
     order: -2;
 }
 
