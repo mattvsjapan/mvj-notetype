@@ -894,9 +894,9 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     margin-top: -10px;
 }
 
-.target-word.text-play:has(ruby) {
+.target-word.text-play:has(ruby):not(.furigana-off) {
     padding-top: 17px;
-    margin-top: -17px;
+    margin-top: 0;
 }
 
 .tategaki .text-play:has(ruby) {
@@ -904,9 +904,9 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     margin-right: -10px;
 }
 
-.tategaki .target-word.text-play:has(ruby) {
+.tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
     padding-right: 17px;
-    margin-right: -17px;
+    margin-right: 0;
 }
 
 @media (hover: none) {
@@ -914,17 +914,18 @@ circle.devoiced, rect.devoiced { fill: none !important; }
         padding-top: 1px;
         margin-top: -1px;
     }
-    .target-word.text-play:has(ruby) {
-        padding-top: 2px;
-        margin-top: -2px;
+    .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-top: 17px;
+        margin-top: 0;
     }
     .tategaki .text-play:has(ruby) {
         padding-right: 1px;
         margin-right: -1px;
     }
-    .tategaki .target-word.text-play:has(ruby) {
-        padding-right: 2px;
-        margin-right: -2px;
+    .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-top: 0;
+        padding-right: 17px;
+        margin-right: 0;
     }
 }
 
@@ -1164,6 +1165,10 @@ rt {
     color: inherit;
 }
 
+.target-word:has(ruby):not(.furigana-off) {
+    padding-top: 17px;  /* matches 0.33em rt at 52px */
+}
+
 /* Image */
 
 .image-wrap {
@@ -1238,7 +1243,7 @@ rt {
     font-family: var(--jp);
     font-size: 23px;
     font-weight: 400;
-    line-height: 1.65;
+    line-height: 1.7;
     color: var(--text-1);
     text-align: center;
     margin: 0 0 20px;
@@ -1377,7 +1382,7 @@ rt {
     font-family: var(--jp);
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.65;
+    line-height: 1.7;
     color: var(--text-1);
     margin: 0;
     padding-top: 0;
@@ -1620,11 +1625,11 @@ html:not(.tategaki) .answer .jp-def-section {
     order: 1;
 }
 
-/* Non-tategaki: tighten Japanese text line-height */
+/* Non-tategaki: Japanese text line-height */
 html:not(.tategaki) .sentence,
 html:not(.tategaki) .jp-def,
 html:not(.tategaki) [data-font="jp"] {
-    line-height: 1.55;
+    line-height: 1.7;
 }
 
 /* Back entrance animation — elements start hidden, JS adds .ri after content is ready */
@@ -1987,6 +1992,11 @@ html.tategaki:has(.back) {
     margin: 0 0 12px 0;
 }
 
+.tategaki .target-word:has(ruby):not(.furigana-off) {
+    padding-top: 0;
+    padding-right: 17px;
+}
+
 .tategaki .pitch-graph {
     margin: -10px;
 }
@@ -2123,7 +2133,7 @@ html.tategaki:has(.back) {
     margin: 0 0 0 16px;
     order: -2;
     height: 100%;
-    line-height: 1.65;
+    line-height: 1.7;
 }
 
 /* JP def section — follows definition */
