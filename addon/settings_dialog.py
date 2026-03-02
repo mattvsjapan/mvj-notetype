@@ -267,7 +267,25 @@ def _apply_modes(css: str, modes: list[Mode]) -> str:
     return _MODES_CONTENT_RE.sub(replacer, css, count=1)
 
 
-class _DeckComboBox(QComboBox):
+class _NoScrollComboBox(QComboBox):
+    """QComboBox that ignores wheel events unless it has focus.
+
+    Prevents accidental value changes when scrolling the settings page on
+    Windows, where wheel events go to the widget under the cursor.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+    def wheelEvent(self, event) -> None:  # type: ignore[override]
+        if self.hasFocus():
+            super().wheelEvent(event)
+        else:
+            event.ignore()
+
+
+class _DeckComboBox(_NoScrollComboBox):
     """Multi-select combo box with checkboxes for deck selection."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -565,7 +583,7 @@ class SettingsDialog(QDialog):
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
             )
             for var, label, options, default in entries:
-                combo = QComboBox()
+                combo = _NoScrollComboBox()
                 combo.addItems(options if options is not None else self._color_schemes)
                 combo.setCurrentText(self._defaults.get(var, default))
                 combo.currentTextChanged.connect(self._on_setting_changed)
@@ -651,7 +669,7 @@ class SettingsDialog(QDialog):
             for var, label, options, default in entries:
                 row = QHBoxLayout()
                 cb = QCheckBox()
-                combo = QComboBox()
+                combo = _NoScrollComboBox()
                 combo.addItems(options if options is not None else self._color_schemes)
 
                 is_overridden = var in mode.overrides
