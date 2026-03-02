@@ -39,14 +39,15 @@ from aqt.webview import AnkiWebView, AnkiWebViewKind
 
 from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, change_notes_to_mvj
 
+_SAMPLE_MEDIA_DIR = os.path.join(os.path.dirname(__file__), "sample_media")
 _SAMPLE_IMAGE = "_mvj_sample.jpg"
 
 # --- Sample card for the live preview ---
 _SAMPLE_FIELDS = {
     "Word": "日本語[にほんご]:0-",
-    "Word Audio": "[audio:_mvj_word]",
+    "Word Audio": "[audio:_mvj_word.mp3]",
     "Sentence": "日本語[にほんご]:0 って: 難[むずか]し\\い:h3 よね: 、 分[わ]かる:k",
-    "Sentence Audio": "[audio:_mvj_sentence]",
+    "Sentence Audio": "[audio:_mvj_sentence.mp3]",
     "Definition": (
         '<!-- def-type="bilingual" -->'
         "A language that is spoken by the people of Japan as their primary means of communication."
@@ -58,8 +59,8 @@ _SAMPLE_FIELDS = {
         "<!-- def-end -->"
     ),
     "Definition Audio": (
-        '<!-- def-type="bilingual" -->[audio:_mvj_def_bi]<!-- def-end -->'
-        '<!-- def-type="monolingual" -->[audio:_mvj_def_mono]<!-- def-end -->'
+        '<!-- def-type="bilingual" -->[audio:_mvj_def_bi.mp3]<!-- def-end -->'
+        '<!-- def-type="monolingual" -->[audio:_mvj_def_mono.mp3]<!-- def-end -->'
     ),
     "Image": f'<img src="{_SAMPLE_IMAGE}">',
 }
@@ -776,11 +777,14 @@ class SettingsDialog(QDialog):
 
     def _init_preview(self, layout: QVBoxLayout) -> None:
         """Set up the preview webview with a synthetic sample card."""
-        # Ensure sample image is in media folder
-        src = os.path.join(os.path.dirname(__file__), _SAMPLE_IMAGE)
-        dst = os.path.join(mw.col.media.dir(), _SAMPLE_IMAGE)
-        if os.path.exists(src) and not os.path.exists(dst):
-            shutil.copy2(src, dst)
+        # Ensure sample media files are in media folder
+        if os.path.isdir(_SAMPLE_MEDIA_DIR):
+            media_dir = mw.col.media.dir()
+            for fname in os.listdir(_SAMPLE_MEDIA_DIR):
+                src = os.path.join(_SAMPLE_MEDIA_DIR, fname)
+                dst = os.path.join(media_dir, fname)
+                if os.path.isfile(src) and not os.path.exists(dst):
+                    shutil.copy2(src, dst)
 
         self._note = mw.col.new_note(self._model)
         for name, value in _SAMPLE_FIELDS.items():
