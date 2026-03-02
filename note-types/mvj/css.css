@@ -13,7 +13,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: blue;          /* blue | black | red | purple | white */
+    --color-scheme: purple;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
     --debug: off;                  /* on | off                            */
@@ -615,7 +615,7 @@ html {
 
 .pitch-graph {
     text-align: center;
-    margin: -10px 0 14px;
+    margin: 0 0 20px;
     line-height: 0;
 }
 
@@ -626,7 +626,7 @@ html {
 
 @media (hover: none) {
     .pitch-graph {
-        margin: -10px 0 5px;
+        margin: 0 0 12px;
     }
 }
 
@@ -1432,6 +1432,13 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     overflow: hidden;
     min-height: 0;
     margin: 0;
+    transition: padding 400ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Zero vertical padding when collapsed so 0fr grid track fully collapses */
+.jp-def-input:not(:checked) ~ .jp-def-wrap > * {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .jp-def-input:checked ~ .jp-def-wrap {
@@ -2143,7 +2150,7 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .pitch-graph {
-    margin: -10px;
+    margin: 0;
 }
 
 .tategaki .pitch-graph svg {
@@ -2338,6 +2345,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
     height: 1px;
     margin: 0 0 20px;
     background: linear-gradient(90deg, transparent, var(--answer-divider-color) 25%, var(--answer-divider-color) 75%, transparent);
+    order: -2;
 }
 
 /* Audio-only front: move audio-row-bottom right of divider (front section) */
