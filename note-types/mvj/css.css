@@ -19,7 +19,7 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: front;                 /* front | back | off                  */
+    --word-text: back;                 /* front | back | off                  */
     --word-audio: front;            /* front | back | off                  */
     --word-audio-buttons: on;      /* on | off                            */
     --word-text-play: on;          /* on | off                            */
@@ -28,7 +28,7 @@
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence-text: front;             /* front | back | off                  */
+    --sentence-text: back;             /* front | back | off                  */
     --sentence-audio: front;        /* front | back | off                  */
     --sentence-audio-buttons: on;  /* on | off                            */
     --sentence-text-play: on;      /* on | off                            */
