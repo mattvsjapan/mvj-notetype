@@ -44,6 +44,10 @@ from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, ch
 _SAMPLE_MEDIA_DIR = os.path.join(os.path.dirname(__file__), "sample_media")
 _SAMPLE_IMAGE = "_mvj_sample.jpg"
 
+# Regexes for recovering missing definition text from audio TTS-SOURCE comments
+_DEF_TEXT_TYPE_RE = re.compile(r'<!-- def-type="([^"]+)" -->')
+_DEF_AUDIO_SOURCE_RE = re.compile(r'<!-- def-type="([^"]+)" TTS-SOURCE: (.+?) -->')
+
 # --- Sample card for the live preview ---
 _SAMPLE_FIELDS = {
     "Word": "日本語[にほんご]:0-",
@@ -265,6 +269,56 @@ def _apply_modes(css: str, modes: list[Mode]) -> str:
         return m.group(1) + content + m.group(3)
 
     return _MODES_CONTENT_RE.sub(replacer, css, count=1)
+
+
+def _recover_missing_definitions(def_text: str, def_audio: str) -> tuple[str, str, list[str]]:
+    """Recover definition text from audio TTS-SOURCE comments for types missing in text.
+
+    Also unlocks LOCKED_ types in the audio field — the new add-on only needs
+    the text definition locked, not the audio.
+
+    Returns (new_def_text, new_def_audio, list_of_recovered_type_names).
+    """
+    # Strip LOCKED_ prefix so "LOCKED_monolingual" and "monolingual" match
+    def _base_type(t: str) -> str:
+        return t.removeprefix("LOCKED_")
+
+    existing_base_types = {_base_type(t) for t in _DEF_TEXT_TYPE_RE.findall(def_text)}
+
+    # Find def types in audio that have TTS-SOURCE text
+    audio_sources = _DEF_AUDIO_SOURCE_RE.findall(def_audio)
+
+    recovered = []
+    blocks = []
+    for def_type, source_text in audio_sources:
+        base = _base_type(def_type)
+        if base in existing_base_types:
+            continue
+        # Recovered text keeps LOCKED_ prefix if present
+        block = (
+            f'<!-- def-type="{def_type}" -->\n'
+            f'{source_text}\n'
+            f'<!-- def-end -->'
+        )
+        blocks.append(block)
+        recovered.append(def_type)
+        existing_base_types.add(base)  # avoid duplicates if audio has repeats
+
+    if blocks:
+        separator = "\n\n<!-- def-br-start --><br><br><!-- def-br-end -->\n\n"
+        joined = separator.join(blocks)
+
+        if def_text.strip():
+            new_text = def_text + separator + joined
+        else:
+            new_text = joined
+    else:
+        new_text = def_text
+
+    # Unlock all LOCKED_ types in audio — new add-on only needs text locked
+    new_audio = re.sub(r'(<!-- def-type=")LOCKED_', r'\1', def_audio)
+
+    return new_text, new_audio, recovered
 
 
 class _NoScrollComboBox(QComboBox):
@@ -1024,9 +1078,10 @@ class SettingsDialog(QDialog):
 
         converted_count = 0
         flagged_count = 0
+        recovered_count = 0
 
         def task():
-            nonlocal converted_count, flagged_count
+            nonlocal converted_count, flagged_count, recovered_count
             modified = []
             total = len(note_ids)
 
@@ -1053,6 +1108,33 @@ class SettingsDialog(QDialog):
                     if new_value != fld_value:
                         note.fields[j] = new_value
                         changed = True
+
+                # Recover missing definition text from audio TTS-SOURCE
+                # Old note types used "Explanation"/"Explanation Audio";
+                # new ones use "Definition"/"Definition Audio".
+                for text_key, audio_key in (
+                    ("Definition", "Definition Audio"),
+                    ("Explanation", "Explanation Audio"),
+                ):
+                    try:
+                        audio_val = note[audio_key]
+                        text_val = note[text_key]
+                    except KeyError:
+                        continue
+
+                    if audio_val:
+                        new_text, new_audio, recovered = _recover_missing_definitions(
+                            text_val, audio_val
+                        )
+                        if recovered:
+                            note[text_key] = new_text
+                            recovered_count += 1
+                            note_warnings.append("def_recovered")
+                            changed = True
+                        if new_audio != audio_val:
+                            note[audio_key] = new_audio
+                            changed = True
+                    break
 
                 if note_warnings:
                     note.tags.append("mvj-review")
@@ -1087,7 +1169,10 @@ class SettingsDialog(QDialog):
                 return
 
             # Phase 2: move notes into MvJ note type and delete old type
-            self._finish_migration(old_note_type_name, converted_count, flagged_count)
+            self._finish_migration(
+                old_note_type_name, converted_count, flagged_count,
+                recovered_count,
+            )
 
         mw.progress.start(
             max=len(note_ids),
@@ -1096,12 +1181,15 @@ class SettingsDialog(QDialog):
         )
         mw.taskman.run_in_background(task, on_done)
 
-    def _finish_migration(self, old_name, converted_count=0, flagged_count=0):
+    def _finish_migration(self, old_name, converted_count=0, flagged_count=0,
+                          recovered_count=0):
         """Phase 2: move notes to MvJ note type, delete old type, show summary."""
         def on_success(migrated_old_name, count):
             msg = f"Migration complete!\n\n\u2022 {count} notes moved to {NOTE_TYPE_NAME}"
             if converted_count:
                 msg += f"\n\u2022 {converted_count} notes had fields converted"
+            if recovered_count:
+                msg += f"\n\u2022 {recovered_count} notes had definitions recovered from audio"
             if flagged_count:
                 msg += f"\n\u2022 {flagged_count} notes tagged 'mvj-review' for manual check"
             msg += f"\n\u2022 \u201c{migrated_old_name}\u201d note type deleted"
