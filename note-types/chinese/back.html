@@ -165,14 +165,15 @@
     })();
     </script>
     <div class="answer">
-        <h1 class="target-word" style="--d:0" id="target-word"></h1>
-        <p class="sentence" style="--d:50" id="sentence"></p>
         {{#Image}}
-        <div class="image-wrap" style="--d:95">{{Image}}</div>
+        <div class="image-wrap" style="--d:0">{{Image}}</div>
         {{/Image}}
-        <div class="audio-row-bottom" id="audio-row-bottom" style="--d:110"></div>
-        <p class="def" style="--d:130" id="def-bilingual"></p>
-        <div class="jp-def-section" style="--d:170" id="jp-def-section">
+        <h1 class="target-word" style="--d:50" id="target-word"></h1>
+        <p class="sentence" style="--d:100" id="sentence"></p>
+        <div class="audio-row-bottom" id="audio-row-bottom" style="--d:130"></div>
+        <div class="divider" style="--d:145"></div>
+        <p class="def" style="--d:160" id="def-bilingual"></p>
+        <div class="jp-def-section" style="--d:200" id="jp-def-section">
             <input type="checkbox" id="jp-toggle" class="jp-def-input">
             <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
             <div class="jp-def-wrap">

@@ -20,6 +20,7 @@
     /* Borders */
     --border: rgba(255, 255, 255, 0.06);
     --border-light: rgba(255, 255, 255, 0.09);
+    --divider-color: rgba(255, 255, 255, 0.45);
 
     /* Text — 4-level hierarchy */
     --text-1: rgba(255, 255, 255, 0.92);
@@ -175,7 +176,7 @@ html {
 }
 
 @media (hover: none) {
-    .card-inner { padding-bottom: 30px; }
+    .card-inner { padding-top: clamp(20px, 6vw, 44px); padding-bottom: 30px; }
 }
 
 /* Glass sheen on card surface */
@@ -210,7 +211,7 @@ html {
 
 .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-light) 25%, var(--border-light) 75%, transparent);
+    background: linear-gradient(90deg, transparent, var(--divider-color) 25%, var(--divider-color) 75%, transparent);
     margin: 0 0 20px;
 }
 
@@ -565,7 +566,7 @@ html {
     font-weight: normal;
     line-height: 1.2;
     text-align: center;
-    margin: 0 0 12px;
+    margin: -8px 0 4px;
     text-rendering: optimizeLegibility;
 }
 
