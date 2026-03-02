@@ -837,22 +837,22 @@
     var defMode = _rootStyle.getPropertyValue('--definition-mode').trim() || 'all';
 
     var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
-    var wordPitchColor = (rawWPC === 'front') ? 'front' : (rawWPC === 'off') ? 'off' : 'back';
+    var wordPitchColor = (rawWPC === 'front & back' || rawWPC === 'front' || rawWPC === 'both') ? 'front & back' : (rawWPC === 'off') ? 'off' : 'back only';
     var rawSPC = _rootStyle.getPropertyValue('--sentence-pitch-color').trim();
-    var sentPitchColor = (rawSPC === 'front') ? 'front' : (rawSPC === 'off') ? 'off' : 'back';
+    var sentPitchColor = (rawSPC === 'front & back' || rawSPC === 'front' || rawSPC === 'both') ? 'front & back' : (rawSPC === 'off') ? 'off' : 'back only';
     var rawDPC = _rootStyle.getPropertyValue('--definition-pitch-color').trim();
-    var defPitchColor = (rawDPC === 'front') ? 'front' : (rawDPC === 'off') ? 'off' : 'back';
+    var defPitchColor = (rawDPC === 'front & back' || rawDPC === 'front' || rawDPC === 'both') ? 'front & back' : (rawDPC === 'off') ? 'off' : 'back only';
 
-    var wordFurigana = _rootStyle.getPropertyValue('--word-furigana').trim() || 'back';
-    var sentFurigana = _rootStyle.getPropertyValue('--sentence-furigana').trim() || 'back';
-    var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'back';
+    var wordFurigana = _rootStyle.getPropertyValue('--word-furigana').trim() || 'back only';
+    var sentFurigana = _rootStyle.getPropertyValue('--sentence-furigana').trim() || 'back only';
+    var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'back only';
 
-    var wordSide = _rootStyle.getPropertyValue('--word-text').trim() || 'back';
-    var sentSide = _rootStyle.getPropertyValue('--sentence-text').trim() || 'back';
-    var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back';
+    var wordSide = _rootStyle.getPropertyValue('--word-text').trim() || 'back only';
+    var sentSide = _rootStyle.getPropertyValue('--sentence-text').trim() || 'back only';
+    var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back only';
     var answerEl = document.querySelector('.answer');
-    var wordIsOnFront = (wordSide === 'front');
-    var sentIsOnFront = (sentSide === 'front');
+    var wordIsOnFront = (wordSide === 'front & back');
+    var sentIsOnFront = (sentSide === 'front & back');
     var isTategaki = document.documentElement.classList.contains('tategaki');
 
     // Word → target word + pitch graph
@@ -951,8 +951,8 @@
           frontSentEl.innerHTML = sentEl.innerHTML;
           if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
           if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
-          if (sentFurigana !== 'back') frontSentEl.classList.add('furigana-' + sentFurigana);
-          if (sentPitchColor === 'front') frontSentEl.classList.add('pitch-color-front');
+          if (sentFurigana !== 'back only') frontSentEl.classList.add('furigana-' + sentFurigana);
+          if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
         }
         sentEl.setAttribute('data-show', 'off');
       }
@@ -984,7 +984,7 @@
     }
 
     // Image → hide answer copy when image is on front or off
-    if (imageSide === 'front') {
+    if (imageSide === 'front & back') {
       var frontImageEl = document.getElementById('front-image');
       var rawImageEl = document.getElementById('raw-image');
       if (frontImageEl && rawImageEl && rawImageEl.innerHTML.trim()) {

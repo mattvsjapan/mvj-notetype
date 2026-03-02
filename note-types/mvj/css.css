@@ -19,24 +19,24 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: back;                 /* front | back | off                  */
-    --word-audio: front;            /* front | back | off                  */
-    --word-audio-buttons: both;    /* front only | back only | both | none */
+    --word-text: back only;            /* front & back | back only | off      */
+    --word-audio: front & back;     /* front & back | back only | off      */
+    --word-audio-buttons: front & back;/* front only | back only | front & back | none */
     --word-text-play: on;          /* on | off                            */
-    --word-furigana: back;         /* front | back | off                  */
-    --word-pitch-color: back;      /* front | back | off                  */
+    --word-furigana: back only;    /* front & back | back only | off      */
+    --word-pitch-color: back only; /* front & back | back only | off      */
     --pitch-graph: on;              /* on | off                            */
 
     /* Sentence */
-    --sentence-text: back;             /* front | back | off                  */
-    --sentence-audio: front;        /* front | back | off                  */
-    --sentence-audio-buttons: both;/* front only | back only | both | none */
+    --sentence-text: back only;        /* front & back | back only | off      */
+    --sentence-audio: front & back; /* front & back | back only | off      */
+    --sentence-audio-buttons: front & back;/* front only | back only | front & back | none */
     --sentence-text-play: on;      /* on | off                            */
-    --sentence-furigana: back;     /* front | back | off                  */
-    --sentence-pitch-color: off;  /* front | back | off                  */
+    --sentence-furigana: back only;/* front & back | back only | off      */
+    --sentence-pitch-color: off;  /* front & back | back only | off      */
 
     /* Image */
-    --image: back;                /* front | back | off                  */
+    --image: back only;           /* front & back | back only | off      */
 
     /* Definitions */
     --definition-text: on;         /* on | off                            */
@@ -45,8 +45,8 @@
     --definition-text-play: on;    /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-default: bilingual; /* monolingual | bilingual             */
-    --definition-furigana: back;   /* front | back | off                  */
-    --definition-pitch-color: back;/* front | back | off                  */
+    --definition-furigana: back only;/* front & back | back only | off      */
+    --definition-pitch-color: back only;/* front & back | back only | off      */
 
     /* Hotkeys */
     --hotkey-word-audio: z;        /* keyboard key                        */
@@ -69,46 +69,46 @@
     --mode-1-name: Word Audio Only;
     --mode-1-tag: _jp::word;
     --mode-1-deck: ;
-    --mode-1-sentence-audio: back;
+    --mode-1-sentence-audio: back only;
 
     /* —— Mode 2: Sentence Audio Only ——————————————————————————— */
     --mode-2-name: Sentence Audio Only;
     --mode-2-tag: _jp::sentence;
     --mode-2-deck: ;
-    --mode-2-word-audio: back;
+    --mode-2-word-audio: back only;
 
     /* —— Mode 3: Image ————————————————————————————————————————— */
     --mode-3-name: Image;
     --mode-3-tag: _jp::image;
     --mode-3-deck: ;
-    --mode-3-word-audio: back;
-    --mode-3-sentence-audio: back;
-    --mode-3-image: front;
+    --mode-3-word-audio: back only;
+    --mode-3-sentence-audio: back only;
+    --mode-3-image: front & back;
 
     /* —— Mode 4: Reading ——————————————————————————————————————— */
     --mode-4-name: Reading;
     --mode-4-tag: _jp::reading;
     --mode-4-deck: ;
     --mode-4-tategaki: on;
-    --mode-4-word-audio: back;
-    --mode-4-sentence-text: front;
-    --mode-4-sentence-audio: back;
+    --mode-4-word-audio: back only;
+    --mode-4-sentence-text: front & back;
+    --mode-4-sentence-audio: back only;
     --mode-4-definition-text: on;
 
     /* —— Mode 5: Vocab ————————————————————————————————————————— */
     --mode-5-name: Vocab;
     --mode-5-tag: _jp::vocab;
     --mode-5-deck: ;
-    --mode-5-word-text: front;
-    --mode-5-word-audio: back;
-    --mode-5-sentence-audio: back;
+    --mode-5-word-text: front & back;
+    --mode-5-word-audio: back only;
+    --mode-5-sentence-audio: back only;
 
     /* —— Mode 6: Furigana —————————————————————————————————————— */
     --mode-6-name: Furigana;
     --mode-6-tag: jp_::furigana;
     --mode-6-deck: ;
-    --mode-6-word-furigana: front;
-    --mode-6-sentence-furigana: front;
+    --mode-6-word-furigana: front & back;
+    --mode-6-sentence-furigana: front & back;
 
     /* ═══════════════════════════════════════════════════════ */
 

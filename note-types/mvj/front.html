@@ -688,18 +688,25 @@ function clearLastMargin(el) {
         return v ? v.trim() : (fallback || '');
     }
 
-    var wordSide = setting('--word-text', 'back');
-    var sentSide = setting('--sentence-text', 'back');
-    var imageSide = setting('--image', 'back');
-    var wordAudioSide = setting('--word-audio', 'front');
-    var sentAudioSide = setting('--sentence-audio', 'front');
-    var wordFurigana = setting('--word-furigana', 'back');
-    var sentFurigana = setting('--sentence-furigana', 'back');
-    var wordPC = setting('--word-pitch-color', 'back');
-    var sentPC = setting('--sentence-pitch-color', 'back');
-    // Backwards compat: treat 'on' or any unknown value as 'back'
-    wordPC = (wordPC === 'front') ? 'front' : (wordPC === 'off') ? 'off' : 'back';
-    sentPC = (sentPC === 'front') ? 'front' : (sentPC === 'off') ? 'off' : 'back';
+    var wordSide = setting('--word-text', 'back only');
+    var sentSide = setting('--sentence-text', 'back only');
+    var imageSide = setting('--image', 'back only');
+    var wordAudioSide = setting('--word-audio', 'front & back');
+    var sentAudioSide = setting('--sentence-audio', 'front & back');
+    var wordFurigana = setting('--word-furigana', 'back only');
+    var sentFurigana = setting('--sentence-furigana', 'back only');
+    var wordPC = setting('--word-pitch-color', 'back only');
+    var sentPC = setting('--sentence-pitch-color', 'back only');
+    // Backwards compat: normalize old 'front'/'back'/'on' values
+    wordSide = (wordSide === 'front & back' || wordSide === 'front' || wordSide === 'both') ? 'front & back' : (wordSide === 'off') ? 'off' : 'back only';
+    sentSide = (sentSide === 'front & back' || sentSide === 'front' || sentSide === 'both') ? 'front & back' : (sentSide === 'off') ? 'off' : 'back only';
+    imageSide = (imageSide === 'front & back' || imageSide === 'front' || imageSide === 'both') ? 'front & back' : (imageSide === 'off') ? 'off' : 'back only';
+    wordAudioSide = (wordAudioSide === 'front & back' || wordAudioSide === 'front' || wordAudioSide === 'both') ? 'front & back' : (wordAudioSide === 'off') ? 'off' : 'back only';
+    sentAudioSide = (sentAudioSide === 'front & back' || sentAudioSide === 'front' || sentAudioSide === 'both') ? 'front & back' : (sentAudioSide === 'off') ? 'off' : 'back only';
+    wordFurigana = (wordFurigana === 'front & back' || wordFurigana === 'front' || wordFurigana === 'both') ? 'front & back' : (wordFurigana === 'off') ? 'off' : 'back only';
+    sentFurigana = (sentFurigana === 'front & back' || sentFurigana === 'front' || sentFurigana === 'both') ? 'front & back' : (sentFurigana === 'off') ? 'off' : 'back only';
+    wordPC = (wordPC === 'front & back' || wordPC === 'front' || wordPC === 'both') ? 'front & back' : (wordPC === 'off') ? 'off' : 'back only';
+    sentPC = (sentPC === 'front & back' || sentPC === 'front' || sentPC === 'both') ? 'front & back' : (sentPC === 'off') ? 'off' : 'back only';
 
     // ── Stamp data-side on front-content elements (both front and back) ──
     var frontWord = document.getElementById('front-word');
@@ -707,17 +714,19 @@ function clearLastMargin(el) {
     var frontImage = document.getElementById('front-image');
 
     if (frontWord) frontWord.setAttribute('data-side',
-        wordSide === 'front' ? 'front' : (wordSide === 'off' ? 'off' : 'back'));
+        wordSide === 'front & back' ? 'front' : (wordSide === 'off' ? 'off' : 'back'));
     if (frontSent) frontSent.setAttribute('data-side',
-        sentSide === 'front' ? 'front' : (sentSide === 'off' ? 'off' : 'back'));
+        sentSide === 'front & back' ? 'front' : (sentSide === 'off' ? 'off' : 'back'));
     if (frontImage) frontImage.setAttribute('data-side',
-        imageSide === 'front' ? 'front' : (imageSide === 'off' ? 'off' : 'back'));
+        imageSide === 'front & back' ? 'front' : (imageSide === 'off' ? 'off' : 'back'));
 
     // ── Stamp data-side on audio items (both front and back) ──
     var wordAI = document.querySelector('.audio-row .audio-item[data-audio="word"]');
     var sentAI = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
-    if (wordAI) wordAI.setAttribute('data-side', wordAudioSide);
-    if (sentAI) sentAI.setAttribute('data-side', sentAudioSide);
+    if (wordAI) wordAI.setAttribute('data-side',
+        wordAudioSide === 'front & back' ? 'front' : (wordAudioSide === 'off' ? 'off' : 'back'));
+    if (sentAI) sentAI.setAttribute('data-side',
+        sentAudioSide === 'front & back' ? 'front' : (sentAudioSide === 'off' ? 'off' : 'back'));
 
     // Per-section audio button hiding
     var rs = getComputedStyle(document.documentElement);
@@ -844,36 +853,36 @@ function clearLastMargin(el) {
     }
 
     // ── Populate front-content children (front only) ──
-    if (wordSide === 'front') {
+    if (wordSide === 'front & back') {
         var rw = document.getElementById('raw-word');
-        var html = rw ? (wordPC === 'front' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
+        var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
         if (html) {
             frontWord.innerHTML = html;
-            if (wordPC === 'front') frontWord.classList.add('pitch-color-front');
+            if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
         } else { frontWord.setAttribute('data-side', 'back'); }
     }
 
-    if (sentSide === 'front') {
+    if (sentSide === 'front & back') {
         var rs = document.getElementById('raw-sentence');
-        var html = rs ? (sentPC === 'front' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
+        var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
         if (html) {
             frontSent.innerHTML = html;
-            if (sentPC === 'front') frontSent.classList.add('pitch-color-front');
+            if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
         } else { frontSent.setAttribute('data-side', 'back'); }
     }
 
-    if (imageSide === 'front') {
+    if (imageSide === 'front & back') {
         var ri = document.getElementById('raw-image');
         if (ri && ri.innerHTML.trim()) { frontImage.innerHTML = ri.innerHTML; }
         else { frontImage.setAttribute('data-side', 'back'); }
     }
     if (window.__checkImageFit) window.__checkImageFit();
 
-    if (wordFurigana !== 'back') frontWord.classList.add('furigana-' + wordFurigana);
-    if (sentFurigana !== 'back') frontSent.classList.add('furigana-' + sentFurigana);
+    if (wordFurigana !== 'back only') frontWord.classList.add('furigana-' + wordFurigana);
+    if (sentFurigana !== 'back only') frontSent.classList.add('furigana-' + sentFurigana);
 
     // ── Front-side text-play linkage ──
-    if (wordSide === 'front' && wordAudioSide === 'front' && frontWord.innerHTML) {
+    if (wordSide === 'front & back' && wordAudioSide === 'front & back' && frontWord.innerHTML) {
         window.__linkTextPlay(frontWord, 'word', {
             play: function() {
                 var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
@@ -888,7 +897,7 @@ function clearLastMargin(el) {
         });
     }
 
-    if (sentSide === 'front' && sentAudioSide === 'front' && frontSent.innerHTML) {
+    if (sentSide === 'front & back' && sentAudioSide === 'front & back' && frontSent.innerHTML) {
         window.__linkTextPlay(frontSent, 'sentence', {
             play: function() {
                 var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
