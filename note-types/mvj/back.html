@@ -1632,6 +1632,10 @@
     // ── Trigger reveal animations after content is ready ──
     var riEls = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');
     for (var ri = 0; ri < riEls.length; ri++) riEls[ri].classList.add('ri');
+    var rtEls = document.querySelectorAll('.front-content .target-word rt, .front-content .sentence rt');
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+      for (var rti = 0; rti < rtEls.length; rti++) rtEls[rti].classList.add('rt-ri');
+    }); });
     if (isTategaki) {
       var ciEl = document.querySelector('.card-inner');
       if (ciEl) ciEl.classList.add('tate-expand');

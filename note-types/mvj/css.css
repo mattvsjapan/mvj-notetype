@@ -928,6 +928,20 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
         padding-top: 0.33em;
         margin-top: 0;
     }
+    @supports not (-webkit-touch-callout: none) {
+        html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+            padding-top: 0.45em;
+        }
+        html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off) {
+            padding-top: 0.45em;
+            margin-top: 0;
+        }
+        html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off),
+        html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off) {
+            padding-top: 0.45em;
+            margin-top: 0;
+        }
+    }
     .tategaki .text-play:has(ruby) {
         padding-right: 1px;
         margin-right: -1px;
@@ -1185,6 +1199,21 @@ rt {
 
 html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     padding-top: 0.33em;
+}
+
+@media (hover: none) {
+    @supports not (-webkit-touch-callout: none) {
+        html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
+            padding-top: 0.38em;
+        }
+        html:not(.tategaki) .sentence:has(ruby):not(.furigana-off) {
+            padding-top: 0.45em;
+        }
+        html:not(.tategaki) .def:has(ruby):not(.furigana-off),
+        html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
+            padding-top: 0.45em;
+        }
+    }
 }
 
 /* Image */
@@ -1482,8 +1511,8 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .target-word.furigana-front rt { visibility: visible; color: inherit; }
 .front-content .sentence.furigana-front rt { visibility: visible; color: inherit; }
 /* Suppress fade-in animation when furigana was already visible on front */
-.back .front-content .target-word.furigana-front rt { animation: none; }
-.back .front-content .sentence.furigana-front rt { animation: none; }
+.back .front-content .target-word.furigana-front rt.rt-ri { animation: none; }
+.back .front-content .sentence.furigana-front rt.rt-ri { animation: none; }
 
 /* furigana-off: hide rt everywhere, including back-side reveal */
 .target-word.furigana-off rt,
@@ -1535,6 +1564,9 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .back .front-content .target-word rt {
     color: inherit;
     visibility: visible;
+    opacity: 0;
+}
+.back .front-content .target-word rt.rt-ri {
     animation: rtFadeIn 0.25s ease both;
 }
 .back .front-content .sentence {
@@ -1546,6 +1578,9 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .back .front-content .sentence rt {
     color: inherit;
     visibility: visible;
+    opacity: 0;
+}
+.back .front-content .sentence rt.rt-ri {
     animation: rtFadeIn 0.25s ease both;
 }
 
@@ -1814,6 +1849,7 @@ html.tategaki:has(.back) {
 .tategaki .back .front-content .target-word rt,
 .tategaki .back .front-content .sentence rt {
     display: revert;
+    animation: none;
 }
 .tategaki .front-content .target-word.furigana-front rt,
 .tategaki .front-content .sentence.furigana-front rt { display: revert; }
@@ -2029,9 +2065,13 @@ html.tategaki:has(.back) {
     }
 }
 
-/* WebKit (AnkiMobile) already expands the content area for ruby in
-   vertical writing mode, so the extra padding is redundant. */
+/* WebKit (AnkiMobile) already expands the content area for ruby,
+   so the extra padding is redundant. */
 @supports (-webkit-touch-callout: none) {
+    html:not(.tategaki) .target-word:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-top: 0;
+    }
     .tategaki .target-word:has(ruby):not(.furigana-off),
     .tategaki .target-word.text-play:has(ruby):not(.furigana-off),
     .tategaki .sentence:has(ruby):not(.furigana-off),
