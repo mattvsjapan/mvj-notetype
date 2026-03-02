@@ -2066,10 +2066,18 @@ html.tategaki:has(.back) {
 }
 
 /* WebKit (AnkiMobile) already expands the content area for ruby,
-   so the extra padding is redundant. */
+   so the extra padding is partially redundant. */
 @supports (-webkit-touch-callout: none) {
     html:not(.tategaki) .target-word:has(ruby):not(.furigana-off),
     html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-top: 0.08em;
+    }
+    html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .def:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off),
+    html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off) {
         padding-top: 0;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off),
