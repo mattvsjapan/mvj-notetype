@@ -893,8 +893,8 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     margin-top: -10px;
 }
 
-.target-word.text-play:has(ruby):not(.furigana-off) {
-    padding-top: 17px;
+html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+    padding-top: 0.33em;
     margin-top: 0;
 }
 
@@ -904,7 +904,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
-    padding-right: 17px;
+    padding-right: 0.33em;
     margin-right: 0;
 }
 
@@ -913,8 +913,8 @@ circle.devoiced, rect.devoiced { fill: none !important; }
         padding-top: 1px;
         margin-top: -1px;
     }
-    .target-word.text-play:has(ruby):not(.furigana-off) {
-        padding-top: 17px;
+    html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-top: 0.33em;
         margin-top: 0;
     }
     .tategaki .text-play:has(ruby) {
@@ -922,8 +922,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
         margin-right: -1px;
     }
     .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
-        padding-top: 0;
-        padding-right: 17px;
+        padding-right: 0.33em;
         margin-right: 0;
     }
 }
@@ -1164,8 +1163,8 @@ rt {
     color: inherit;
 }
 
-.target-word:has(ruby):not(.furigana-off) {
-    padding-top: 17px;  /* matches 0.33em rt at 52px */
+html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
+    padding-top: 0.33em;
 }
 
 /* Image */
@@ -1868,7 +1867,7 @@ html.tategaki:has(.back) {
     .tategaki .card {
         overflow-y: hidden;
         overscroll-behavior-y: none;
-        touch-action: pan-x;
+        touch-action: pan-x pinch-zoom;
         padding-bottom: 20px;
     }
     .tategaki #content {
@@ -1992,8 +1991,16 @@ html.tategaki:has(.back) {
 }
 
 .tategaki .target-word:has(ruby):not(.furigana-off) {
-    padding-top: 0;
-    padding-right: 17px;
+    padding-right: 0.33em;
+}
+
+/* WebKit (AnkiMobile) already expands the content area for ruby in
+   vertical writing mode, so the extra padding is redundant. */
+@supports (-webkit-touch-callout: none) {
+    .tategaki .target-word:has(ruby):not(.furigana-off),
+    .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
+        padding-right: 0;
+    }
 }
 
 .tategaki .pitch-graph {
