@@ -2158,6 +2158,21 @@ html.tategaki:has(.back) {
     }
 }
 
+/* Collapse ruby-annotation padding when rt is hidden on tategaki front —
+   the JS adds .furigana-hidden in the default "back only" state.
+   Placed after all other tategaki padding rules to win source-order ties. */
+.tategaki .front-content .target-word.furigana-hidden:has(ruby),
+.tategaki .front-content .sentence.furigana-hidden:has(ruby) {
+    padding-right: 0;
+}
+/* Text-play elements have a symmetric 4px/-4px base — restore that instead
+   of zeroing, so the pill highlight stays centered around the text. */
+.tategaki .front-content .target-word.furigana-hidden.text-play:has(ruby),
+.tategaki .front-content .sentence.furigana-hidden.text-play:has(ruby) {
+    padding-right: 4px;
+    margin-right: -4px;
+}
+
 .tategaki .pitch-graph {
     margin: 0;
 }

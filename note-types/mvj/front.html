@@ -880,8 +880,10 @@ function clearLastMargin(el) {
 
     if (wordFurigana === 'front & back') frontWord.classList.add('furigana-front');
     else if (wordFurigana === 'off') frontWord.classList.add('furigana-off');
+    else if (!_isBack && document.documentElement.classList.contains('tategaki')) frontWord.classList.add('furigana-hidden');
     if (sentFurigana === 'front & back') frontSent.classList.add('furigana-front');
     else if (sentFurigana === 'off') frontSent.classList.add('furigana-off');
+    else if (!_isBack && document.documentElement.classList.contains('tategaki')) frontSent.classList.add('furigana-hidden');
 
     // ── Front-side text-play linkage ──
     if (wordSide === 'front & back' && wordAudioSide === 'front & back' && frontWord.innerHTML) {
