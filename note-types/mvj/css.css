@@ -1609,24 +1609,26 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     visibility: hidden;
 }
 
-/* Restore text-play negative margins that get defeated by .front-content margin shorthand */
+/* Stretched flex children: keep pill padding inside natural width (same pattern as word-pitch-group) */
 .front-content .target-word.text-play {
-    margin-top: -2px;
-    margin-left: -6px;
-    margin-right: -6px;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
     margin-bottom: 10px;
+    box-sizing: border-box;
 }
 .front-content .target-word.text-play:has(ruby):not(.furigana-off) {
-    margin-top: -10px;
+    margin-top: 0;
 }
 .front-content .sentence.text-play {
-    margin-top: -2px;
-    margin-left: -6px;
-    margin-right: -6px;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
     margin-bottom: 14px;
+    box-sizing: border-box;
 }
 .front-content .sentence.text-play:has(ruby):not(.furigana-off) {
-    margin-top: -10px;
+    margin-top: 0;
 }
 
 /* furigana-front: show rt on front side (override default hiding) */
