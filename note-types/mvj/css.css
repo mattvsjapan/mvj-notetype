@@ -1630,6 +1630,18 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .sentence.text-play:has(ruby):not(.furigana-off) {
     margin-top: 0;
 }
+/* Tategaki: the above rules set physical margins for horizontal layout.
+   In vertical-rl, margin-bottom is inline-end (shrinks height:100% elements)
+   and margin-left is block-end (column spacing). Override both. */
+.tategaki .front-content .target-word.text-play {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.tategaki .front-content .sentence.text-play {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 16px;
+}
 
 /* furigana-front: show rt on front side (override default hiding) */
 .front-content .target-word.furigana-front rt { visibility: visible; color: inherit; }
