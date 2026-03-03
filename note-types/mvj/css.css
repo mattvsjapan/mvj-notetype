@@ -939,11 +939,27 @@ html:not(.tategaki) .front-content .target-word.text-play:has(ruby):not(.furigan
 html:not(.tategaki) .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
     top: 0.2em;
 }
+@supports (-webkit-touch-callout: none) {
+    html:not(.tategaki) .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+        top: 0.45em;
+    }
+    html:not(.tategaki) .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+        top: 0.35em;
+    }
+}
 
 /* Back side: furigana is visible — restore default inset so pill encompasses it */
 html:not(.tategaki) .back .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after,
 html:not(.tategaki) .back .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
     top: -2px;
+}
+@supports (-webkit-touch-callout: none) {
+    html:not(.tategaki) .back .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+        top: 0.1em;
+    }
+    html:not(.tategaki) .back .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+        top: 0.3em;
+    }
 }
 
 /* Front entrance */
@@ -2129,6 +2145,18 @@ html.tategaki:has(.back) {
     .tategaki .def:has(ruby):not(.furigana-off),
     .tategaki .jp-def:has(ruby):not(.furigana-off) {
         padding-right: 0;
+    }
+    /* Pill top-edge override for definitions with ruby (non-tategaki) */
+    html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off)::after,
+    html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off)::after {
+        top: 0.3em;
+    }
+    /* Pill right-edge override for tategaki ruby elements */
+    .tategaki .target-word.text-play:has(ruby):not(.furigana-off)::after,
+    .tategaki .sentence.text-play:has(ruby):not(.furigana-off)::after,
+    .tategaki .def.text-play:has(ruby):not(.furigana-off)::after,
+    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off)::after {
+        right: 0.3em;
     }
 }
 
