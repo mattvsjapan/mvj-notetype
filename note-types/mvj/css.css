@@ -888,7 +888,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 /* Extra padding to encompass furigana annotations */
-.text-play:has(ruby) {
+.text-play:has(ruby):not(.furigana-off) {
     padding-top: 10px;
     margin-top: -10px;
 }
@@ -898,7 +898,7 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
     margin-top: 0;
 }
 
-.tategaki .text-play:has(ruby) {
+.tategaki .text-play:has(ruby):not(.furigana-off) {
     padding-right: 10px;
     margin-right: -10px;
 }
@@ -920,7 +920,7 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
 }
 
 @media (hover: none) {
-    .text-play:has(ruby) {
+    .text-play:has(ruby):not(.furigana-off) {
         padding-top: 1px;
         margin-top: -1px;
     }
@@ -1582,6 +1582,24 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .sentence rt {
     color: var(--text-1);
     visibility: hidden;
+}
+
+/* Restore text-play negative margins that get defeated by .front-content margin shorthand */
+.front-content .target-word.text-play {
+    margin-top: -2px;
+    margin-left: -6px;
+    margin-right: -6px;
+}
+.front-content .target-word.text-play:has(ruby):not(.furigana-off) {
+    margin-top: -10px;
+}
+.front-content .sentence.text-play {
+    margin-top: -2px;
+    margin-left: -6px;
+    margin-right: -6px;
+}
+.front-content .sentence.text-play:has(ruby):not(.furigana-off) {
+    margin-top: -10px;
 }
 
 /* furigana-front: show rt on front side (override default hiding) */
