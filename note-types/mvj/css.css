@@ -997,6 +997,8 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
 .tategaki .word-pitch-group.text-play {
     padding: 8px 6px;
     margin: -8px -6px;
+    width: calc(100% + 12px);
+    box-sizing: border-box;
 }
 
 .tategaki .word-pitch-group.text-play:has(ruby) {
