@@ -906,15 +906,17 @@
                     && !graphEl.hasAttribute('data-state');
       var wordTextPlayEl;
 
+      var useWrapper = isAdjacent || isTategaki;
+
       if (wordIsOnFront) {
         wordTextPlayEl = document.getElementById('front-word');
-      } else if (isAdjacent) {
+      } else if (useWrapper) {
         wordTextPlayEl = document.getElementById('word-pitch-group');
       } else {
         wordTextPlayEl = targetEl;
       }
 
-      var hasContent = wordIsOnFront || isAdjacent
+      var hasContent = wordIsOnFront || useWrapper
           ? (wordTextPlayEl.querySelector('.target-word') || wordTextPlayEl).innerHTML
           : wordTextPlayEl.innerHTML;
 
