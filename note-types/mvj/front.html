@@ -816,7 +816,12 @@ function clearLastMargin(el) {
             if (km) return roleMap[km[1]] || '';
             var tm = accent.match(/^(p)?([a-zA-Z])?~?(\d)?~?$/);
             if (!tm) return '';
-            if (tm[1]) return 'particle';
+            if (tm[1]) {
+                var role = tm[2] && roleMap[tm[2]] ? roleMap[tm[2]]
+                         : tm[3] !== undefined ? (parseInt(tm[3]) === 0 ? 'heiban' : parseInt(tm[3]) === 1 ? 'atamadaka' : 'nakadaka')
+                         : '';
+                return role ? 'particle ' + role : 'particle';
+            }
             if (tm[2] && roleMap[tm[2]]) return roleMap[tm[2]];
             if (tm[3] !== undefined) {
                 var n = parseInt(tm[3]);
