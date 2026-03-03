@@ -1443,6 +1443,8 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     overflow: hidden;
     min-height: 0;
     margin: 0;
+    transition: overflow 0s 350ms;
+    transition-behavior: allow-discrete;
 }
 
 /* Zero padding/margin when collapsed so 0fr grid track fully collapses */
@@ -1460,6 +1462,8 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .jp-def-input:checked ~ .jp-def-wrap > .jp-def.text-play,
 .jp-def-input:checked ~ .jp-def-wrap > .def.text-play {
     overflow: visible;
+    transition: overflow 0s 0s;
+    transition-behavior: allow-discrete;
 }
 
 .jp-def {
