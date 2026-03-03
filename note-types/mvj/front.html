@@ -894,7 +894,9 @@ function clearLastMargin(el) {
     else if (!_isBack && document.documentElement.classList.contains('tategaki')) frontSent.classList.add('furigana-hidden');
 
     // ── Front-side text-play linkage ──
-    if (wordSide === 'front & back' && wordAudioSide === 'front & back' && frontWord.innerHTML) {
+    if (wordSide === 'front & back' && wordAudioSide !== 'off'
+        && document.querySelector('.audio-row .audio-item[data-audio="word"]')
+        && frontWord.innerHTML) {
         window.__linkTextPlay(frontWord, 'word', {
             play: function() {
                 var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
@@ -909,7 +911,9 @@ function clearLastMargin(el) {
         });
     }
 
-    if (sentSide === 'front & back' && sentAudioSide === 'front & back' && frontSent.innerHTML) {
+    if (sentSide === 'front & back' && sentAudioSide !== 'off'
+        && document.querySelector('.audio-row .audio-item[data-audio="sentence"]')
+        && frontSent.innerHTML) {
         window.__linkTextPlay(frontSent, 'sentence', {
             play: function() {
                 var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
