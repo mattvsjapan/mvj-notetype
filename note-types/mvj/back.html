@@ -907,7 +907,8 @@
     }
 
     // Word text-play on back
-    if (wordOn && wordRaw) {
+    var wordAudioItem = document.querySelector('.audio-item[data-audio="word"]:not([data-side="off"])');
+    if (wordOn && wordRaw && wordAudioItem) {
       var isAdjacent = !targetEl.hasAttribute('data-show')
                     && !graphEl.hasAttribute('data-state');
       var wordTextPlayEl;
@@ -929,7 +930,7 @@
       if (wordTextPlayEl && hasContent) {
         window.__linkTextPlay(wordTextPlayEl, 'word', {
           play: function() {
-            var item = document.querySelector('.audio-item[data-audio="word"]');
+            var item = document.querySelector('.audio-item[data-audio="word"]:not([data-side="off"])');
             window.__playItemAudios(item);
           },
           getBtn: function() {
@@ -987,7 +988,8 @@
     }
 
     // Sentence text-play on back
-    if (sentOn && sentRaw) {
+    var sentAudioItem = document.querySelector('.audio-item[data-audio="sentence"]:not([data-side="off"])');
+    if (sentOn && sentRaw && sentAudioItem) {
       var sentTextPlayEl = sentIsOnFront
         ? document.getElementById('front-sentence')
         : sentEl;
@@ -995,7 +997,7 @@
           && sentTextPlayEl.getAttribute('data-show') !== 'off') {
         window.__linkTextPlay(sentTextPlayEl, 'sentence', {
           play: function() {
-            var item = document.querySelector('.audio-item[data-audio="sentence"]');
+            var item = document.querySelector('.audio-item[data-audio="sentence"]:not([data-side="off"])');
             window.__playItemAudios(item);
           },
           getBtn: function() {
