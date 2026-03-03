@@ -2,6 +2,7 @@
 
 import re
 
+from anki import hooks as anki_hooks
 from anki.hooks import wrap
 from aqt import gui_hooks, mw
 from aqt.editor import Editor
@@ -44,6 +45,49 @@ def _munge_sound_to_audio(txt: str, editor: Editor) -> str:
 
 
 gui_hooks.editor_will_munge_html.append(_munge_sound_to_audio)
+
+
+# --- Collection-level hook: convert [sound:] for AnkiConnect / Migaku / Yomichan ---
+
+
+def _convert_on_add(col, note, deck_id):
+    model = note.note_type()
+    if model is None or model["name"] != NOTE_TYPE_NAME:
+        return
+    for i, value in enumerate(note.fields):
+        if _SOUND_RE.search(value):
+            note.fields[i] = _SOUND_RE.sub(r"[audio:\1]", value)
+
+
+anki_hooks.note_will_be_added.append(_convert_on_add)
+
+
+# --- Editor display hook: convert [sound:] when fields are loaded (e.g. Migaku intercept) ---
+
+_converting_editor = False
+
+
+def _convert_on_editor_load(editor: Editor):
+    global _converting_editor
+    if _converting_editor:
+        return
+    if not _is_target_note(editor):
+        return
+    note = editor.note
+    changed = False
+    for i, value in enumerate(note.fields):
+        if _SOUND_RE.search(value):
+            note.fields[i] = _SOUND_RE.sub(r"[audio:\1]", value)
+            changed = True
+    if changed:
+        _converting_editor = True
+        try:
+            editor.loadNoteKeepingFocus()
+        finally:
+            _converting_editor = False
+
+
+gui_hooks.editor_did_load_note.append(_convert_on_editor_load)
 
 
 from .settings_dialog import SettingsDialog
