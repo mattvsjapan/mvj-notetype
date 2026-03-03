@@ -278,7 +278,7 @@
     // Strip split furigana before | gets treated as a separator
     expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
     expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
-    expr = expr.replace(/([。!?！？])/g, ' $1 .');
+    expr = expr.replace(/([。!?！？])(?!:)/g, ' $1 .');
     expr = expr.replace(/([「」|、､])/g, ' $1 ');
     expr = expr.replace(/([^ ]), /g, ' $1 , ');
     return expr;
@@ -866,7 +866,7 @@
           : targetEl;
 
       if (wordSeqs.length > 0) {
-        wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
+        wordTarget.innerHTML = wordSeqs.map(makeColoredSentence).join('');
         if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
         if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
         if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
@@ -932,13 +932,15 @@
           : sentEl;
 
       if (sentSeqs.length > 0) {
-        var hasAccent = sentSeqs[0].some(function(s) {
-          return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+        var hasAccent = sentSeqs.some(function(seq) {
+          return seq.some(function(s) {
+            return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+          });
         });
         if (!hasAccent) sentTarget.classList.add('no-accent');
         if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
         if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
-        sentTarget.innerHTML = makeColoredSentence(sentSeqs[0]);
+        sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
       }
 
       if (sentIsOnFront && !isTategaki) {
