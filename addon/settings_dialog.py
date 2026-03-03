@@ -971,9 +971,24 @@ class SettingsDialog(QDialog):
         ))
 
     def _install(self):
+        # Save current (possibly unsaved) settings into the model CSS so that
+        # _merge_css_settings preserves them when the new templates arrive.
+        model = mw.col.models.by_name(NOTE_TYPE_NAME)
+        if model:
+            self._sync_current_to_data()
+            model["css"] = _apply_settings(model["css"], self._defaults)
+            model["css"] = _apply_modes(model["css"], self._modes)
+            mw.col.models.update_dict(model)
         install_notetype(on_success=self._build_ui)
 
     def _sync_local(self, dev_sync):
+        # Save current (possibly unsaved) settings before syncing templates
+        model = mw.col.models.by_name(NOTE_TYPE_NAME)
+        if model:
+            self._sync_current_to_data()
+            model["css"] = _apply_settings(model["css"], self._defaults)
+            model["css"] = _apply_modes(model["css"], self._modes)
+            mw.col.models.update_dict(model)
         dev_sync.sync_local_templates()
         self._build_ui()
 
