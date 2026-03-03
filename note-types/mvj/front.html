@@ -459,6 +459,7 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
     if (window.__textPlayEnabled && !window.__textPlayEnabled[_sec]) return;
     if (!textEl || (!opts.getAudioSrc && !opts.play)) return;
 
+    textEl.classList.remove('text-play-inert');
     textEl.classList.add('text-play');
     textEl.setAttribute('data-text-play', audioKey);
 
@@ -894,38 +895,46 @@ function clearLastMargin(el) {
     else if (!_isBack && document.documentElement.classList.contains('tategaki')) frontSent.classList.add('furigana-hidden');
 
     // ── Front-side text-play linkage ──
-    if (wordSide === 'front & back' && wordAudioSide !== 'off'
+    if (wordSide === 'front & back'
         && document.querySelector('.audio-row .audio-item[data-audio="word"]')
         && frontWord.innerHTML) {
-        window.__linkTextPlay(frontWord, 'word', {
-            play: function() {
-                var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
-                window.__playItemAudios(item);
-            },
-            getBtn: function() {
-                return document.querySelector('.audio-item[data-audio="word"] .replay-button');
-            },
-            getAllBtns: function() {
-                return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
-            }
-        });
+        if (wordAudioSide === 'front & back') {
+            window.__linkTextPlay(frontWord, 'word', {
+                play: function() {
+                    var item = document.querySelector('.audio-item[data-audio="word"][data-side="front"]');
+                    window.__playItemAudios(item);
+                },
+                getBtn: function() {
+                    return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+                },
+                getAllBtns: function() {
+                    return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+                }
+            });
+        } else if (wordAudioSide !== 'off') {
+            frontWord.classList.add('text-play', 'text-play-inert');
+        }
     }
 
-    if (sentSide === 'front & back' && sentAudioSide !== 'off'
+    if (sentSide === 'front & back'
         && document.querySelector('.audio-row .audio-item[data-audio="sentence"]')
         && frontSent.innerHTML) {
-        window.__linkTextPlay(frontSent, 'sentence', {
-            play: function() {
-                var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
-                window.__playItemAudios(item);
-            },
-            getBtn: function() {
-                return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
-            },
-            getAllBtns: function() {
-                return Array.from(document.querySelectorAll('.audio-item[data-audio="sentence"] .replay-button'));
-            }
-        });
+        if (sentAudioSide === 'front & back') {
+            window.__linkTextPlay(frontSent, 'sentence', {
+                play: function() {
+                    var item = document.querySelector('.audio-item[data-audio="sentence"][data-side="front"]');
+                    window.__playItemAudios(item);
+                },
+                getBtn: function() {
+                    return document.querySelector('.audio-item[data-audio="sentence"] .replay-button');
+                },
+                getAllBtns: function() {
+                    return Array.from(document.querySelectorAll('.audio-item[data-audio="sentence"] .replay-button'));
+                }
+            });
+        } else if (sentAudioSide !== 'off') {
+            frontSent.classList.add('text-play', 'text-play-inert');
+        }
     }
 
     // Only clear last margins when front has visible content — in the

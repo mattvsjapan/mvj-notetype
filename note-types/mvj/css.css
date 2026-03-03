@@ -893,6 +893,11 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     isolation: isolate;
 }
 
+.text-play.text-play-inert {
+    pointer-events: none;
+    cursor: default;
+}
+
 .tategaki .text-play {
     padding: 6px 4px;
     margin: -6px -4px;
