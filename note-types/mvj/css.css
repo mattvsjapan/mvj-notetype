@@ -1564,14 +1564,18 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     margin-bottom: 24px;
 }
 
+html:not(.tategaki) .front-content .image-wrap {
+    order: -1;
+}
+
 /* Animate front-content children on the front side only */
-:not(.back) > .card-inner > .front .front-content .target-word[data-side="front"] {
+:not(.back) > .card-inner > .front .front-content .image-wrap[data-side="front"] {
     animation: frontFadeIn 0.35s ease both;
 }
-:not(.back) > .card-inner > .front .front-content .sentence[data-side="front"] {
+:not(.back) > .card-inner > .front .front-content .target-word[data-side="front"] {
     animation: frontFadeIn 0.35s ease 80ms both;
 }
-:not(.back) > .card-inner > .front .front-content .image-wrap[data-side="front"] {
+:not(.back) > .card-inner > .front .front-content .sentence[data-side="front"] {
     animation: frontFadeIn 0.35s ease 160ms both;
 }
 
@@ -1618,11 +1622,6 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 /* Suppress color-reveal animation (colors were already visible on front) */
 .back .front-content .target-word.pitch-color-front span,
 .back .front-content .sentence.pitch-color-front span { animation: none; }
-
-/* When word is in front zone, pitch graph becomes first item in back zone */
-.answer[data-word-zone="front"] .pitch-graph {
-    order: -1;
-}
 
 [data-font="jp"] {
     font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
@@ -1698,8 +1697,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     display: contents;
 }
 
-/* Non-tategaki: show image after sentence (image is before sentence in DOM) */
-html:not(.tategaki) .answer .image-wrap,
+/* Non-tategaki: show image before word (image is before sentence in DOM) */
+html:not(.tategaki) .answer .image-wrap {
+    order: -1;
+}
 html:not(.tategaki) .answer .audio-row-bottom,
 html:not(.tategaki) .answer .def,
 html:not(.tategaki) .answer .jp-def-section {
@@ -1723,6 +1724,10 @@ html:not(.tategaki) [data-font="jp"] {
 .ri {
     animation: reveal 0.5s var(--spring) both;
     animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+html:not(.tategaki) .answer .image-wrap.ri {
+    animation-delay: 0ms;
 }
 
 @keyframes reveal {
