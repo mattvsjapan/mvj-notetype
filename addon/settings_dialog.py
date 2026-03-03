@@ -42,7 +42,7 @@ from aqt.webview import AnkiWebView, AnkiWebViewKind
 from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES, install_notetype, change_notes_to_mvj
 
 _SAMPLE_MEDIA_DIR = os.path.join(os.path.dirname(__file__), "sample_media")
-_SAMPLE_IMAGE = "_mvj_sample.jpg"
+_SAMPLE_IMAGE = "_mvj_sample.webp"
 
 # Regexes for recovering missing definition text from audio TTS-SOURCE comments
 _DEF_TEXT_TYPE_RE = re.compile(r'<!-- def-type="([^"]+)" -->')
@@ -52,7 +52,7 @@ _DEF_AUDIO_SOURCE_RE = re.compile(r'<!-- def-type="([^"]+)" TTS-SOURCE: (.+?) --
 _SAMPLE_FIELDS = {
     "Word": "日本語[にほんご]:0-",
     "Word Audio": "[audio:_mvj_word.mp3]",
-    "Sentence": "日本語[にほんご]:0 って: 難[むずか]し\\い:h3 よね: 、 分[わ]かる:k",
+    "Sentence": "そりゃ:0 / パパ:1 と: / ママ:1 に: / 日本語[にほんご]:0 は: / 習[なら]ってた:k けど:",
     "Sentence Audio": "[audio:_mvj_sentence.mp3]",
     "Definition": (
         '<!-- def-type="bilingual" -->'
@@ -873,8 +873,9 @@ class SettingsDialog(QDialog):
             for fname in os.listdir(_SAMPLE_MEDIA_DIR):
                 src = os.path.join(_SAMPLE_MEDIA_DIR, fname)
                 dst = os.path.join(media_dir, fname)
-                if os.path.isfile(src) and not os.path.exists(dst):
-                    shutil.copy2(src, dst)
+                if os.path.isfile(src):
+                    if not os.path.exists(dst) or os.path.getsize(src) != os.path.getsize(dst):
+                        shutil.copy2(src, dst)
 
         self._note = mw.col.new_note(self._model)
         for name, value in _SAMPLE_FIELDS.items():
