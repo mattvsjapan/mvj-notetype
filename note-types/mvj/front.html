@@ -878,8 +878,10 @@ function clearLastMargin(el) {
     }
     if (window.__checkImageFit) window.__checkImageFit();
 
-    if (wordFurigana !== 'back only') frontWord.classList.add('furigana-' + wordFurigana);
-    if (sentFurigana !== 'back only') frontSent.classList.add('furigana-' + sentFurigana);
+    if (wordFurigana === 'front & back') frontWord.classList.add('furigana-front');
+    else if (wordFurigana === 'off') frontWord.classList.add('furigana-off');
+    if (sentFurigana === 'front & back') frontSent.classList.add('furigana-front');
+    else if (sentFurigana === 'off') frontSent.classList.add('furigana-off');
 
     // ── Front-side text-play linkage ──
     if (wordSide === 'front & back' && wordAudioSide === 'front & back' && frontWord.innerHTML) {

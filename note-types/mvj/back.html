@@ -951,7 +951,8 @@
           frontSentEl.innerHTML = sentEl.innerHTML;
           if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
           if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
-          if (sentFurigana !== 'back only') frontSentEl.classList.add('furigana-' + sentFurigana);
+          if (sentFurigana === 'front & back') frontSentEl.classList.add('furigana-front');
+          else if (sentFurigana === 'off') frontSentEl.classList.add('furigana-off');
           if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
         }
         sentEl.setAttribute('data-show', 'off');
