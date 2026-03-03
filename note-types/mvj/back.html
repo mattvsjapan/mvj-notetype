@@ -171,8 +171,10 @@
       </script>
       <div class="answer">
           <div class="word-column">
-              <h1 class="target-word" style="--d:0" id="target-word"></h1>
-              <div class="pitch-graph" style="--d:50" id="pitch-graph"></div>
+              <div class="word-pitch-group" id="word-pitch-group">
+                  <h1 class="target-word" style="--d:0" id="target-word"></h1>
+                  <div class="pitch-graph" style="--d:50" id="pitch-graph"></div>
+              </div>
               {{#Image}}
               <div class="image-wrap" style="--d:135">{{Image}}</div>
               {{/Image}}
@@ -883,25 +885,6 @@
       }
     }
 
-    // Word text-play on back
-    if (wordOn && wordRaw) {
-      var wordTextPlayEl = wordIsOnFront ? document.getElementById('front-word') : targetEl;
-      if (wordTextPlayEl && wordTextPlayEl.innerHTML) {
-        window.__linkTextPlay(wordTextPlayEl, 'word', {
-          play: function() {
-            var item = document.querySelector('.audio-item[data-audio="word"]');
-            window.__playItemAudios(item);
-          },
-          getBtn: function() {
-            return document.querySelector('.audio-item[data-audio="word"] .replay-button');
-          },
-          getAllBtns: function() {
-            return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
-          }
-        });
-      }
-    }
-
     if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
@@ -917,9 +900,38 @@
       graphEl.setAttribute('data-state', 'empty');
     }
 
-    // Tighten gap when word sits directly above pitch graph
-    if (!targetEl.hasAttribute('data-show') && !graphEl.hasAttribute('data-state')) {
-      answerEl.setAttribute('data-word-graph', 'adjacent');
+    // Word text-play on back
+    if (wordOn && wordRaw) {
+      var isAdjacent = !targetEl.hasAttribute('data-show')
+                    && !graphEl.hasAttribute('data-state');
+      var wordTextPlayEl;
+
+      if (wordIsOnFront) {
+        wordTextPlayEl = document.getElementById('front-word');
+      } else if (isAdjacent) {
+        wordTextPlayEl = document.getElementById('word-pitch-group');
+      } else {
+        wordTextPlayEl = targetEl;
+      }
+
+      var hasContent = wordIsOnFront || isAdjacent
+          ? (wordTextPlayEl.querySelector('.target-word') || wordTextPlayEl).innerHTML
+          : wordTextPlayEl.innerHTML;
+
+      if (wordTextPlayEl && hasContent) {
+        window.__linkTextPlay(wordTextPlayEl, 'word', {
+          play: function() {
+            var item = document.querySelector('.audio-item[data-audio="word"]');
+            window.__playItemAudios(item);
+          },
+          getBtn: function() {
+            return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+          },
+          getAllBtns: function() {
+            return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+          }
+        });
+      }
     }
 
     // Sentence → colored sentence
@@ -1542,17 +1554,13 @@
       if (isTategaki) {
         var wordCol = document.querySelector('.word-column');
         if (wordCol) {
-          var wpGroup = document.createElement('div');
-          wpGroup.className = 'word-pitch-group';
-          var targetWord = wordCol.querySelector('.target-word');
-          var pitchGraph = wordCol.querySelector('.pitch-graph');
-          if (targetWord) wpGroup.appendChild(targetWord);
-          if (pitchGraph) wpGroup.appendChild(pitchGraph);
-          wordCol.insertBefore(wpGroup, wordCol.firstChild);
-          var wpgVisible = Array.prototype.some.call(wpGroup.children, function(c) {
-            return getComputedStyle(c).display !== 'none';
-          });
-          if (!wpgVisible) wpGroup.style.display = 'none';
+          var wpGroup = document.getElementById('word-pitch-group');
+          if (wpGroup) {
+            var wpgVisible = Array.prototype.some.call(wpGroup.children, function(c) {
+              return getComputedStyle(c).display !== 'none';
+            });
+            if (!wpgVisible) wpGroup.style.display = 'none';
+          }
           if (midAudioRow && midAudioRow.children.length > 0) {
             var imageWrap = wordCol.querySelector('.image-wrap');
             if (imageWrap) wordCol.insertBefore(midAudioRow, imageWrap);

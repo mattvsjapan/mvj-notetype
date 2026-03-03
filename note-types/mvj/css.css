@@ -982,6 +982,28 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
     box-shadow: inset 0 0 0 1px var(--accent-glow);
 }
 
+.word-pitch-group.text-play {
+    padding: 6px 8px;
+    margin: -6px -8px;
+    border-radius: 10px;
+}
+
+/* Wrapper handles ruby internally — no extra expansion needed */
+.word-pitch-group.text-play:has(ruby) {
+    padding-top: 6px;
+    margin-top: -6px;
+}
+
+.tategaki .word-pitch-group.text-play {
+    padding: 8px 6px;
+    margin: -8px -6px;
+}
+
+.tategaki .word-pitch-group.text-play:has(ruby) {
+    padding-right: 6px;
+    margin-right: -6px;
+}
+
 /* Front entrance */
 .fi {
     animation: fadeIn 0.5s var(--spring) both;
@@ -1185,8 +1207,33 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
     text-rendering: optimizeLegibility;
 }
 
-.answer[data-word-graph="adjacent"] .target-word {
-    margin-bottom: 8px;
+.word-pitch-group > .target-word {
+    margin-bottom: 0;
+}
+.word-pitch-group > .pitch-graph {
+    margin-bottom: 0;
+}
+
+/* Default: word-only spacing */
+.word-pitch-group {
+    margin-bottom: 12px;
+}
+
+/* When graph is visible: graph's spacing + internal gap */
+.word-pitch-group:has(.pitch-graph:not([data-state="empty"]):not([style*="display: none"])) {
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+@media (hover: none) {
+    .word-pitch-group:has(.pitch-graph:not([data-state="empty"]):not([style*="display: none"])) {
+        margin-bottom: 12px;
+    }
+}
+
+/* Collapse wrapper when all children are hidden */
+.word-pitch-group:has(> .target-word[data-show="off"]):has(> .pitch-graph[data-state="empty"]) {
+    display: none;
 }
 
 /* Ruby (furigana) base styles */
@@ -1695,6 +1742,12 @@ html:not(.tategaki) .front-content .image-wrap {
 /* Word column — wraps target-word, pitch-graph, image; invisible in normal mode */
 .word-column {
     display: contents;
+}
+
+.word-pitch-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Non-tategaki: show image before word (image is before sentence in DOM) */
