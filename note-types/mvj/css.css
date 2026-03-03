@@ -630,6 +630,12 @@ html {
     }
 }
 
+/* Utility roles — before accent colors so accents win when both apply */
+.connector line { stroke: var(--graph-color); }
+.particle circle { fill: none; stroke: var(--graph-color); }
+.particle line { stroke: var(--graph-color); }
+.particle text { fill: var(--graph-color); }
+
 /* Pitch accent colors (SVG) */
 
 .atamadaka circle,
@@ -681,10 +687,8 @@ html {
 .keihan_odaka text,
 .keihan_low_odaka text { fill: var(--pitch-keihan-odaka); }
 
-.connector line { stroke: var(--graph-color); }
-.particle circle { fill: none; stroke: var(--graph-color); }
-.particle line { stroke: var(--graph-color); }
-.particle text { fill: var(--graph-color); }
+/* Particle circles stay hollow even with accent colors */
+.particle circle { fill: none; }
 
 /* Text should not have stroke */
 .atamadaka text,
@@ -704,6 +708,7 @@ html {
 
 /* Pitch accent colors (HTML spans) */
 
+.particle { color: var(--graph-color); }
 .atamadaka { color: var(--pitch-atamadaka); }
 .heiban { color: var(--pitch-heiban); }
 .nakadaka { color: var(--pitch-nakadaka); }
@@ -716,7 +721,6 @@ html {
 .keihan_low_nakadaka { color: var(--pitch-keihan-low-nakadaka); }
 .keihan_odaka,
 .keihan_low_odaka { color: var(--pitch-keihan-odaka); }
-.particle { color: var(--graph-color); }
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
 .def .particle, .jp-def .particle { color: inherit; }
@@ -1360,6 +1364,11 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .sentence .particle {
     color: inherit;
 }
+.particle.atamadaka { color: var(--pitch-atamadaka); }
+.particle.heiban { color: var(--pitch-heiban); }
+.particle.nakadaka { color: var(--pitch-nakadaka); }
+.particle.kifuku { color: var(--pitch-kifuku); }
+.particle.odaka { color: var(--pitch-odaka); }
 
 .sentence mark {
     background: var(--accent-soft);
