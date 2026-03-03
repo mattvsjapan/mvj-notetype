@@ -873,6 +873,7 @@
         if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
         if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
         if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
+        if (wordFurigana === 'front & back' && wordIsOnFront) wordTarget.classList.add('furigana-front');
       }
 
       if (wordIsOnFront) {
@@ -956,6 +957,7 @@
         if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
         if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
         if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
+        if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
         sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
       }
 

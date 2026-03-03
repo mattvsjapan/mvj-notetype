@@ -1606,7 +1606,9 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .target-word.furigana-front rt { visibility: visible; color: inherit; }
 .front-content .sentence.furigana-front rt { visibility: visible; color: inherit; }
 /* Suppress fade-in animation when furigana was already visible on front */
-.back .front-content .target-word.furigana-front rt.rt-ri { animation: none; }
+.back .front-content .target-word.furigana-front rt,
+.back .front-content .sentence.furigana-front rt { opacity: 1; }
+.back .front-content .target-word.furigana-front rt.rt-ri,
 .back .front-content .sentence.furigana-front rt.rt-ri { animation: none; }
 
 /* furigana-off: hide rt everywhere, including back-side reveal */
