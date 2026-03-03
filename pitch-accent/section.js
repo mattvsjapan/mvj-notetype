@@ -113,9 +113,13 @@ class Section {
 
   get moraes() {
     const m = this._d.moraes;
-    if ((this.role === 'particle' || this.isParticle) && m.length === 1 && !m[0].literal) {
-      if (m[0].text === 'ハ') return [{ text: 'ワ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
-      if (m[0].text === 'ヘ') return [{ text: 'エ', devoiced: m[0].devoiced, literal: false, high: m[0].high }];
+    if (this.role === 'particle' || this.isParticle) {
+      return m.map(mora => {
+        if (mora.literal) return mora;
+        if (mora.text === 'ハ') return { ...mora, text: 'ワ' };
+        if (mora.text === 'ヘ') return { ...mora, text: 'エ' };
+        return mora;
+      });
     }
     return m;
   }
