@@ -1589,6 +1589,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     margin-top: -2px;
     margin-left: -6px;
     margin-right: -6px;
+    margin-bottom: 10px;
 }
 .front-content .target-word.text-play:has(ruby):not(.furigana-off) {
     margin-top: -10px;
@@ -1597,6 +1598,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     margin-top: -2px;
     margin-left: -6px;
     margin-right: -6px;
+    margin-bottom: 14px;
 }
 .front-content .sentence.text-play:has(ruby):not(.furigana-off) {
     margin-top: -10px;
