@@ -814,14 +814,14 @@ function clearLastMargin(el) {
             if (!accent) return '';
             var km = accent.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
             if (km) return roleMap[km[1]] || '';
-            var tm = accent.match(/^p?([a-zA-Z])?~?(\d)?~?$/);
+            var tm = accent.match(/^(p)?([a-zA-Z])?~?(\d)?~?$/);
             if (!tm) return '';
-            if (tm[1] && roleMap[tm[1]]) return roleMap[tm[1]];
-            if (tm[2] !== undefined) {
-                var n = parseInt(tm[2]);
+            if (tm[1]) return 'particle';
+            if (tm[2] && roleMap[tm[2]]) return roleMap[tm[2]];
+            if (tm[3] !== undefined) {
+                var n = parseInt(tm[3]);
                 return n === 0 ? 'heiban' : n === 1 ? 'atamadaka' : 'nakadaka';
             }
-            if (tm[1] === 'p') return 'particle';
             return '';
         }
         var SEPS = [',', '\u3001', '\u300C', '\u300D'];
