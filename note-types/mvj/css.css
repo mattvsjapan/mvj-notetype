@@ -998,10 +998,13 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
     box-shadow: inset 0 0 0 1px var(--accent-glow);
 }
 
-.word-pitch-group.text-play {
+html:not(.tategaki) .word-pitch-group.text-play {
     padding: 6px 8px;
-    margin: -6px -8px;
+    margin-top: -6px;
+    margin-left: 0;
+    margin-right: 0;
     border-radius: 10px;
+    box-sizing: border-box;
 }
 
 /* Wrapper handles ruby internally — no extra expansion needed */
@@ -1012,14 +1015,14 @@ html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
 
 .tategaki .word-pitch-group.text-play {
     padding: 8px 6px;
-    margin: -8px -6px;
-    width: calc(100% + 12px);
+    margin: 0;
+    width: 100%;
     box-sizing: border-box;
 }
 
 .tategaki .word-pitch-group.text-play:has(ruby) {
     padding-right: 6px;
-    margin-right: -6px;
+    margin-right: 0;
 }
 
 /* Front entrance */
