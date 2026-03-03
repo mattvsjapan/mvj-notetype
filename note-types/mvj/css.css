@@ -2336,6 +2336,11 @@ html:not(.tategaki) .divider {
     display: none;
 }
 
+html:not(.tategaki) .back:not(:has(.front-content [data-side="front"]))
+    .answer:not([data-def-text="off"]):not([data-def-layout="none"]):has(.sentence:not([data-show="off"]):not(:empty)) .divider {
+    display: block;
+}
+
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     display: block;
     order: -2;
