@@ -885,12 +885,17 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 
 .text-play {
     cursor: pointer;
-    border-radius: 6px;
-    padding: 2px 6px;
-    margin: -2px -6px;
-    transition: background 600ms ease, box-shadow 600ms ease;
     position: relative;
     isolation: isolate;
+}
+
+.text-play::after {
+    content: '';
+    position: absolute;
+    inset: -2px -6px;
+    border-radius: 6px;
+    z-index: -1;
+    transition: background 600ms ease, box-shadow 600ms ease;
 }
 
 .text-play.text-play-inert {
@@ -898,131 +903,47 @@ circle.devoiced, rect.devoiced { fill: none !important; }
     cursor: default;
 }
 
-.tategaki .text-play {
-    padding: 6px 4px;
-    margin: -6px -4px;
-}
-
-/* Extra padding to encompass furigana annotations */
-.text-play:has(ruby):not(.furigana-off) {
-    padding-top: 10px;
-    margin-top: -10px;
-}
-
-html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
-    padding-top: 0.33em;
-    margin-top: 0;
-}
-
-.tategaki .text-play:has(ruby):not(.furigana-off) {
-    padding-right: 10px;
-    margin-right: -10px;
-}
-
-.tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
-    padding-right: 0.33em;
-    margin-right: 0;
-}
-
-.tategaki .sentence.text-play:has(ruby):not(.furigana-off) {
-    padding-right: 0.5em;
-    margin-right: 0;
-}
-
-.tategaki .def.text-play:has(ruby):not(.furigana-off),
-.tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
-    padding-right: 0.47em;
-    margin-right: 0;
-}
-
-@media (hover: none) {
-    .text-play:has(ruby):not(.furigana-off) {
-        padding-top: 1px;
-        margin-top: -1px;
-    }
-    html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
-        padding-top: 0.33em;
-        margin-top: 0;
-    }
-    @supports not (-webkit-touch-callout: none) {
-        html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
-            padding-top: 0.45em;
-        }
-        html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off) {
-            padding-top: 0.45em;
-            margin-top: 0;
-        }
-        html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off),
-        html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off) {
-            padding-top: 0.45em;
-            margin-top: 0;
-        }
-    }
-    .tategaki .text-play:has(ruby) {
-        padding-right: 1px;
-        margin-right: -1px;
-    }
-    .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
-        padding-right: 0.33em;
-        margin-right: 0;
-    }
-    .tategaki .sentence.text-play:has(ruby):not(.furigana-off) {
-        padding-right: 0.4em;
-        margin-right: 0;
-    }
-    .tategaki .def.text-play:has(ruby):not(.furigana-off),
-    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
-        padding-right: 0.47em;
-        margin-right: 0;
-    }
-    @supports not (-webkit-touch-callout: none) {
-        .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
-            padding-right: 0.45em;
-        }
-        .tategaki .sentence.text-play:has(ruby):not(.furigana-off) {
-            padding-right: 0.45em;
-        }
-    }
+.tategaki .text-play::after {
+    inset: -6px -4px;
 }
 
 @media (hover: hover) {
-    .text-play:hover,
-    .text-play.hover-linked {
+    .text-play:hover::after,
+    .text-play.hover-linked::after {
         background: color-mix(in srgb, var(--accent-soft) 75%, transparent);
         box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-glow) 75%, transparent);
     }
 }
 
-.text-play.playing {
+.text-play.playing::after {
     background: var(--accent-soft-bright);
     box-shadow: inset 0 0 0 1px var(--accent-glow);
 }
 
-html:not(.tategaki) .word-pitch-group.text-play {
-    padding: 6px 8px;
-    margin-top: -6px;
-    margin-left: 0;
-    margin-right: 0;
+html:not(.tategaki) .word-pitch-group.text-play::after {
+    inset: -6px -8px;
     border-radius: 10px;
-    box-sizing: border-box;
 }
 
-/* Wrapper handles ruby internally — no extra expansion needed */
-.word-pitch-group.text-play:has(ruby) {
-    padding-top: 6px;
-    margin-top: -6px;
+.tategaki .word-pitch-group.text-play::after {
+    inset: -8px -6px;
+    border-radius: 10px;
 }
 
-.tategaki .word-pitch-group.text-play {
-    padding: 8px 6px;
-    margin: 0;
-    width: 100%;
-    box-sizing: border-box;
+/* Front-side horizontal: when furigana is hidden (visibility:hidden preserves space),
+   pull the pill's top edge inward so it doesn't extend into empty annotation area.
+   In tategaki, rt uses display:none — no annotation space to skip. */
+html:not(.tategaki) .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+    top: 0.33em;
+}
+html:not(.tategaki) .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+    top: 0.2em;
 }
 
-.tategaki .word-pitch-group.text-play:has(ruby) {
-    padding-right: 6px;
-    margin-right: 0;
+/* Back side: furigana is visible — restore default inset so pill encompasses it */
+html:not(.tategaki) .back .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after,
+html:not(.tategaki) .back .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
+    top: -2px;
 }
 
 /* Front entrance */
@@ -1525,6 +1446,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     pointer-events: auto;
 }
 
+.jp-def-input:checked ~ .jp-def-wrap > .jp-def.text-play {
+    overflow: visible;
+}
+
 .jp-def {
     font-family: var(--jp);
     font-size: 20px;
@@ -1607,40 +1532,6 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .front-content .sentence rt {
     color: var(--text-1);
     visibility: hidden;
-}
-
-/* Stretched flex children: keep pill padding inside natural width (same pattern as word-pitch-group) */
-.front-content .target-word.text-play {
-    margin-top: 0;
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 10px;
-    box-sizing: border-box;
-}
-.front-content .target-word.text-play:has(ruby):not(.furigana-off) {
-    margin-top: 0;
-}
-.front-content .sentence.text-play {
-    margin-top: 0;
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 14px;
-    box-sizing: border-box;
-}
-.front-content .sentence.text-play:has(ruby):not(.furigana-off) {
-    margin-top: 0;
-}
-/* Tategaki: the above rules set physical margins for horizontal layout.
-   In vertical-rl, margin-bottom is inline-end (shrinks height:100% elements)
-   and margin-left is block-end (column spacing). Override both. */
-.tategaki .front-content .target-word.text-play {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-.tategaki .front-content .sentence.text-play {
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 16px;
 }
 
 /* furigana-front: show rt on front side (override default hiding) */
@@ -2227,49 +2118,20 @@ html.tategaki:has(.back) {
 /* WebKit (AnkiMobile) already expands the content area for ruby,
    so the extra padding is partially redundant. */
 @supports (-webkit-touch-callout: none) {
-    html:not(.tategaki) .target-word:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .target-word.text-play:has(ruby):not(.furigana-off) {
+    html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         padding-top: 0.08em;
     }
     html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off),
     html:not(.tategaki) .def:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off) {
+    html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
         padding-top: 0;
     }
-    /* On WebKit, move the text-play highlight to a ::before that starts below
-       the ruby annotation area, so the pill doesn't extend into the empty/furigana space. */
-    html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off)::before {
-        content: '';
-        position: absolute;
-        top: 0.2em;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 6px;
-        z-index: -1;
-        transition: background 600ms ease, box-shadow 600ms ease;
-    }
-    html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off).playing {
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-    html:not(.tategaki) .sentence.text-play:has(ruby):not(.furigana-off).playing::before {
-        background: var(--accent-soft-bright);
-        box-shadow: inset 0 0 0 1px var(--accent-glow);
-    }
-    .tategaki .target-word:has(ruby):not(.furigana-off),
-    .tategaki .target-word.text-play:has(ruby):not(.furigana-off) {
+    .tategaki .target-word:has(ruby):not(.furigana-off) {
         padding-right: 0.08em;
     }
     .tategaki .sentence:has(ruby):not(.furigana-off),
-    .tategaki .sentence.text-play:has(ruby):not(.furigana-off),
     .tategaki .def:has(ruby):not(.furigana-off),
-    .tategaki .def.text-play:has(ruby):not(.furigana-off),
-    .tategaki .jp-def:has(ruby):not(.furigana-off),
-    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off) {
+    .tategaki .jp-def:has(ruby):not(.furigana-off) {
         padding-right: 0;
     }
 }
@@ -2281,14 +2143,6 @@ html.tategaki:has(.back) {
 .tategaki .front-content .sentence.furigana-hidden:has(ruby) {
     padding-right: 0;
 }
-/* Text-play elements have a symmetric 4px/-4px base — restore that instead
-   of zeroing, so the pill highlight stays centered around the text. */
-.tategaki .front-content .target-word.furigana-hidden.text-play:has(ruby),
-.tategaki .front-content .sentence.furigana-hidden.text-play:has(ruby) {
-    padding-right: 4px;
-    margin-right: -4px;
-}
-
 .tategaki .pitch-graph {
     margin: 0;
 }
@@ -2302,6 +2156,7 @@ html.tategaki:has(.back) {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
     max-width: 391px;
     margin-left: 0;
 }
