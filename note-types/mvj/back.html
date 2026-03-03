@@ -871,6 +871,7 @@
         wordTarget.innerHTML = wordSeqs.map(makeColoredSentence).join('');
         if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
         if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
+        if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
         if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
       }
 
@@ -953,6 +954,7 @@
         });
         if (!hasAccent) sentTarget.classList.add('no-accent');
         if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
+        if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
         if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
         sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
       }
