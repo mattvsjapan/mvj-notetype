@@ -810,6 +810,8 @@ function clearLastMargin(el) {
         };
         function accentClass(accent) {
             if (!accent) return '';
+            accent = accent.replace(/-+$/, '');
+            if (!accent) return '';
             var km = accent.match(/^([a-zA-Z]{1,2}):([hlHL]+)$/);
             if (km) return roleMap[km[1]] || '';
             var tm = accent.match(/^p?([a-zA-Z])?~?(\d)?~?$/);
