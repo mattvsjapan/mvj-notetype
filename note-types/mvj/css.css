@@ -2354,6 +2354,10 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
     order: -4;
 }
 
+.tategaki .back:not(:has(.front-content [data-side="front"])):not(:has(.audio-row-bottom[data-zone="front"])) .divider {
+    display: none;
+}
+
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::before {
     content: '';
     display: block;
