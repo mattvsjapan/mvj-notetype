@@ -175,6 +175,7 @@
     --pitch-keihan-nakadaka: #a89c0f;
     --pitch-keihan-low-nakadaka: #876333;
     --pitch-keihan-odaka: #658065;
+    --pitch-black: var(--text-1);
 
     /* Fonts */
     --mono: 'JetBrains Mono', monospace;
@@ -658,6 +659,10 @@ html {
 .odaka line { fill: var(--pitch-odaka); stroke: var(--pitch-odaka); }
 .odaka text { fill: var(--pitch-odaka); }
 
+.black circle,
+.black line { fill: var(--pitch-black); stroke: var(--pitch-black); }
+.black text { fill: var(--pitch-black); }
+
 /* Keihan pitch accent colors (SVG) */
 
 .keihan_heiban circle,
@@ -696,6 +701,7 @@ html {
 .nakadaka text,
 .kifuku text,
 .odaka text,
+.black text,
 .keihan_heiban text,
 .keihan_low_heiban text,
 .keihan_atamadaka text,
@@ -714,6 +720,7 @@ html {
 .nakadaka { color: var(--pitch-nakadaka); }
 .kifuku { color: var(--pitch-kifuku); }
 .odaka { color: var(--pitch-odaka); }
+.black { color: var(--pitch-black); }
 .keihan_heiban { color: var(--pitch-keihan-heiban); }
 .keihan_low_heiban { color: var(--pitch-keihan-low-heiban); }
 .keihan_atamadaka { color: var(--pitch-keihan-atamadaka); }
@@ -1369,6 +1376,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .particle.nakadaka { color: var(--pitch-nakadaka); }
 .particle.kifuku { color: var(--pitch-kifuku); }
 .particle.odaka { color: var(--pitch-odaka); }
+.particle.black { color: var(--pitch-black); }
 
 .sentence mark {
     background: var(--accent-soft);
