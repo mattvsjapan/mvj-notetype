@@ -2340,6 +2340,10 @@ html.tategaki:has(.back) {
     margin-right: 6px;
 }
 
+.tategaki .jp-def-wrap > * {
+    min-width: 0;
+}
+
 .tategaki .jp-def-toggle {
     writing-mode: vertical-rl;
     padding: 14px 3px;
