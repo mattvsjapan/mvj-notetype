@@ -605,7 +605,7 @@ html {
 .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--divider-color) 25%, var(--divider-color) 75%, transparent);
-    margin: 0 0 20px;
+    margin: 0 0 16px;
 }
 
 /* Pitch graph */
