@@ -1487,11 +1487,6 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     padding-top: 0;
 }
 
-.jp-def::before {
-    content: '';
-    display: block;
-    height: 3px;
-}
 
 /* Data-attribute driven visibility */
 [data-state="empty"] {
