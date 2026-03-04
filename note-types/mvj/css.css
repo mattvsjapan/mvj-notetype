@@ -13,7 +13,7 @@
 
     /* Layout */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: purple;          /* blue | black | red | purple | white */
+    --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
     --debug: off;                  /* on | off                            */
@@ -21,7 +21,7 @@
     /* Word */
     --word-text: back only;            /* front & back | back only | off      */
     --word-audio: front & back;     /* front & back | back only | off      */
-    --word-audio-buttons: front & back;/* front only | back only | front & back | none */
+    --word-audio-buttons: front only;/* front only | back only | front & back | none */
     --word-autoplay: on;           /* on | off                            */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
@@ -31,7 +31,7 @@
     /* Sentence */
     --sentence-text: back only;        /* front & back | back only | off      */
     --sentence-audio: front & back; /* front & back | back only | off      */
-    --sentence-audio-buttons: front & back;/* front only | back only | front & back | none */
+    --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
     --sentence-autoplay: on;       /* on | off                            */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
@@ -43,7 +43,7 @@
     /* Definitions */
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
-    --definition-audio-buttons: on;/* on | off                            */
+    --definition-audio-buttons: off;/* on | off                            */
     --definition-autoplay-bi: on;  /* on | off                            */
     --definition-autoplay-mono: on;/* on | off                            */
     --definition-text-play: on;    /* on | off                            */
