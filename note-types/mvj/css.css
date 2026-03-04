@@ -522,10 +522,6 @@ html {
         min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px + 1px);
     }
 
-    html:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
-    }
-
     .card-inner:has(> .back),
     html:not(.tategaki) .card-inner:has(.front-content [data-side="front"]) {
         padding-top: 20px;
@@ -538,10 +534,6 @@ html {
     .android .card-inner {
         min-height: calc(100dvh - 40px);
     }
-    .android:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: calc((100dvh - 120px) * 0.52);
-    }
-
 }
 
 /* iPad / large touch screens — cap card height to phone-like size */
@@ -551,9 +543,6 @@ html {
     }
     .card-inner {
         min-height: 650px;
-    }
-    html:not(.tategaki) .front:not(:has(.front-content [data-side="front"])) {
-        padding-top: 354px;
     }
 }
 
@@ -1011,6 +1000,37 @@ html:not(.tategaki) .back .front-content .text-play:has(ruby):not(.furigana-fron
 
 @keyframes labelSettle {
     from { font-size: 10px; }
+}
+
+/* Audio-only front: flex spacer positioning */
+html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"])) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"]))::before,
+html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"]))::after {
+    content: '';
+    flex-grow: 1;
+}
+@media (hover: none) {
+    html:not(.tategaki) .card-inner:not(:has(> .back)) {
+        display: flex;
+        flex-direction: column;
+    }
+    html:not(.tategaki) .card-inner:not(:has(> .back)):not(:has(.front-content [data-side="front"])) {
+        padding: clamp(20px, 6vw, 44px);
+    }
+    html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"])) {
+        flex: 1;
+    }
+    html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"]))::before {
+        flex-grow: 2;
+    }
+    html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"])) .audio-row {
+        padding-top: 0;
+        margin-bottom: 0;
+    }
 }
 
 /* ================================================

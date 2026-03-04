@@ -219,9 +219,6 @@ if (!window.__audioCtxVisHandler) {
                     ci.style.minHeight = (h - 40 - bi + 1) + 'px';
                 }
             }
-            if (fr && !fr.querySelector('.front-content [data-side="front"]')) {
-                fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
-            }
         }
     }
     if (window.innerHeight > 100) {
@@ -976,28 +973,12 @@ function clearLastMargin(el) {
         }
     }
 
-    // ── Adjust front padding for added content (mobile only) ──
-    // lock() sets paddingTop before data-side is stamped; clear it now if
-    // front-content has visible items (padding is only for audio-only fronts).
-    if (window.matchMedia('(hover: none)').matches) {
-        var fc = document.querySelector('.front-content');
-        var fr = document.querySelector('.front');
-        if (fc && fr && fr.style.paddingTop) {
-            if (fr.querySelector('.front-content [data-side="front"]')) {
-                fr.style.paddingTop = '';
-            } else {
-                var contentH = fc.offsetHeight;
-                if (contentH > 0) {
-                    var curPad = parseInt(fr.style.paddingTop) || 0;
-                    fr.style.paddingTop = Math.max(0, curPad - contentH) + 'px';
-                }
-            }
-        }
-    }
+
 
 
 })();
 </script>
+
 
 <script>
 // Center hyphens between pitch-num glyphs (Latin baseline sits too low next to them)
