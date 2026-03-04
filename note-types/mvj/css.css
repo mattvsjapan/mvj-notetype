@@ -1816,7 +1816,7 @@ html:not(.tategaki) .answer .image-wrap.ri {
    ================================================ */
 
 /* Card shrinks to fit content horizontally in vertical writing mode */
-html.tategaki:has(.back) {
+html.tategaki {
     direction: rtl;
 }
 
@@ -1847,6 +1847,9 @@ html.tategaki:has(.back) {
     overflow: visible;
     clip-path: inset(0 30% 0 30%);
 }
+.tategaki .card-inner:not(:has(> .back)) {
+    overflow: visible;
+}
 .tategaki .card-inner.tate-expand {
     clip-path: none;
     animation: tategakiExpand 100ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
@@ -1854,7 +1857,7 @@ html.tategaki:has(.back) {
 
 /* Extend grain pseudo into overflow to create scroll-end spacing;
    clip the grain to the card-inner bounds so the gap shows plain card background */
-.tategaki .card-inner:has(> .back)::before {
+.tategaki .card-inner::before {
     left: -20px;
     clip-path: inset(0 0 0 20px round 16px);
 }
@@ -1876,6 +1879,46 @@ html.tategaki:has(.back) {
     flex-wrap: wrap;
     align-items: flex-start;
     height: 100%;
+}
+
+/* Tategaki audio-only front: zero margin when audio is alone */
+.tategaki :not(.back) > .card-inner:not(:has(> .back))
+    .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) .audio-row {
+    margin-left: 0;
+}
+
+/* Tategaki audio-only front: flex spacers push buttons ~2/3 down on mobile */
+@media (hover: none) {
+    .tategaki :not(.back) > .card-inner:not(:has(> .back))
+        .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) {
+        writing-mode: horizontal-tb;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    .tategaki :not(.back) > .card-inner:not(:has(> .back))
+        .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"]))::before {
+        content: '';
+        flex-grow: 2;
+        order: -2;
+    }
+    .tategaki :not(.back) > .card-inner:not(:has(> .back))
+        .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"]))::after {
+        content: '';
+        flex-grow: 1;
+        order: 0;
+    }
+    .tategaki :not(.back) > .card-inner:not(:has(> .back))
+        .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) .audio-row {
+        margin-top: 0;
+        margin-left: 0;
+        padding-top: 0;
+        margin-bottom: 0;
+    }
+    .tategaki :not(.back) > .card-inner:not(:has(> .back))
+        .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) .front-content {
+        display: none;
+    }
 }
 
 /* On back side, .front must stay display:contents — the :not(:has(> .back))
@@ -1961,7 +2004,8 @@ html.tategaki:has(.back) {
     flex-direction: column;
     gap: clamp(16px, 8vw, 40px);
     padding: 0;
-    order: 1;
+    order: -1;
+    margin-left: 16px;
 }
 
 /* Back — hide the top audio row (audio-row-bottom takes over) */
@@ -1969,12 +2013,13 @@ html.tategaki:has(.back) {
     display: none;
 }
 
-/* Tategaki: image-only front — stack image above audio */
+/* Tategaki: image-only front — stack image and audio vertically */
 .tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) {
     writing-mode: horizontal-tb;
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 16px;
+    gap: 0;
 }
 
 .tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .front-content {
@@ -1987,13 +2032,22 @@ html.tategaki:has(.back) {
     margin-left: 0;
 }
 
+/* Desktop: audio at top (order:-1), image below. Audio stretches to fill. */
 .tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row {
     flex: 1;
     margin-top: 0;
+    margin-bottom: 0;
 }
 
 .tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row .audio-item {
     flex: 0 0 auto;
+}
+
+/* Mobile: image at top, audio at bottom */
+@media (hover: none) {
+    .tategaki :not(.back) > .card-inner:not(:has(> .back)) .front:has(.image-wrap[data-side="front"]):not(:has(.target-word[data-side="front"])):not(:has(.sentence[data-side="front"])) .audio-row {
+        order: 1;
+    }
 }
 
 /* Answer — flex layout: audio right, content left */
@@ -2025,16 +2079,8 @@ html.tategaki:has(.back) {
         box-sizing: border-box;
     }
     .tategaki .front .audio-row {
-        margin-top: min(
-            calc((100dvh - var(--bottom-inset, 0px) - 120px) * 0.52),
-            calc(100dvh - max(40px, var(--bottom-inset, 0px) + 7px) - 88px - 260px)
-        );
-    }
-    .android.tategaki .front .audio-row {
-        margin-top: min(
-            calc((100dvh - 120px) * 0.52),
-            calc(100dvh - 388px)
-        );
+        margin-top: auto;
+        margin-bottom: 0;
     }
 }
 
@@ -2042,9 +2088,6 @@ html.tategaki:has(.back) {
 @media (hover: none) and (min-width: 768px) {
     .tategaki .card-inner {
         height: min(668px, calc(100dvh - max(40px, var(--bottom-inset, 0px) + 20px)));
-    }
-    .tategaki .front .audio-row {
-        margin-top: calc((min(668px, 100dvh - max(40px, var(--bottom-inset, 0px) + 20px)) - 120px) * 0.52);
     }
 }
 

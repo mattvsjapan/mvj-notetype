@@ -625,6 +625,7 @@ window.__playItemAudios = function(item) {
             ['catch'](function() { if (gen === window.__webAudioGen) next(); });
     })();
 };
+
 </script>
 
 <script>
@@ -947,30 +948,19 @@ function clearLastMargin(el) {
 
     // Only clear last margins when front has visible content — in the
     // audio-only case the audio-row's margin-bottom provides symmetric
-    // spacing and must be preserved.
+    // spacing and must be preserved. Tategaki audio-only is an exception:
+    // audio-row has margin-left that needs clearing when it's alone.
     var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
-    if (hasFrontContent) clearLastMargin(document.querySelector('.front'));
+    var isTategaki = document.documentElement.classList.contains('tategaki');
+    if (hasFrontContent || isTategaki) clearLastMargin(document.querySelector('.front'));
     // Only clear inside .front-content when it is itself the last visible
     // child of .front (no audio row below it); otherwise the sentence
     // needs its margin to separate from the audio row.
     var fc = document.querySelector('.front-content');
     if (hasFrontContent && fc && fc.classList.contains('debug-last')) {
-        // In tategaki the audio row sits to the LEFT of front-content,
-        // which is the visual terminal position. clearLastMargin can't
-        // detect this (both children share order:0, DOM tiebreak picks
-        // front-content). Move the marker to the audio row instead.
-        var ar = document.querySelector('.front > .audio-row');
-        if (document.documentElement.classList.contains('tategaki')
-            && ar && getComputedStyle(ar).display !== 'none') {
-            fc.classList.remove('debug-last');
-            fc.style.marginBottom = '';
-            ar.style.marginBottom = '0';
-            ar.classList.add('debug-last');
-        } else {
-            fc.classList.remove('debug-last');
-            fc.style.marginBottom = '';
-            clearLastMargin(fc);
-        }
+        fc.classList.remove('debug-last');
+        fc.style.marginBottom = '';
+        clearLastMargin(fc);
     }
 
 
