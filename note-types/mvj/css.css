@@ -2158,9 +2158,10 @@ html.tategaki:has(.back) {
     }
     /* Pill position: iOS overrides (non-tategaki) */
     .target-word.text-play  { --pill-ruby-hidden: 0.45em; --pill-ruby-visible: 0.1em; }
-    .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.1em; }
+    .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.2em; }
     .def.text-play,
-    .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
+    .jp-def.text-play       { --pill-ruby-visible: 0.2em; }
+    .word-pitch-group.text-play { --pill-ruby-visible: 0.1em; }
 
     /* Pill position: iOS overrides (tategaki) */
     .tategaki .target-word.text-play  { --pill-ruby-visible: -0.04em; }
