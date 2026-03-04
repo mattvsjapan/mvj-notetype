@@ -896,7 +896,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 .text-play::after {
     content: '';
     position: absolute;
-    inset: -2px -6px;
+    inset: var(--pill-top, -2px) -6px -2px;
     border-radius: 6px;
     z-index: -1;
     transition: background 600ms ease, box-shadow 600ms ease;
@@ -908,7 +908,7 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 .tategaki .text-play::after {
-    inset: -6px -4px;
+    inset: -6px var(--pill-right, -4px) -6px -4px;
 }
 
 @media (hover: hover) {
@@ -925,53 +925,52 @@ circle.devoiced, rect.devoiced { fill: none !important; }
 }
 
 html:not(.tategaki) .word-pitch-group.text-play::after {
-    inset: -6px -8px;
+    inset: var(--pill-top, -6px) -8px -6px;
     border-radius: 10px;
 }
 
 .tategaki .word-pitch-group.text-play::after {
-    inset: -8px -6px;
+    inset: -8px var(--pill-right, -6px) -8px -6px;
     border-radius: 10px;
 }
 
-/* Front-side horizontal: when furigana is hidden (visibility:hidden preserves space),
-   pull the pill's top edge inward so it doesn't extend into empty annotation area.
-   In tategaki, rt uses display:none — no annotation space to skip. */
-html:not(.tategaki) .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-    top: 0.33em;
-}
-html:not(.tategaki) .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-    top: 0.2em;
-}
-@supports (-webkit-touch-callout: none) {
-    html:not(.tategaki) .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-        top: 0.45em;
-    }
-    html:not(.tategaki) .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-        top: 0.35em;
-    }
+/* ── Pill position: per-element tuning variables ── */
+.target-word.text-play      { --pill-ruby-hidden: 0.33em; --pill-ruby-visible: -2px; }
+.sentence.text-play         { --pill-ruby-hidden: 0.2em;  --pill-ruby-visible: -0.22em; }
+.def.text-play,
+.jp-def.text-play           { --pill-ruby-visible: -2px; }
+.word-pitch-group.text-play { --pill-ruby-visible: -6px; }
+
+/* ── Pill position: state resolution (non-tategaki) ── */
+
+/* Ruby visible (answer area, back-revealed, furigana-front) */
+html:not(.tategaki) .text-play:has(ruby):not(.furigana-off) {
+    --pill-top: var(--pill-ruby-visible);
 }
 
-/* Back side: furigana is visible — restore default inset so pill encompasses it */
-html:not(.tategaki) .back .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-    top: -2px;
-}
-html:not(.tategaki) .back .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-    top: -0.22em;
-}
-@supports (-webkit-touch-callout: none) {
-    html:not(.tategaki) .back .front-content .target-word.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-        top: 0.1em;
-    }
-    html:not(.tategaki) .back .front-content .sentence.text-play:has(ruby):not(.furigana-front):not(.furigana-off)::after {
-        top: 0.1em;
-    }
+/* Split furigana: always visible even when furigana-off */
+html:not(.tategaki) .text-play.furigana-off:has(rt[data-split]) {
+    --pill-top: var(--pill-ruby-visible);
 }
 
-/* Sentence pill: extend top above visible furigana (answer area + furigana-front) */
-html:not(.tategaki) .answer .sentence.text-play:has(ruby):not(.furigana-off)::after,
-html:not(.tategaki) .front-content .sentence.text-play.furigana-front:has(ruby)::after {
-    top: -0.22em;
+/* Front-side hidden furigana: pull pill inward past empty annotation space */
+html:not(.tategaki) .front-content .text-play:has(ruby):not(.furigana-front):not(.furigana-off) {
+    --pill-top: var(--pill-ruby-hidden);
+}
+
+/* Back side re-reveals furigana on front-content elements */
+html:not(.tategaki) .back .front-content .text-play:has(ruby):not(.furigana-front):not(.furigana-off) {
+    --pill-top: var(--pill-ruby-visible);
+}
+
+/* ── Pill position: state resolution (tategaki) ──
+   Only "visible" needed — tategaki front hides rt with display:none,
+   so no hidden-space adjustment needed. */
+.tategaki .text-play:has(ruby):not(.furigana-off) {
+    --pill-right: var(--pill-ruby-visible);
+}
+.tategaki .text-play.furigana-off:has(rt[data-split]) {
+    --pill-right: var(--pill-ruby-visible);
 }
 
 /* Front entrance */
@@ -2157,20 +2156,17 @@ html.tategaki:has(.back) {
     .tategaki .jp-def:has(ruby):not(.furigana-off) {
         padding-right: 0;
     }
-    /* Pill top-edge override for definitions with ruby (non-tategaki) */
-    html:not(.tategaki) .def.text-play:has(ruby):not(.furigana-off)::after,
-    html:not(.tategaki) .jp-def.text-play:has(ruby):not(.furigana-off)::after {
-        top: 0.3em;
-    }
-    /* Pill right-edge override for tategaki ruby elements */
-    .tategaki .target-word.text-play:has(ruby):not(.furigana-off)::after {
-        right: -0.04em;
-    }
-    .tategaki .sentence.text-play:has(ruby):not(.furigana-off)::after,
-    .tategaki .def.text-play:has(ruby):not(.furigana-off)::after,
-    .tategaki .jp-def.text-play:has(ruby):not(.furigana-off)::after {
-        right: 0.1em;
-    }
+    /* Pill position: iOS overrides (non-tategaki) */
+    .target-word.text-play  { --pill-ruby-hidden: 0.45em; --pill-ruby-visible: 0.1em; }
+    .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.1em; }
+    .def.text-play,
+    .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
+
+    /* Pill position: iOS overrides (tategaki) */
+    .tategaki .target-word.text-play  { --pill-ruby-visible: -0.04em; }
+    .tategaki .sentence.text-play,
+    .tategaki .def.text-play,
+    .tategaki .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
 }
 
 /* Collapse ruby-annotation padding when rt is hidden on tategaki front —

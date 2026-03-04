@@ -666,7 +666,8 @@
   
   function makeGroup(elements, cls) { return `<g class="${cls}">${elements.join('')}</g>`; }
   function makeSvg(contents, w, h, vh) {
-    return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
+    var vw = Math.round(w / h * vh);
+    return `<svg style="font-family: ${config.graph_font}" viewBox="0 0 ${w} ${h}" width="${vw}px" height="${vh}px" xmlns="http://www.w3.org/2000/svg">${contents}</svg>`;
   }
   function makeText(mora, x, y, dx) {
     const cls = mora.devoiced ? ' class="devoiced"' : '';
