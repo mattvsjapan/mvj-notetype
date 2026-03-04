@@ -17,6 +17,19 @@ REPO_DIR="$(dirname "$ADDON_DIR")"
 PACKAGE_NAME=$(python3 -c "import json, sys; print(json.load(open(sys.argv[1]))['package'])" "$ADDON_DIR/manifest.json")
 
 TIMESTAMP=$(date +"%Y-%m-%d")
+VERSION=$(date +"%Y.%m.%d")
+
+# Update version in manifest.json
+python3 -c "
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    m = json.load(f)
+m['version'] = sys.argv[2]
+with open(path, 'w') as f:
+    json.dump(m, f, indent=4)
+    f.write('\n')
+" "$ADDON_DIR/manifest.json" "$VERSION"
 
 OUTPUT_NAME="${1:-$PACKAGE_NAME}-${TIMESTAMP}.ankiaddon"
 OUTPUT_PATH="$REPO_DIR/$OUTPUT_NAME"
