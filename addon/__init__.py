@@ -107,6 +107,7 @@ def _on_tools_action():
 
 _tools_action = QAction("", mw)
 _tools_action.triggered.connect(_on_tools_action)
+_tools_action.setShortcut("Alt+S")
 mw.form.menuTools.addSeparator()
 mw.form.menuTools.addAction(_tools_action)
 

@@ -526,6 +526,9 @@ class SettingsDialog(QDialog):
         update_btn = QPushButton("Update to Newest Version")
         update_btn.clicked.connect(self._install)
         btn_box.addButton(update_btn, QDialogButtonBox.ButtonRole.ActionRole)
+        self._reset_css_cb = QCheckBox("Reset CSS")
+        self._reset_css_cb.setToolTip("Overwrite all CSS including custom settings")
+        btn_box.addButton(self._reset_css_cb, QDialogButtonBox.ButtonRole.ActionRole)
         convert_btn = QPushButton("Convert [sound:] \u2192 [audio:]")
         convert_btn.clicked.connect(self._convert_sound_to_audio)
         btn_box.addButton(convert_btn, QDialogButtonBox.ButtonRole.ActionRole)
@@ -971,25 +974,30 @@ class SettingsDialog(QDialog):
         ))
 
     def _install(self):
-        # Save current (possibly unsaved) settings into the model CSS so that
-        # _merge_css_settings preserves them when the new templates arrive.
-        model = mw.col.models.by_name(NOTE_TYPE_NAME)
-        if model:
-            self._sync_current_to_data()
-            model["css"] = _apply_settings(model["css"], self._defaults)
-            model["css"] = _apply_modes(model["css"], self._modes)
-            mw.col.models.update_dict(model)
-        install_notetype(on_success=self._build_ui)
+        reset_css = self._reset_css_cb.isChecked()
+        if not reset_css:
+            # Save current (possibly unsaved) settings into the model CSS so
+            # that _merge_css_settings preserves them when the new templates
+            # arrive.
+            model = mw.col.models.by_name(NOTE_TYPE_NAME)
+            if model:
+                self._sync_current_to_data()
+                model["css"] = _apply_settings(model["css"], self._defaults)
+                model["css"] = _apply_modes(model["css"], self._modes)
+                mw.col.models.update_dict(model)
+        install_notetype(on_success=self._build_ui, reset_css=reset_css)
 
     def _sync_local(self, dev_sync):
-        # Save current (possibly unsaved) settings before syncing templates
-        model = mw.col.models.by_name(NOTE_TYPE_NAME)
-        if model:
-            self._sync_current_to_data()
-            model["css"] = _apply_settings(model["css"], self._defaults)
-            model["css"] = _apply_modes(model["css"], self._modes)
-            mw.col.models.update_dict(model)
-        dev_sync.sync_local_templates()
+        reset_css = self._reset_css_cb.isChecked()
+        if not reset_css:
+            # Save current (possibly unsaved) settings before syncing templates
+            model = mw.col.models.by_name(NOTE_TYPE_NAME)
+            if model:
+                self._sync_current_to_data()
+                model["css"] = _apply_settings(model["css"], self._defaults)
+                model["css"] = _apply_modes(model["css"], self._modes)
+                mw.col.models.update_dict(model)
+        dev_sync.sync_local_templates(reset_css=reset_css)
         self._build_ui()
 
     def _convert_sound_to_audio(self):

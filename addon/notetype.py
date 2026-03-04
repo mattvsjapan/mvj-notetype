@@ -110,10 +110,12 @@ def _create_notetype(front: str, back: str, css: str) -> None:
     mm.add(model)
 
 
-def _update_notetype(model: dict, front: str, back: str, css: str) -> None:
+def _update_notetype(
+    model: dict, front: str, back: str, css: str, *, reset_css: bool = False,
+) -> None:
     model["tmpls"][0]["qfmt"] = front
     model["tmpls"][0]["afmt"] = back
-    model["css"] = _merge_css_settings(model["css"], css)
+    model["css"] = css if reset_css else _merge_css_settings(model["css"], css)
     field_map = {name: (desc, font, size) for name, desc, font, size in _FIELDS}
     for fld in model["flds"]:
         if fld["name"] in field_map:
@@ -132,12 +134,14 @@ def _fonts_exist() -> bool:
     return all(os.path.exists(os.path.join(media_dir, f)) for f in _FONT_FILES)
 
 
-def install_notetype(on_success=None) -> None:
+def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
     """Main entry point — download files then create or update note type.
 
     Args:
         on_success: Optional callback invoked (on the main thread) after a
             successful install or update.
+        reset_css: If True, overwrite all CSS instead of preserving the
+            user's SETTINGS region.
     """
     skip_fonts = _fonts_exist()
     total_files = len(_TEMPLATE_FILES) + (0 if skip_fonts else len(_FONT_FILES))
@@ -174,7 +178,7 @@ def install_notetype(on_success=None) -> None:
         try:
             existing = mw.col.models.by_name(NOTE_TYPE_NAME)
             if existing:
-                _update_notetype(existing, front, back, css)
+                _update_notetype(existing, front, back, css, reset_css=reset_css)
             else:
                 _create_notetype(front, back, css)
         except Exception as e:
