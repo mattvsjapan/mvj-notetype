@@ -568,6 +568,9 @@ html {
 @media (hover: none) {
     .card-inner { padding-bottom: 30px; }
 }
+@media (hover: none) and (min-width: 768px) {
+    .card-inner { padding-bottom: clamp(20px, 6vw, 44px); }
+}
 
 /* Glass sheen on card surface */
 .card-inner::after {
@@ -2243,23 +2246,39 @@ html.tategaki {
        boxes (~10-12 px per line).  Negative margin-block on rt collapses
        that gap; transform is adjusted from the mobile default (7px) to -3px
        to keep furigana visually above the base text. */
+    /* iPhone default — furigana slightly closer to base text */
     html:not(.tategaki) .sentence rt,
     html:not(.tategaki) .def rt,
     html:not(.tategaki) .jp-def rt {
         margin-block: -0.5em;
-        transform: translateY(-0.35em);
+        transform: translateY(0.1em);
     }
     /* Tategaki equivalent: margin-block collapses the horizontal annotation
        gap (in vertical-rl, block axis = horizontal).  Transforms adjusted
        from mobile defaults to compensate. */
     .tategaki .sentence rt {
         margin-block: -0.5em;
-        transform: translate(0.35em, 0.07em);
+        transform: translate(-0.15em, 0.07em);
     }
     .tategaki .def rt,
     .tategaki .jp-def rt {
         margin-block: -0.5em;
-        transform: translate(0.4em, 0.07em);
+        transform: translate(-0.1em, 0.07em);
+    }
+    /* iPad — larger annotation gap needs more offset */
+    @media (min-width: 768px) {
+        html:not(.tategaki) .sentence rt,
+        html:not(.tategaki) .def rt,
+        html:not(.tategaki) .jp-def rt {
+            transform: translateY(-0.35em);
+        }
+        .tategaki .sentence rt {
+            transform: translate(0.35em, 0.07em);
+        }
+        .tategaki .def rt,
+        .tategaki .jp-def rt {
+            transform: translate(0.4em, 0.07em);
+        }
     }
     html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         padding-top: 0.08em;
@@ -2435,7 +2454,12 @@ html.tategaki {
     .tategaki .sentence rt {
         font-size: 0.45em;
         margin-block: -0.5em;
-        transform: translate(0.35em, 0.07em);
+        transform: translate(-0.15em, 0.07em);
+    }
+    @media (min-width: 768px) {
+        .tategaki .sentence rt {
+            transform: translate(0.35em, 0.07em);
+        }
     }
 }
 
