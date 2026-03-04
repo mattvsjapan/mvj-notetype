@@ -1448,7 +1448,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     text-align: left;
 }
 
-@media (hover: none) {
+@media (hover: none) and (max-width: 767px) {
     .jp-def-section {
         text-align: center;
     }

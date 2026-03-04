@@ -712,7 +712,7 @@ rt {
     text-align: left;
 }
 
-@media (hover: none) {
+@media (hover: none) and (max-width: 767px) {
     .jp-def-section {
         text-align: center;
     }
