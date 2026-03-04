@@ -122,10 +122,6 @@ html {
         min-height: calc(100dvh - 40px - var(--bottom-inset, 0px) + 35px + 1px);
     }
 
-    .front {
-        padding-top: calc((100dvh - var(--bottom-inset, 0px) + 35px - 120px) * 0.52);
-    }
-
     /* AnkiDroid: revert iOS-only bottom-inset and bounce scroll adjustments */
     .android .card {
         height: 100dvh;
@@ -133,10 +129,6 @@ html {
     .android .card-inner {
         min-height: calc(100dvh - 40px);
     }
-    .android .front {
-        padding-top: calc((100dvh - 120px) * 0.52);
-    }
-
 }
 
 /* iPad / large touch screens — cap card height to phone-like size */
@@ -146,9 +138,6 @@ html {
     }
     .card-inner {
         min-height: 650px;
-    }
-    .front {
-        padding-top: 354px;
     }
 }
 
@@ -423,6 +412,37 @@ html {
 
 @keyframes labelSettle {
     from { font-size: 10px; }
+}
+
+/* Audio-only front: flex spacer positioning */
+:not(.back) > .card-inner > .front {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+:not(.back) > .card-inner > .front::before,
+:not(.back) > .card-inner > .front::after {
+    content: '';
+    flex-grow: 1;
+}
+@media (hover: none) {
+    .card-inner:not(:has(> .back)) {
+        display: flex;
+        flex-direction: column;
+    }
+    .card-inner:not(:has(> .back)) {
+        padding: clamp(20px, 6vw, 44px);
+    }
+    :not(.back) > .card-inner > .front {
+        flex: 1;
+    }
+    :not(.back) > .card-inner > .front::before {
+        flex-grow: 2;
+    }
+    :not(.back) > .card-inner > .front .audio-row {
+        padding-top: 0;
+        margin-bottom: 0;
+    }
 }
 
 /* ================================================

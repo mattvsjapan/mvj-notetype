@@ -74,7 +74,6 @@ if (!window.__audioCtxVisHandler) {
     var ci = document.querySelector('.card-inner');
     if (!ci) return;
     var isBack = !!document.querySelector('.back');
-    var fr = !isBack && document.querySelector('.front');
     var isTablet = window.innerWidth >= 768;
     var biVal = getComputedStyle(document.documentElement).getPropertyValue('--bottom-inset');
     function lock() {
@@ -89,7 +88,6 @@ if (!window.__audioCtxVisHandler) {
                 ci.style.minHeight = (h - 40 - bi + 1) + 'px';
             }
         }
-        if (fr) fr.style.paddingTop = isTablet ? '354px' : Math.round((h - bi - 120) * 0.52) + 'px';
     }
     if (window.innerHeight > 100) {
         lock();
