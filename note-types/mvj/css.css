@@ -1789,7 +1789,9 @@ html:not(.tategaki) .front-content .image-wrap {
 html:not(.tategaki) .answer .image-wrap {
     order: -1;
 }
-html:not(.tategaki) .answer .audio-row-bottom,
+html:not(.tategaki) .answer .audio-row-bottom {
+    order: -3;
+}
 html:not(.tategaki) .answer .def,
 html:not(.tategaki) .answer .jp-def-section {
     order: 1;
