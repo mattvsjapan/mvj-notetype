@@ -336,11 +336,19 @@ The approach: switch `.front` to `writing-mode: horizontal-tb` for audio-only. T
 
 **IMPORTANT: All rules must be inside `@media (hover: none)`.** Unlike non-tategaki desktop (where spacers collapse because there's no extra height), tategaki desktop has a definite height on `.card-inner`, so spacers would NOT collapse — they'd center the buttons. Desktop tategaki audio-only buttons should remain top-aligned (their natural position), so spacers must be mobile-only.
 
-**IMPORTANT: `.audio-row` has `order: 1` in tategaki** (from `.tategaki .front .audio-row` base rule). Pseudo-elements default to `order: 0`, so both `::before` and `::after` render before `.audio-row`. You must set explicit `order` values: `::before` gets `order: -1`, `::after` gets `order: 2`, so flex order is `::before` → `.audio-row` (order 1) → `::after`.
+**IMPORTANT: `.audio-row` had `order: 1` in tategaki** (from `.tategaki .front .audio-row` base rule). During Phase 2 this was changed to `order: -1` (audio-first ordering). Pseudo-elements default to `order: 0`, so you must set explicit `order` values to bracket the audio-row: `::before` gets `order: -2`, `::after` gets `order: 0`.
 
-**IMPORTANT: `.front-content` has `height: 100%` in tategaki** (from `.tategaki .card-inner:not(:has(> .back)) .front-content`). Even when empty (audio-only case), it's a flex child that consumes the full container height, preventing spacers from working. It must be set to `display: none` in the audio-only context.
+**IMPORTANT: `.front-content` has `height: 100%` in tategaki** (from `.tategaki .card-inner:not(:has(> .back)) .front-content`). Even when empty (audio-only case), it's a flex child that consumes the full container height, preventing spacers from distributing space. It must be set to `display: none` in the audio-only context.
+
+**IMPORTANT: `.audio-row` has `margin-left: 16px`** (added in Phase 2 for column spacing when content is present). This must be zeroed for audio-only. A base (non-media-query) rule is needed for desktop, and the mobile spacer rule also zeroes it.
 
 ```css
+/* Tategaki audio-only front: zero margin when audio is alone */
+.tategaki :not(.back) > .card-inner:not(:has(> .back))
+    .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) .audio-row {
+    margin-left: 0;
+}
+
 /* Tategaki audio-only front: flex spacers push buttons ~2/3 down on mobile */
 @media (hover: none) {
     .tategaki :not(.back) > .card-inner:not(:has(> .back))
@@ -354,17 +362,18 @@ The approach: switch `.front` to `writing-mode: horizontal-tb` for audio-only. T
         .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"]))::before {
         content: '';
         flex-grow: 2;
-        order: -1;
+        order: -2;
     }
     .tategaki :not(.back) > .card-inner:not(:has(> .back))
         .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"]))::after {
         content: '';
         flex-grow: 1;
-        order: 2;
+        order: 0;
     }
     .tategaki :not(.back) > .card-inner:not(:has(> .back))
         .front:not(:has(.front-content [data-side="front"])):not(:has(.image-wrap[data-side="front"])) .audio-row {
         margin-top: 0;
+        margin-left: 0;
         padding-top: 0;
         margin-bottom: 0;
     }
@@ -375,7 +384,16 @@ The approach: switch `.front` to `writing-mode: horizontal-tb` for audio-only. T
 }
 ```
 
-The `:not(:has(.image-wrap[data-side="front"]))` guard is critical — without it, this conflicts with the existing image-only tategaki layout (lines 1953-1977).
+The `:not(:has(.image-wrap[data-side="front"]))` guard is critical — without it, this conflicts with the existing image-only tategaki layout.
+
+**Additional changes made during Phase 2** (beyond original scope but affecting codebase state for later phases):
+- `.tategaki .front .audio-row` order changed from `1` to `-1` (audio-first), `margin-left: 16px` added
+- Mobile tategaki: `.tategaki .front .audio-row { margin-top: auto; margin-bottom: 0; }` (bottom-align audio when content present)
+- `html.tategaki { direction: rtl; }` — was `:has(.back)` only, now applies to front too (enables RTL scroll on front)
+- `.tategaki .card-inner:not(:has(> .back)) { overflow: visible; }` — enables scroll-end spacing on front
+- `.tategaki .card-inner::before { left: -20px; clip-path: ... }` — was back-only, now both sides
+- Image-only front: `gap: 0`, `flex-wrap: nowrap`, `margin-bottom: 0` on audio-row, mobile `order: 1` flip
+- `clearLastMargin` script: removed tategaki override that forced marker onto audio-row; now also runs for tategaki audio-only
 
 **Verify Phase 2:**
 - Desktop tategaki, audio-only front: buttons top-aligned (UNCHANGED — spacers are mobile-only)
@@ -391,7 +409,7 @@ This phase adds a new capability that didn't exist before: when the back of a ca
 
 **What to change in `back.html`:**
 
-Add detection JS after all content rendering, right before the "Trigger reveal animations" comment (original line ~1667). The code must run AFTER all `data-show`, `data-state`, `data-def-layout`, and `data-def-text` attributes have been set.
+Add detection JS after all content rendering, right before the "Trigger reveal animations" comment. The code must run AFTER all `data-show`, `data-state`, `data-def-layout`, and `data-def-text` attributes have been set.
 
 ```javascript
 // Detect audio-only back — set attribute for CSS spacer positioning
@@ -443,7 +461,7 @@ Variables `targetEl`, `graphEl`, `sentEl`, `answerEl` are already in scope — t
 
 **What to change in `css.css`:**
 
-Add rules near the back layout section (after line ~1140 area, near the existing `.back` flex rules):
+Add rules near the back layout section (near the existing `.back` flex rules):
 
 ```css
 /* Audio-only back: spacer positioning */
@@ -466,13 +484,31 @@ html:not(.tategaki) .back[data-audio-only]::after {
 }
 ```
 
+**IMPORTANT: Check `order` values on `.back`'s flex children.** On the back, `.front` and inner `.card-inner` are dissolved via `display: contents`, so `.audio-row`, `.front-content`, and `.answer` become direct flex children of `.back`. In non-tategaki, relevant `order` values are:
+- `.front-content` (when has front items): `order: -1`
+- `.audio-row-bottom`, `.def`, `.jp-def-section`: `order: 1`
+- `.answer::before` (pseudo-divider): `order: -2`
+
+For audio-only back, `.front-content` has no `[data-side="front"]` children so it won't get `order: -1`. The `::before`/`::after` spacers default to `order: 0`, and `.answer` also defaults to `order: 0`. DOM order determines position: `::before` first, then `.answer`, then `::after`. This should work without explicit `order` values — but **verify by reading the actual CSS before implementing** since Phase 2 changes may have shifted line numbers and rules.
+
+**IMPORTANT: `.answer` is still present in the DOM for audio-only backs.** It contains `.audio-row-bottom` (with the actual buttons) plus potentially empty/hidden elements. In non-tategaki, `.answer` has `display: flex; flex-direction: column` with no explicit height — it wraps its content. This should be safe (no `height: 100%` problem like tategaki `.front-content`). But **verify `.answer` doesn't have `min-height` or `flex: 1` that would consume spacer space.**
+
+**IMPORTANT: `.audio-row` padding/margin.** The base `.front .audio-row` has `padding: 48px 0 0; margin-bottom: 48px`. On the back, `.audio-row` is dissolved from `.front` into `.back`'s flex context. For audio-only, these padding/margin values create unwanted spacing. Zero them:
+```css
+html:not(.tategaki) .back[data-audio-only] .audio-row {
+    padding-top: 0;
+    margin-bottom: 0;
+}
+```
+On mobile, `.back .audio-row` is `display: none` (only `.audio-row-bottom` shows), so this only matters for desktop.
+
 **How `.back` gets height:** Making the outer `.card-inner` a flex column lets `.back` use `flex: 1` to stretch to fill it. On desktop, `.card-inner` has no min-height, so `.back` wraps content and spacers collapse — same compact look as the front. On mobile, `.card-inner` has `min-height: ~100dvh`, so `.back` stretches and spacers have room.
 
 **About back-side audio rows:** On the back, audio can appear in two places:
 - `.audio-row` (from FrontSide, dissolved via `display: contents` on `.front`) — shows on desktop if it has front-side buttons
 - `.audio-row-bottom` (inside `.answer`) — shows on mobile always; on desktop only when `.audio-row` has no front buttons
 
-They never both show on desktop simultaneously. On mobile, only `.audio-row-bottom` shows (`.back .audio-row` is `display: none` on mobile — line 1098-1099). The spacers on `.back` center whichever one is visible.
+They never both show on desktop simultaneously. On mobile, only `.audio-row-bottom` shows (`.back .audio-row` is `display: none` on mobile). The spacers on `.back` center whichever one is visible.
 
 **Verify Phase 3:**
 - Back with content (word, definitions, etc.): NO change — `data-audio-only` is not set
@@ -484,24 +520,38 @@ They never both show on desktop simultaneously. On mobile, only `.audio-row-bott
 
 ### Phase 4: Tategaki back audio-only (CSS only)
 
+**This is the trickiest phase. Read all hazards before implementing.**
+
+Phase 4 depends on Phase 3's JS detection being in place (`data-audio-only` attribute on `.back`).
+
 **What to change in `css.css`:**
 
-1. **Remove** the three tategaki `.audio-row-bottom` padding-top rules (section C above):
-   - Line 2066-2073 (iOS mobile)
-   - Line 2074-2079 (Android mobile)
-   - Line 2082-2084 (iPad)
+1. **Do NOT remove** the three tategaki `.audio-row-bottom` padding-top rules (section C). They apply to ALL tategaki `.audio-row-bottom` usage, not just audio-only. They position the audio column when the back has content (near the sentence). **Only override them for `[data-audio-only]`.**
 
-   **IMPORTANT:** These rules apply to ALL tategaki `.audio-row-bottom` usage, not just audio-only. They position the audio column when the back has content too (sentence, word, etc.). Removing them changes the tategaki back audio column position for ALL cards, not just audio-only ones.
+2. **Add** spacer rules scoped to `.back[data-audio-only]`. The approach (same as Phase 2): switch to `writing-mode: horizontal-tb` so `flex-direction: column` works top-to-bottom.
 
-   **This is the trickiest part of the refactor.** The tategaki `.audio-row-bottom` has `height: 100%` and uses `padding-top` to push its buttons down within the full-height column. For cards WITH content, the buttons should be top-aligned (near the sentence). For audio-only cards, they should be centered/two-thirds.
+**CRITICAL: Scope to mobile only (`@media (hover: none)`).** Phase 2 learned that desktop tategaki has a definite height on `.card-inner`, so spacers would actively center buttons. **ASK THE USER** whether desktop tategaki back audio-only buttons should be top-aligned (like front) or centered. Do NOT assume — the front and back may have different requirements.
 
-   **Therefore:** Do NOT remove these padding-top rules as a blanket change. Instead, only override them for audio-only:
+**CRITICAL: Multiple elements have `height: 100%` that will consume spacer space.** This was the #1 debugging issue in Phase 2. On the back, the following tategaki elements have `height: 100%`:
+- `.tategaki .answer` → `height: 100%` — Must override to `height: auto`
+- `.tategaki .back .front-content` → `height: 100%` — `.front-content` is dissolved from `.front` via `display: contents` and becomes a direct flex child of `.back`. Must set `display: none` or `height: auto`
+- `.tategaki .audio-row-bottom` → `height: 100%` — Must override to `height: auto`
+- `.tategaki .divider` → `height: 100%` — Already hidden for audio-only by existing CSS rule, but verify
+
+**CRITICAL: Check `order` values.** Phase 2's worst bug was pseudo-elements rendering in the wrong position due to `order` on the target element. In `.back`'s flex context (after `display: contents` dissolves `.front`):
+- `.audio-row`: `display: none` in tategaki back — not a concern
+- `.audio-row-bottom`: `order: -3` (base) or `order: -5` (when `data-zone="front"`)
+- `.divider`: `order: -4`
+- `.sentence`: `order: -3` (in tategaki `.answer` context — but this is inside `.answer`, not `.back`)
+- `.front-content`: no explicit order (defaults to `order: 0`)
+- `.answer`: no explicit order (defaults to `order: 0`)
+
+**WAIT** — `.audio-row-bottom` is INSIDE `.answer`, not a direct child of `.back`. Its `order: -3` affects its position within `.answer`, not within `.back`. The direct flex children of `.back` in audio-only are: `.front-content` (order 0, dissolved), `.answer` (order 0), plus `::before`/`::after` (order 0). DOM order should work. But **verify this by reading the actual DOM structure and CSS before implementing.**
 
 ```css
 /* Tategaki audio-only back */
 .tategaki .back[data-audio-only] {
     writing-mode: horizontal-tb;
-    display: flex;
     flex-direction: column;
     align-items: center;
 }
@@ -510,10 +560,15 @@ They never both show on desktop simultaneously. On mobile, only `.audio-row-bott
     content: '';
     flex-grow: 1;
 }
+/* QUESTION: Should this be mobile-only like Phase 2? Ask the user. */
 @media (hover: none) {
     .tategaki .back[data-audio-only]::before {
         flex-grow: 2;
     }
+}
+.tategaki .back[data-audio-only] .answer {
+    height: auto;
+    writing-mode: horizontal-tb;
 }
 .tategaki .back[data-audio-only] .audio-row-bottom {
     height: auto;
@@ -521,23 +576,26 @@ They never both show on desktop simultaneously. On mobile, only `.audio-row-bott
     margin: 0;
     order: 0;
 }
-.tategaki .back[data-audio-only] .answer {
-    height: auto;
-    writing-mode: horizontal-tb;
+/* .front-content dissolved from .front — may need collapsing */
+.tategaki .back[data-audio-only] .front-content {
+    display: none;
 }
 ```
 
-The `writing-mode: horizontal-tb` on `.back` switches the entire back to horizontal layout for audio-only. The overrides on `.audio-row-bottom` and `.answer` undo the tategaki-specific styles that assume vertical writing mode.
+**Additional properties to check/zero on `.audio-row-bottom`:**
+- `margin: 0 0 0 24px` (base rule) → must zero to `margin: 0`
+- `height: 100%` → must set `height: auto`
+- `padding-top: min(calc(...))` (mobile rules) → must set `padding-top: 0`
+- `will-change: transform` → probably fine but verify no layout side effects
+- `writing-mode: horizontal-tb` → already set on the base rule, should be fine
 
-2. The tategaki front `.audio-row` margin-top rules (section B — removed in Phase 2) are pure front-side rules and can be safely removed. But the `.audio-row-bottom` padding-top rules (this phase) affect the back with content. **Only remove them if you're sure they can be replaced by the `[data-audio-only]`-scoped overrides above.**
+**About the `.divider`:** The existing rule `.tategaki .back:not(:has(.front-content [data-side="front"])):not(:has(.audio-row-bottom[data-zone="front"])) .divider { display: none; }` should hide the divider for audio-only backs. Verify this matches — if `.audio-row-bottom` has `data-zone="front"`, the divider would still show. In that case, add an override: `.tategaki .back[data-audio-only] .divider { display: none; }`.
 
-   Actually, re-reading the original rules: they apply to `.tategaki .audio-row-bottom` unconditionally (not scoped to audio-only). They position the back-side audio column for ALL tategaki cards. So:
-   - **Keep the original padding-top rules for non-audio-only tategaki back** (they position the audio column next to the sentence)
-   - **Override to zero only for `[data-audio-only]`** (as shown above)
+**About the clip-path on `.card-inner:has(> .back)`:** The back-side `.card-inner` uses `clip-path: inset(0 30% 0 30%)` for the reveal animation, then `clip-path: none` after `.tate-expand` class is added. This should not affect audio-only layout since it's a visual clip, not a layout constraint. But if buttons appear clipped during animation, that's why.
 
 **Verify Phase 4:**
 - Tategaki back with content: audio column positioned correctly next to sentence (UNCHANGED from before)
-- Tategaki back audio-only on desktop: buttons centered
+- Tategaki back audio-only on desktop: **verify with user** — centered or top-aligned?
 - Tategaki back audio-only on mobile: buttons at ~2/3 down
 - Tategaki back audio-only on iPad: buttons at ~2/3 within 668px card
 
@@ -606,52 +664,96 @@ Base `padding: 40px clamp(20px, 6vw, 44px)` gives larger top/bottom than sides o
 
 CSS specificity for many of these rules is identical (they use similarly-weighted selectors). Rules win by source order. When adding new rules, placement matters. The spacer rules should go BEFORE platform-specific overrides and AFTER base layout rules.
 
-### L. Tategaki `.audio-row` has `order: 1`
+### L. Tategaki elements have non-zero `order` values
 
-**Confirmed in Phase 2.** `.tategaki .front .audio-row` has `order: 1` (for positioning in vertical writing mode). Pseudo-elements default to `order: 0`, so both `::before` and `::after` render *before* the audio-row in flex order, pushing buttons to the bottom. Fix: set explicit `order` on pseudo-elements (`::before` gets `order: -1`, `::after` gets `order: 2`) to bracket the audio-row.
+**Confirmed in Phase 2.** Pseudo-elements default to `order: 0`. Any element with a non-zero `order` will render before or after them, breaking the expected `::before` → content → `::after` sandwich.
 
-**Rule for later phases:** When adding spacer pseudo-elements in tategaki, always check if the target element has an `order` property and set explicit `order` values on `::before`/`::after` accordingly.
+Known `order` values (after Phase 2 changes):
+- `.tategaki .front .audio-row`: `order: -1` (changed from `1` in Phase 2)
+- `.tategaki .audio-row-bottom`: `order: -3` (inside `.answer`, not directly in `.back`)
+- `.tategaki .audio-row-bottom[data-zone="front"]`: `order: -5`
+- `.tategaki .divider`: `order: -4`
 
-### M. Tategaki `.front-content` has `height: 100%`
+**Rule:** When adding spacer pseudo-elements, ALWAYS check what `order` values exist on the target element and its siblings. Set explicit `order` on `::before`/`::after` to bracket the content. Use dump debugging (not guessing) if the layout doesn't match expectations.
 
-**Confirmed in Phase 2.** `.tategaki .card-inner:not(:has(> .back)) .front-content` has `height: 100%`. Even when empty (no `[data-side="front"]` children), it remains a flex child consuming the full container height, preventing spacers from distributing space. Fix: set `display: none` on `.front-content` in the audio-only context.
+### M. Tategaki elements with `height: 100%` consume spacer space
 
-### N. Desktop tategaki spacers must be mobile-only
+**Confirmed in Phase 2 — this was the #1 time-wasting bug.** Multiple tategaki elements have `height: 100%`. Even when empty or hidden-by-children, they remain flex children consuming the full container height, preventing spacers from distributing space.
 
-**Confirmed in Phase 2.** Unlike non-tategaki desktop (where `.card-inner` has no min-height so spacers collapse to zero), tategaki desktop has a definite `height` on `.card-inner`. Spacers would actively center the buttons, but the intended desktop behavior is top-aligned. All tategaki spacer rules must be inside `@media (hover: none)`.
+Known elements with `height: 100%`:
+- `.tategaki .card-inner:not(:has(> .back)) .front-content` → front side
+- `.tategaki .back .front-content` → back side (dissolved from `.front`)
+- `.tategaki .answer` → back side
+- `.tategaki .audio-row-bottom` → back side (inside `.answer`)
+- `.tategaki .divider` → back side
+
+**Rule:** For every spacer implementation, identify ALL flex children of the container and check their `height` values. Any with `height: 100%` must be overridden to `height: auto` or `display: none` in the audio-only context.
+
+### N. Desktop tategaki spacers must be mobile-only (unless verified otherwise)
+
+**Confirmed in Phase 2.** Unlike non-tategaki desktop (where `.card-inner` has no min-height so spacers collapse to zero), tategaki desktop has a definite `height` on `.card-inner`. Spacers would actively position the buttons (e.g., centering with 1:1 ratio), which may not be desired.
+
+**Rule:** Default to `@media (hover: none)` for tategaki spacer rules. If desktop behavior should differ from "top-aligned," explicitly confirm with the user before implementing.
+
+### O. `margin-bottom: 48px` on `.front .audio-row` becomes visible when element position changes
+
+**Confirmed in Phase 2.** The base `.front .audio-row` rule has `padding: 48px 0 0; margin-bottom: 48px`. These values are designed for the default non-tategaki horizontal layout. When elements are reordered or repositioned (e.g., audio-row moved to top via `order: -1`, or pushed to bottom via `margin-top: auto`), these margins/paddings become visible in new directions and create unexpected gaps.
+
+**Rule:** When repositioning audio elements with spacers or order changes, always zero out `padding-top`, `margin-bottom`, and `margin-left` as appropriate.
+
+### P. Use dump debugging, not guessing
+
+**Learned painfully in Phase 2.** When computed styles show correct values but the layout is wrong, the issue is often in a property you didn't check (e.g., `order`, `height: 100%` on a sibling, `margin` from a base rule). `getComputedStyle` on pseudo-elements can show heights that don't match `getBoundingClientRect` positions.
+
+**Rule:** When something doesn't work on the first try, immediately add JS dump debugging that outputs `getBoundingClientRect()` positions for all relevant elements, computed `order`, `display`, `height`, `margin`, and `flex` values. Copy-paste the output and diagnose from real data. Do NOT guess and iterate — this wastes time.
+
+### Q. Line numbers shift between phases
+
+Phases 1 and 2 added and removed CSS rules, shifting all line numbers in the file. **Do not rely on line numbers from this document.** Instead, search for the actual selectors or comments to find the right location. Read the surrounding context before editing.
 
 ---
 
 ## 8. Summary of What Gets Removed vs Added
 
-### Removed from `css.css` (9 rules across 6 blocks)
+### Removed from `css.css`
 
-| Location | Selector | Property | Scope |
-|----------|----------|----------|-------|
-| ~line 524 | `.front:not(:has(...))` | `padding-top: calc(...)` | iOS mobile |
-| ~line 541 | `.android .front:not(:has(...))` | `padding-top: calc(...)` | Android mobile |
-| ~line 555 | `.front:not(:has(...))` | `padding-top: 354px` | iPad |
-| ~line 2007 | `.tategaki .front .audio-row` | `margin-top: min(...)` | iOS mobile |
-| ~line 2013 | `.android.tategaki .front .audio-row` | `margin-top: min(...)` | Android mobile |
-| ~line 2026 | `.tategaki .front .audio-row` | `margin-top: calc(...)` | iPad |
+| Selector | Property | Scope | Phase |
+|----------|----------|-------|-------|
+| `.front:not(:has(...))` | `padding-top: calc(...)` | iOS mobile | 1 ✓ |
+| `.android .front:not(:has(...))` | `padding-top: calc(...)` | Android mobile | 1 ✓ |
+| `.front:not(:has(...))` | `padding-top: 354px` | iPad | 1 ✓ |
+| `.tategaki .front .audio-row` | `margin-top: min(...)` | iOS mobile | 2 ✓ |
+| `.android.tategaki .front .audio-row` | `margin-top: min(...)` | Android mobile | 2 ✓ |
+| `.tategaki .front .audio-row` | `margin-top: calc(...)` | iPad | 2 ✓ |
 
 **NOT removed** (kept for non-audio-only tategaki back):
-| ~line 2066-2084 | `.tategaki .audio-row-bottom` | `padding-top: ...` | All mobile tategaki |
+| `.tategaki .audio-row-bottom` | `padding-top: ...` | All mobile tategaki | N/A |
 
-### Removed from `front.html` (2 JS blocks)
+### Removed from `front.html` (Phase 1)
 
-| Location | What |
-|----------|------|
-| ~line 219 | `lock()` paddingTop inline style |
-| ~line 981-996 | "Adjust front padding" correction block |
+| What |
+|------|
+| `lock()` paddingTop inline style |
+| "Adjust front padding" correction block |
 
-### Added to `css.css` (~50 lines)
+### Added to `css.css`
 
-1. Non-tategaki front spacer rules (base + mobile override)
-2. Tategaki front spacer rules (base + mobile override + margin-top: 0)
-3. Non-tategaki back spacer rules (base + mobile override)
-4. Tategaki back spacer rules (base + mobile override + property resets)
+1. ✓ Non-tategaki front spacer rules (base + mobile override) — Phase 1
+2. ✓ Tategaki front spacer rules (mobile-only + margin/order resets) — Phase 2
+3. Non-tategaki back spacer rules (base + mobile override) — Phase 3
+4. Tategaki back spacer rules (mobile-only + height/margin/padding resets) — Phase 4
 
-### Added to `back.html` (~20 lines)
+### Added to `back.html` (Phase 3)
 
 Audio-only back detection JS (sets `data-audio-only` on `.back`).
+
+### Additional changes made during Phase 2 (beyond original scope)
+
+These changed the codebase state and affect what Phases 3/4 will encounter:
+- `.tategaki .front .audio-row` order changed `1` → `-1`, added `margin-left: 16px`
+- Mobile: `.tategaki .front .audio-row { margin-top: auto; margin-bottom: 0; }`
+- `html.tategaki { direction: rtl; }` — expanded from back-only to both sides
+- `.tategaki .card-inner:not(:has(> .back)) { overflow: visible; }` — new
+- `.tategaki .card-inner::before` scroll-end spacing — expanded from back-only to both sides
+- Image-only front layout adjustments (gap, flex-wrap, order flip on mobile)
+- `clearLastMargin` script changes (removed tategaki override, expanded to run for audio-only)
