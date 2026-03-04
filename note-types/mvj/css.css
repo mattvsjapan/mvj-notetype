@@ -566,7 +566,7 @@ html {
 }
 
 @media (hover: none) {
-    .card-inner { padding-bottom: 30px; }
+    .card-inner { padding-bottom: clamp(20px, 6vw, 44px); }
 }
 @media (hover: none) and (min-width: 768px) {
     .card-inner { padding-bottom: clamp(20px, 6vw, 44px); }
