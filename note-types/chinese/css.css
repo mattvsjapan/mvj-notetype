@@ -341,10 +341,6 @@ html {
     transition: background 600ms ease, box-shadow 600ms ease;
 }
 
-.jp-def.text-play::after {
-    top: -1.5px;
-}
-
 @media (hover: hover) {
     .text-play:hover::after,
     .text-play.hover-linked::after {
