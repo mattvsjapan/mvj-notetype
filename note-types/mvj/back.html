@@ -130,7 +130,7 @@
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked) playAll();
+                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definition) playAll();
                   });
               }
           } else {
@@ -163,7 +163,7 @@
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked) buttons[0].click();
+                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definition) buttons[0].click();
                   });
               }
           }
@@ -1159,7 +1159,7 @@
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
-              if (defToggle.checked) secondaryBtns[0].click();
+              if (defToggle.checked && window.__autoplayEnabled.definition) secondaryBtns[0].click();
             });
           }
         } else {
@@ -1191,7 +1191,7 @@
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked) singleBtns[0].click();
+                if (defToggle.checked && window.__autoplayEnabled.definition) singleBtns[0].click();
               });
             }
           }
@@ -1354,7 +1354,7 @@
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
-              if (defToggle.checked) playSecondary();
+              if (defToggle.checked && window.__autoplayEnabled.definition) playSecondary();
             });
           }
         } else {
@@ -1400,7 +1400,7 @@
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked) playPrimary();
+                if (defToggle.checked && window.__autoplayEnabled.definition) playPrimary();
               });
             }
           }
