@@ -19,6 +19,7 @@ from aqt.qt import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
+    QPlainTextEdit,
     QProgressDialog,
     QPushButton,
     QVBoxLayout,
@@ -94,8 +95,8 @@ class MediaManagerDialog(QDialog):
 
     def _setup_ui(self):
         self.setWindowTitle("Manage Media")
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(400 if self._source_folder else 250)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(500 if self._source_folder else 350)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -125,12 +126,18 @@ class MediaManagerDialog(QDialog):
         source_group.setLayout(source_layout)
 
         self._unreferenced_label = QLabel()
+        self._unreferenced_list = self._make_file_list()
         self._duplicated_label = QLabel()
+        self._duplicated_list = self._make_file_list()
         self._used_label = QLabel()
+        self._used_list = self._make_file_list()
 
         source_layout.addWidget(self._unreferenced_label)
+        source_layout.addWidget(self._unreferenced_list)
         source_layout.addWidget(self._duplicated_label)
+        source_layout.addWidget(self._duplicated_list)
         source_layout.addWidget(self._used_label)
+        source_layout.addWidget(self._used_list)
 
         layout.addWidget(source_group)
 
@@ -143,11 +150,18 @@ class MediaManagerDialog(QDialog):
         anki_group.setLayout(anki_layout)
 
         self._orphaned_label = QLabel()
+        self._orphaned_list = self._make_file_list()
         self._protected_label = QLabel()
+        self._protected_list = self._make_file_list()
         self._anki_used_label = QLabel()
+        self._anki_used_list = self._make_file_list()
+
         anki_layout.addWidget(self._orphaned_label)
+        anki_layout.addWidget(self._orphaned_list)
         anki_layout.addWidget(self._protected_label)
+        anki_layout.addWidget(self._protected_list)
         anki_layout.addWidget(self._anki_used_label)
+        anki_layout.addWidget(self._anki_used_list)
 
         layout.addWidget(anki_group)
 
@@ -180,6 +194,15 @@ class MediaManagerDialog(QDialog):
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         qconnect(button_box.rejected, self.reject)
         layout.addWidget(button_box)
+
+    def _make_file_list(self) -> QPlainTextEdit:
+        """Create a configured read-only file list widget."""
+        widget = QPlainTextEdit()
+        widget.setReadOnly(True)
+        widget.setMaximumHeight(120)
+        widget.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        widget.hide()
+        return widget
 
     def _refresh_analysis(self):
         """Re-run analysis and update UI (called after deletion)."""
@@ -251,6 +274,22 @@ class MediaManagerDialog(QDialog):
             f"In-use files: {anki_used_count} "
             f"(actively used by cards)"
         )
+
+        # Populate file lists
+        for file_list, files in (
+            (self._unreferenced_list, result['source_unreferenced']),
+            (self._duplicated_list, result['source_duplicated']),
+            (self._used_list, result['source_used']),
+            (self._orphaned_list, result['anki_orphaned']),
+            (self._protected_list, result.get('anki_protected', [])),
+            (self._anki_used_list, result.get('anki_used', [])),
+        ):
+            if files:
+                file_list.setPlainText("\n".join(sorted(files)))
+                file_list.show()
+            else:
+                file_list.setPlainText("")
+                file_list.hide()
 
         self._delete_unreferenced_btn.setEnabled(unreferenced_count > 0)
         self._delete_duplicated_btn.setEnabled(duplicated_count > 0)
