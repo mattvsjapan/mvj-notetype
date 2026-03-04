@@ -96,6 +96,7 @@ _SETTINGS = {
         ("--word-text", "Word Text", ["front & back", "back only", "off"], "front & back"),
         ("--word-audio", "Word Audio", ["front & back", "back only", "off"], "back only"),
         ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
+        ("--word-autoplay", "Word Autoplay", ["on", "off"], "on"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front & back", "back only", "off"], "front & back"),
         ("--word-pitch-color", "Word Pitch Color", ["front & back", "back only", "off"], "back only"),
@@ -105,6 +106,7 @@ _SETTINGS = {
         ("--sentence-text", "Sentence Text", ["front & back", "back only", "off"], "front & back"),
         ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "off"], "back only"),
         ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
+        ("--sentence-autoplay", "Sentence Autoplay", ["on", "off"], "on"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front & back", "back only", "off"], "front & back"),
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front & back", "back only", "off"], "back only"),
@@ -116,6 +118,7 @@ _SETTINGS = {
         ("--definition-text", "Definition Text", ["on", "off"], "on"),
         ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "off"], "on"),
+        ("--definition-autoplay", "Definition Autoplay", ["on", "off"], "on"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
         ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
@@ -127,10 +130,10 @@ _SETTINGS = {
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
     "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
-    "word-text", "word-audio", "word-audio-buttons", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
-    "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
+    "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
+    "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-audio-buttons", "definition-text-play", "definition-mode", "definition-default",
+    "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay", "definition-text-play", "definition-mode", "definition-default",
     "definition-furigana", "definition-pitch-color",
 ]
 

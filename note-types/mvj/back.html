@@ -1675,7 +1675,10 @@
       var items = document.querySelectorAll('.audio-row .audio-item[data-side="back"]');
       var queue = [];
       var animateBtn = window.__animateBtn;
+      var ap = window.__autoplayEnabled;
       items.forEach(function(item) {
+        var type = item.getAttribute('data-audio');
+        if ((type === 'word' && !ap.word) || (type === 'sentence' && !ap.sentence)) return;
         var btns = item.querySelectorAll('.replay-button');
         if (item._jsAudios && item._jsAudios.length) {
           for (var j = 0; j < item._jsAudios.length; j++) {
@@ -1698,7 +1701,7 @@
           window.__playMobile(entry.audio.src, entry.btn)
             .then(function() { if (gen === window.__webAudioGen) playNext(); })
             ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
-        } else if (window.__autoPlayDefAudio) {
+        } else if (window.__autoPlayDefAudio && ap.definition) {
           window.__autoPlayDefAudio();
         }
       })();

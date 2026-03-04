@@ -46,10 +46,10 @@
     var rs = getComputedStyle(root);
     var settings = [
         'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
-        'word-text', 'word-audio', 'word-audio-buttons', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
-        'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
+        'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
+        'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
         'image',
-        'definition-text', 'definition-audio', 'definition-audio-buttons', 'definition-text-play', 'definition-mode', 'definition-default', 'definition-furigana', 'definition-pitch-color'
+        'definition-text', 'definition-audio', 'definition-audio-buttons', 'definition-autoplay', 'definition-text-play', 'definition-mode', 'definition-default', 'definition-furigana', 'definition-pitch-color'
     ];
 
     // Find last defined mode
@@ -121,6 +121,16 @@
         word: rs.getPropertyValue('--word-text-play').trim() !== 'off',
         sentence: rs.getPropertyValue('--sentence-text-play').trim() !== 'off',
         definition: rs.getPropertyValue('--definition-text-play').trim() !== 'off'
+    };
+})();
+
+// Autoplay — read per-section CSS variables and cache
+(function() {
+    var rs = getComputedStyle(document.documentElement);
+    window.__autoplayEnabled = {
+        word: rs.getPropertyValue('--word-autoplay').trim() !== 'off',
+        sentence: rs.getPropertyValue('--sentence-autoplay').trim() !== 'off',
+        definition: rs.getPropertyValue('--definition-autoplay').trim() !== 'off'
     };
 })();
 
@@ -1107,7 +1117,10 @@ function clearLastMargin(el) {
   var items = document.querySelectorAll('.audio-row .audio-item[data-side="front"]');
   var queue = [];
   var animateBtn = window.__animateBtn;
+  var ap = window.__autoplayEnabled;
   items.forEach(function(item) {
+    var type = item.getAttribute('data-audio');
+    if ((type === 'word' && !ap.word) || (type === 'sentence' && !ap.sentence)) return;
     if (item._jsAudios) {
       var btns = item.querySelectorAll('.replay-button');
       for (var j = 0; j < item._jsAudios.length; j++)
