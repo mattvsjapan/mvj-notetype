@@ -938,7 +938,7 @@ html:not(.tategaki) .word-pitch-group.text-play::after {
 .target-word.text-play      { --pill-ruby-hidden: 0.33em; --pill-ruby-visible: -2px; }
 .sentence.text-play         { --pill-ruby-hidden: 0.2em;  --pill-ruby-visible: -0.22em; }
 .def.text-play,
-.jp-def.text-play           { --pill-ruby-visible: -2px; }
+.jp-def.text-play           { --pill-ruby-visible: -0.22em; }
 .word-pitch-group.text-play { --pill-ruby-visible: -6px; }
 
 /* ── Pill position: state resolution (non-tategaki) ── */
@@ -1251,7 +1251,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     border-radius: 10px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .image-wrap::after {
@@ -1584,7 +1584,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 }
 
 .front-content .image-wrap {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 html:not(.tategaki) .front-content .image-wrap {
@@ -2140,13 +2140,23 @@ html.tategaki:has(.back) {
 /* WebKit (AnkiMobile) already expands the content area for ruby,
    so the extra padding is partially redundant. */
 @supports (-webkit-touch-callout: none) {
+    /* iOS WebKit's ruby layout adds annotation-gap space that inflates line
+       boxes (~10-12 px per line).  Negative margin-block on rt collapses
+       that gap; transform is adjusted from the mobile default (7px) to -3px
+       to keep furigana visually above the base text. */
+    .sentence rt,
+    .def rt,
+    .jp-def rt {
+        margin-block: -7px;
+        transform: translateY(-1.5px);
+    }
     html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         padding-top: 0.08em;
     }
     html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
     html:not(.tategaki) .def:has(ruby):not(.furigana-off),
     html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
-        padding-top: 0;
+        padding-top: 0.45em;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off) {
         padding-right: 0;
@@ -2158,9 +2168,9 @@ html.tategaki:has(.back) {
     }
     /* Pill position: iOS overrides (non-tategaki) */
     .target-word.text-play  { --pill-ruby-hidden: 0.45em; --pill-ruby-visible: 0.1em; }
-    .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.2em; }
+    .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.1em; }
     .def.text-play,
-    .jp-def.text-play       { --pill-ruby-visible: 0.2em; }
+    .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
     .word-pitch-group.text-play { --pill-ruby-visible: 0.1em; }
 
     /* Pill position: iOS overrides (tategaki) */
