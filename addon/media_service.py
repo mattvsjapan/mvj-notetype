@@ -21,6 +21,21 @@ def _log(msg):
     print(f"[MvJ Media] {msg}")
 
 
+def _extract_media_from_fields(fields):
+    """Extract media filenames from a list of field strings."""
+    media_files = set()
+    for field in fields:
+        sounds = [html.unescape(s) for s in SOUND_TAG_PATTERN.findall(field or "")]
+        media_files.update(sounds)
+        images = [
+            unquote(html.unescape(g1 or g2))
+            for g1, g2 in IMG_TAG_PATTERN.findall(field or "")
+            if not (g1 or g2).strip().lower().startswith("data:")
+        ]
+        media_files.update(images)
+    return media_files
+
+
 def extract_media_files(note, media_type=None):
     """Extract all media file references from a note.
 
@@ -31,6 +46,9 @@ def extract_media_files(note, media_type=None):
     Returns:
         Set of filenames referenced by the note
     """
+    if media_type is None:
+        return _extract_media_from_fields(note.fields)
+
     media_files = set()
 
     for field in note.fields:
@@ -69,27 +87,24 @@ def _build_media_reference_map(exclude_note_ids=None):
     media_map = {}
 
     try:
-        all_note_ids = mw.col.find_notes("*")
+        rows = mw.col.db.all("select id, flds from notes")
+        checked = 0
 
-        for nid in all_note_ids:
+        for nid, flds in rows:
             if nid in exclude_note_ids:
                 continue
+            checked += 1
 
-            try:
-                note = mw.col.get_note(nid)
-                media_files = extract_media_files(note)
+            fields = flds.split("\x1f")
+            media_files = _extract_media_from_fields(fields)
 
-                for filename in media_files:
-                    if filename not in media_map:
-                        media_map[filename] = set()
-                    media_map[filename].add(nid)
-
-            except Exception as e:
-                _log(f"Could not check note {nid} for media references: {e}")
-                continue
+            for filename in media_files:
+                if filename not in media_map:
+                    media_map[filename] = set()
+                media_map[filename].add(nid)
 
         _log(f"Built media reference map: {len(media_map)} unique files across "
-             f"{len(all_note_ids) - len(exclude_note_ids)} notes")
+             f"{checked} notes")
         return media_map
 
     except Exception as e:
@@ -175,16 +190,26 @@ def analyze_media_usage(source_folder=None):
     _log("Building media reference map for analysis...")
     media_ref_map = _build_media_reference_map(set())
 
+    # Scan Anki media folder first so source analysis can use the set
+    anki_files = []
+    anki_files_set = set()
+    if media_dir and os.path.exists(media_dir):
+        _log(f"Scanning Anki media folder: {media_dir}")
+        try:
+            anki_files = [e.name for e in os.scandir(media_dir) if e.is_file()]
+            anki_files_set = set(anki_files)
+        except Exception as e:
+            _log(f"Error scanning Anki media folder: {e}")
+
     # Analyze source folder
     if source_folder and os.path.exists(source_folder):
         _log(f"Analyzing source folder: {source_folder}")
         try:
-            source_files = [f for f in os.listdir(source_folder)
-                           if os.path.isfile(os.path.join(source_folder, f))]
+            source_files = [e.name for e in os.scandir(source_folder) if e.is_file()]
 
             for filename in source_files:
                 ref_count = len(media_ref_map.get(filename, set()))
-                in_anki = os.path.exists(os.path.join(media_dir, filename))
+                in_anki = filename in anki_files_set
 
                 # Also count LOCKED_ references (legacy notes not yet regenerated)
                 disabled_version = f"LOCKED_{filename}"
@@ -205,33 +230,27 @@ def analyze_media_usage(source_folder=None):
             _log(f"Error analyzing source folder: {e}")
 
     # Analyze Anki media folder
-    if media_dir and os.path.exists(media_dir):
+    if anki_files:
         _log(f"Analyzing Anki media folder: {media_dir}")
-        try:
-            anki_files = [f for f in os.listdir(media_dir)
-                         if os.path.isfile(os.path.join(media_dir, f))]
+        for filename in anki_files:
+            ref_count = len(media_ref_map.get(filename, set()))
 
-            for filename in anki_files:
-                ref_count = len(media_ref_map.get(filename, set()))
-
-                if ref_count == 0:
-                    if filename.startswith('_'):
-                        result['anki_protected'].append(filename)
-                    else:
-                        # Check LOCKED_ references (legacy notes not yet regenerated)
-                        disabled_version = f"LOCKED_{filename}"
-                        disabled_ref_count = len(media_ref_map.get(disabled_version, set()))
-                        if disabled_ref_count > 0:
-                            result['anki_used'].append(filename)
-                        else:
-                            result['anki_orphaned'].append(filename)
+            if ref_count == 0:
+                if filename.startswith('_'):
+                    result['anki_protected'].append(filename)
                 else:
-                    result['anki_used'].append(filename)
+                    # Check LOCKED_ references (legacy notes not yet regenerated)
+                    disabled_version = f"LOCKED_{filename}"
+                    disabled_ref_count = len(media_ref_map.get(disabled_version, set()))
+                    if disabled_ref_count > 0:
+                        result['anki_used'].append(filename)
+                    else:
+                        result['anki_orphaned'].append(filename)
+            else:
+                result['anki_used'].append(filename)
 
-            _log(f"Anki folder: {len(result['anki_orphaned'])} orphaned, "
-                 f"{len(result['anki_protected'])} protected, "
-                 f"{len(result['anki_used'])} in-use")
-        except Exception as e:
-            _log(f"Error analyzing Anki media folder: {e}")
+        _log(f"Anki folder: {len(result['anki_orphaned'])} orphaned, "
+             f"{len(result['anki_protected'])} protected, "
+             f"{len(result['anki_used'])} in-use")
 
     return result
