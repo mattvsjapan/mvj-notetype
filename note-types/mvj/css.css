@@ -524,7 +524,7 @@ html {
 
     .card-inner:has(> .back),
     html:not(.tategaki) .card-inner:has(.front-content [data-side="front"]) {
-        padding-top: 20px;
+        padding-top: clamp(20px, 6vw, 44px);
     }
 
     /* AnkiDroid: revert iOS-only bottom-inset and bounce scroll adjustments */
@@ -1014,11 +1014,11 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [
     flex-grow: 1;
 }
 @media (hover: none) {
-    html:not(.tategaki) .card-inner:not(:has(> .back)) {
+    html:not(.tategaki) :not(.back) > .card-inner:not(:has(> .back)) {
         display: flex;
         flex-direction: column;
     }
-    html:not(.tategaki) .card-inner:not(:has(> .back)):not(:has(.front-content [data-side="front"])) {
+    html:not(.tategaki) :not(.back) > .card-inner:not(:has(> .back)):not(:has(.front-content [data-side="front"])) {
         padding: clamp(20px, 6vw, 44px);
     }
     html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"])) {
@@ -1029,6 +1029,42 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [
     }
     html:not(.tategaki) :not(.back) > .card-inner > .front:not(:has(.front-content [data-side="front"])) .audio-row {
         padding-top: 0;
+        margin-bottom: 0;
+    }
+}
+
+/* Audio-only back: flex spacer positioning */
+html:not(.tategaki) .card-inner:has(> .back[data-audio-only]) {
+    display: flex;
+    flex-direction: column;
+}
+html:not(.tategaki) .back[data-audio-only] {
+    flex: 1;
+}
+html:not(.tategaki) .back[data-audio-only]::before,
+html:not(.tategaki) .back[data-audio-only]::after {
+    content: '';
+    flex-grow: 1;
+}
+html:not(.tategaki) .back[data-audio-only] .front-content {
+    display: none;
+}
+html:not(.tategaki) .back[data-audio-only] .audio-row {
+    padding: 48px 0 0;
+    margin-bottom: 48px;
+}
+@media (hover: none) {
+    html:not(.tategaki) .card-inner:has(> .back[data-audio-only]) {
+        padding: clamp(20px, 6vw, 44px);
+    }
+    html:not(.tategaki) .back[data-audio-only]::before {
+        flex-grow: 2;
+    }
+    html:not(.tategaki) .back[data-audio-only] .audio-row {
+        padding-top: 0;
+        margin-bottom: 0;
+    }
+    html:not(.tategaki) .back[data-audio-only] .audio-row-bottom {
         margin-bottom: 0;
     }
 }
@@ -2438,7 +2474,15 @@ html:not(.tategaki) .back:not(:has(.front-content [data-side="front"]))
     display: block;
 }
 
-html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider {
+html:not(.tategaki) .back:has(.front-content [data-side="front"])
+    .answer:not([data-def-layout="none"]):not([data-def-text="off"]) .divider,
+html:not(.tategaki) .back:has(.front-content [data-side="front"])
+    .answer:has(
+        .target-word:not([data-show="off"]):not(:empty),
+        .pitch-graph:not([data-state="empty"]),
+        .sentence:not([data-show="off"]):not(:empty),
+        .image-wrap:not([data-show="off"])
+    ) .divider {
     display: block;
     order: -2;
 }

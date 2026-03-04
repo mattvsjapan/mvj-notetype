@@ -632,14 +632,16 @@ window.__playItemAudios = function(item) {
 function clearLastMargin(el) {
     if (!el) return;
     var items = [];
-    for (var i = 0; i < el.children.length; i++) {
-        var child = el.children[i];
-        if (getComputedStyle(child).display === 'contents') {
-            for (var j = 0; j < child.children.length; j++) items.push(child.children[j]);
-        } else {
-            items.push(child);
+    (function collect(parent) {
+        for (var i = 0; i < parent.children.length; i++) {
+            var child = parent.children[i];
+            if (getComputedStyle(child).display === 'contents') {
+                collect(child);
+            } else {
+                items.push(child);
+            }
         }
-    }
+    })(el);
     var isVertical = getComputedStyle(el).writingMode === 'vertical-rl';
     items = items.filter(function(item) {
         if (getComputedStyle(item).display === 'none') return false;

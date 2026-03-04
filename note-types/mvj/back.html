@@ -1664,6 +1664,55 @@
         wc.style.marginLeft = '0';
         clearLastMargin(wc);
     }
+    // If .answer has no visible content but front content exists, collapse
+    // .answer and run clearLastMargin on .back so .audio-row's margin is
+    // cleared. Skip for audio-only backs — their margin provides breathing room
+    // (same logic as front.html skipping clearLastMargin for audio-only fronts).
+    var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
+    var backAudioRow = document.querySelector('.back .audio-row');
+    if (hasFrontContent && backAudioRow && answerEl && answerEl.getBoundingClientRect().height <= 2) {
+        answerEl.style.display = 'none';
+        var backEl = document.querySelector('.back');
+        if (backEl) {
+            clearLastMargin(backEl);
+        }
+    }
+
+    // Detect audio-only back — set attribute for CSS spacer positioning
+    (function() {
+        var back = document.querySelector('.back');
+        if (!back) return;
+
+        var wordVisible = targetEl
+            && targetEl.getAttribute('data-show') !== 'off'
+            && targetEl.textContent.trim() !== '';
+
+        var graphVisible = graphEl && !graphEl.hasAttribute('data-state');
+
+        var sentVisible = sentEl
+            && sentEl.getAttribute('data-show') !== 'off'
+            && sentEl.textContent.trim() !== '';
+
+        var imgEl = document.querySelector('.answer .image-wrap');
+        var imgVisible = imgEl && imgEl.getAttribute('data-show') !== 'off';
+
+        var defVisible = answerEl
+            && answerEl.getAttribute('data-def-layout') !== 'none'
+            && answerEl.getAttribute('data-def-text') !== 'off';
+
+        var frontContentVisible = !!document.querySelector(
+            '.front-content [data-side="front"]'
+        );
+
+        var hasContent = wordVisible || graphVisible || sentVisible
+                      || imgVisible || defVisible || frontContentVisible;
+
+        if (!hasContent) {
+            back.setAttribute('data-audio-only', '');
+        }
+    })();
+
+
 
     // ── Trigger reveal animations after content is ready ──
     var riEls = document.querySelectorAll('.answer > [style*="--d"], .word-column [style*="--d"]');

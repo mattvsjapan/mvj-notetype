@@ -403,118 +403,43 @@ The `:not(:has(.image-wrap[data-side="front"]))` guard is critical — without i
 
 ---
 
-### Phase 3: Non-tategaki back audio-only (CSS + JS)
+### Phase 3: Non-tategaki back audio-only (CSS + JS) ✓
 
 This phase adds a new capability that didn't exist before: when the back of a card has nothing visible except audio buttons, position them like the front audio-only case.
 
-**What to change in `back.html`:**
+**What was changed in `back.html`:**
 
-Add detection JS after all content rendering, right before the "Trigger reveal animations" comment. The code must run AFTER all `data-show`, `data-state`, `data-def-layout`, and `data-def-text` attributes have been set.
+1. Audio-only detection IIFE added right before "Trigger reveal animations" comment. Sets `data-audio-only` on `.back` when no content is visible. Variables `targetEl`, `graphEl`, `sentEl`, `answerEl` are already in scope from `_renderBack()`.
 
-```javascript
-// Detect audio-only back — set attribute for CSS spacer positioning
-(function() {
-    var back = document.querySelector('.back');
-    if (!back) return;
+2. Empty `.answer` collapse block added after `clearLastMargin(.answer)`. When `.answer` has no visible content (height ≤ 2px) AND front content exists, collapses `.answer` and runs `clearLastMargin(.back)` to clear `.audio-row`'s margin. Guarded by `hasFrontContent` to preserve breathing room on audio-only backs.
 
-    // Check each content type using the same attributes the CSS uses to hide them.
-    // Word: data-show="off" means hidden. Empty word with word-text on still has
-    // no content, so also check textContent.
-    var wordVisible = targetEl
-        && targetEl.getAttribute('data-show') !== 'off'
-        && targetEl.textContent.trim() !== '';
+3. `clearLastMargin` in `front.html` updated to recursively flatten `display: contents` (was only one level deep, needed two for `.back > .card-inner(contents) > .front(contents) > .audio-row`).
 
-    // Pitch graph: data-state="empty" means hidden
-    var graphVisible = graphEl && !graphEl.hasAttribute('data-state');
+**What was changed in `css.css`:**
 
-    // Sentence: data-show="off" means hidden; also check for empty content
-    var sentVisible = sentEl
-        && sentEl.getAttribute('data-show') !== 'off'
-        && sentEl.textContent.trim() !== '';
+Spacer rules placed right after Phase 1 front spacers (cohesive audio-only section). Base rules outside media query, mobile overrides inside `@media (hover: none)`.
 
-    // Image: may not exist in DOM (Mustache conditional). If it exists,
-    // data-show="off" means hidden.
-    var imgEl = document.querySelector('.answer .image-wrap');
-    var imgVisible = imgEl && imgEl.getAttribute('data-show') !== 'off';
+Key rules added:
+- `.card-inner:has(> .back[data-audio-only])` → flex column (so `.back` can stretch via `flex: 1`)
+- `.back[data-audio-only]::before/::after` → spacers (1:1 base, 2:1 on mobile)
+- `.back[data-audio-only] .front-content` → `display: none`
+- `.back[data-audio-only] .audio-row` → `padding: 48px 0 0; margin-bottom: 48px` (desktop breathing room, matching front)
+- Mobile: `.audio-row` padding/margin zeroed, `.audio-row-bottom` margin zeroed, `.card-inner` padding equalized
+- Divider rule tightened: only shows when back has visible content (definitions OR word/graph/sentence/image)
 
-    // Definitions: data-def-layout="none" means no definitions exist.
-    // data-def-text="off" means definitions are configured off.
-    var defVisible = answerEl
-        && answerEl.getAttribute('data-def-layout') !== 'none'
-        && answerEl.getAttribute('data-def-text') !== 'off';
+**Additional changes made during Phase 3** (beyond original scope but affecting codebase state for Phase 4):
+- Phase 1 bug fix: `.card-inner:not(:has(> .back))` mobile rules scoped with `:not(.back) >` to prevent inner `.card-inner` (from FrontSide) from losing `display: contents` on mobile (Hazard R)
+- `clearLastMargin` made recursive for `display: contents` flattening
+- Divider rule for `.back:has(.front-content [data-side="front"])` now requires visible back content (definitions or content elements) — prevents divider showing when only audio buttons are below it
+- `.answer` collapse logic added for "front content + empty answer" case — handles ghost `.answer` (0-1px height) that steals `clearLastMargin` targeting
 
-    // Front-content items shown on front (they're repeated on the back)
-    var frontContentVisible = !!document.querySelector(
-        '.front-content [data-side="front"]'
-    );
-
-    var hasContent = wordVisible || graphVisible || sentVisible
-                  || imgVisible || defVisible || frontContentVisible;
-
-    if (!hasContent) {
-        back.setAttribute('data-audio-only', '');
-    }
-})();
-```
-
-Variables `targetEl`, `graphEl`, `sentEl`, `answerEl` are already in scope — they're declared earlier in `_renderBack()`.
-
-**What to change in `css.css`:**
-
-Add rules near the back layout section (near the existing `.back` flex rules):
-
-```css
-/* Audio-only back: spacer positioning */
-html:not(.tategaki) .card-inner:has(> .back[data-audio-only]) {
-    display: flex;
-    flex-direction: column;
-}
-html:not(.tategaki) .back[data-audio-only] {
-    flex: 1;
-}
-html:not(.tategaki) .back[data-audio-only]::before,
-html:not(.tategaki) .back[data-audio-only]::after {
-    content: '';
-    flex-grow: 1;
-}
-@media (hover: none) {
-    html:not(.tategaki) .back[data-audio-only]::before {
-        flex-grow: 2;
-    }
-}
-```
-
-**IMPORTANT: Check `order` values on `.back`'s flex children.** On the back, `.front` and inner `.card-inner` are dissolved via `display: contents`, so `.audio-row`, `.front-content`, and `.answer` become direct flex children of `.back`. In non-tategaki, relevant `order` values are:
-- `.front-content` (when has front items): `order: -1`
-- `.audio-row-bottom`, `.def`, `.jp-def-section`: `order: 1`
-- `.answer::before` (pseudo-divider): `order: -2`
-
-For audio-only back, `.front-content` has no `[data-side="front"]` children so it won't get `order: -1`. The `::before`/`::after` spacers default to `order: 0`, and `.answer` also defaults to `order: 0`. DOM order determines position: `::before` first, then `.answer`, then `::after`. This should work without explicit `order` values — but **verify by reading the actual CSS before implementing** since Phase 2 changes may have shifted line numbers and rules.
-
-**IMPORTANT: `.answer` is still present in the DOM for audio-only backs.** It contains `.audio-row-bottom` (with the actual buttons) plus potentially empty/hidden elements. In non-tategaki, `.answer` has `display: flex; flex-direction: column` with no explicit height — it wraps its content. This should be safe (no `height: 100%` problem like tategaki `.front-content`). But **verify `.answer` doesn't have `min-height` or `flex: 1` that would consume spacer space.**
-
-**IMPORTANT: `.audio-row` padding/margin.** The base `.front .audio-row` has `padding: 48px 0 0; margin-bottom: 48px`. On the back, `.audio-row` is dissolved from `.front` into `.back`'s flex context. For audio-only, these padding/margin values create unwanted spacing. Zero them:
-```css
-html:not(.tategaki) .back[data-audio-only] .audio-row {
-    padding-top: 0;
-    margin-bottom: 0;
-}
-```
-On mobile, `.back .audio-row` is `display: none` (only `.audio-row-bottom` shows), so this only matters for desktop.
-
-**How `.back` gets height:** Making the outer `.card-inner` a flex column lets `.back` use `flex: 1` to stretch to fill it. On desktop, `.card-inner` has no min-height, so `.back` wraps content and spacers collapse — same compact look as the front. On mobile, `.card-inner` has `min-height: ~100dvh`, so `.back` stretches and spacers have room.
-
-**About back-side audio rows:** On the back, audio can appear in two places:
-- `.audio-row` (from FrontSide, dissolved via `display: contents` on `.front`) — shows on desktop if it has front-side buttons
-- `.audio-row-bottom` (inside `.answer`) — shows on mobile always; on desktop only when `.audio-row` has no front buttons
-
-They never both show on desktop simultaneously. On mobile, only `.audio-row-bottom` shows (`.back .audio-row` is `display: none` on mobile). The spacers on `.back` center whichever one is visible.
-
-**Verify Phase 3:**
-- Back with content (word, definitions, etc.): NO change — `data-audio-only` is not set
-- Back audio-only on desktop: buttons in compact card with padding (same look as front)
-- Back audio-only on mobile: buttons at ~2/3 mark
-- Back audio-only on iPad: buttons at ~2/3 within 650px card
+**Verify Phase 3:** ✓
+- Back with content (word, definitions, etc.): NO change — `data-audio-only` is not set ✓
+- Back audio-only on desktop: buttons in compact card with padding (same look as front) ✓
+- Back audio-only on mobile: buttons at ~2/3 mark ✓
+- Back audio-only on iPad: buttons at ~2/3 within 650px card ✓
+- Word on front + audio-only back: divider hidden, no extra padding below audio ✓
+- Front side: NO change ✓
 
 ---
 
@@ -707,7 +632,42 @@ Known elements with `height: 100%`:
 
 **Rule:** When something doesn't work on the first try, immediately add JS dump debugging that outputs `getBoundingClientRect()` positions for all relevant elements, computed `order`, `display`, `height`, `margin`, and `flex` values. Copy-paste the output and diagnose from real data. Do NOT guess and iterate — this wastes time.
 
-### Q. Line numbers shift between phases
+### Q. `rowSettle` animation overrides `.back .audio-row` padding
+
+**Confirmed in Phase 3.** `.back .audio-row` has `animation: rowSettle 0.35s var(--ease) both`. The `@keyframes rowSettle { from { padding: 48px 0 0; gap: 40px; } }` animates FROM the front-side values to the back-side values. With `fill-mode: both`, the animation's keyframe values override CSS declarations in the cascade. `getComputedStyle` shows the animated value (48px), not the CSS declaration (`padding: 0`).
+
+**Impact:** Even though `.back .audio-row { padding: 0 }` is declared, the animation forces `padding-top: 48px` until it completes. For audio-only backs this is handled by setting `padding: 48px 0 0` explicitly (matching the animation). For the "front content + empty answer" case, the animation runs its transition normally and the padding settles to 0.
+
+**Rule:** When debugging unexpected padding/margin values on `.audio-row` in the back, always check whether an animation is overriding the computed style. Use `el.style.animation = 'none'` in dump debugging to test.
+
+### R. Phase 1 `.card-inner:not(:has(> .back))` matches the INNER `.card-inner` on back
+
+**Confirmed in Phase 3.** The Phase 1 mobile rule `html:not(.tategaki) .card-inner:not(:has(> .back))` was intended for the front-side `.card-inner`, but it also matches the inner `.card-inner` from FrontSide on the back (since that element's children are `.front` and raw containers, not `.back`). This rule has higher specificity than `.back > .card-inner { display: contents }`, so it overrides `display: contents` with `display: flex`, making the inner `.card-inner` visible as a dark rectangle.
+
+**Fix applied:** Scoped both Phase 1 mobile `.card-inner` rules with `:not(.back) >` prefix: `html:not(.tategaki) :not(.back) > .card-inner:not(:has(> .back))`. This prevents matching the inner `.card-inner` (which IS a child of `.back`).
+
+**Rule for Phase 4:** Any rule targeting `.card-inner` with `:not(:has(> .back))` must be scoped with `:not(.back) >` to avoid matching the FrontSide inner `.card-inner`.
+
+### S. `.answer` has ghost height (0-1px) even when all children are hidden
+
+**Confirmed in Phase 3.** When all `.answer` children are `display: none`, `.answer` itself (a flex container) can still have 0-1px of height. This makes it appear as the bottommost element in `.back`, causing `clearLastMargin` to target it instead of `.audio-row`.
+
+- When `.answer` is 1px: `clearLastMargin(.back)` marks `.answer` as last, `.audio-row` margin preserved (good for audio-only, bad for content+audio case)
+- When `.answer` is 0px: `clearLastMargin(.back)` skips it (zero height filtered), marks `.audio-row` as last, zeroes its margin via inline style (bad for audio-only — the inline `marginBottom: 0` overrides CSS `margin-bottom: 48px`)
+
+**Fix applied:** Do NOT run `clearLastMargin(.back)` unconditionally. Only run it inside the answer-collapse block, guarded by `hasFrontContent`. For audio-only backs, the CSS breathing room margin is preserved.
+
+**Rule for Phase 4:** Never run `clearLastMargin` on `.back` without checking whether it would inappropriately clear breathing-room margins. The front-side pattern (skipping `clearLastMargin` for audio-only) must be mirrored on the back.
+
+### T. Divider visibility should check for actual back content
+
+**Confirmed in Phase 3.** The original divider rule `html:not(.tategaki) .back:has(.front-content [data-side="front"]) .divider { display: block }` unconditionally shows the divider when front content exists. But if the back only adds audio buttons (no definitions, no back-side word/sentence/image), nothing appears below the divider, making it look orphaned.
+
+**Fix applied:** Split into two selector groups — one checking definitions (`data-def-layout`/`data-def-text`), one checking content elements via `:has(.target-word:not([data-show="off"]):not(:empty), .pitch-graph:not([data-state="empty"]), .sentence:not([data-show="off"]):not(:empty), .image-wrap:not([data-show="off"]))`.
+
+**Rule for Phase 4:** The tategaki divider rule may need similar treatment. Check `.tategaki .back:has(.front-content [data-side="front"])) .divider` (if it exists) and apply the same content-visibility guard.
+
+### U. Line numbers shift between phases
 
 Phases 1 and 2 added and removed CSS rules, shifting all line numbers in the file. **Do not rely on line numbers from this document.** Instead, search for the actual selectors or comments to find the right location. Read the surrounding context before editing.
 
@@ -740,12 +700,21 @@ Phases 1 and 2 added and removed CSS rules, shifting all line numbers in the fil
 
 1. ✓ Non-tategaki front spacer rules (base + mobile override) — Phase 1
 2. ✓ Tategaki front spacer rules (mobile-only + margin/order resets) — Phase 2
-3. Non-tategaki back spacer rules (base + mobile override) — Phase 3
+3. ✓ Non-tategaki back spacer rules (base + mobile override) — Phase 3
 4. Tategaki back spacer rules (mobile-only + height/margin/padding resets) — Phase 4
 
 ### Added to `back.html` (Phase 3)
 
 Audio-only back detection JS (sets `data-audio-only` on `.back`).
+
+### Additional changes made during Phase 3 (beyond original scope)
+
+These changed the codebase state and affect what Phase 4 will encounter:
+- Phase 1 bug fix: `.card-inner:not(:has(> .back))` scoped with `:not(.back) >` (Hazard R)
+- `clearLastMargin` in `front.html` made recursive for `display: contents` flattening
+- Divider rule for `.back:has(.front-content [data-side="front"])` now requires visible back content
+- `.answer` collapse + `clearLastMargin(.back)` logic for "front content + empty answer" case
+- `.back[data-audio-only] .audio-row` gets desktop breathing room (`padding: 48px 0 0; margin-bottom: 48px`), zeroed on mobile
 
 ### Additional changes made during Phase 2 (beyond original scope)
 
