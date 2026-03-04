@@ -330,6 +330,10 @@ html {
     transition: background 600ms ease, box-shadow 600ms ease;
 }
 
+.target-word.text-play::after {
+    inset: 2px -6px;
+}
+
 @media (hover: hover) {
     .text-play:hover::after,
     .text-play.hover-linked::after {
