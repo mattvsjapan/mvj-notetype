@@ -2154,7 +2154,7 @@ html.tategaki:has(.back) {
         padding-top: 0;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off) {
-        padding-right: 0.08em;
+        padding-right: 0;
     }
     .tategaki .sentence:has(ruby):not(.furigana-off),
     .tategaki .def:has(ruby):not(.furigana-off),
@@ -2167,11 +2167,13 @@ html.tategaki:has(.back) {
         top: 0.3em;
     }
     /* Pill right-edge override for tategaki ruby elements */
-    .tategaki .target-word.text-play:has(ruby):not(.furigana-off)::after,
+    .tategaki .target-word.text-play:has(ruby):not(.furigana-off)::after {
+        right: -0.04em;
+    }
     .tategaki .sentence.text-play:has(ruby):not(.furigana-off)::after,
     .tategaki .def.text-play:has(ruby):not(.furigana-off)::after,
     .tategaki .jp-def.text-play:has(ruby):not(.furigana-off)::after {
-        right: 0.3em;
+        right: 0.1em;
     }
 }
 
