@@ -126,11 +126,12 @@
   
               window.__playLockedDefAudio = playAll;
               window.__autoPlayDefAudio = playAll;
-  
+              window.__autoPlayDefAudioType = 'bilingual';
+
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definition) playAll();
+                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definitionBi) playAll();
                   });
               }
           } else {
@@ -159,11 +160,12 @@
                   window.__animateBtn(buttons[0]);
               };
               window.__autoPlayDefAudio = window.__playLockedDefAudio;
+              window.__autoPlayDefAudioType = 'bilingual';
 
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definition) buttons[0].click();
+                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definitionBi) buttons[0].click();
                   });
               }
           }
@@ -1155,11 +1157,12 @@
             window.__animateBtn(primaryBtns[0]);
           };
           window.__autoPlayDefAudio = window.__playLockedDefAudio;
+          window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
 
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
-              if (defToggle.checked && window.__autoplayEnabled.definition) secondaryBtns[0].click();
+              if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) secondaryBtns[0].click();
             });
           }
         } else {
@@ -1187,17 +1190,18 @@
                              (singleType === 'monolingual' && !!window.__monoUnlocked);
           if (singleShown) {
             window.__autoPlayDefAudio = window.__playLockedDefAudio;
+            window.__autoPlayDefAudioType = singleType;
           } else {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled.definition) singleBtns[0].click();
+                if (defToggle.checked && window.__autoplayEnabled[singleType === 'monolingual' ? 'definitionMono' : 'definitionBi']) singleBtns[0].click();
               });
             }
           }
         }
       }
-  
+
       nativeContainer.remove();
     } else if (window.__defAudioNativeContainer) {
       window.__defAudioNativeContainer.remove();
@@ -1349,12 +1353,13 @@
                              (primaryType === 'monolingual' && !!window.__monoUnlocked);
           if (primaryShown) {
             window.__autoPlayDefAudio = playPrimary;
+            window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
           }
-  
+
           var defToggle = document.getElementById('jp-toggle');
           if (defToggle) {
             defToggle.addEventListener('change', function() {
-              if (defToggle.checked && window.__autoplayEnabled.definition) playSecondary();
+              if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) playSecondary();
             });
           }
         } else {
@@ -1391,16 +1396,17 @@
             }
           }, function() { window.__stopAllAudio(); });
           window.__playLockedDefAudio = playPrimary;
-  
+
           var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
                              (primaryType === 'monolingual' && !!window.__monoUnlocked);
           if (primaryShown) {
             window.__autoPlayDefAudio = playPrimary;
+            window.__autoPlayDefAudioType = primaryType;
           } else {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled.definition) playPrimary();
+                if (defToggle.checked && window.__autoplayEnabled[primaryType === 'monolingual' ? 'definitionMono' : 'definitionBi']) playPrimary();
               });
             }
           }
@@ -1701,7 +1707,7 @@
           window.__playMobile(entry.audio.src, entry.btn)
             .then(function() { if (gen === window.__webAudioGen) playNext(); })
             ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
-        } else if (window.__autoPlayDefAudio && ap.definition) {
+        } else if (window.__autoPlayDefAudio && ap[window.__autoPlayDefAudioType === 'monolingual' ? 'definitionMono' : 'definitionBi']) {
           window.__autoPlayDefAudio();
         }
       })();
