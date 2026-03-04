@@ -1962,6 +1962,60 @@ html.tategaki {
     }
 }
 
+/* Tategaki audio-only back: hide non-audio elements, reset heights */
+.tategaki .back[data-audio-only] .front-content {
+    display: none;
+}
+.tategaki .back[data-audio-only] .divider {
+    display: none;
+}
+.tategaki .back[data-audio-only] .answer {
+    writing-mode: horizontal-tb;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    height: auto;
+    gap: clamp(12px, 6.15vw, 31px);
+}
+.tategaki .back[data-audio-only] .audio-row-bottom {
+    height: auto;
+    margin: 0;
+}
+.tategaki .back[data-audio-only] .word-column {
+    height: auto;
+    margin: 0;
+}
+.tategaki .back[data-audio-only] .mid-audio-row {
+    grid-auto-flow: row;
+    gap: clamp(12px, 6.15vw, 31px);
+}
+
+/* Tategaki audio-only back: flex spacers push buttons ~2/3 down on mobile */
+@media (hover: none) {
+    .tategaki .back[data-audio-only] {
+        writing-mode: horizontal-tb;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .tategaki .back[data-audio-only]::before {
+        content: '';
+        flex-grow: 2;
+    }
+    .tategaki .back[data-audio-only]::after {
+        content: '';
+        flex-grow: 1;
+    }
+    .tategaki .back[data-audio-only] .answer {
+        flex-wrap: nowrap;
+        flex-direction: column;
+        align-items: center;
+    }
+    .tategaki .back[data-audio-only] .audio-row-bottom {
+        padding-top: 0;
+    }
+}
+
 /* On back side, .front must stay display:contents — the :not(:has(> .back))
    selector above also matches the inner .card-inner from {{FrontSide}},
    so we override it here with equal specificity (0-4-0), winning by source order. */
@@ -2332,8 +2386,9 @@ html.tategaki {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    width: auto;
     max-width: 391px;
+    align-self: stretch;
     margin-left: 0;
 }
 
