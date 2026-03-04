@@ -992,6 +992,7 @@ class SettingsDialog(QDialog):
         install_notetype(on_success=self._build_ui, reset_css=reset_css)
 
     def _sync_local(self, dev_sync):
+        show_front = self._btn_front.isChecked()
         reset_css = self._reset_css_cb.isChecked()
         if not reset_css:
             # Save current (possibly unsaved) settings before syncing templates
@@ -1003,6 +1004,10 @@ class SettingsDialog(QDialog):
                 mw.col.models.update_dict(model)
         dev_sync.sync_local_templates(reset_css=reset_css, config="mvj")
         self._build_ui()
+        # Restore whichever side the preview was showing before rebuild
+        if show_front:
+            self._btn_front.setChecked(True)
+            self._btn_back.setChecked(False)
 
     def _convert_sound_to_audio(self):
         sound_re = re.compile(r"\[sound:([^\]]+)\]")
