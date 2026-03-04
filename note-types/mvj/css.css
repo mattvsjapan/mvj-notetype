@@ -1363,7 +1363,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 
 @media (hover: none) {
     .sentence rt {
-        font-size: 0.4em;
+        font-size: 0.45em;
         transform: translateY(7px);
     }
 }
@@ -1433,7 +1433,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 @media (hover: none) {
     .tategaki .def rt,
     .tategaki .jp-def rt {
-        font-size: 0.47em;
+        font-size: 0.5em;
         transform: translate(-5px, 1px);
     }
 }
@@ -2243,11 +2243,23 @@ html.tategaki {
        boxes (~10-12 px per line).  Negative margin-block on rt collapses
        that gap; transform is adjusted from the mobile default (7px) to -3px
        to keep furigana visually above the base text. */
-    .sentence rt,
-    .def rt,
-    .jp-def rt {
-        margin-block: -7px;
-        transform: translateY(-1.5px);
+    html:not(.tategaki) .sentence rt,
+    html:not(.tategaki) .def rt,
+    html:not(.tategaki) .jp-def rt {
+        margin-block: -0.5em;
+        transform: translateY(-0.35em);
+    }
+    /* Tategaki equivalent: margin-block collapses the horizontal annotation
+       gap (in vertical-rl, block axis = horizontal).  Transforms adjusted
+       from mobile defaults to compensate. */
+    .tategaki .sentence rt {
+        margin-block: -0.5em;
+        transform: translate(0.35em, 0.07em);
+    }
+    .tategaki .def rt,
+    .tategaki .jp-def rt {
+        margin-block: -0.5em;
+        transform: translate(0.4em, 0.07em);
     }
     html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         padding-top: 0.08em;
@@ -2255,7 +2267,7 @@ html.tategaki {
     html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
     html:not(.tategaki) .def:has(ruby):not(.furigana-off),
     html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
-        padding-top: 0.45em;
+        padding-top: 0.2em;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off) {
         padding-right: 0;
@@ -2263,7 +2275,7 @@ html.tategaki {
     .tategaki .sentence:has(ruby):not(.furigana-off),
     .tategaki .def:has(ruby):not(.furigana-off),
     .tategaki .jp-def:has(ruby):not(.furigana-off) {
-        padding-right: 0;
+        padding-right: 0.25em;
     }
     /* Pill position: iOS overrides (non-tategaki) */
     .target-word.text-play  { --pill-ruby-hidden: 0.45em; --pill-ruby-visible: 0.1em; }
@@ -2414,8 +2426,16 @@ html.tategaki {
 @media (hover: none) {
     .tategaki .sentence rt {
         transform: translate(-7px, 1px);
-        font-size: 0.4em;
+        font-size: 0.5em;
         letter-spacing: 0.1em;
+    }
+}
+/* iOS override must follow the mobile rule above to win source order */
+@supports (-webkit-touch-callout: none) {
+    .tategaki .sentence rt {
+        font-size: 0.45em;
+        margin-block: -0.5em;
+        transform: translate(0.35em, 0.07em);
     }
 }
 
