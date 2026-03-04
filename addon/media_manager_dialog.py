@@ -26,7 +26,6 @@ from aqt.qt import (
     Qt,
     qconnect,
 )
-from aqt.utils import tooltip
 
 from . import media_service as ms
 
@@ -120,17 +119,28 @@ class MediaManagerDialog(QDialog):
         desc_label.setStyleSheet("margin-bottom: 15px;")
         layout.addWidget(desc_label)
 
+        # Accordion state: only one file list expanded at a time
+        self._expanded_list = None
+        self._expanded_button = None
+
         # Source Folder Group
         source_group = QGroupBox("Source Media Folder")
         source_layout = QVBoxLayout()
         source_group.setLayout(source_layout)
 
-        self._unreferenced_label = QLabel()
+        self._unreferenced_label = self._make_category_button()
         self._unreferenced_list = self._make_file_list()
-        self._duplicated_label = QLabel()
+        self._duplicated_label = self._make_category_button()
         self._duplicated_list = self._make_file_list()
-        self._used_label = QLabel()
+        self._used_label = self._make_category_button()
         self._used_list = self._make_file_list()
+
+        qconnect(self._unreferenced_label.clicked,
+                 lambda: self._toggle_file_list(self._unreferenced_label, self._unreferenced_list))
+        qconnect(self._duplicated_label.clicked,
+                 lambda: self._toggle_file_list(self._duplicated_label, self._duplicated_list))
+        qconnect(self._used_label.clicked,
+                 lambda: self._toggle_file_list(self._used_label, self._used_list))
 
         source_layout.addWidget(self._unreferenced_label)
         source_layout.addWidget(self._unreferenced_list)
@@ -149,12 +159,19 @@ class MediaManagerDialog(QDialog):
         anki_layout = QVBoxLayout()
         anki_group.setLayout(anki_layout)
 
-        self._orphaned_label = QLabel()
+        self._orphaned_label = self._make_category_button()
         self._orphaned_list = self._make_file_list()
-        self._protected_label = QLabel()
+        self._protected_label = self._make_category_button()
         self._protected_list = self._make_file_list()
-        self._anki_used_label = QLabel()
+        self._anki_used_label = self._make_category_button()
         self._anki_used_list = self._make_file_list()
+
+        qconnect(self._orphaned_label.clicked,
+                 lambda: self._toggle_file_list(self._orphaned_label, self._orphaned_list))
+        qconnect(self._protected_label.clicked,
+                 lambda: self._toggle_file_list(self._protected_label, self._protected_list))
+        qconnect(self._anki_used_label.clicked,
+                 lambda: self._toggle_file_list(self._anki_used_label, self._anki_used_list))
 
         anki_layout.addWidget(self._orphaned_label)
         anki_layout.addWidget(self._orphaned_list)
@@ -199,10 +216,51 @@ class MediaManagerDialog(QDialog):
         """Create a configured read-only file list widget."""
         widget = QPlainTextEdit()
         widget.setReadOnly(True)
-        widget.setMaximumHeight(120)
+        widget.setMaximumHeight(250)
         widget.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         widget.hide()
         return widget
+
+    def _make_category_button(self) -> QPushButton:
+        """Create a flat, left-aligned button styled like a label."""
+        button = QPushButton()
+        button.setFlat(True)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.setStyleSheet(
+            "QPushButton { text-align: left; border: none; padding: 2px 0px; }"
+        )
+        return button
+
+    def _toggle_file_list(self, button: QPushButton, file_list: QPlainTextEdit):
+        """Accordion toggle: expand one list at a time."""
+        if not file_list.toPlainText():
+            return
+
+        if file_list is self._expanded_list:
+            # Collapse
+            file_list.hide()
+            text = button.text()
+            button.setText("\u25b6" + text[1:])
+            self._expanded_list = None
+            self._expanded_button = None
+        else:
+            # Collapse previously expanded
+            if self._expanded_list is not None:
+                self._expanded_list.hide()
+                text = self._expanded_button.text()
+                self._expanded_button.setText("\u25b6" + text[1:])
+
+            # Expand new
+            file_list.show()
+            text = button.text()
+            button.setText("\u25bc" + text[1:])
+            self._expanded_list = file_list
+            self._expanded_button = button
+
+        # Only grow the dialog, never shrink (stretch absorbs collapsed space)
+        hint = self.sizeHint()
+        if hint.height() > self.height():
+            self.resize(self.width(), hint.height())
 
     def _refresh_analysis(self):
         """Re-run analysis and update UI (called after deletion)."""
@@ -251,31 +309,31 @@ class MediaManagerDialog(QDialog):
         anki_used_count = len(result.get('anki_used', []))
 
         self._unreferenced_label.setText(
-            f"Unused files: {unreferenced_count} "
+            f"\u25b6 Unused files: {unreferenced_count} "
             f"(not used by any card)"
         )
         self._duplicated_label.setText(
-            f"Duplicated files: {duplicated_count} "
+            f"\u25b6 Duplicated files: {duplicated_count} "
             f"(used by cards, but also in Anki folder)"
         )
         self._used_label.setText(
-            f"In-use files: {used_count} "
+            f"\u25b6 In-use files: {used_count} "
             f"(used by cards, only in source folder)"
         )
         self._orphaned_label.setText(
-            f"Unused files: {orphaned_count} "
+            f"\u25b6 Unused files: {orphaned_count} "
             f"(in Anki folder but not used by any card)"
         )
         self._protected_label.setText(
-            f"Protected files: {protected_count} "
+            f"\u25b6 Protected files: {protected_count} "
             f"(names start with underscore, preserved by Anki)"
         )
         self._anki_used_label.setText(
-            f"In-use files: {anki_used_count} "
+            f"\u25b6 In-use files: {anki_used_count} "
             f"(actively used by cards)"
         )
 
-        # Populate file lists
+        # Populate file lists (all start collapsed)
         for file_list, files in (
             (self._unreferenced_list, result['source_unreferenced']),
             (self._duplicated_list, result['source_duplicated']),
@@ -284,12 +342,18 @@ class MediaManagerDialog(QDialog):
             (self._protected_list, result.get('anki_protected', [])),
             (self._anki_used_list, result.get('anki_used', [])),
         ):
-            if files:
-                file_list.setPlainText("\n".join(sorted(files)))
-                file_list.show()
+            file_list.setPlainText("\n".join(sorted(files)) if files else "")
+            file_list.hide()
+
+        # Restore expanded state if the list still has content
+        if self._expanded_list is not None:
+            if self._expanded_list.toPlainText():
+                self._expanded_list.show()
+                text = self._expanded_button.text()
+                self._expanded_button.setText("\u25bc" + text[1:])
             else:
-                file_list.setPlainText("")
-                file_list.hide()
+                self._expanded_list = None
+                self._expanded_button = None
 
         self._delete_unreferenced_btn.setEnabled(unreferenced_count > 0)
         self._delete_duplicated_btn.setEnabled(duplicated_count > 0)
