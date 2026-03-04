@@ -2307,7 +2307,7 @@ html.tategaki {
     html:not(.tategaki) .def rt,
     html:not(.tategaki) .jp-def rt {
         margin-block: -0.5em;
-        transform: translateY(0.1em);
+        transform: translateY(0.25em);
     }
     /* Tategaki equivalent: margin-block collapses the horizontal annotation
        gap (in vertical-rl, block axis = horizontal).  Transforms adjusted
