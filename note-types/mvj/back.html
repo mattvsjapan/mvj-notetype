@@ -1998,12 +1998,16 @@
       var s = defSetting(type);
       if (s === 'off') return false;
       if (s === 'always') return true;
-      return isDefPrimary(type);   // 'only when primary' or 'primary or reveal'
+      // 'only when primary' or 'primary or reveal'
+      if (isDefPrimary(type)) return true;
+      // secondary with 'primary or reveal' when secondary is always shown
+      if (s === 'primary or reveal' && defSecondary === 'on') return true;
+      return false;
     }
     function shouldDefPlayOnReveal(defLang) {
       var type = defLang === 'mono' ? 'monolingual' : 'bilingual';
       var s = defSetting(type);
-      return (s === 'primary or reveal') && !isDefPrimary(type);
+      return (s === 'primary or reveal') && !isDefPrimary(type) && defSecondary === 'details';
     }
     setTimeout(function() {
       window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
@@ -2017,18 +2021,38 @@
     // ── Auto-play word/sentence/def audio when Details is expanded ──
     var detailsCb = document.getElementById('details-toggle');
     if (detailsCb) {
+      var detailsAudioGen = -1;
       detailsCb.addEventListener('change', function() {
-        if (!detailsCb.checked) return;
-        window.__stopAllAudio();
-        setTimeout(function() {
-          window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
+        if (detailsCb.checked) {
+          var detailsFilter = function(type, item) {
             if (type === 'word') return ap.word === 'details';
             if (type === 'sentence') return ap.sentence === 'details';
             if (type === 'def') return shouldDefPlayOnReveal(item.getAttribute('data-def-lang'));
             return false;
+          };
+          var hasItems = false;
+          document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])').forEach(function(item) {
+            if (detailsFilter(item.getAttribute('data-audio'), item)) hasItems = true;
           });
-        }, 0);
+          if (hasItems) {
+            window.__stopAllAudio();
+            detailsAudioGen = window.__webAudioGen;
+            setTimeout(function() {
+              window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', detailsFilter);
+            }, 0);
+          }
+        } else if (detailsAudioGen === window.__webAudioGen) {
+          window.__stopAllAudio();
+        }
       });
+      // Track text-play taps inside details so collapsing stops them too
+      var detInner = document.getElementById('details-inner');
+      if (detInner) {
+        detInner.addEventListener('click', function(e) {
+          var tp = e.target.closest('.text-play');
+          if (tp) setTimeout(function() { detailsAudioGen = window.__webAudioGen; }, 0);
+        });
+      }
     }
   }
   _renderBack();
