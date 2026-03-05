@@ -49,8 +49,8 @@
     --definition-text-play: on;    /* on | off                            */
     --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
     --definition-default: bilingual; /* monolingual | bilingual             */
-    --definition-furigana: back only;/* front & back | back only | off      */
-    --definition-pitch-color: back only;/* front & back | back only | off      */
+    --definition-furigana: on;        /* on | off                            */
+    --definition-pitch-color: on;     /* on | off                            */
 
     /* Notes */
     --notes-text: on;              /* on | details | off                   */

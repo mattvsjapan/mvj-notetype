@@ -134,8 +134,8 @@ _SETTINGS = {
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
         ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
-        ("--definition-furigana", "Definition Furigana", ["front & back", "back only", "off"], "back only"),
-        ("--definition-pitch-color", "Definition Pitch Color", ["front & back", "back only", "off"], "back only"),
+        ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
+        ("--definition-pitch-color", "Definition Pitch Color", ["on", "off"], "on"),
     ],
     "Notes": [
         ("--notes-text", "Notes Text", ["on", "details", "off"], "on"),

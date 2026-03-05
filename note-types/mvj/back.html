@@ -863,11 +863,11 @@
     var rawSPC = _rootStyle.getPropertyValue('--sentence-pitch-color').trim();
     var sentPitchColor = (rawSPC === 'front & back' || rawSPC === 'front' || rawSPC === 'both') ? 'front & back' : (rawSPC === 'off') ? 'off' : 'back only';
     var rawDPC = _rootStyle.getPropertyValue('--definition-pitch-color').trim();
-    var defPitchColor = (rawDPC === 'front & back' || rawDPC === 'front' || rawDPC === 'both') ? 'front & back' : (rawDPC === 'off') ? 'off' : 'back only';
+    var defPitchColor = (rawDPC === 'off') ? 'off' : 'on';
 
     var wordFurigana = _rootStyle.getPropertyValue('--word-furigana').trim() || 'back only';
     var sentFurigana = _rootStyle.getPropertyValue('--sentence-furigana').trim() || 'back only';
-    var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'back only';
+    var defFurigana = _rootStyle.getPropertyValue('--definition-furigana').trim() || 'on';
 
     var wordSide = _rootStyle.getPropertyValue('--word-text').trim() || 'back only';
     var sentSide = _rootStyle.getPropertyValue('--sentence-text').trim() || 'back only';
