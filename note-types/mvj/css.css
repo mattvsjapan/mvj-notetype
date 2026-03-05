@@ -642,6 +642,11 @@ html {
     height: auto;
 }
 
+.pitch-graph.text-play svg {
+    transform: scale(1.111);
+    transform-origin: center top;
+}
+
 @media (hover: none) {
     .pitch-graph {
         margin: 0 0 12px;
@@ -1223,6 +1228,7 @@ html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-
     justify-content: center;
     gap: clamp(8px, 4vw, 20px);
     margin-bottom: 20px;
+    order: 2;
 }
 html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }

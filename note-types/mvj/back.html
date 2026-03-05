@@ -1084,6 +1084,9 @@
     if (window.__checkImageFit) window.__checkImageFit();
 
     // Definition → bilingual + monolingual
+    function pitchNums(html) {
+      return html.replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
+    }
     function colorizeText(raw, el) {
       if (!raw) return '';
       if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
@@ -1118,7 +1121,7 @@
         defEl.setAttribute('data-font', 'jp');
         window.__monoUnlocked = true;
       } else {
-        defEl.innerHTML = primaryContent;
+        defEl.innerHTML = pitchNums(primaryContent);
       }
 
       if (defSecondary === 'off') {
@@ -1126,7 +1129,7 @@
       } else {
         // Render secondary in jpDefEl
         if (monoIsPrimary) {
-          jpDefEl.innerHTML = secondaryContent;
+          jpDefEl.innerHTML = pitchNums(secondaryContent);
           jpDefEl.className = 'def';
           var toggleLabel = document.querySelector('.jp-def-toggle');
           if (toggleLabel) toggleLabel.textContent = 'Bilingual';
@@ -1150,7 +1153,7 @@
         }
       }
     } else if (hasBi && !hasMono) {
-      defEl.innerHTML = defs.bilingual;
+      defEl.innerHTML = pitchNums(defs.bilingual);
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
       defEl.innerHTML = colorizeText(defs[monoKey], defEl) || defs[monoKey];
