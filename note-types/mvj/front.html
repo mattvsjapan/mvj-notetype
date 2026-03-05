@@ -129,11 +129,12 @@
 (function() {
     var rs = getComputedStyle(document.documentElement);
     function apVal(v) { v = v.trim() || 'front & back'; return v === 'on' ? 'front & back' : v === 'off' ? 'none' : v; }
+    function defApVal(v) { v = v.trim() || 'always'; return v === 'on' ? 'always' : v; }
     window.__autoplayEnabled = {
         word: apVal(rs.getPropertyValue('--word-autoplay')),
         sentence: apVal(rs.getPropertyValue('--sentence-autoplay')),
-        definitionBi: rs.getPropertyValue('--definition-autoplay-bi').trim() !== 'off',
-        definitionMono: rs.getPropertyValue('--definition-autoplay-mono').trim() !== 'off'
+        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi')),
+        definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'))
     };
 })();
 
@@ -368,6 +369,7 @@ window.__adoptNativeAudio = function(elements) {
                     }
                 }, function() { window.__stopAllAudio(); });
             })(el, btn);
+            btn._audioSrc = el.src;
             buttons.push(btn);
         }
     }
@@ -637,14 +639,31 @@ window.__playItemAudios = function(item) {
 };
 
 // Build queue from multiple audio-item elements and play sequentially.
-// filterFn(type) returns true to include, false to skip.
+// filterFn(type, item) returns true to include, false to skip.
 // onDone is called after the last item finishes (optional).
 window.__autoplayItems = function(selector, filterFn, onDone) {
-    var items = document.querySelectorAll(selector);
-    var queue = [];
-    items.forEach(function(item) {
+    var matched = [];
+    document.querySelectorAll(selector).forEach(function(item) {
         var type = item.getAttribute('data-audio');
-        if (!filterFn(type)) return;
+        if (filterFn(type, item)) matched.push(item);
+    });
+    // Ensure primary def audio plays before secondary (stable among def items only)
+    var defStart = -1;
+    for (var di = 0; di < matched.length; di++) {
+        if (matched[di].getAttribute('data-audio') === 'def') { defStart = di; break; }
+    }
+    if (defStart >= 0) {
+        var defs = matched.splice(defStart);
+        defs.sort(function(a, b) {
+            var ra = a.getAttribute('data-def-role'), rb = b.getAttribute('data-def-role');
+            if (ra === 'primary' && rb !== 'primary') return -1;
+            if (rb === 'primary' && ra !== 'primary') return 1;
+            return 0;
+        });
+        matched = matched.concat(defs);
+    }
+    var queue = [];
+    matched.forEach(function(item) {
         var btns = item.querySelectorAll('.replay-button');
         if (item._jsAudios && item._jsAudios.length) {
             for (var j = 0; j < item._jsAudios.length; j++)

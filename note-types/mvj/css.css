@@ -44,8 +44,8 @@
     --definition-text: on;         /* on | details | off                   */
     --definition-audio: on;        /* on | details | off                   */
     --definition-audio-buttons: off;/* on | off                            */
-    --definition-autoplay-bi: on;  /* on | off                            */
-    --definition-autoplay-mono: on;/* on | off                            */
+    --definition-autoplay-bi: always;  /* always | only when primary | primary or reveal | off */
+    --definition-autoplay-mono: always;/* always | only when primary | primary or reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: unlocked; /* bilingual | monolingual | unlocked      */
     --definition-secondary: toggle; /* on | off | details | toggle             */

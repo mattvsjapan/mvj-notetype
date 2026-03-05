@@ -14,6 +14,7 @@
           window.__defAudioEls = [];
           window.__monoUnlocked = false;
           window.__autoPlayDefAudio = null;
+          window.__autoPlayDefAudioSecondary = null;
           window.__playLockedDefAudio = null;
   
           var container = document.getElementById('def-audio-container');
@@ -49,7 +50,8 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
-  
+              item.setAttribute('data-def-lang', 'bi');
+
               for (var i = 0; i < filenames.length; i++) {
                   var audio = document.createElement('audio');
                   audio.preload = 'auto';
@@ -57,7 +59,7 @@
                   document.body.appendChild(audio);
                   audios.push(audio);
                   window.__defAudioEls.push(audio);
-  
+
                   var btn = document.createElement('a');
                   btn.className = 'replay-button';
                   btn.href = '#';
@@ -65,7 +67,8 @@
                   item.appendChild(btn);
                   btns.push(btn);
               }
-  
+              item._jsAudios = audios;
+
               var label = document.createElement('span');
               label.className = 'audio-label';
               label.textContent = 'Definition';
@@ -131,7 +134,8 @@
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definitionBi) playAll();
+                      var s = window.__autoplayEnabled.definitionBi;
+                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'primary or reveal')) playAll();
                   });
               }
           } else {
@@ -146,6 +150,9 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
+              item.setAttribute('data-def-lang', 'bi');
+              item._jsAudios = buttons.filter(function(b) { return b._audioSrc; })
+                  .map(function(b) { return {src: b._audioSrc}; });
               for (var i = 0; i < buttons.length; i++) {
                   item.appendChild(buttons[i]);
               }
@@ -165,7 +172,8 @@
               var toggle = document.getElementById('jp-toggle');
               if (toggle) {
                   toggle.addEventListener('change', function() {
-                      if (toggle.checked && !window.__monoUnlocked && window.__autoplayEnabled.definitionBi) buttons[0].click();
+                      var s = window.__autoplayEnabled.definitionBi;
+                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'primary or reveal')) buttons[0].click();
                   });
               }
           }
@@ -1226,6 +1234,8 @@
             item.setAttribute('data-audio', 'def');
             item.setAttribute('data-def-role', defRole);
             item.setAttribute('data-def-lang', defLang);
+            item._jsAudios = btns.filter(function(b) { return b._audioSrc; })
+                .map(function(b) { return {src: b._audioSrc}; });
             for (var bk = 0; bk < btns.length; bk++) {
               item.appendChild(btns[bk]);
             }
@@ -1250,12 +1260,18 @@
           };
           window.__autoPlayDefAudio = window.__playLockedDefAudio;
           window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
+          window.__autoPlayDefAudioSecondary = function() {
+            secondaryBtns[0].click();
+            window.__animateBtn(secondaryBtns[0]);
+          };
+          window.__autoPlayDefAudioSecondaryType = window.__monoUnlocked ? 'bilingual' : 'monolingual';
 
           if (defSecondary === 'toggle') {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) secondaryBtns[0].click();
+                var s = window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono'];
+                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) secondaryBtns[0].click();
               });
             }
           }
@@ -1266,6 +1282,9 @@
           var singleItem = document.createElement('div');
           singleItem.className = 'audio-item bi';
           singleItem.setAttribute('data-audio', 'def');
+          singleItem.setAttribute('data-def-lang', singleType === 'bilingual' ? 'bi' : 'mono');
+          singleItem._jsAudios = singleBtns.filter(function(b) { return b._audioSrc; })
+              .map(function(b) { return {src: b._audioSrc}; });
           for (var si = 0; si < singleBtns.length; si++) {
             singleItem.appendChild(singleBtns[si]);
           }
@@ -1279,17 +1298,17 @@
             singleBtns[0].click();
             window.__animateBtn(singleBtns[0]);
           };
-  
+          window.__autoPlayDefAudio = window.__playLockedDefAudio;
+          window.__autoPlayDefAudioType = singleType;
+
           var singleShown = (singleType === 'bilingual' && !window.__monoUnlocked) ||
                              (singleType === 'monolingual' && !!window.__monoUnlocked);
-          if (singleShown) {
-            window.__autoPlayDefAudio = window.__playLockedDefAudio;
-            window.__autoPlayDefAudioType = singleType;
-          } else {
+          if (!singleShown) {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled[singleType === 'monolingual' ? 'definitionMono' : 'definitionBi']) singleBtns[0].click();
+                var s = window.__autoplayEnabled[singleType === 'monolingual' ? 'definitionMono' : 'definitionBi'];
+                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) singleBtns[0].click();
               });
             }
           }
@@ -1400,6 +1419,7 @@
             item.setAttribute('data-audio', 'def');
             item.setAttribute('data-def-role', defRole);
             item.setAttribute('data-def-lang', defLang);
+            item._jsAudios = audioEls;
             var btn = document.createElement('a');
             btn.className = 'replay-button';
             btn.href = '#';
@@ -1442,19 +1462,17 @@
           var playSecondary = window.__monoUnlocked ? playBi : playMono;
   
           window.__playLockedDefAudio = playPrimary;
-  
-          var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
-                             (primaryType === 'monolingual' && !!window.__monoUnlocked);
-          if (primaryShown) {
-            window.__autoPlayDefAudio = playPrimary;
-            window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
-          }
+          window.__autoPlayDefAudio = playPrimary;
+          window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
+          window.__autoPlayDefAudioSecondary = playSecondary;
+          window.__autoPlayDefAudioSecondaryType = window.__monoUnlocked ? 'bilingual' : 'monolingual';
 
           if (defSecondary === 'toggle') {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) playSecondary();
+                var s = window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono'];
+                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) playSecondary();
               });
             }
           }
@@ -1462,6 +1480,8 @@
           var defItem = document.createElement('div');
           defItem.className = 'audio-item bi';
           defItem.setAttribute('data-audio', 'def');
+          defItem.setAttribute('data-def-lang', primaryType === 'bilingual' ? 'bi' : 'mono');
+          defItem._jsAudios = primaryAudios;
           var defBtn = document.createElement('a');
           defBtn.className = 'replay-button';
           defBtn.href = '#';
@@ -1492,17 +1512,17 @@
             }
           }, function() { window.__stopAllAudio(); });
           window.__playLockedDefAudio = playPrimary;
+          window.__autoPlayDefAudio = playPrimary;
+          window.__autoPlayDefAudioType = primaryType;
 
           var primaryShown = (primaryType === 'bilingual' && !window.__monoUnlocked) ||
                              (primaryType === 'monolingual' && !!window.__monoUnlocked);
-          if (primaryShown) {
-            window.__autoPlayDefAudio = playPrimary;
-            window.__autoPlayDefAudioType = primaryType;
-          } else {
+          if (!primaryShown) {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
-                if (defToggle.checked && window.__autoplayEnabled[primaryType === 'monolingual' ? 'definitionMono' : 'definitionBi']) playPrimary();
+                var s = window.__autoplayEnabled[primaryType === 'monolingual' ? 'definitionMono' : 'definitionBi'];
+                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) playPrimary();
               });
             }
           }
@@ -1966,28 +1986,45 @@
 
     // ── Auto-play back-side audio (word/sentence set to "back", then definition) ──
     var ap = window.__autoplayEnabled;
+    function defSetting(type) {
+      return ap[type === 'monolingual' ? 'definitionMono' : 'definitionBi'];
+    }
+    function isDefPrimary(type) {
+      return (type === 'monolingual' && window.__monoUnlocked) ||
+             (type === 'bilingual' && !window.__monoUnlocked);
+    }
+    function shouldDefPlayOnBack(defLang) {
+      var type = defLang === 'mono' ? 'monolingual' : 'bilingual';
+      var s = defSetting(type);
+      if (s === 'off') return false;
+      if (s === 'always') return true;
+      return isDefPrimary(type);   // 'only when primary' or 'primary or reveal'
+    }
+    function shouldDefPlayOnReveal(defLang) {
+      var type = defLang === 'mono' ? 'monolingual' : 'bilingual';
+      var s = defSetting(type);
+      return (s === 'primary or reveal') && !isDefPrimary(type);
+    }
     setTimeout(function() {
-      window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type) {
+      window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
         if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back';
         if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back';
+        if (type === 'def') return shouldDefPlayOnBack(item.getAttribute('data-def-lang'));
         return false;
-      }, function() {
-        if (window.__autoPlayDefAudio && ap[window.__autoPlayDefAudioType === 'monolingual' ? 'definitionMono' : 'definitionBi']) {
-          window.__autoPlayDefAudio();
-        }
       });
     }, 0);
 
-    // ── Auto-play word/sentence audio when Details is expanded ──
+    // ── Auto-play word/sentence/def audio when Details is expanded ──
     var detailsCb = document.getElementById('details-toggle');
-    if (detailsCb && (ap.word === 'details' || ap.sentence === 'details')) {
+    if (detailsCb) {
       detailsCb.addEventListener('change', function() {
         if (!detailsCb.checked) return;
         window.__stopAllAudio();
         setTimeout(function() {
-          window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type) {
+          window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
             if (type === 'word') return ap.word === 'details';
             if (type === 'sentence') return ap.sentence === 'details';
+            if (type === 'def') return shouldDefPlayOnReveal(item.getAttribute('data-def-lang'));
             return false;
           });
         }, 0);
