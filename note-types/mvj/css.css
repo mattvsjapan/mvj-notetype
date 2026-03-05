@@ -44,11 +44,11 @@
     --definition-text: on;         /* on | details | off                   */
     --definition-audio: on;        /* on | details | off                   */
     --definition-audio-buttons: off;/* on | off                            */
-    --definition-autoplay-bi: primary or reveal;  /* always | only when primary | primary or reveal | off */
-    --definition-autoplay-mono: primary or reveal;/* always | only when primary | primary or reveal | off */
+    --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
+    --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: unlocked; /* bilingual | monolingual | unlocked      */
-    --definition-secondary: details; /* on | off | details | toggle             */
+    --definition-secondary: details; /* on | off | details | separate toggle    */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;        /* on | off                            */
     --definition-pitch-color: on;     /* on | off                            */
@@ -2647,7 +2647,7 @@ html.tategaki {
 
 @media (hover: none) {
     .tategaki .word-pitch-group {
-        max-width: 100%;
+        max-width: clamp(249px, 80vw, 391px);
     }
     .tategaki .image-wrap {
         width: clamp(249px, 80vw, 391px);
@@ -2789,7 +2789,6 @@ html.tategaki {
     min-width: 0;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
     height: 100%;
 }
 
@@ -2806,14 +2805,42 @@ html.tategaki {
     height: 100%;
 }
 
-/* word-column children lose writing-mode: horizontal-tb from .word-column > * when moved to details;
-   auto height so they share a column (like word-column) instead of each forcing a full-height column */
-.tategaki .details-inner .word-pitch-group,
-.tategaki .details-inner .target-word,
-.tategaki .details-inner .pitch-graph,
-.tategaki .details-inner .image-wrap {
+/* word-pitch-group needs horizontal-tb when moved to details (loses it from .word-column > *);
+   auto height so word and pitch graph stay grouped tightly */
+.tategaki .details-inner .word-pitch-group {
     writing-mode: horizontal-tb;
     height: auto;
+}
+
+/* Tategaki details: word-column wrapper groups word + image like the normal word-column */
+.tategaki .details-inner .details-word-column {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-end;
+    justify-content: space-between;
+    height: 100%;
+    gap: 18px;
+}
+
+.tategaki .details-inner .details-word-column > * {
+    writing-mode: horizontal-tb;
+    height: auto;
+    margin: 0;
+}
+
+.tategaki .details-inner .details-word-column .word-pitch-group {
+    max-width: 391px;
+}
+
+@media (hover: none) {
+    .tategaki .details-inner .details-word-column .word-pitch-group {
+        max-width: 100%;
+    }
+    .tategaki .details-inner .details-word-column .image-wrap {
+        width: clamp(249px, 80vw, 391px);
+    }
 }
 
 /* Divider */

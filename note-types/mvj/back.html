@@ -135,7 +135,7 @@
               if (toggle) {
                   toggle.addEventListener('change', function() {
                       var s = window.__autoplayEnabled.definitionBi;
-                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'primary or reveal')) playAll();
+                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'when primary or on reveal')) playAll();
                   });
               }
           } else {
@@ -173,7 +173,7 @@
               if (toggle) {
                   toggle.addEventListener('change', function() {
                       var s = window.__autoplayEnabled.definitionBi;
-                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'primary or reveal')) buttons[0].click();
+                      if (toggle.checked && !window.__monoUnlocked && (s === 'always' || s === 'when primary or on reveal')) buttons[0].click();
                   });
               }
           }
@@ -865,7 +865,7 @@
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
     var defPrimary = _rootStyle.getPropertyValue('--definition-primary').trim() || 'unlocked';
-    var defSecondary = _rootStyle.getPropertyValue('--definition-secondary').trim() || 'toggle';
+    var defSecondary = _rootStyle.getPropertyValue('--definition-secondary').trim() || 'separate toggle';
 
     var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
     var wordPitchColor = (rawWPC === 'front & back' || rawWPC === 'front' || rawWPC === 'both') ? 'front & back' : (rawWPC === 'off') ? 'off' : 'back only';
@@ -1141,7 +1141,7 @@
           var toggleLabelOn = document.querySelector('.jp-def-toggle');
           if (toggleLabelOn) toggleLabelOn.style.display = 'none';
           answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'dual-mono' : 'dual-bi');
-        } else if (defSecondary === 'toggle') {
+        } else if (defSecondary === 'separate toggle') {
           answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'dual-mono' : 'dual-bi');
         } else if (defSecondary === 'details') {
           answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'mono-only' : 'bi-only');
@@ -1163,7 +1163,7 @@
     if (!defText) {
       defEl.style.display = 'none';
       // Only signal "all definitions off" if secondary is also not in the main area
-      var secondaryInMain = (hasBi && hasMono) && (defSecondary === 'on' || defSecondary === 'toggle');
+      var secondaryInMain = (hasBi && hasMono) && (defSecondary === 'on' || defSecondary === 'separate toggle');
       if (!secondaryInMain) {
         answerEl.setAttribute('data-def-text', 'off');
       }
@@ -1271,12 +1271,12 @@
           };
           window.__autoPlayDefAudioSecondaryType = window.__monoUnlocked ? 'bilingual' : 'monolingual';
 
-          if (defSecondary === 'toggle') {
+          if (defSecondary === 'separate toggle') {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
                 var s = window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono'];
-                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) secondaryBtns[0].click();
+                if (defToggle.checked && (s === 'always' || s === 'when primary or on reveal')) secondaryBtns[0].click();
               });
             }
           }
@@ -1313,7 +1313,7 @@
             if (defToggle) {
               defToggle.addEventListener('change', function() {
                 var s = window.__autoplayEnabled[singleType === 'monolingual' ? 'definitionMono' : 'definitionBi'];
-                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) singleBtns[0].click();
+                if (defToggle.checked && (s === 'always' || s === 'when primary or on reveal')) singleBtns[0].click();
               });
             }
           }
@@ -1472,12 +1472,12 @@
           window.__autoPlayDefAudioSecondary = playSecondary;
           window.__autoPlayDefAudioSecondaryType = window.__monoUnlocked ? 'bilingual' : 'monolingual';
 
-          if (defSecondary === 'toggle') {
+          if (defSecondary === 'separate toggle') {
             var defToggle = document.getElementById('jp-toggle');
             if (defToggle) {
               defToggle.addEventListener('change', function() {
                 var s = window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono'];
-                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) playSecondary();
+                if (defToggle.checked && (s === 'always' || s === 'when primary or on reveal')) playSecondary();
               });
             }
           }
@@ -1527,7 +1527,7 @@
             if (defToggle) {
               defToggle.addEventListener('change', function() {
                 var s = window.__autoplayEnabled[primaryType === 'monolingual' ? 'definitionMono' : 'definitionBi'];
-                if (defToggle.checked && (s === 'always' || s === 'primary or reveal')) playPrimary();
+                if (defToggle.checked && (s === 'always' || s === 'when primary or on reveal')) playPrimary();
               });
             }
           }
@@ -1864,8 +1864,8 @@
                 detailsInner.appendChild(biDef);
                 detailsCount++;
             }
-            // When primary is in details and secondary is toggle, move toggle into details too
-            if (defSecondary === 'toggle') {
+            // When primary is in details and secondary is separate toggle, move toggle into details too
+            if (defSecondary === 'separate toggle') {
                 var jpSecToggle = document.getElementById('jp-def-section');
                 if (jpSecToggle && jpDefEl.textContent.trim()) {
                     detailsInner.appendChild(jpSecToggle);
@@ -1900,6 +1900,28 @@
             if (ns && ns.style.display !== 'none') {
                 detailsInner.appendChild(ns);
                 detailsCount++;
+            }
+        }
+
+        // Tategaki: wrap word + image together in a word-column-like container
+        if (isTategaki) {
+            var detWordEl = detailsInner.querySelector('.word-pitch-group, .target-word, .pitch-graph');
+            var detImgEl = detailsInner.querySelector('.image-wrap');
+            if (detWordEl && detImgEl) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'details-word-column';
+                var children = Array.prototype.slice.call(detailsInner.children);
+                var toWrap = [];
+                var collecting = false;
+                for (var wi = 0; wi < children.length; wi++) {
+                    if (children[wi] === detWordEl) collecting = true;
+                    if (collecting) toWrap.push(children[wi]);
+                    if (children[wi] === detImgEl) break;
+                }
+                detailsInner.insertBefore(wrapper, toWrap[0]);
+                for (var wj = 0; wj < toWrap.length; wj++) {
+                    wrapper.appendChild(toWrap[wj]);
+                }
             }
         }
 
@@ -2009,16 +2031,16 @@
       var s = defSetting(type);
       if (s === 'off') return false;
       if (s === 'always') return true;
-      // 'only when primary' or 'primary or reveal'
+      // 'only when primary' or 'when primary or on reveal'
       if (isDefPrimary(type)) return true;
-      // secondary with 'primary or reveal' when secondary is always shown
-      if (s === 'primary or reveal' && defSecondary === 'on') return true;
+      // secondary with 'when primary or on reveal' when secondary is always shown
+      if (s === 'when primary or on reveal' && defSecondary === 'on') return true;
       return false;
     }
     function shouldDefPlayOnReveal(defLang) {
       var type = defLang === 'mono' ? 'monolingual' : 'bilingual';
       var s = defSetting(type);
-      return (s === 'primary or reveal') && !isDefPrimary(type) && defSecondary === 'details';
+      return (s === 'when primary or on reveal') && !isDefPrimary(type) && defSecondary === 'details';
     }
     setTimeout(function() {
       window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
