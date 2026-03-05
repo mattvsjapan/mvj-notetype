@@ -436,6 +436,7 @@
 [data-debug="on"] .answer > *,
 [data-debug="on"] .front-content > *,
 [data-debug="on"] .word-column > *,
+[data-debug="on"] .details-inner > *,
 [data-debug="on"] .front > .audio-row,
 [data-debug="on"] .back .audio-row {
     outline: 2px solid rgba(0, 150, 255, 0.6);
@@ -1849,6 +1850,11 @@ html:not(.tategaki) .front-content .image-wrap {
 .details-inner .word-pitch-group.text-play,
 .details-inner .target-word.text-play {
     align-self: stretch;
+}
+
+.details-inner .word-pitch-group,
+.details-inner .word-pitch-group:has(.pitch-graph:not([data-state="empty"]):not([style*="display: none"])) {
+    margin-bottom: 0;
 }
 
 .details-inner .target-word {
