@@ -93,6 +93,7 @@ _HOTKEYS = [
     ("--hotkey-play-all", "Play All", "z"),
     ("--hotkey-stop-all", "Stop All", "?"),
     ("--hotkey-jp-toggle", "Reveal Definition Toggle", "."),
+    ("--hotkey-details-toggle", "Reveal Details", "n"),
 ]
 
 _SETTINGS = {

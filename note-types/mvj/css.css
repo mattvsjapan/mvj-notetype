@@ -64,6 +64,7 @@
     --hotkey-play-all: ,;          /* keyboard key                        */
     --hotkey-stop-all: .;          /* keyboard key                        */
     --hotkey-jp-toggle: h;         /* keyboard key (back only)            */
+    --hotkey-details-toggle: n;    /* keyboard key (back only)            */
 
     /* ═══════════════════════════════════════════════════════
        ⚙  MODES — Tag & deck-based settings overrides.

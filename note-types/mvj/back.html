@@ -2079,7 +2079,7 @@
   
   <script>
   (function() {
-    var HANDLER_KEY = '__jpDefHandler';
+    var HANDLER_KEY = '__toggleHandlers';
     function animateToggle(label) {
       label.style.color = 'var(--text-1)';
       label.style.borderColor = 'var(--flash-border)';
@@ -2091,18 +2091,36 @@
       }, 350);
     }
     var _rs = getComputedStyle(document.documentElement);
-    var K_JP = _rs.getPropertyValue('--hotkey-jp-toggle').trim() || '.';
+    var toggles = [
+      {
+        key: (_rs.getPropertyValue('--hotkey-jp-toggle').trim() || '.').toLowerCase(),
+        id: 'jp-toggle',
+        label: '.jp-def-toggle',
+        onChange: function(cb) { cb.dispatchEvent(new Event('change')); }
+      },
+      {
+        key: (_rs.getPropertyValue('--hotkey-details-toggle').trim() || 'n').toLowerCase(),
+        id: 'details-toggle',
+        label: '.details-toggle'
+      }
+    ];
     function handler(ev) {
-      if (ev.key === K_JP) {
-        var cb = document.getElementById('jp-toggle');
-        var tl = document.querySelector('.jp-def-toggle');
-        if (cb && tl && tl.style.display !== 'none') {
-          ev.preventDefault();
-          ev.stopPropagation();
-          cb.checked = !cb.checked;
-          cb.dispatchEvent(new Event('change'));
-          var label = document.querySelector('.jp-def-toggle');
-          if (label) animateToggle(label);
+      var el = ev.target;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      var k = ev.key.toLowerCase();
+      for (var i = 0; i < toggles.length; i++) {
+        var t = toggles[i];
+        if (k === t.key) {
+          var cb = document.getElementById(t.id);
+          var lbl = document.querySelector(t.label);
+          if (cb && (!lbl || lbl.style.display !== 'none')) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            cb.checked = !cb.checked;
+            if (t.onChange) t.onChange(cb);
+            if (lbl) animateToggle(lbl);
+          }
+          return;
         }
       }
     }
@@ -2111,7 +2129,8 @@
     }
     window[HANDLER_KEY] = handler;
     window.addEventListener('keydown', handler, { capture: true });
-  
+
+    // Stop audio when JP definition is toggled off
     var jpToggle = document.getElementById('jp-toggle');
     if (jpToggle) {
       jpToggle.addEventListener('change', function() {
@@ -2122,7 +2141,7 @@
     }
   })();
   </script>
-  
+
   <script>
   // Tategaki: convert ASCII digits to full-width and wrap bracketed digit content
   (function() {
