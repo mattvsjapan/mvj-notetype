@@ -1859,7 +1859,8 @@ html:not(.tategaki) .front-content .image-wrap {
 
 /* Details inner element styling */
 .details-inner .word-pitch-group.text-play,
-.details-inner .target-word.text-play {
+.details-inner .target-word.text-play,
+.details-inner .sentence.text-play {
     align-self: stretch;
 }
 
