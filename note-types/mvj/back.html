@@ -195,6 +195,13 @@
           <div class="notes-section" style="--d:260" id="notes-section">
               <p class="notes" id="notes"></p>
           </div>
+          <div class="details-section" style="--d:300" id="details-section">
+              <input type="checkbox" id="details-toggle" class="details-input">
+              <label for="details-toggle" class="details-toggle" onclick="">Details</label>
+              <div class="details-wrap">
+                  <div class="details-inner" id="details-inner"></div>
+              </div>
+          </div>
       </div>
   </div>
   </div>
@@ -865,6 +872,19 @@
     var wordSide = _rootStyle.getPropertyValue('--word-text').trim() || 'back only';
     var sentSide = _rootStyle.getPropertyValue('--sentence-text').trim() || 'back only';
     var imageSide = _rootStyle.getPropertyValue('--image').trim() || 'back only';
+
+    // Details section settings
+    var _detWordText = wordSide === 'details';
+    var _detWordAudio = _rootStyle.getPropertyValue('--word-audio').trim() === 'details';
+    var _detSentText = sentSide === 'details';
+    var _detSentAudio = _rootStyle.getPropertyValue('--sentence-audio').trim() === 'details';
+    var _detImage = imageSide === 'details';
+    var _detPitchGraph = _rootStyle.getPropertyValue('--pitch-graph').trim() === 'details';
+    var _detDefText = _rootStyle.getPropertyValue('--definition-text').trim() === 'details';
+    var _detDefAudio = _rootStyle.getPropertyValue('--definition-audio').trim() === 'details';
+    var _detNotesText = _rootStyle.getPropertyValue('--notes-text').trim() === 'details';
+    var _hasAnyDetails = _detWordText || _detWordAudio || _detSentText || _detSentAudio
+        || _detImage || _detPitchGraph || _detDefText || _detDefAudio || _detNotesText;
     var answerEl = document.querySelector('.answer');
     var wordIsOnFront = (wordSide === 'front & back');
     var sentIsOnFront = (sentSide === 'front & back');
@@ -1519,19 +1539,10 @@
         });
     }
 
-    // ── Mirror audio buttons to bottom row (mobile) ──
-    var bottomRow = document.getElementById('audio-row-bottom');
-    if (bottomRow) {
-      var SVG_BOTTOM = window.__audioSVG;
-      var animateBtnBottom = window.__animateBtn;
-      var isTategaki = document.documentElement.classList.contains('tategaki');
-      var midAudioRow = null;
-      if (isTategaki) {
-        midAudioRow = document.createElement('div');
-        midAudioRow.className = 'mid-audio-row';
-        midAudioRow.style.cssText = '--d:80';
-      }
-      function cloneItemToRow(origItem, targetRow) {
+    // ── Clone audio buttons helper (used by bottom-row + details section) ──
+    var SVG_BOTTOM = window.__audioSVG;
+    var animateBtnBottom = window.__animateBtn;
+    function cloneItemToRow(origItem, targetRow) {
         var clone = document.createElement('div');
         clone.className = 'audio-item';
         var attrs = origItem.attributes;
@@ -1576,6 +1587,16 @@
           clone.appendChild(lbl);
         }
         if (origBtns.length > 0) targetRow.appendChild(clone);
+    }
+
+    // ── Mirror audio buttons to bottom row (mobile) ──
+    var bottomRow = document.getElementById('audio-row-bottom');
+    if (bottomRow) {
+      var midAudioRow = null;
+      if (isTategaki) {
+        midAudioRow = document.createElement('div');
+        midAudioRow.className = 'mid-audio-row';
+        midAudioRow.style.cssText = '--d:80';
       }
       var topItems = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"]):not([data-btn-off])');
       var hasFrontContent = !!document.querySelector('.front-content [data-side="front"]');
@@ -1677,6 +1698,102 @@
         wcEl.style.display = 'none';
     }
 
+    // ── Details section — move elements from their normal position ──
+    var detailsSection = document.getElementById('details-section');
+    var detailsInner = document.getElementById('details-inner');
+    if (detailsSection && detailsInner && _hasAnyDetails) {
+        var detailsCount = 0;
+
+        // Order: target-word, pitch-graph, word-audio, image, sentence, sentence-audio,
+        //        bilingual def, monolingual def section, definition-audio, notes
+
+        if (_detWordText) {
+            var tw = document.getElementById('target-word');
+            if (tw && tw.getAttribute('data-show') !== 'off' && tw.textContent.trim()) {
+                detailsInner.appendChild(tw);
+                detailsCount++;
+            }
+        }
+
+        if (_detPitchGraph) {
+            var pg = document.getElementById('pitch-graph');
+            if (pg && !pg.hasAttribute('data-state')) {
+                detailsInner.appendChild(pg);
+                detailsCount++;
+            }
+        }
+
+        if (_detWordAudio) {
+            var waItem = document.querySelector('.audio-row .audio-item[data-audio="word"]:not([data-side="off"])');
+            if (waItem) {
+                cloneItemToRow(waItem, detailsInner);
+                waItem.setAttribute('data-side', 'off');
+                detailsCount++;
+            }
+        }
+
+        if (_detImage) {
+            var imgWrap = document.querySelector('.answer .image-wrap');
+            if (imgWrap && imgWrap.getAttribute('data-show') !== 'off') {
+                detailsInner.appendChild(imgWrap);
+                detailsCount++;
+            }
+        }
+
+        if (_detSentText) {
+            var st = document.getElementById('sentence');
+            if (st && st.getAttribute('data-show') !== 'off' && st.textContent.trim()) {
+                detailsInner.appendChild(st);
+                detailsCount++;
+            }
+        }
+
+        if (_detSentAudio) {
+            var saItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]:not([data-side="off"])');
+            if (saItem) {
+                cloneItemToRow(saItem, detailsInner);
+                saItem.setAttribute('data-side', 'off');
+                detailsCount++;
+            }
+        }
+
+        if (_detDefText) {
+            var biDef = document.getElementById('def-bilingual');
+            if (biDef && biDef.textContent.trim()) {
+                detailsInner.appendChild(biDef);
+                detailsCount++;
+            }
+            var jpSec = document.getElementById('jp-def-section');
+            if (jpSec && jpSec.style.display !== 'none') {
+                detailsInner.appendChild(jpSec);
+                detailsCount++;
+            }
+        }
+
+        if (_detDefAudio) {
+            var daItems = document.querySelectorAll('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])');
+            for (var dai = 0; dai < daItems.length; dai++) {
+                cloneItemToRow(daItems[dai], detailsInner);
+                daItems[dai].setAttribute('data-side', 'off');
+                detailsCount++;
+            }
+        }
+
+        if (_detNotesText) {
+            var ns = document.getElementById('notes-section');
+            if (ns && ns.style.display !== 'none') {
+                detailsInner.appendChild(ns);
+                detailsCount++;
+            }
+        }
+
+        if (detailsCount === 0) {
+            detailsSection.style.display = 'none';
+        }
+    } else if (detailsSection) {
+        detailsSection.style.display = 'none';
+    }
+
     // Clear stale debug-last markings left over from front-side rendering
     document.querySelectorAll('.debug-last').forEach(function(el) {
         el.classList.remove('debug-last');
@@ -1737,8 +1854,11 @@
             && notesSec.style.display !== 'none'
             && notesP && notesP.textContent.trim() !== '';
 
+        var detailsVisible = detailsSection && detailsSection.style.display !== 'none';
+
         var hasContent = wordVisible || graphVisible || sentVisible
-                      || imgVisible || defVisible || notesVisible || frontContentVisible;
+                      || imgVisible || defVisible || notesVisible || frontContentVisible
+                      || detailsVisible;
 
         if (!hasContent) {
             back.setAttribute('data-audio-only', '');

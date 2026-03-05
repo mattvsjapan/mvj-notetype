@@ -104,18 +104,18 @@ _SETTINGS = {
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [
-        ("--word-text", "Word Text", ["front & back", "back only", "off"], "front & back"),
-        ("--word-audio", "Word Audio", ["front & back", "back only", "off"], "back only"),
+        ("--word-text", "Word Text", ["front & back", "back only", "details", "off"], "front & back"),
+        ("--word-audio", "Word Audio", ["front & back", "back only", "details", "off"], "back only"),
         ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
         ("--word-autoplay", "Word Autoplay", ["front only", "back only", "front & back", "none"], "front & back"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front & back", "back only", "off"], "front & back"),
         ("--word-pitch-color", "Word Pitch Color", ["front & back", "back only", "off"], "back only"),
-        ("--pitch-graph", "Pitch Graph", ["on", "off"], "on"),
+        ("--pitch-graph", "Pitch Graph", ["on", "details", "off"], "on"),
     ],
     "Sentence Text": [
-        ("--sentence-text", "Sentence Text", ["front & back", "back only", "off"], "front & back"),
-        ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "off"], "back only"),
+        ("--sentence-text", "Sentence Text", ["front & back", "back only", "details", "off"], "front & back"),
+        ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "details", "off"], "back only"),
         ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
         ("--sentence-autoplay", "Sentence Autoplay", ["front only", "back only", "front & back", "none"], "front & back"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
@@ -123,11 +123,11 @@ _SETTINGS = {
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front & back", "back only", "off"], "back only"),
     ],
     "Image": [
-        ("--image", "Image", ["front & back", "back only", "off"], "back only"),
+        ("--image", "Image", ["front & back", "back only", "details", "off"], "back only"),
     ],
     "Definitions": [
-        ("--definition-text", "Definition Text", ["on", "off"], "on"),
-        ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
+        ("--definition-text", "Definition Text", ["on", "details", "off"], "on"),
+        ("--definition-audio", "Definition Audio", ["on", "details", "off"], "on"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "off"], "on"),
         ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "off"], "on"),
         ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "off"], "on"),
@@ -138,7 +138,7 @@ _SETTINGS = {
         ("--definition-pitch-color", "Definition Pitch Color", ["front & back", "back only", "off"], "back only"),
     ],
     "Notes": [
-        ("--notes-text", "Notes Text", ["on", "off"], "on"),
+        ("--notes-text", "Notes Text", ["on", "details", "off"], "on"),
         ("--notes-font", "Notes Font", ["bilingual", "monolingual"], "bilingual"),
     ],
 }

@@ -19,18 +19,18 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: back only;            /* front & back | back only | off      */
-    --word-audio: front & back;     /* front & back | back only | off      */
+    --word-text: back only;            /* front & back | back only | details | off */
+    --word-audio: front & back;     /* front & back | back only | details | off */
     --word-audio-buttons: front only;/* front only | back only | front & back | none */
     --word-autoplay: front & back; /* front only | back only | front & back | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
-    --pitch-graph: on;              /* on | off                            */
+    --pitch-graph: on;              /* on | details | off                   */
 
     /* Sentence */
-    --sentence-text: back only;        /* front & back | back only | off      */
-    --sentence-audio: front & back; /* front & back | back only | off      */
+    --sentence-text: back only;        /* front & back | back only | details | off */
+    --sentence-audio: front & back; /* front & back | back only | details | off */
     --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
     --sentence-autoplay: front & back; /* front only | back only | front & back | none */
     --sentence-text-play: on;      /* on | off                            */
@@ -38,11 +38,11 @@
     --sentence-pitch-color: off;  /* front & back | back only | off      */
 
     /* Image */
-    --image: back only;           /* front & back | back only | off      */
+    --image: back only;           /* front & back | back only | details | off */
 
     /* Definitions */
-    --definition-text: on;         /* on | off                            */
-    --definition-audio: on;        /* on | off                            */
+    --definition-text: on;         /* on | details | off                   */
+    --definition-audio: on;        /* on | details | off                   */
     --definition-audio-buttons: off;/* on | off                            */
     --definition-autoplay-bi: on;  /* on | off                            */
     --definition-autoplay-mono: on;/* on | off                            */
@@ -53,7 +53,7 @@
     --definition-pitch-color: back only;/* front & back | back only | off      */
 
     /* Notes */
-    --notes-text: on;              /* on | off                            */
+    --notes-text: on;              /* on | details | off                   */
     --notes-font: bilingual;       /* bilingual | monolingual             */
 
     /* Hotkeys */
@@ -1755,6 +1755,131 @@ html:not(.tategaki) .front-content .image-wrap {
     line-height: 1.7;
 }
 
+/* Details section — collapsible container for elements set to "details" */
+.details-section {
+    margin-top: 16px;
+    order: 2;
+}
+
+.details-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.details-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--toggle-bg);
+    border: 1px solid var(--toggle-border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+    gap: 4px;
+}
+
+@media (hover: hover) {
+    .details-toggle:hover {
+        color: var(--text-1);
+        border-color: var(--toggle-hover-border);
+        background: var(--toggle-hover-bg);
+    }
+}
+
+.details-toggle::after {
+    content: '▸';
+    font-size: 10px;
+    transition: transform 200ms ease;
+}
+
+.details-input:checked + .details-toggle::after {
+    transform: rotate(90deg);
+}
+
+.details-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    margin-top: 4px;
+    transition: grid-template-rows 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms ease 50ms;
+}
+
+.details-inner {
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    transition: overflow 0s 350ms;
+    transition-behavior: allow-discrete;
+}
+
+.details-input:not(:checked) ~ .details-wrap .details-inner > * {
+    padding: 0;
+    margin: 0;
+}
+
+.details-input:checked ~ .details-wrap {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.details-input:checked ~ .details-wrap .details-inner {
+    overflow: visible;
+    transition: overflow 0s 0s;
+    transition-behavior: allow-discrete;
+}
+
+/* Details inner element styling */
+.details-inner .target-word {
+    margin: 0;
+}
+
+.details-inner .pitch-graph {
+    margin: 0;
+}
+
+.details-inner .image-wrap {
+    order: unset;
+}
+
+.details-inner .sentence {
+    margin: 0;
+    text-align: center;
+}
+
+.details-inner .notes-section {
+    margin-top: 0;
+    order: unset;
+}
+
+.details-inner .def {
+    margin: 0;
+    order: unset;
+}
+
+.details-inner .jp-def-section {
+    order: unset;
+}
+
+.details-inner .audio-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
@@ -1819,6 +1944,9 @@ html:not(.tategaki) .answer .def,
 html:not(.tategaki) .answer .jp-def-section,
 html:not(.tategaki) .answer .notes-section {
     order: 1;
+}
+html:not(.tategaki) .answer .details-section {
+    order: 2;
 }
 
 /* Non-tategaki: Japanese text line-height */
@@ -2598,6 +2726,36 @@ html.tategaki {
 
 .tategaki .notes-section .notes {
     line-height: 1.7;
+}
+
+/* Details section — tategaki */
+.tategaki .details-section {
+    margin: 0 0 0 16px;
+    margin-top: 0;
+    height: 100%;
+}
+
+.tategaki .details-toggle {
+    writing-mode: vertical-rl;
+    padding: 14px 3px;
+}
+
+.tategaki .details-toggle::after {
+    transform: rotate(90deg);
+}
+
+.tategaki .details-input:checked + .details-toggle::after {
+    transform: rotate(180deg);
+}
+
+.tategaki .details-wrap {
+    margin-top: 0;
+    margin-right: 6px;
+}
+
+.tategaki .details-inner {
+    min-width: 0;
+    flex-direction: row;
 }
 
 /* Divider */
