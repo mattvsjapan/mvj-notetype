@@ -1746,8 +1746,7 @@ html:not(.tategaki) .front-content .image-wrap {
     display: none;
 }
 
-.answer[data-def-text="off"] .def,
-.answer[data-def-text="off"] .jp-def-section {
+.answer[data-def-text="off"] > .def {
     display: none;
 }
 

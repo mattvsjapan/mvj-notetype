@@ -1161,7 +1161,12 @@
     }
 
     if (!defText) {
-      answerEl.setAttribute('data-def-text', 'off');
+      defEl.style.display = 'none';
+      // Only signal "all definitions off" if secondary is also not in the main area
+      var secondaryInMain = (hasBi && hasMono) && (defSecondary === 'on' || defSecondary === 'toggle');
+      if (!secondaryInMain) {
+        answerEl.setAttribute('data-def-text', 'off');
+      }
     }
 
     if (defPitchColor === 'off') {
@@ -1856,14 +1861,17 @@
                 detailsInner.appendChild(biDef);
                 detailsCount++;
             }
-            var jpSec = document.getElementById('jp-def-section');
-            if (jpSec && jpSec.style.display !== 'none') {
-                detailsInner.appendChild(jpSec);
-                detailsCount++;
+            // When primary is in details and secondary is toggle, move toggle into details too
+            if (defSecondary === 'toggle') {
+                var jpSecToggle = document.getElementById('jp-def-section');
+                if (jpSecToggle && jpDefEl.textContent.trim()) {
+                    detailsInner.appendChild(jpSecToggle);
+                    detailsCount++;
+                }
             }
         }
 
-        if (_detSecondaryDef && !_detDefText) {
+        if (_detSecondaryDef) {
             var jpSecDet = document.getElementById('jp-def-section');
             if (jpSecDet && jpDefEl.textContent.trim()) {
                 var jpToggleDet = document.getElementById('jp-toggle');
