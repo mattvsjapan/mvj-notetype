@@ -972,6 +972,23 @@
       }
     }
 
+    // Pitch graph text-play (when not wrapped with word)
+    var graphHasContent = !graphEl.hasAttribute('data-state');
+    if (graphHasContent && !useWrapper && wordAudioItem) {
+      window.__linkTextPlay(graphEl, 'word', {
+        play: function() {
+          var item = document.querySelector('.audio-item[data-audio="word"]:not([data-side="off"])');
+          window.__playItemAudios(item);
+        },
+        getBtn: function() {
+          return document.querySelector('.audio-item[data-audio="word"] .replay-button');
+        },
+        getAllBtns: function() {
+          return Array.from(document.querySelectorAll('.audio-item[data-audio="word"] .replay-button'));
+        }
+      });
+    }
+
     // Sentence → colored sentence
     if (!sentOn) {
       sentEl.setAttribute('data-show', 'off');

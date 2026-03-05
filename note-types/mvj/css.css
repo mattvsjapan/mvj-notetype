@@ -931,6 +931,20 @@ html:not(.tategaki) .word-pitch-group.text-play::after {
     border-radius: 10px;
 }
 
+html:not(.tategaki) .pitch-graph.text-play {
+    align-self: stretch;
+}
+
+html:not(.tategaki) .pitch-graph.text-play::after {
+    inset: -4px -8px -4px;
+    border-radius: 8px;
+}
+
+.tategaki .pitch-graph.text-play::after {
+    inset: -8px var(--pill-right, -4px) -8px -4px;
+    border-radius: 8px;
+}
+
 /* ── Pill position: per-element tuning variables ── */
 .target-word.text-play      { --pill-ruby-hidden: 0.33em; --pill-ruby-visible: -2px; }
 .sentence.text-play         { --pill-ruby-hidden: 0.2em;  --pill-ruby-visible: -0.22em; }

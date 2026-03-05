@@ -518,11 +518,19 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
             for (var i = 0; i < allBtns.length; i++) {
                 allBtns[i].classList.add('hover-linked');
             }
+            var siblingTexts = document.querySelectorAll('.text-play[data-text-play="' + audioKey + '"]');
+            for (var i = 0; i < siblingTexts.length; i++) {
+                if (siblingTexts[i] !== textEl) siblingTexts[i].classList.add('hover-linked');
+            }
         });
         textEl.addEventListener('mouseleave', function() {
             var allBtns = opts.getAllBtns ? opts.getAllBtns() : [];
             for (var i = 0; i < allBtns.length; i++) {
                 allBtns[i].classList.remove('hover-linked');
+            }
+            var siblingTexts = document.querySelectorAll('.text-play[data-text-play="' + audioKey + '"]');
+            for (var i = 0; i < siblingTexts.length; i++) {
+                if (siblingTexts[i] !== textEl) siblingTexts[i].classList.remove('hover-linked');
             }
         });
     }
