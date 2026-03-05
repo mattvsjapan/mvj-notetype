@@ -1242,6 +1242,9 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
 .word-pitch-group > .target-word {
     margin-bottom: 0;
 }
+.word-pitch-group > .target-word.text-play {
+    align-self: stretch;
+}
 .word-pitch-group > .pitch-graph {
     margin-bottom: 0;
 }
@@ -1843,6 +1846,11 @@ html:not(.tategaki) .front-content .image-wrap {
 }
 
 /* Details inner element styling */
+.details-inner .word-pitch-group.text-play,
+.details-inner .target-word.text-play {
+    align-self: stretch;
+}
+
 .details-inner .target-word {
     margin: 0;
 }

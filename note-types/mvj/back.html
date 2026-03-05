@@ -942,7 +942,7 @@
                     && !graphEl.hasAttribute('data-state');
       var wordTextPlayEl;
 
-      var useWrapper = isAdjacent || isTategaki;
+      var useWrapper = (isAdjacent || isTategaki) && !(_detWordText && !_detPitchGraph);
 
       if (wordIsOnFront) {
         wordTextPlayEl = document.getElementById('front-word');
@@ -1707,15 +1707,29 @@
         // Order: target-word, pitch-graph, word-audio, image, sentence, sentence-audio,
         //        bilingual def, monolingual def section, definition-audio, notes
 
-        if (_detWordText) {
+        if (_detWordText && _detPitchGraph) {
+            var tw = document.getElementById('target-word');
+            var pg = document.getElementById('pitch-graph');
+            var twOk = tw && tw.getAttribute('data-show') !== 'off' && tw.textContent.trim();
+            var pgOk = pg && !pg.hasAttribute('data-state');
+            if (twOk && pgOk) {
+                var wpg = document.getElementById('word-pitch-group');
+                detailsInner.appendChild(wpg);
+                detailsCount++;
+            } else if (twOk) {
+                detailsInner.appendChild(tw);
+                detailsCount++;
+            } else if (pgOk) {
+                detailsInner.appendChild(pg);
+                detailsCount++;
+            }
+        } else if (_detWordText) {
             var tw = document.getElementById('target-word');
             if (tw && tw.getAttribute('data-show') !== 'off' && tw.textContent.trim()) {
                 detailsInner.appendChild(tw);
                 detailsCount++;
             }
-        }
-
-        if (_detPitchGraph) {
+        } else if (_detPitchGraph) {
             var pg = document.getElementById('pitch-graph');
             if (pg && !pg.hasAttribute('data-state')) {
                 detailsInner.appendChild(pg);
