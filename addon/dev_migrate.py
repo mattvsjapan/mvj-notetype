@@ -26,15 +26,70 @@ _LOG_FILE = os.path.join(_LOG_DIR, "migration_log.txt")
 _SYNTAX_COMMENT_RE = re.compile(
     r'<!--\s*generated using syntax:\s*"([^"]+)"\s*-->'
 )
+_AUDIO_RE = re.compile(r'\[audio:([^\]]+)\]')
 
-# Comment syntax has pitch outside brackets: 堰[せき];1 -
-# convert_word_field expects it inside: 堰[せき;1] -
-_PITCH_OUTSIDE_RE = re.compile(r'\[([^\]]+)\];([^\s]+)')
+# Matches [reading]okurigana;pitch — okurigana may be empty
+_PITCH_OUTSIDE_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);(\S+)')
+_EMPTY_PITCH_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);')
+# d = devoiced → * prefix on reading (d can be after bracket or before reading)
+_DEVOICED_AFTER_RE = re.compile(r'\[([^\]]+)\]d')
+_DEVOICED_BEFORE_RE = re.compile(r'\[d([^\]]+)\]')
 
 
-def _reformat_syntax(text):
-    """Move semicolon+pitch from outside brackets to inside."""
-    return _PITCH_OUTSIDE_RE.sub(r'[\1;\2]', text)
+def _reformat_token(text):
+    """Reformat a single token from comment syntax to converter input."""
+    # d modifier → * prefix inside bracket
+    text = _DEVOICED_AFTER_RE.sub(r'[*\1]', text)
+    text = _DEVOICED_BEFORE_RE.sub(r'[*\1]', text)
+    # Move ;pitch inside brackets
+    text = _PITCH_OUTSIDE_RE.sub(r'[\1;\3]\2', text)
+    # Empty pitch (trailing ";") defaults to 0
+    text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
+    return text
+
+
+def _convert_comment_syntax(raw):
+    """Convert full comment syntax string to new notation."""
+    # Strip trailing " -" ghost particle — convert_word_field adds its own
+    raw = re.sub(r'\s+-\s*$', '', raw)
+    # Split on standalone ; between word groups
+    groups = re.split(r'\s+;\s+', raw)
+    all_warnings = []
+    converted_groups = []
+
+    multi = len(groups) > 1
+
+    for group in groups:
+        group = re.sub(r'\s+-\s*$', '', group)
+        tokens = group.split()
+        pitched = []
+        for token in tokens:
+            reformatted = _reformat_token(token)
+            result, warnings = convert_word_field(reformatted)
+            # In multi-group expressions, strip the auto-added ghost particle
+            if multi:
+                result = re.sub(r'-$', '', result)
+            all_warnings.extend(warnings)
+            pitched.append(result)
+
+        converted_groups.append(' '.join(pitched))
+
+    # Join word groups with /
+    result = ' / '.join(converted_groups)
+
+    # Add : to bare particles between accented tokens
+    parts = result.split(' ')
+    for i in range(len(parts)):
+        if ':' in parts[i] or parts[i] == '/':
+            continue
+        # Check if there's an accented token before and after
+        has_before = any(':' in parts[j] for j in range(i))
+        has_after = any(':' in parts[j] for j in range(i + 1, len(parts)))
+        if has_before and has_after:
+            parts[i] = parts[i] + ':'
+    result = ' '.join(parts)
+
+    return result, all_warnings
 
 
 def _log(note_id, word_before, image_before, word_after):
@@ -59,12 +114,15 @@ def _migrate_note(editor: Editor):
         return
 
     field_names = [f["name"] for f in model["flds"]]
-    if "Image" not in field_names or "Word" not in field_names:
-        showWarning("Note is missing Image or Word field.")
-        return
+    for needed in ("Image", "Word", "Word Audio", "Sentence Audio"):
+        if needed not in field_names:
+            showWarning(f"Note is missing {needed} field.")
+            return
 
     img_idx = field_names.index("Image")
     word_idx = field_names.index("Word")
+    word_audio_idx = field_names.index("Word Audio")
+    sent_audio_idx = field_names.index("Sentence Audio")
 
     image_content = note.fields[img_idx]
     if not image_content.strip():
@@ -76,8 +134,30 @@ def _migrate_note(editor: Editor):
         tooltip("No pitch syntax comment found in Image field.")
         return
 
-    old_syntax = _reformat_syntax(m.group(1))
-    new_syntax, warnings = convert_word_field(old_syntax)
+    new_syntax, warnings = _convert_comment_syntax(m.group(1))
+
+    # Move sentence audio from Word Audio to Sentence Audio:
+    # - filenames containing "reibun"
+    # - filenames with no Japanese characters (kanji/kana)
+    word_audio = note.fields[word_audio_idx]
+    audio_files = _AUDIO_RE.findall(word_audio)
+    moved_audio = []
+    for fname in audio_files:
+        is_reibun = 'reibun' in fname
+        has_japanese = any(
+            '\u3040' <= ch <= '\u309f' or  # hiragana
+            '\u30a0' <= ch <= '\u30ff' or  # katakana
+            '\u4e00' <= ch <= '\u9fff' or  # CJK
+            '\u3400' <= ch <= '\u4dbf'     # CJK ext A
+            for ch in fname
+        )
+        if is_reibun or not has_japanese:
+            tag = f"[audio:{fname}]"
+            word_audio = word_audio.replace(tag, "")
+            moved_audio.append(tag)
+    if moved_audio:
+        note.fields[word_audio_idx] = word_audio.strip()
+        note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
 
     word_before = note.fields[word_idx]
     _log(note.id, word_before, image_content, new_syntax)
@@ -89,6 +169,8 @@ def _migrate_note(editor: Editor):
     editor.loadNoteKeepingFocus()
 
     msg = f"Migrated: {new_syntax}"
+    if moved_audio:
+        msg += f" | Moved {len(moved_audio)} reibun audio to Sentence Audio"
     if warnings:
         msg += f" (warnings: {', '.join(warnings)})"
     tooltip(msg)
