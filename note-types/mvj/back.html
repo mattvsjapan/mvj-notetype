@@ -1728,13 +1728,14 @@
 
     // ── Auto-play back-side audio (word/sentence set to "back", then definition) ──
     setTimeout(function() {
-      var items = document.querySelectorAll('.audio-row .audio-item[data-side="back"]');
+      var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
       var queue = [];
       var animateBtn = window.__animateBtn;
       var ap = window.__autoplayEnabled;
       items.forEach(function(item) {
         var type = item.getAttribute('data-audio');
-        if ((type === 'word' && !ap.word) || (type === 'sentence' && !ap.sentence)) return;
+        if ((type === 'word' && ap.word !== 'back only' && ap.word !== 'front & back')
+         || (type === 'sentence' && ap.sentence !== 'back only' && ap.sentence !== 'front & back')) return;
         var btns = item.querySelectorAll('.replay-button');
         if (item._jsAudios && item._jsAudios.length) {
           for (var j = 0; j < item._jsAudios.length; j++) {

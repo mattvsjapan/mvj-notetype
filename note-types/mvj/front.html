@@ -127,9 +127,10 @@
 // Autoplay — read per-section CSS variables and cache
 (function() {
     var rs = getComputedStyle(document.documentElement);
+    function apVal(v) { v = v.trim() || 'front & back'; return v === 'on' ? 'front & back' : v === 'off' ? 'none' : v; }
     window.__autoplayEnabled = {
-        word: rs.getPropertyValue('--word-autoplay').trim() !== 'off',
-        sentence: rs.getPropertyValue('--sentence-autoplay').trim() !== 'off',
+        word: apVal(rs.getPropertyValue('--word-autoplay')),
+        sentence: apVal(rs.getPropertyValue('--sentence-autoplay')),
         definitionBi: rs.getPropertyValue('--definition-autoplay-bi').trim() !== 'off',
         definitionMono: rs.getPropertyValue('--definition-autoplay-mono').trim() !== 'off'
     };
@@ -1094,7 +1095,8 @@ function clearLastMargin(el) {
   var ap = window.__autoplayEnabled;
   items.forEach(function(item) {
     var type = item.getAttribute('data-audio');
-    if ((type === 'word' && !ap.word) || (type === 'sentence' && !ap.sentence)) return;
+    if ((type === 'word' && ap.word !== 'front only' && ap.word !== 'front & back')
+     || (type === 'sentence' && ap.sentence !== 'front only' && ap.sentence !== 'front & back')) return;
     if (item._jsAudios) {
       var btns = item.querySelectorAll('.replay-button');
       for (var j = 0; j < item._jsAudios.length; j++)
