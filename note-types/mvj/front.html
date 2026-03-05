@@ -1154,8 +1154,8 @@ function clearLastMargin(el) {
   var ap = window.__autoplayEnabled;
   setTimeout(function() {
     window.__autoplayItems('.audio-row .audio-item[data-side="front"]', function(type) {
-      if (type === 'word') return ap.word === 'front only' || ap.word === 'front & back';
-      if (type === 'sentence') return ap.sentence === 'front only' || ap.sentence === 'front & back';
+      if (type === 'word') return ap.word === 'front only' || ap.word === 'front & back' || ap.word === 'when no def audio';
+      if (type === 'sentence') return ap.sentence === 'front only' || ap.sentence === 'front & back' || ap.sentence === 'when no def audio';
       return false;
     });
   }, 0);

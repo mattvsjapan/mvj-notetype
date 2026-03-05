@@ -2042,10 +2042,14 @@
       var s = defSetting(type);
       return (s === 'when primary or on reveal') && !isDefPrimary(type) && defSecondary === 'details';
     }
+    var anyDefWillPlay = false;
+    document.querySelectorAll('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])').forEach(function(item) {
+      if (shouldDefPlayOnBack(item.getAttribute('data-def-lang'))) anyDefWillPlay = true;
+    });
     setTimeout(function() {
       window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
-        if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back';
-        if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back';
+        if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back' || (ap.word === 'when no def audio' && !anyDefWillPlay);
+        if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back' || (ap.sentence === 'when no def audio' && !anyDefWillPlay);
         if (type === 'def') return shouldDefPlayOnBack(item.getAttribute('data-def-lang'));
         return false;
       });

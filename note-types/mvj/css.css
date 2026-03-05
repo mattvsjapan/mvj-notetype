@@ -22,7 +22,7 @@
     --word-text: back only;            /* front & back | back only | details | off */
     --word-audio: front & back;     /* front & back | back only | details | off */
     --word-audio-buttons: front only;/* front only | back only | front & back | none */
-    --word-autoplay: front only; /* front only | back only | front & back | none */
+    --word-autoplay: front only; /* front only | back only | front & back | when no def audio | details | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
@@ -32,7 +32,7 @@
     --sentence-text: back only;        /* front & back | back only | details | off */
     --sentence-audio: front & back; /* front & back | back only | details | off */
     --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
-    --sentence-autoplay: front only; /* front only | back only | front & back | none */
+    --sentence-autoplay: front only; /* front only | back only | front & back | when no def audio | details | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
     --sentence-pitch-color: off;  /* front & back | back only | off      */
