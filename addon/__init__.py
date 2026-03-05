@@ -201,3 +201,9 @@ try:
     from . import dev_sync  # noqa: F401
 except ImportError:
     pass
+
+# Dev-only migration tool (excluded from packaging)
+try:
+    from . import dev_migrate  # noqa: F401
+except ImportError:
+    pass
