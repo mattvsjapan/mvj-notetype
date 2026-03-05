@@ -35,7 +35,7 @@ _FIELDS = [
     ("Definition Audio", "TTS audio of the definition", None, 12),
     ("am-study-morphs", "Unknown words (for AnkiMorphs & MvJ Japanese)", None, None),
     ("Image", "Image", None, 12),
-    ("Translation", "English translation & LLM explanation", None, None),
+    ("Notes", "English translation & LLM explanation", None, None),
     ("Context", "For LLMs to better understand the sentence", None, None),
 ]
 
