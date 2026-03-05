@@ -52,6 +52,10 @@
     --definition-furigana: back only;/* front & back | back only | off      */
     --definition-pitch-color: back only;/* front & back | back only | off      */
 
+    /* Notes */
+    --notes-text: on;              /* on | off                            */
+    --notes-font: bilingual;       /* bilingual | monolingual             */
+
     /* Hotkeys */
     --hotkey-word-audio: z;        /* keyboard key                        */
     --hotkey-sentence-audio: x;    /* keyboard key                        */
@@ -1732,6 +1736,25 @@ html:not(.tategaki) .front-content .image-wrap {
     margin-bottom: 16px;
 }
 
+/* Notes section */
+.notes-section {
+    margin-top: 16px;
+}
+
+.notes {
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--text-1);
+    margin: 0;
+    text-align: left;
+}
+
+.notes[data-font="jp"] {
+    font-family: var(--jp);
+    line-height: 1.7;
+}
+
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
@@ -1793,7 +1816,8 @@ html:not(.tategaki) .answer .audio-row-bottom {
     order: -3;
 }
 html:not(.tategaki) .answer .def,
-html:not(.tategaki) .answer .jp-def-section {
+html:not(.tategaki) .answer .jp-def-section,
+html:not(.tategaki) .answer .notes-section {
     order: 1;
 }
 
@@ -2563,6 +2587,17 @@ html.tategaki {
 
 .tategaki .jp-def-input:checked + .jp-def-toggle::after {
     transform: rotate(180deg);
+}
+
+/* Notes — follows definitions in tategaki R→L flow */
+.tategaki .notes-section {
+    margin: 0 0 0 16px;
+    margin-top: 0;
+    height: 100%;
+}
+
+.tategaki .notes-section .notes {
+    line-height: 1.7;
 }
 
 /* Divider */

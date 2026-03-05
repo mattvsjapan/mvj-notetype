@@ -69,6 +69,17 @@ _SAMPLE_FIELDS = {
         '<!-- def-type="monolingual" -->[audio:_mvj_def_mono.mp3]<!-- def-end -->'
     ),
     "Image": f'<img src="{_SAMPLE_IMAGE}">',
+    "Notes": (
+        "The sentence 「そりゃパパとママに日本語は習ってたけど」means something like "
+        '"Well sure, I had learned Japanese from Mom and Dad, but…" — そりゃ is a casual '
+        "shortening of それは, used to concede a point (\"okay, sure\"), パパとママに means "
+        '"from Mom and Dad" (に marking them as the source of teaching), 日本語は is the '
+        "topic \"Japanese,\" and 習ってたけど is a casual past progressive form of 習う (to "
+        "learn) followed by けど (\"but\"), which trails off without finishing the thought — "
+        "implying something like \"…but it's not like I'm actually fluent\" or \"…but that's "
+        'a different matter," leaving the rest unsaid, which is a very natural and common '
+        "pattern in Japanese conversation."
+    ),
 }
 
 # --- Settings schema ---
@@ -126,6 +137,10 @@ _SETTINGS = {
         ("--definition-furigana", "Definition Furigana", ["front & back", "back only", "off"], "back only"),
         ("--definition-pitch-color", "Definition Pitch Color", ["front & back", "back only", "off"], "back only"),
     ],
+    "Notes": [
+        ("--notes-text", "Notes Text", ["on", "off"], "on"),
+        ("--notes-font", "Notes Font", ["bilingual", "monolingual"], "bilingual"),
+    ],
 }
 
 # All settings the JS mode system can override (matches front.html settings array).
@@ -136,6 +151,7 @@ _OVERRIDABLE = [
     "image",
     "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-mode", "definition-default",
     "definition-furigana", "definition-pitch-color",
+    "notes-text", "notes-font",
 ]
 
 # Regex to find the modes *content* (between the MODES banner and the closing ═══ banner).

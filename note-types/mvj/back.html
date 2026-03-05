@@ -192,10 +192,16 @@
                   <p class="jp-def" id="def-monolingual"></p>
               </div>
           </div>
+          <div class="notes-section" style="--d:260" id="notes-section">
+              <p class="notes" id="notes"></p>
+          </div>
       </div>
   </div>
   </div>
-  
+
+  {{#Notes}}
+  <div id="raw-notes" style="display:none">{{Notes}}</div>
+  {{/Notes}}
   <div id="raw-definition" style="display:none">{{Definition}}</div>
   
   <script>
@@ -1095,6 +1101,27 @@
       jpDefEl.classList.add('furigana-off');
     }
 
+    // ── Notes ──
+    var notesOn = _rootStyle.getPropertyValue('--notes-text').trim() !== 'off';
+    var notesFont = _rootStyle.getPropertyValue('--notes-font').trim() || 'bilingual';
+    var notesRawEl = document.getElementById('raw-notes');
+    var notesEl = document.getElementById('notes');
+    var notesSectionEl = document.getElementById('notes-section');
+
+    if (notesOn && notesRawEl && notesEl) {
+        var notesHtml = notesRawEl.innerHTML.trim();
+        if (notesHtml) {
+            notesEl.innerHTML = notesHtml;
+            if (notesFont === 'monolingual') {
+                notesEl.setAttribute('data-font', 'jp');
+            }
+        } else {
+            notesSectionEl.style.display = 'none';
+        }
+    } else if (notesSectionEl) {
+        notesSectionEl.style.display = 'none';
+    }
+
     // ── Tagged definition audio: native [sound:] elements ──
     if (window.__defAudioNativeContainer && defAudio) {
       var nativeContainer = window.__defAudioNativeContainer;
@@ -1704,8 +1731,14 @@
             '.front-content [data-side="front"]'
         );
 
+        var notesSec = document.getElementById('notes-section');
+        var notesP = document.getElementById('notes');
+        var notesVisible = notesSec
+            && notesSec.style.display !== 'none'
+            && notesP && notesP.textContent.trim() !== '';
+
         var hasContent = wordVisible || graphVisible || sentVisible
-                      || imgVisible || defVisible || frontContentVisible;
+                      || imgVisible || defVisible || notesVisible || frontContentVisible;
 
         if (!hasContent) {
             back.setAttribute('data-audio-only', '');
