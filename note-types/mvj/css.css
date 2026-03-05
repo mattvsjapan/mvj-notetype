@@ -2789,6 +2789,7 @@ html.tategaki {
     min-width: 0;
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: space-between;
     height: 100%;
 }
 
@@ -2803,6 +2804,16 @@ html.tategaki {
 .tategaki .details-inner .def {
     margin: 0;
     height: 100%;
+}
+
+/* word-column children lose writing-mode: horizontal-tb from .word-column > * when moved to details;
+   auto height so they share a column (like word-column) instead of each forcing a full-height column */
+.tategaki .details-inner .word-pitch-group,
+.tategaki .details-inner .target-word,
+.tategaki .details-inner .pitch-graph,
+.tategaki .details-inner .image-wrap {
+    writing-mode: horizontal-tb;
+    height: auto;
 }
 
 /* Divider */
