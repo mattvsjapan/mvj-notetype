@@ -127,7 +127,7 @@ _SETTINGS = {
         ("--image", "Image", ["front & back", "back only", "details toggle", "off"], "back only"),
     ],
     "Definitions": [
-        ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "unlocked"], "unlocked"),
+        ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "monolingual when unlocked"], "monolingual when unlocked"),
         ("--definition-text", "Primary Definition Text", ["on", "details toggle", "off"], "on"),
         ("--definition-secondary", "Secondary Definition Text", ["on", "off", "details toggle", "separate toggle"], "separate toggle"),
         ("--definition-audio", "Definition Audio", ["on", "details toggle", "off"], "on"),

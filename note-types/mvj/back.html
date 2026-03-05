@@ -822,8 +822,8 @@
   }
   
   function applyDefPrimaryFilter(defs, primary) {
-      // Unlock LOCKED_monolingual for monolingual/unlocked modes
-      if (primary === 'monolingual' || primary === 'unlocked') {
+      // Unlock LOCKED_monolingual for monolingual/monolingual when unlocked modes
+      if (primary === 'monolingual' || primary === 'monolingual when unlocked') {
           if (defs.LOCKED_monolingual) {
               defs.monolingual = defs.LOCKED_monolingual;
               delete defs.LOCKED_monolingual;
@@ -836,7 +836,7 @@
       } else if (primary === 'monolingual') {
           delete defs.bilingual;
       }
-      // 'unlocked': keep both (secondary setting controls the other)
+      // 'monolingual when unlocked': keep both (secondary setting controls the other)
   }
 
   // ── Render (deferred for Anki front→back transitions) ──
@@ -864,7 +864,7 @@
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
-    var defPrimary = _rootStyle.getPropertyValue('--definition-primary').trim() || 'unlocked';
+    var defPrimary = _rootStyle.getPropertyValue('--definition-primary').trim() || 'monolingual when unlocked';
     var defSecondary = _rootStyle.getPropertyValue('--definition-secondary').trim() || 'separate toggle';
 
     var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
