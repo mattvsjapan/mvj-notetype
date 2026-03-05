@@ -19,42 +19,42 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: back only;            /* front & back | back only | details | off */
-    --word-audio: front & back;     /* front & back | back only | details | off */
+    --word-text: back only;            /* front & back | back only | details toggle | off */
+    --word-audio: front & back;     /* front & back | back only | details toggle | off */
     --word-audio-buttons: front only;/* front only | back only | front & back | none */
-    --word-autoplay: front only; /* front only | back only | front & back | when no def audio | details | none */
+    --word-autoplay: front only; /* front only | back only | front & back | when no def audio | details toggle | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
-    --pitch-graph: on;              /* on | details | off                   */
+    --pitch-graph: on;              /* on | details toggle | off             */
 
     /* Sentence */
-    --sentence-text: back only;        /* front & back | back only | details | off */
-    --sentence-audio: front & back; /* front & back | back only | details | off */
+    --sentence-text: back only;        /* front & back | back only | details toggle | off */
+    --sentence-audio: front & back; /* front & back | back only | details toggle | off */
     --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
-    --sentence-autoplay: front only; /* front only | back only | front & back | when no def audio | details | none */
+    --sentence-autoplay: front only; /* front only | back only | front & back | when no def audio | details toggle | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
     --sentence-pitch-color: off;  /* front & back | back only | off      */
 
     /* Image */
-    --image: back only;           /* front & back | back only | details | off */
+    --image: back only;           /* front & back | back only | details toggle | off */
 
     /* Definitions */
-    --definition-text: on;         /* on | details | off                   */
-    --definition-audio: on;        /* on | details | off                   */
+    --definition-text: on;         /* on | details toggle | off             */
+    --definition-audio: on;        /* on | details toggle | off             */
     --definition-audio-buttons: off;/* on | off                            */
     --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
     --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: unlocked; /* bilingual | monolingual | unlocked      */
-    --definition-secondary: details; /* on | off | details | separate toggle    */
+    --definition-secondary: details toggle; /* on | off | details toggle | separate toggle    */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;        /* on | off                            */
     --definition-pitch-color: on;     /* on | off                            */
 
     /* Notes */
-    --notes-text: details;              /* on | details | off                   */
+    --notes-text: details toggle;       /* on | details toggle | off             */
     --notes-font: bilingual;       /* bilingual | monolingual             */
 
     /* Hotkeys */
@@ -1775,7 +1775,7 @@ html:not(.tategaki) .front-content .image-wrap {
     line-height: 1.7;
 }
 
-/* Details section — collapsible container for elements set to "details" */
+/* Details section — collapsible container for elements set to "details toggle" */
 .details-section {
     order: 2;
 }
