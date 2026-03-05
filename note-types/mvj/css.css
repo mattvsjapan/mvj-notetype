@@ -22,7 +22,7 @@
     --word-text: back only;            /* front & back | back only | details | off */
     --word-audio: front & back;     /* front & back | back only | details | off */
     --word-audio-buttons: front only;/* front only | back only | front & back | none */
-    --word-autoplay: front & back; /* front only | back only | front & back | none */
+    --word-autoplay: front only; /* front only | back only | front & back | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
@@ -32,7 +32,7 @@
     --sentence-text: back only;        /* front & back | back only | details | off */
     --sentence-audio: front & back; /* front & back | back only | details | off */
     --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
-    --sentence-autoplay: front & back; /* front only | back only | front & back | none */
+    --sentence-autoplay: front only; /* front only | back only | front & back | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
     --sentence-pitch-color: off;  /* front & back | back only | off      */
@@ -44,17 +44,17 @@
     --definition-text: on;         /* on | details | off                   */
     --definition-audio: on;        /* on | details | off                   */
     --definition-audio-buttons: off;/* on | off                            */
-    --definition-autoplay-bi: always;  /* always | only when primary | primary or reveal | off */
-    --definition-autoplay-mono: always;/* always | only when primary | primary or reveal | off */
+    --definition-autoplay-bi: primary or reveal;  /* always | only when primary | primary or reveal | off */
+    --definition-autoplay-mono: primary or reveal;/* always | only when primary | primary or reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: unlocked; /* bilingual | monolingual | unlocked      */
-    --definition-secondary: toggle; /* on | off | details | toggle             */
+    --definition-secondary: details; /* on | off | details | toggle             */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;        /* on | off                            */
     --definition-pitch-color: on;     /* on | off                            */
 
     /* Notes */
-    --notes-text: on;              /* on | details | off                   */
+    --notes-text: details;              /* on | details | off                   */
     --notes-font: bilingual;       /* bilingual | monolingual             */
 
     /* Hotkeys */
