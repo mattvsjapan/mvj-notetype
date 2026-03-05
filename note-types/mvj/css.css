@@ -2783,6 +2783,16 @@ html.tategaki {
 .tategaki .details-inner {
     min-width: 0;
     flex-direction: row;
+    flex-wrap: wrap;
+    height: 100%;
+}
+
+/* Tategaki details: each text element gets its own column */
+.tategaki .details-inner .sentence,
+.tategaki .details-inner .notes-section,
+.tategaki .details-inner .jp-def-section,
+.tategaki .details-inner .def {
+    height: 100%;
 }
 
 /* Divider */
