@@ -1539,7 +1539,7 @@
     }
 
     // ── Definition text-play ──
-    if (defAudio && defText) {
+    if (defAudio && defText && document.querySelector('.audio-item[data-audio="def"]')) {
       var defLayout = answerEl.getAttribute('data-def-layout');
       var hasDualAudio = !!document.querySelector('.audio-item[data-audio="def"][data-def-lang]');
 
