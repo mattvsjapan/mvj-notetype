@@ -1670,6 +1670,9 @@
           lbl.textContent = origLabel.textContent;
           clone.appendChild(lbl);
         }
+        if (origItem._jsAudios) {
+          clone._jsAudios = origItem._jsAudios;
+        }
         if (origBtns.length > 0) targetRow.appendChild(clone);
     }
 
@@ -2038,15 +2041,16 @@
             if (type === 'def') return shouldDefPlayOnReveal(item.getAttribute('data-def-lang'));
             return false;
           };
+          var detailsSel = '.audio-row .audio-item:not([data-side="off"]), #details-inner .audio-item';
           var hasItems = false;
-          document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])').forEach(function(item) {
+          document.querySelectorAll(detailsSel).forEach(function(item) {
             if (detailsFilter(item.getAttribute('data-audio'), item)) hasItems = true;
           });
           if (hasItems) {
             window.__stopAllAudio();
             detailsAudioGen = window.__webAudioGen;
             setTimeout(function() {
-              window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', detailsFilter);
+              window.__autoplayItems(detailsSel, detailsFilter);
             }, 0);
           }
         } else if (detailsAudioGen === window.__webAudioGen) {
