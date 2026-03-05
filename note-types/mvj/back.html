@@ -1865,25 +1865,25 @@
                 detailsInner.appendChild(biDef);
                 detailsCount++;
             }
-            // When primary is in details and secondary is separate toggle, move toggle into details too
-            if (defSecondary === 'separate toggle') {
-                var jpSecToggle = document.getElementById('jp-def-section');
-                if (jpSecToggle && jpDefEl.textContent.trim()) {
-                    detailsInner.appendChild(jpSecToggle);
-                    detailsCount++;
-                }
-            }
         }
 
+        var _defToggleEliminated = false;
         if (_detSecondaryDef) {
             var jpSecDet = document.getElementById('jp-def-section');
             if (jpSecDet && jpDefEl.textContent.trim()) {
-                var jpToggleDet = document.getElementById('jp-toggle');
-                if (jpToggleDet) jpToggleDet.checked = true;
-                var toggleLabelDet = document.querySelector('.jp-def-toggle');
-                if (toggleLabelDet) toggleLabelDet.style.display = 'none';
-                detailsInner.appendChild(jpSecDet);
-                detailsCount++;
+                if (defSecondary === 'separate toggle') {
+                    // Keep def-toggle visible inside details
+                    detailsInner.appendChild(jpSecDet);
+                    detailsCount++;
+                } else {
+                    // 'on' or 'off' — auto-check and hide toggle label
+                    var jpToggleDet = document.getElementById('jp-toggle');
+                    if (jpToggleDet) jpToggleDet.checked = true;
+                    var toggleLabelDet = document.querySelector('.jp-def-toggle');
+                    if (toggleLabelDet) toggleLabelDet.style.display = 'none';
+                    detailsInner.appendChild(jpSecDet);
+                    detailsCount++;
+                }
             }
         }
 
@@ -1901,6 +1901,19 @@
             if (ns && ns.style.display !== 'none') {
                 detailsInner.appendChild(ns);
                 detailsCount++;
+            }
+        }
+
+        // Sole-item exception: if the only item in details is the jp-def-section,
+        // eliminate the def-toggle so the secondary shows directly on details open
+        if (_detSecondaryDef && defSecondary === 'separate toggle' && detailsCount === 1) {
+            var jpSecSole = document.getElementById('jp-def-section');
+            if (jpSecSole && detailsInner.contains(jpSecSole)) {
+                var jpToggleSole = document.getElementById('jp-toggle');
+                if (jpToggleSole) jpToggleSole.checked = true;
+                var toggleLabelSole = document.querySelector('.jp-def-toggle');
+                if (toggleLabelSole) toggleLabelSole.style.display = 'none';
+                _defToggleEliminated = true;
             }
         }
 
@@ -2041,7 +2054,9 @@
     function shouldDefPlayOnReveal(defLang) {
       var type = defLang === 'mono' ? 'monolingual' : 'bilingual';
       var s = defSetting(type);
-      return (s === 'when primary or on reveal') && !isDefPrimary(type) && _detSecondaryDef;
+      // Only play on details reveal if secondary is in details AND def-toggle was eliminated
+      // (when def-toggle still exists, playback is triggered by the def-toggle listener instead)
+      return (s === 'when primary or on reveal') && !isDefPrimary(type) && _detSecondaryDef && _defToggleEliminated;
     }
     var anyDefWillPlay = false;
     document.querySelectorAll('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])').forEach(function(item) {

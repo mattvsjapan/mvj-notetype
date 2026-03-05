@@ -152,9 +152,9 @@ _SETTINGS = {
         ("--details-sentence-audio", "Sentence Audio", ["on", "off"], "off"),
         ("--details-sentence-autoplay", "Sentence Autoplay", ["on", "off"], "off"),
         ("--details-image", "Image", ["on", "off"], "off"),
-        ("--details-definition-text", "Definition Text", ["on", "off"], "off"),
-        ("--details-definition-audio", "Definition Audio", ["on", "off"], "off"),
+        ("--details-definition-text", "Primary Definition", ["on", "off"], "off"),
         ("--details-definition-secondary", "Secondary Definition", ["on", "off"], "off"),
+        ("--details-definition-audio", "Definition Audio", ["on", "off"], "off"),
         ("--details-notes-text", "Notes Text", ["on", "off"], "off"),
     ],
 }
