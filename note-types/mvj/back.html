@@ -1543,8 +1543,19 @@
       }
 
       if (defLayout === 'bi-only' || defLayout === 'mono-only') {
-        if (defEl.innerHTML) {
-          window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+        if (_detSecondaryDef && hasDualAudio) {
+          var detDefIsBi = (defLayout === 'bi-only');
+          var detDefKey = detDefIsBi ? 'def-bi' : 'def-mono';
+          var detJpKey = detDefIsBi ? 'def-mono' : 'def-bi';
+          if (defEl.innerHTML) window.__linkTextPlay(defEl, detDefKey, _defTextPlayOpts(detDefIsBi ? 'bi' : 'mono'));
+          if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, detJpKey, _defTextPlayOpts(detDefIsBi ? 'mono' : 'bi'));
+        } else {
+          if (defEl.innerHTML) {
+            window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+          }
+          if (_detSecondaryDef && jpDefEl.innerHTML) {
+            window.__linkTextPlay(jpDefEl, 'def', _defTextPlayOpts(null));
+          }
         }
       } else if (defLayout === 'dual-bi' || defLayout === 'dual-mono') {
         if (hasDualAudio) {

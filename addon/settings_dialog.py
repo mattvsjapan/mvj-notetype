@@ -135,7 +135,7 @@ _SETTINGS = {
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-primary", "Primary Definition", ["bilingual", "monolingual", "unlocked"], "unlocked"),
         ("--definition-secondary", "Secondary Definition", ["on", "off", "details", "toggle"], "toggle"),
-        ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
+        ("--definition-default", "Definition Default Font", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
         ("--definition-pitch-color", "Definition Pitch Color", ["on", "off"], "on"),
     ],
