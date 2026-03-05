@@ -105,32 +105,32 @@ _SETTINGS = {
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [
-        ("--word-text", "Word Text", ["front & back", "back only", "details toggle", "off"], "front & back"),
-        ("--word-audio", "Word Audio", ["front & back", "back only", "details toggle", "off"], "back only"),
+        ("--word-text", "Word Text", ["front & back", "back only", "off"], "front & back"),
+        ("--word-audio", "Word Audio", ["front & back", "back only", "off"], "back only"),
         ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
-        ("--word-autoplay", "Word Autoplay", ["front only", "back only", "front & back", "when no def audio", "details toggle", "none"], "front & back"),
+        ("--word-autoplay", "Word Autoplay", ["front only", "back only", "front & back", "when no def audio", "none"], "front & back"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front & back", "back only", "off"], "front & back"),
         ("--word-pitch-color", "Word Pitch Color", ["front & back", "back only", "off"], "back only"),
-        ("--pitch-graph", "Pitch Graph", ["on", "details toggle", "off"], "on"),
+        ("--pitch-graph", "Pitch Graph", ["on", "off"], "on"),
     ],
     "Sentence Text": [
-        ("--sentence-text", "Sentence Text", ["front & back", "back only", "details toggle", "off"], "front & back"),
-        ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "details toggle", "off"], "back only"),
+        ("--sentence-text", "Sentence Text", ["front & back", "back only", "off"], "front & back"),
+        ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "off"], "back only"),
         ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
-        ("--sentence-autoplay", "Sentence Autoplay", ["front only", "back only", "front & back", "when no def audio", "details toggle", "none"], "front & back"),
+        ("--sentence-autoplay", "Sentence Autoplay", ["front only", "back only", "front & back", "when no def audio", "none"], "front & back"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front & back", "back only", "off"], "front & back"),
         ("--sentence-pitch-color", "Sentence Pitch Color", ["front & back", "back only", "off"], "back only"),
     ],
     "Image": [
-        ("--image", "Image", ["front & back", "back only", "details toggle", "off"], "back only"),
+        ("--image", "Image", ["front & back", "back only", "off"], "back only"),
     ],
     "Definitions": [
         ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "monolingual when unlocked"], "monolingual when unlocked"),
-        ("--definition-text", "Primary Definition Text", ["on", "details toggle", "off"], "on"),
-        ("--definition-secondary", "Secondary Definition Text", ["on", "off", "details toggle", "separate toggle"], "separate toggle"),
-        ("--definition-audio", "Definition Audio", ["on", "details toggle", "off"], "on"),
+        ("--definition-text", "Primary Definition Text", ["on", "off"], "on"),
+        ("--definition-secondary", "Secondary Definition Text", ["on", "off", "separate toggle"], "separate toggle"),
+        ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "off"], "on"),
         ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
         ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
@@ -140,8 +140,22 @@ _SETTINGS = {
         ("--definition-pitch-color", "Definition Pitch Color", ["on", "off"], "on"),
     ],
     "Notes": [
-        ("--notes-text", "Notes Text", ["on", "details toggle", "off"], "on"),
+        ("--notes-text", "Notes Text", ["on", "off"], "on"),
         ("--notes-font", "Notes Font", ["bilingual", "monolingual"], "bilingual"),
+    ],
+    "Details Toggle": [
+        ("--details-word-text", "Word Text", ["on", "off"], "off"),
+        ("--details-word-audio", "Word Audio", ["on", "off"], "off"),
+        ("--details-word-autoplay", "Word Autoplay", ["on", "off"], "off"),
+        ("--details-pitch-graph", "Pitch Graph", ["on", "off"], "off"),
+        ("--details-sentence-text", "Sentence Text", ["on", "off"], "off"),
+        ("--details-sentence-audio", "Sentence Audio", ["on", "off"], "off"),
+        ("--details-sentence-autoplay", "Sentence Autoplay", ["on", "off"], "off"),
+        ("--details-image", "Image", ["on", "off"], "off"),
+        ("--details-definition-text", "Definition Text", ["on", "off"], "off"),
+        ("--details-definition-audio", "Definition Audio", ["on", "off"], "off"),
+        ("--details-definition-secondary", "Secondary Definition", ["on", "off"], "off"),
+        ("--details-notes-text", "Notes Text", ["on", "off"], "off"),
     ],
 }
 
@@ -154,6 +168,9 @@ _OVERRIDABLE = [
     "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-primary", "definition-secondary", "definition-default",
     "definition-furigana", "definition-pitch-color",
     "notes-text", "notes-font",
+    "details-word-text", "details-word-audio", "details-word-autoplay", "details-pitch-graph",
+    "details-sentence-text", "details-sentence-audio", "details-sentence-autoplay",
+    "details-image", "details-definition-text", "details-definition-audio", "details-definition-secondary", "details-notes-text",
 ]
 
 # Regex to find the modes *content* (between the MODES banner and the closing ═══ banner).
@@ -200,6 +217,24 @@ class Mode:
     overrides: dict[str, str] = field(default_factory=dict)
 
 
+# Migration: old settings that used "details toggle" as a value map to
+# the corresponding --details-* variable.
+_DETAILS_TOGGLE_MIGRATION = {
+    "--word-text": ("--details-word-text", "back only"),
+    "--word-audio": ("--details-word-audio", "back only"),
+    "--word-autoplay": ("--details-word-autoplay", "none"),
+    "--pitch-graph": ("--details-pitch-graph", "on"),
+    "--sentence-text": ("--details-sentence-text", "back only"),
+    "--sentence-audio": ("--details-sentence-audio", "back only"),
+    "--sentence-autoplay": ("--details-sentence-autoplay", "none"),
+    "--image": ("--details-image", "back only"),
+    "--definition-text": ("--details-definition-text", "on"),
+    "--definition-audio": ("--details-definition-audio", "on"),
+    "--definition-secondary": ("--details-definition-secondary", "on"),
+    "--notes-text": ("--details-notes-text", "on"),
+}
+
+
 def _parse_settings(css: str) -> dict[str, str]:
     """Extract current setting values from CSS text."""
     values = {}
@@ -211,18 +246,39 @@ def _parse_settings(css: str) -> dict[str, str]:
     for var, _label, default in _HOTKEYS:
         m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
         values[var] = m.group(1) if m else default
+
+    # Migrate old "details toggle" values to the new --details-* system
+    for old_var, (details_var, replacement) in _DETAILS_TOGGLE_MIGRATION.items():
+        if values.get(old_var) == "details toggle":
+            values[old_var] = replacement
+            values[details_var] = "on"
+
     return values
 
 
 def _apply_settings(css: str, settings: dict[str, str]) -> str:
-    """Replace setting values in the CSS string in-place."""
+    """Replace setting values in the CSS string in-place.
+
+    If a variable doesn't exist yet (e.g. after a template update adds new
+    settings), insert it before the Hotkeys section.
+    """
     for var, value in settings.items():
-        css = re.sub(
+        new_css, n = re.subn(
             rf"({re.escape(var)}:\s*).+?(;)",
             rf"\g<1>{value}\2",
             css,
             count=1,
         )
+        if n:
+            css = new_css
+        else:
+            # Variable missing from CSS — insert before Hotkeys section
+            css = re.sub(
+                r"(\n[ \t]*/\* Hotkeys \*/)",
+                rf"\n    {var}: {value};\1",
+                css,
+                count=1,
+            )
     return css
 
 

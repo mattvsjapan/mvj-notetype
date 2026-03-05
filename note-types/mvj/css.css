@@ -19,43 +19,57 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: back only;            /* front & back | back only | details toggle | off */
-    --word-audio: front & back;     /* front & back | back only | details toggle | off */
+    --word-text: back only;        /* front & back | back only | off      */
+    --word-audio: front & back;    /* front & back | back only | off      */
     --word-audio-buttons: front only;/* front only | back only | front & back | none */
-    --word-autoplay: front only; /* front only | back only | front & back | when no def audio | details toggle | none */
+    --word-autoplay: front only;   /* front only | back only | front & back | when no def audio | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
-    --pitch-graph: on;              /* on | details toggle | off             */
+    --pitch-graph: on;             /* on | off                            */
 
     /* Sentence */
-    --sentence-text: back only;        /* front & back | back only | details toggle | off */
-    --sentence-audio: front & back; /* front & back | back only | details toggle | off */
+    --sentence-text: back only;    /* front & back | back only | off      */
+    --sentence-audio: front & back;/* front & back | back only | off      */
     --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
-    --sentence-autoplay: front only; /* front only | back only | front & back | when no def audio | details toggle | none */
+    --sentence-autoplay: front only;/* front only | back only | front & back | when no def audio | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
-    --sentence-pitch-color: off;  /* front & back | back only | off      */
+    --sentence-pitch-color: off;   /* front & back | back only | off      */
 
     /* Image */
-    --image: back only;           /* front & back | back only | details toggle | off */
+    --image: back only;            /* front & back | back only | off      */
 
     /* Definitions */
-    --definition-text: on;         /* on | details toggle | off             */
-    --definition-audio: on;        /* on | details toggle | off             */
+    --definition-text: on;         /* on | off                            */
+    --definition-audio: on;        /* on | off                            */
     --definition-audio-buttons: off;/* on | off                            */
     --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
     --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: monolingual when unlocked; /* bilingual | monolingual | monolingual when unlocked */
-    --definition-secondary: details toggle; /* on | off | details toggle | separate toggle    */
+    --definition-secondary: on;    /* on | off | separate toggle          */
     --definition-default: bilingual; /* monolingual | bilingual             */
-    --definition-furigana: on;        /* on | off                            */
-    --definition-pitch-color: on;     /* on | off                            */
+    --definition-furigana: on;     /* on | off                            */
+    --definition-pitch-color: on;  /* on | off                            */
 
     /* Notes */
-    --notes-text: details toggle;       /* on | details toggle | off             */
+    --notes-text: on;              /* on | off                            */
     --notes-font: bilingual;       /* bilingual | monolingual             */
+
+    /* Details Toggle */
+    --details-word-text: off;      /* on | off                            */
+    --details-word-audio: off;     /* on | off                            */
+    --details-word-autoplay: off;  /* on | off                            */
+    --details-pitch-graph: off;    /* on | off                            */
+    --details-sentence-text: off;  /* on | off                            */
+    --details-sentence-audio: off; /* on | off                            */
+    --details-sentence-autoplay: off;/* on | off                          */
+    --details-image: off;          /* on | off                            */
+    --details-definition-text: off;/* on | off                            */
+    --details-definition-audio: off;/* on | off                           */
+    --details-definition-secondary: on;/* on | off                        */
+    --details-notes-text: on;      /* on | off                            */
 
     /* Hotkeys */
     --hotkey-word-audio: z;        /* keyboard key                        */
@@ -1775,7 +1789,7 @@ html:not(.tategaki) .front-content .image-wrap {
     line-height: 1.7;
 }
 
-/* Details section — collapsible container for elements set to "details toggle" */
+/* Details section — collapsible container for elements with details toggle on */
 .details-section {
     order: 2;
 }
