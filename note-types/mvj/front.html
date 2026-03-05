@@ -636,6 +636,40 @@ window.__playItemAudios = function(item) {
     })();
 };
 
+// Build queue from multiple audio-item elements and play sequentially.
+// filterFn(type) returns true to include, false to skip.
+// onDone is called after the last item finishes (optional).
+window.__autoplayItems = function(selector, filterFn, onDone) {
+    var items = document.querySelectorAll(selector);
+    var queue = [];
+    items.forEach(function(item) {
+        var type = item.getAttribute('data-audio');
+        if (!filterFn(type)) return;
+        var btns = item.querySelectorAll('.replay-button');
+        if (item._jsAudios && item._jsAudios.length) {
+            for (var j = 0; j < item._jsAudios.length; j++)
+                queue.push({ src: item._jsAudios[j].src, btn: btns[j] });
+        } else {
+            var els = item.querySelectorAll('audio');
+            for (var j = 0; j < els.length; j++)
+                queue.push({ src: els[j].src, btn: btns[j] });
+        }
+    });
+    if (!queue.length) { if (onDone) onDone(); return; }
+    var gen = window.__webAudioGen;
+    var i = 0;
+    (function playNext() {
+        if (gen !== window.__webAudioGen) return;
+        if (i < queue.length) {
+            var entry = queue[i++];
+            if (entry.btn) window.__animateBtn(entry.btn);
+            window.__playMobile(entry.src, entry.btn)
+                .then(function() { if (gen === window.__webAudioGen) playNext(); })
+                ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
+        } else if (onDone) { onDone(); }
+    })();
+};
+
 </script>
 
 <script>
@@ -1098,36 +1132,13 @@ function clearLastMargin(el) {
 // Autoplay audio items in sequence (front side only)
 (function() {
   if (document.querySelector('.back')) return;
-  var items = document.querySelectorAll('.audio-row .audio-item[data-side="front"]');
-  var queue = [];
-  var animateBtn = window.__animateBtn;
   var ap = window.__autoplayEnabled;
-  items.forEach(function(item) {
-    var type = item.getAttribute('data-audio');
-    if ((type === 'word' && ap.word !== 'front only' && ap.word !== 'front & back')
-     || (type === 'sentence' && ap.sentence !== 'front only' && ap.sentence !== 'front & back')) return;
-    if (item._jsAudios) {
-      var btns = item.querySelectorAll('.replay-button');
-      for (var j = 0; j < item._jsAudios.length; j++)
-        queue.push({ audio: item._jsAudios[j], btn: btns[j], js: true });
-    } else {
-      var audio = item.querySelector('audio');
-      var btn = item.querySelector('.replay-button');
-      if (audio) queue.push({ audio: audio, btn: btn, js: false });
-    }
-  });
-  if (!queue.length) return;
-  var i = 0;
   setTimeout(function() {
-    var gen = window.__webAudioGen;
-    (function playNext() {
-      if (i >= queue.length || gen !== window.__webAudioGen) return;
-      var entry = queue[i++];
-      if (entry.btn) animateBtn(entry.btn);
-      window.__playMobile(entry.audio.src, entry.btn)
-          .then(function() { if (gen === window.__webAudioGen) playNext(); })
-          ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
-    })();
+    window.__autoplayItems('.audio-row .audio-item[data-side="front"]', function(type) {
+      if (type === 'word') return ap.word === 'front only' || ap.word === 'front & back';
+      if (type === 'sentence') return ap.sentence === 'front only' || ap.sentence === 'front & back';
+      return false;
+    });
   }, 0);
 })();
 </script>

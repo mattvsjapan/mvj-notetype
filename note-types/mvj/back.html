@@ -1965,42 +1965,34 @@
     }
 
     // ── Auto-play back-side audio (word/sentence set to "back", then definition) ──
+    var ap = window.__autoplayEnabled;
     setTimeout(function() {
-      var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
-      var queue = [];
-      var animateBtn = window.__animateBtn;
-      var ap = window.__autoplayEnabled;
-      items.forEach(function(item) {
-        var type = item.getAttribute('data-audio');
-        if ((type === 'word' && ap.word !== 'back only' && ap.word !== 'front & back')
-         || (type === 'sentence' && ap.sentence !== 'back only' && ap.sentence !== 'front & back')) return;
-        var btns = item.querySelectorAll('.replay-button');
-        if (item._jsAudios && item._jsAudios.length) {
-          for (var j = 0; j < item._jsAudios.length; j++) {
-            queue.push({ audio: item._jsAudios[j], btn: btns[j] });
-          }
-        } else {
-          var els = item.querySelectorAll('audio');
-          for (var j = 0; j < els.length; j++) {
-            queue.push({ audio: els[j], btn: btns[j] });
-          }
-        }
-      });
-      var gen = window.__webAudioGen;
-      var i = 0;
-      (function playNext() {
-        if (gen !== window.__webAudioGen) return;
-        if (i < queue.length) {
-          var entry = queue[i++];
-          if (entry.btn) animateBtn(entry.btn);
-          window.__playMobile(entry.audio.src, entry.btn)
-            .then(function() { if (gen === window.__webAudioGen) playNext(); })
-            ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
-        } else if (window.__autoPlayDefAudio && ap[window.__autoPlayDefAudioType === 'monolingual' ? 'definitionMono' : 'definitionBi']) {
+      window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type) {
+        if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back';
+        if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back';
+        return false;
+      }, function() {
+        if (window.__autoPlayDefAudio && ap[window.__autoPlayDefAudioType === 'monolingual' ? 'definitionMono' : 'definitionBi']) {
           window.__autoPlayDefAudio();
         }
-      })();
+      });
     }, 0);
+
+    // ── Auto-play word/sentence audio when Details is expanded ──
+    var detailsCb = document.getElementById('details-toggle');
+    if (detailsCb && (ap.word === 'details' || ap.sentence === 'details')) {
+      detailsCb.addEventListener('change', function() {
+        if (!detailsCb.checked) return;
+        window.__stopAllAudio();
+        setTimeout(function() {
+          window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type) {
+            if (type === 'word') return ap.word === 'details';
+            if (type === 'sentence') return ap.sentence === 'details';
+            return false;
+          });
+        }, 0);
+      });
+    }
   }
   _renderBack();
 
