@@ -1743,7 +1743,6 @@ html:not(.tategaki) .front-content .image-wrap {
 
 /* Notes section */
 .notes-section {
-    margin-top: 16px;
 }
 
 .notes {
@@ -1885,6 +1884,7 @@ html:not(.tategaki) .front-content .image-wrap {
 }
 
 .details-inner .jp-def-section {
+    margin: 0;
     order: unset;
 }
 
