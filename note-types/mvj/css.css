@@ -47,7 +47,8 @@
     --definition-autoplay-bi: on;  /* on | off                            */
     --definition-autoplay-mono: on;/* on | off                            */
     --definition-text-play: on;    /* on | off                            */
-    --definition-mode: all;        /* all | bilingual | monolingual | unlocked */
+    --definition-primary: unlocked; /* bilingual | monolingual | unlocked      */
+    --definition-secondary: toggle; /* on | off | details | toggle             */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;        /* on | off                            */
     --definition-pitch-color: on;     /* on | off                            */
@@ -1434,7 +1435,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     font-weight: 400;
     line-height: 1.45;
     color: var(--text-1);
-    margin: 0;
+    margin: 0 0 16px 0;
     text-align: left;
 }
 
@@ -1749,11 +1750,6 @@ html:not(.tategaki) .front-content .image-wrap {
     display: none;
 }
 
-/* Gap between def and jp-def-section — only in dual modes, direct child only */
-.answer[data-def-layout="dual-bi"] > .def,
-.answer[data-def-layout="dual-mono"] > .def {
-    margin-bottom: 16px;
-}
 
 /* Notes section */
 .notes-section {
@@ -1764,7 +1760,7 @@ html:not(.tategaki) .front-content .image-wrap {
     font-weight: 400;
     line-height: 1.45;
     color: var(--text-1);
-    margin: 0;
+    margin: 0 0 16px 0;
     text-align: left;
 }
 

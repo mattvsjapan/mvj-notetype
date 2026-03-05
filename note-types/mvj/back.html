@@ -813,22 +813,22 @@
     return defs;
   }
   
-  function applyDefModeFilter(defs, mode) {
-      if (mode === 'bilingual') {
-          delete defs.monolingual;
-          delete defs.LOCKED_monolingual;
-      } else if (mode === 'monolingual') {
-          delete defs.bilingual;
-          if (defs.LOCKED_monolingual) {
-              defs.monolingual = defs.LOCKED_monolingual;
-              delete defs.LOCKED_monolingual;
-          }
-      } else if (mode === 'unlocked') {
+  function applyDefPrimaryFilter(defs, primary) {
+      // Unlock LOCKED_monolingual for monolingual/unlocked modes
+      if (primary === 'monolingual' || primary === 'unlocked') {
           if (defs.LOCKED_monolingual) {
               defs.monolingual = defs.LOCKED_monolingual;
               delete defs.LOCKED_monolingual;
           }
       }
+      // In bilingual/monolingual mode, remove the other type entirely
+      if (primary === 'bilingual') {
+          delete defs.monolingual;
+          delete defs.LOCKED_monolingual;
+      } else if (primary === 'monolingual') {
+          delete defs.bilingual;
+      }
+      // 'unlocked': keep both (secondary setting controls the other)
   }
 
   // ── Render (deferred for Anki front→back transitions) ──
@@ -856,7 +856,8 @@
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
     var defAudio = _rootStyle.getPropertyValue('--definition-audio').trim() !== 'off';
-    var defMode = _rootStyle.getPropertyValue('--definition-mode').trim() || 'all';
+    var defPrimary = _rootStyle.getPropertyValue('--definition-primary').trim() || 'unlocked';
+    var defSecondary = _rootStyle.getPropertyValue('--definition-secondary').trim() || 'toggle';
 
     var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
     var wordPitchColor = (rawWPC === 'front & back' || rawWPC === 'front' || rawWPC === 'both') ? 'front & back' : (rawWPC === 'off') ? 'off' : 'back only';
@@ -1091,14 +1092,55 @@
       var defDefault = _rootStyle.getPropertyValue('--definition-default').trim() || 'monolingual';
       defs[defDefault] = defHtml.trim();
     }
-    applyDefModeFilter(defs, defMode);
+    applyDefPrimaryFilter(defs, defPrimary);
     var monoKey = defs.monolingual ? 'monolingual' : (defs.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
     var hasBi = !!defs.bilingual;
     var hasMono = !!monoKey;
-  
-    var answerEl = document.querySelector('.answer');
 
-    if (hasBi && !hasMono) {
+    var answerEl = document.querySelector('.answer');
+    var _detSecondaryDef = false;
+
+    if (hasBi && hasMono) {
+      var monoIsPrimary = !!defs.monolingual;
+      var primaryContent = monoIsPrimary ? defs.monolingual : defs.bilingual;
+      var secondaryContent = monoIsPrimary ? defs.bilingual : defs[monoKey];
+
+      // Render primary in defEl
+      if (monoIsPrimary) {
+        defEl.innerHTML = colorizeText(primaryContent, defEl) || primaryContent;
+        defEl.setAttribute('data-font', 'jp');
+        window.__monoUnlocked = true;
+      } else {
+        defEl.innerHTML = primaryContent;
+      }
+
+      if (defSecondary === 'off') {
+        answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'mono-only' : 'bi-only');
+      } else {
+        // Render secondary in jpDefEl
+        if (monoIsPrimary) {
+          jpDefEl.innerHTML = secondaryContent;
+          jpDefEl.className = 'def';
+          var toggleLabel = document.querySelector('.jp-def-toggle');
+          if (toggleLabel) toggleLabel.textContent = 'Bilingual';
+        } else {
+          jpDefEl.innerHTML = colorizeText(secondaryContent, jpDefEl) || secondaryContent;
+        }
+
+        if (defSecondary === 'on') {
+          var jpToggleOn = document.getElementById('jp-toggle');
+          if (jpToggleOn) jpToggleOn.checked = true;
+          var toggleLabelOn = document.querySelector('.jp-def-toggle');
+          if (toggleLabelOn) toggleLabelOn.style.display = 'none';
+          answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'dual-mono' : 'dual-bi');
+        } else if (defSecondary === 'toggle') {
+          answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'dual-mono' : 'dual-bi');
+        } else if (defSecondary === 'details') {
+          answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'mono-only' : 'bi-only');
+          _detSecondaryDef = true;
+        }
+      }
+    } else if (hasBi && !hasMono) {
       defEl.innerHTML = defs.bilingual;
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
@@ -1106,21 +1148,6 @@
       defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
-    } else if (hasBi && hasMono) {
-      if (defs.monolingual) {
-        defEl.innerHTML = colorizeText(defs.monolingual, defEl) || defs.monolingual;
-        defEl.setAttribute('data-font', 'jp');
-        jpDefEl.innerHTML = defs.bilingual;
-        jpDefEl.className = 'def';
-        var toggleLabel = document.querySelector('.jp-def-toggle');
-        if (toggleLabel) toggleLabel.textContent = 'Bilingual';
-        answerEl.setAttribute('data-def-layout', 'dual-mono');
-        window.__monoUnlocked = true;
-      } else {
-        defEl.innerHTML = defs.bilingual;
-        jpDefEl.innerHTML = colorizeText(defs.LOCKED_monolingual, jpDefEl) || defs.LOCKED_monolingual;
-        answerEl.setAttribute('data-def-layout', 'dual-bi');
-      }
     } else {
       answerEl.setAttribute('data-def-layout', 'none');
     }
@@ -1181,7 +1208,7 @@
           nativeGroups[curType].push(node);
         }
       }
-      applyDefModeFilter(nativeGroups, defMode);
+      applyDefPrimaryFilter(nativeGroups, defPrimary);
 
       var biBtns = nativeGroups.bilingual ? window.__adoptNativeAudio(nativeGroups.bilingual) : [];
       var nativeMonoKey = nativeGroups.monolingual ? 'monolingual' : (nativeGroups.LOCKED_monolingual ? 'LOCKED_monolingual' : null);
@@ -1224,11 +1251,13 @@
           window.__autoPlayDefAudio = window.__playLockedDefAudio;
           window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
 
-          var defToggle = document.getElementById('jp-toggle');
-          if (defToggle) {
-            defToggle.addEventListener('change', function() {
-              if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) secondaryBtns[0].click();
-            });
+          if (defSecondary === 'toggle') {
+            var defToggle = document.getElementById('jp-toggle');
+            if (defToggle) {
+              defToggle.addEventListener('change', function() {
+                if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) secondaryBtns[0].click();
+              });
+            }
           }
         } else {
           var singleBtns = hasBiBtns ? biBtns : monoBtns;
@@ -1276,7 +1305,7 @@
     // ── Tagged definition audio: [audio:] JS playback ──
     if (window.__defAudioRawHtml && defAudio) {
       var audioDefs = parseDefinitions(window.__defAudioRawHtml);
-      applyDefModeFilter(audioDefs, defMode);
+      applyDefPrimaryFilter(audioDefs, defPrimary);
   
       var extractAudioFilenames = function(blockHtml) {
         var tmp = document.createElement('div');
@@ -1421,11 +1450,13 @@
             window.__autoPlayDefAudioType = window.__monoUnlocked ? 'monolingual' : 'bilingual';
           }
 
-          var defToggle = document.getElementById('jp-toggle');
-          if (defToggle) {
-            defToggle.addEventListener('change', function() {
-              if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) playSecondary();
-            });
+          if (defSecondary === 'toggle') {
+            var defToggle = document.getElementById('jp-toggle');
+            if (defToggle) {
+              defToggle.addEventListener('change', function() {
+                if (defToggle.checked && window.__autoplayEnabled[window.__monoUnlocked ? 'definitionBi' : 'definitionMono']) playSecondary();
+              });
+            }
           }
         } else {
           var defItem = document.createElement('div');
@@ -1718,7 +1749,7 @@
     // ── Details section — move elements from their normal position ──
     var detailsSection = document.getElementById('details-section');
     var detailsInner = document.getElementById('details-inner');
-    if (detailsSection && detailsInner && _hasAnyDetails) {
+    if (detailsSection && detailsInner && (_hasAnyDetails || _detSecondaryDef)) {
         var detailsCount = 0;
 
         // Order: target-word, pitch-graph, word-audio, image, sentence, sentence-audio,
@@ -1797,6 +1828,18 @@
             var jpSec = document.getElementById('jp-def-section');
             if (jpSec && jpSec.style.display !== 'none') {
                 detailsInner.appendChild(jpSec);
+                detailsCount++;
+            }
+        }
+
+        if (_detSecondaryDef && !_detDefText) {
+            var jpSecDet = document.getElementById('jp-def-section');
+            if (jpSecDet && jpDefEl.textContent.trim()) {
+                var jpToggleDet = document.getElementById('jp-toggle');
+                if (jpToggleDet) jpToggleDet.checked = true;
+                var toggleLabelDet = document.querySelector('.jp-def-toggle');
+                if (toggleLabelDet) toggleLabelDet.style.display = 'none';
+                detailsInner.appendChild(jpSecDet);
                 detailsCount++;
             }
         }
@@ -2052,7 +2095,8 @@
     function handler(ev) {
       if (ev.key === K_JP) {
         var cb = document.getElementById('jp-toggle');
-        if (cb) {
+        var tl = document.querySelector('.jp-def-toggle');
+        if (cb && tl && tl.style.display !== 'none') {
           ev.preventDefault();
           ev.stopPropagation();
           cb.checked = !cb.checked;

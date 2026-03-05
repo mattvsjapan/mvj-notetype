@@ -132,7 +132,8 @@ _SETTINGS = {
         ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "off"], "on"),
         ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "off"], "on"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
-        ("--definition-mode", "Definition Mode", ["all", "bilingual", "monolingual", "unlocked"], "all"),
+        ("--definition-primary", "Primary Definition", ["bilingual", "monolingual", "unlocked"], "unlocked"),
+        ("--definition-secondary", "Secondary Definition", ["on", "off", "details", "toggle"], "toggle"),
         ("--definition-default", "Definition Default", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
         ("--definition-pitch-color", "Definition Pitch Color", ["on", "off"], "on"),
@@ -149,7 +150,7 @@ _OVERRIDABLE = [
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-mode", "definition-default",
+    "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-primary", "definition-secondary", "definition-default",
     "definition-furigana", "definition-pitch-color",
     "notes-text", "notes-font",
 ]
