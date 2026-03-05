@@ -1470,11 +1470,16 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .jp-def-section {
     margin-top: 0;
     margin-bottom: 16px;
+}
+
+.jp-def-section,
+.details-section {
     text-align: left;
 }
 
 @media (hover: none) and (max-width: 767px) {
-    .jp-def-section {
+    .jp-def-section,
+    .details-section {
         text-align: center;
     }
 }
