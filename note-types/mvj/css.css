@@ -1453,6 +1453,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 
 .jp-def-section {
     margin-top: 0;
+    margin-bottom: 16px;
     text-align: left;
 }
 
@@ -1761,7 +1762,6 @@ html:not(.tategaki) .front-content .image-wrap {
 
 /* Details section — collapsible container for elements set to "details" */
 .details-section {
-    margin-top: 16px;
     order: 2;
 }
 
@@ -2778,7 +2778,7 @@ html:not(.tategaki) .divider {
 }
 
 html:not(.tategaki) .back:not(:has(.front-content [data-side="front"]))
-    .answer:not([data-def-text="off"]):not([data-def-layout="none"]):has(.sentence:not([data-show="off"]):not(:empty)) .divider {
+    .answer:not([data-def-text="off"]):not([data-def-layout="none"]):has(> .sentence:not([data-show="off"]):not(:empty)):has(> .def:not(:empty)) .divider {
     display: block;
 }
 
