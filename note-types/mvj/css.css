@@ -1895,7 +1895,8 @@ html:not(.tategaki) .front-content .image-wrap {
     order: unset;
 }
 
-.details-inner .jp-def-section {
+.details-inner.details-inner .jp-def-section {
+    display: block;
     margin: 0;
     order: unset;
 }
