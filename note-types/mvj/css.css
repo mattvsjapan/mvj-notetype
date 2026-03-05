@@ -2792,11 +2792,16 @@ html.tategaki {
     height: 100%;
 }
 
-/* Tategaki details: each text element gets its own column */
+/* Tategaki details: each element gets its own column */
+.tategaki .details-inner .target-word,
+.tategaki .details-inner .pitch-graph,
+.tategaki .details-inner .word-pitch-group,
+.tategaki .details-inner .image-wrap,
 .tategaki .details-inner .sentence,
 .tategaki .details-inner .notes-section,
 .tategaki .details-inner .jp-def-section,
 .tategaki .details-inner .def {
+    margin: 0;
     height: 100%;
 }
 
