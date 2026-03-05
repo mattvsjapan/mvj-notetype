@@ -48,13 +48,13 @@
     --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: monolingual when unlocked; /* bilingual | monolingual | monolingual when unlocked */
-    --definition-secondary: on;    /* on | off | separate toggle          */
+    --definition-secondary: separate toggle;    /* on | off | separate toggle          */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;     /* on | off                            */
     --definition-pitch-color: on;  /* on | off                            */
 
     /* Notes */
-    --notes-text: on;              /* on | off                            */
+    --notes-text: off;              /* on | off                            */
     --notes-font: bilingual;       /* bilingual | monolingual             */
 
     /* Details Toggle */
@@ -68,7 +68,7 @@
     --details-image: off;          /* on | off                            */
     --details-definition-text: off;/* on | off                            */
     --details-definition-audio: off;/* on | off                           */
-    --details-definition-secondary: on;/* on | off                        */
+    --details-definition-secondary: off;/* on | off                        */
     --details-notes-text: on;      /* on | off                            */
 
     /* Hotkeys */
