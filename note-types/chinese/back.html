@@ -180,6 +180,13 @@
                 <p class="jp-def" id="def-monolingual"></p>
             </div>
         </div>
+        <div class="jp-def-section" style="--d:250" id="notes-section">
+            <input type="checkbox" id="notes-toggle" class="jp-def-input">
+            <label for="notes-toggle" class="jp-def-toggle" onclick="">Notes</label>
+            <div class="jp-def-wrap">
+                <p class="jp-def" id="notes-text"></p>
+            </div>
+        </div>
     </div>
 </div>
 </div>
@@ -187,6 +194,7 @@
 <div id="raw-word" style="display:none">{{furigana:Word}}</div>
 <div id="raw-sentence" style="display:none">{{Sentence}}</div>
 <div id="raw-definition" style="display:none">{{Definition}}</div>
+<div id="raw-notes" style="display:none">{{Notes}}</div>
 
 <script>
 (function() {
@@ -828,6 +836,14 @@ function _renderBack() {
     }
   }
 
+  // ── Notes ──
+  var rawNotes = document.getElementById('raw-notes');
+  var notesSec = document.getElementById('notes-section');
+  var notesTxt = document.getElementById('notes-text');
+  var notesContent = (rawNotes ? rawNotes.innerHTML : '').trim();
+  if (notesContent) { notesTxt.innerHTML = notesContent; }
+  else { notesSec.setAttribute('data-state', 'empty'); }
+
   // ── Trigger reveal animations after content is ready ──
   var riEls = document.querySelectorAll('.answer > [style*="--d"]');
   for (var ri = 0; ri < riEls.length; ri++) riEls[ri].classList.add('ri');
@@ -934,6 +950,16 @@ _renderBack();
         cb.checked = !cb.checked;
         cb.dispatchEvent(new Event('change'));
         var label = document.querySelector('.jp-def-toggle');
+        if (label) animateToggle(label);
+      }
+    }
+    if (ev.key === 'k') {
+      var cb = document.getElementById('notes-toggle');
+      if (cb) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        cb.checked = !cb.checked;
+        var label = cb.nextElementSibling;
         if (label) animateToggle(label);
       }
     }
