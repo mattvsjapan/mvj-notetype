@@ -1018,6 +1018,18 @@ function clearLastMargin(el) {
         }
     }
 
+    // Fallback: hide buttons that have active text-play coverage
+    if (_wab === 'fallback' && wordAI) {
+        if (document.querySelector('.text-play:not(.text-play-inert)[data-text-play="word"]')) {
+            wordAI.setAttribute('data-btn-off', '');
+        }
+    }
+    if (_sab === 'fallback' && sentAI) {
+        if (document.querySelector('.text-play:not(.text-play-inert)[data-text-play="sentence"]')) {
+            sentAI.setAttribute('data-btn-off', '');
+        }
+    }
+
     // Only clear last margins when front has visible content — in the
     // audio-only case the audio-row's margin-bottom provides symmetric
     // spacing and must be preserved. Tategaki audio-only is an exception:

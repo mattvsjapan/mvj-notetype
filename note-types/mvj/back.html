@@ -1621,12 +1621,34 @@
       });
     }
 
-    // ── Per-section audio button hiding for definitions ──
-    var _defBtnOff = getComputedStyle(document.documentElement)
-        .getPropertyValue('--definition-audio-buttons').trim() === 'off';
-    if (_defBtnOff) {
+    // ── Per-section audio button hiding (fallback + off) ──
+    var _rs = getComputedStyle(document.documentElement);
+    var _wab = _rs.getPropertyValue('--word-audio-buttons').trim();
+    var _sab = _rs.getPropertyValue('--sentence-audio-buttons').trim();
+    var _dab = _rs.getPropertyValue('--definition-audio-buttons').trim();
+    if (_wab === 'fallback') {
+        var wai = document.querySelector('.audio-item[data-audio="word"]');
+        if (wai && document.querySelector('.text-play:not(.text-play-inert)[data-text-play="word"]')) {
+            wai.setAttribute('data-btn-off', '');
+        }
+    }
+    if (_sab === 'fallback') {
+        var sai = document.querySelector('.audio-item[data-audio="sentence"]');
+        if (sai && document.querySelector('.text-play:not(.text-play-inert)[data-text-play="sentence"]')) {
+            sai.setAttribute('data-btn-off', '');
+        }
+    }
+    if (_dab === 'off') {
         document.querySelectorAll('.audio-item[data-audio="def"]').forEach(function(item) {
             item.setAttribute('data-btn-off', '');
+        });
+    } else if (_dab === 'fallback') {
+        document.querySelectorAll('.audio-item[data-audio="def"]').forEach(function(item) {
+            var defLang = item.getAttribute('data-def-lang');
+            var textKey = defLang ? 'def-' + defLang : 'def';
+            if (document.querySelector('.text-play:not(.text-play-inert)[data-text-play="' + textKey + '"]')) {
+                item.setAttribute('data-btn-off', '');
+            }
         });
     }
 

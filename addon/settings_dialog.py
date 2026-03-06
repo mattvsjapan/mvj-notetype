@@ -108,7 +108,7 @@ _SETTINGS = {
     "Word Text": [
         ("--word-text", "Word Text", ["front & back", "back only", "off"], "front & back"),
         ("--word-audio", "Word Audio", ["front & back", "back only", "off"], "back only"),
-        ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
+        ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "fallback", "none"], "front & back"),
         ("--word-autoplay", "Word Autoplay", ["front only", "back only", "front & back", "when no def audio", "none"], "front & back"),
         ("--word-text-play", "Word Text Play", ["on", "off"], "on"),
         ("--word-furigana", "Word Furigana", ["front & back", "back only", "off"], "front & back"),
@@ -118,7 +118,7 @@ _SETTINGS = {
     "Sentence Text": [
         ("--sentence-text", "Sentence Text", ["front & back", "back only", "off"], "front & back"),
         ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "off"], "back only"),
-        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "none"], "front & back"),
+        ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "fallback", "none"], "front & back"),
         ("--sentence-autoplay", "Sentence Autoplay", ["front only", "back only", "front & back", "when no def audio", "none"], "front & back"),
         ("--sentence-text-play", "Sentence Text Play", ["on", "off"], "on"),
         ("--sentence-furigana", "Sentence Furigana", ["front & back", "back only", "off"], "front & back"),
@@ -132,7 +132,7 @@ _SETTINGS = {
         ("--definition-text", "Primary Definition Text", ["on", "off"], "on"),
         ("--definition-secondary", "Secondary Definition Text", ["on", "off", "separate toggle"], "separate toggle"),
         ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
-        ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "off"], "on"),
+        ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "fallback", "off"], "on"),
         ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
         ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),

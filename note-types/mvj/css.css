@@ -22,7 +22,7 @@
     /* Word */
     --word-text: back only;        /* front & back | back only | off      */
     --word-audio: front & back;    /* front & back | back only | off      */
-    --word-audio-buttons: front only;/* front only | back only | front & back | none */
+    --word-audio-buttons: fallback;  /* front only | back only | front & back | fallback | none */
     --word-autoplay: front only;   /* front only | back only | front & back | when no def audio | none */
     --word-text-play: on;          /* on | off                            */
     --word-furigana: back only;    /* front & back | back only | off      */
@@ -32,8 +32,8 @@
     /* Sentence */
     --sentence-text: back only;    /* front & back | back only | off      */
     --sentence-audio: front & back;/* front & back | back only | off      */
-    --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
-    --sentence-autoplay: front only;/* front only | back only | front & back | when no def audio | none */
+    --sentence-audio-buttons: fallback;/* front only | back only | front & back | fallback | none */
+    --sentence-autoplay: front & back;/* front only | back only | front & back | when no def audio | none */
     --sentence-text-play: on;      /* on | off                            */
     --sentence-furigana: back only;/* front & back | back only | off      */
     --sentence-pitch-color: off;   /* front & back | back only | off      */
@@ -44,7 +44,7 @@
     /* Definitions */
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
-    --definition-audio-buttons: off;/* on | off                            */
+    --definition-audio-buttons: fallback;/* on | fallback | off                 */
     --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
     --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
