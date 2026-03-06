@@ -1942,6 +1942,15 @@
             }
         }
 
+        // If the only item in details is the notes section, relabel the toggle
+        if (detailsCount === 1 && _detNotesText) {
+            var notesInDetails = detailsInner.querySelector('#notes-section');
+            if (notesInDetails) {
+                var detLabel = document.querySelector('.details-toggle');
+                if (detLabel) detLabel.childNodes[0].textContent = 'Notes';
+            }
+        }
+
         if (detailsCount === 0) {
             detailsSection.style.display = 'none';
         }
