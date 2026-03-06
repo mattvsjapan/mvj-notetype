@@ -834,7 +834,8 @@ rt {
 
 /* Definition layout: hide sections based on data-def-layout */
 .answer[data-def-layout="none"] .def,
-.answer[data-def-layout="none"] .jp-def-section {
+.answer[data-def-layout="none"] .jp-def-section,
+.answer[data-def-layout="none"] .divider {
     display: none;
 }
 
