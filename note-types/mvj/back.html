@@ -192,12 +192,12 @@
           <p class="sentence" style="--d:95" id="sentence"></p>
           <div class="audio-row-bottom" id="audio-row-bottom" style="--d:150"></div>
           <div class="divider" style="--d:160"></div>
-          <p class="def" style="--d:170" id="def-bilingual"></p>
+          <div class="def" style="--d:170" id="def-bilingual"></div>
           <div class="jp-def-section" style="--d:225" id="jp-def-section">
               <input type="checkbox" id="jp-toggle" class="jp-def-input">
               <label for="jp-toggle" class="jp-def-toggle" onclick="">Monolingual</label>
               <div class="jp-def-wrap">
-                  <p class="jp-def" id="def-monolingual"></p>
+                  <div class="jp-def" id="def-monolingual"></div>
               </div>
           </div>
           <div class="notes-section" style="--d:260" id="notes-section">
@@ -1089,6 +1089,7 @@
     }
     function colorizeText(raw, el) {
       if (!raw) return '';
+      if (/<(ul|ol|li|div|table|dd|dt|dl)[\s>]/i.test(raw)) return pitchNums(raw);
       if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
       var lines = raw.split(/<br\s*\/?>/gi);
       var colored = lines.map(function(line) {
