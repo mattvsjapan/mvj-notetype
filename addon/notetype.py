@@ -119,9 +119,10 @@ def _update_notetype(
     model["tmpls"][0]["qfmt"] = front
     model["tmpls"][0]["afmt"] = back
     model["css"] = css if reset_css else _merge_css_settings(model["css"], css)
+    existing_names = {f["name"] for f in model["flds"]}
     for fld in model["flds"]:
         new_name = _FIELD_RENAMES.get(fld["name"])
-        if new_name:
+        if new_name and new_name not in existing_names:
             mw.col.models.rename_field(model, fld, new_name)
     field_map = {name: (desc, font, size) for name, desc, font, size in _FIELDS}
     for fld in model["flds"]:
