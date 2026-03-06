@@ -20,23 +20,23 @@
     --debug: off;                  /* on | off                            */
 
     /* Word */
-    --word-text: front & back;     /* front & back | back only | off      */
-    --word-audio: back only;       /* front & back | back only | off      */
-    --word-audio-buttons: front & back;/* front only | back only | front & back | none */
-    --word-autoplay: front & back; /* front only | back only | front & back | when no def audio | none */
+    --word-text: back only;        /* front & back | back only | off      */
+    --word-audio: front & back;    /* front & back | back only | off      */
+    --word-audio-buttons: front only;/* front only | back only | front & back | none */
+    --word-autoplay: front only;   /* front only | back only | front & back | when no def audio | none */
     --word-text-play: on;          /* on | off                            */
-    --word-furigana: front & back; /* front & back | back only | off      */
+    --word-furigana: back only;    /* front & back | back only | off      */
     --word-pitch-color: back only; /* front & back | back only | off      */
     --pitch-graph: on;             /* on | off                            */
 
     /* Sentence */
-    --sentence-text: front & back; /* front & back | back only | off      */
-    --sentence-audio: back only;   /* front & back | back only | off      */
-    --sentence-audio-buttons: front & back;/* front only | back only | front & back | none */
-    --sentence-autoplay: front & back;/* front only | back only | front & back | when no def audio | none */
+    --sentence-text: back only;    /* front & back | back only | off      */
+    --sentence-audio: front & back;/* front & back | back only | off      */
+    --sentence-audio-buttons: front only;/* front only | back only | front & back | none */
+    --sentence-autoplay: front only;/* front only | back only | front & back | when no def audio | none */
     --sentence-text-play: on;      /* on | off                            */
-    --sentence-furigana: front & back;/* front & back | back only | off   */
-    --sentence-pitch-color: back only;/* front & back | back only | off   */
+    --sentence-furigana: back only;/* front & back | back only | off      */
+    --sentence-pitch-color: off;   /* front & back | back only | off      */
 
     /* Image */
     --image: back only;            /* front & back | back only | off      */
@@ -44,18 +44,18 @@
     /* Definitions */
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
-    --definition-audio-buttons: on;/* on | off                            */
-    --definition-autoplay-bi: always;/* always | only when primary | when primary or on reveal | off */
-    --definition-autoplay-mono: always;/* always | only when primary | when primary or on reveal | off */
+    --definition-audio-buttons: off;/* on | off                            */
+    --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
+    --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: monolingual when unlocked; /* bilingual | monolingual | monolingual when unlocked */
     --definition-secondary: separate toggle;    /* on | off | separate toggle          */
-    --definition-default: monolingual; /* monolingual | bilingual             */
+    --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;     /* on | off                            */
     --definition-pitch-color: on;  /* on | off                            */
 
     /* Notes */
-    --notes-text: on;              /* on | off                            */
+    --notes-text: off;              /* on | off                            */
     --notes-font: bilingual;       /* bilingual | monolingual             */
 
     /* Details Toggle */
@@ -70,15 +70,15 @@
     --details-definition-text: off;/* on | off                            */
     --details-definition-audio: off;/* on | off                           */
     --details-definition-secondary: off;/* on | off                        */
-    --details-notes-text: off;     /* on | off                            */
+    --details-notes-text: on;      /* on | off                            */
 
     /* Hotkeys */
-    --hotkey-word-audio: n;        /* keyboard key                        */
-    --hotkey-sentence-audio: h;    /* keyboard key                        */
-    --hotkey-definition-audio: ,;  /* keyboard key (back only)            */
-    --hotkey-play-all: z;          /* keyboard key                        */
-    --hotkey-stop-all: ?;          /* keyboard key                        */
-    --hotkey-jp-toggle: .;         /* keyboard key (back only)            */
+    --hotkey-word-audio: z;        /* keyboard key                        */
+    --hotkey-sentence-audio: x;    /* keyboard key                        */
+    --hotkey-definition-audio: c;  /* keyboard key (back only)            */
+    --hotkey-play-all: ,;          /* keyboard key                        */
+    --hotkey-stop-all: .;          /* keyboard key                        */
+    --hotkey-jp-toggle: h;         /* keyboard key (back only)            */
     --hotkey-details-toggle: n;    /* keyboard key (back only)            */
 
     /* ═══════════════════════════════════════════════════════
