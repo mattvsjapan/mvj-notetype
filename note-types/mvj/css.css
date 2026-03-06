@@ -16,7 +16,7 @@
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
-    --toggle-align: center;        /* left | center                       */
+    --toggle-align: left;        /* left | center                       */
     --debug: off;                  /* on | off                            */
 
     /* Word */
