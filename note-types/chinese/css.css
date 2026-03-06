@@ -336,6 +336,10 @@ html {
     inset: 2px -6px;
 }
 
+.answer > .def.text-play::after {
+    inset: -6px -10px;
+}
+
 @media (hover: hover) {
     .text-play:hover::after,
     .text-play.hover-linked::after {
