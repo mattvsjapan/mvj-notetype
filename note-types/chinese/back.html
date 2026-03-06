@@ -792,6 +792,16 @@ function _renderBack() {
     });
   }
 
+  // ── Fallback: hide audio buttons that have active text-play coverage ──
+  document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+    var audioType = item.getAttribute('data-audio');
+    var defLang = item.getAttribute('data-def-lang');
+    var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
+    if (document.querySelector('.text-play[data-text-play="' + textKey + '"]')) {
+      item.setAttribute('data-btn-off', '');
+    }
+  });
+
   // ── Mirror audio buttons to bottom row (mobile) ──
   var bottomRow = document.getElementById('audio-row-bottom');
   if (bottomRow) {

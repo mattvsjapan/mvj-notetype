@@ -483,11 +483,11 @@ html {
    ================================================ */
 
 .back .audio-row {
-    /* display: flex; — uncomment to restore back audio buttons */
-    display: none;
+    display: flex;
     padding: 0;
     gap: clamp(8px, 4vw, 20px);
     animation: rowSettle 0.35s var(--ease) both;
+    order: 1;
 }
 
 /* Audio item ordering — top row (desktop) */
@@ -523,10 +523,8 @@ html {
    font-size all force reflow every frame — too expensive for mobile WebViews) */
 @media (hover: none) {
     .back .audio-row {
-        display: none;
+        display: flex;
     }
-
-    /* .back > .answer { margin-top: -20px; } — restore when back audio buttons are restored */
 
     .back .audio-row,
     .back .audio-item,
@@ -537,7 +535,12 @@ html {
     }
 }
 
+/* Fallback: hide audio buttons covered by text-play */
+.audio-item[data-btn-off] { display: none; }
+.back .audio-row:not(:has(.audio-item:not([data-btn-off]))) { display: none; }
+
 /* Unwrap {{FrontSide}} containers on back */
+.back { display: flex; flex-direction: column; }
 .back > .card-inner { display: contents; }
 .back > .card-inner::before,
 .back > .card-inner::after { display: none; }
@@ -563,8 +566,7 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
-    /* margin-top: 24px; — restore when back audio buttons are restored */
-    margin-top: 0;
+    margin-top: 24px;
     padding-bottom: 8px;
 }
 
