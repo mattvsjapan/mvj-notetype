@@ -1907,6 +1907,7 @@ html:not(.tategaki) .front-content .image-wrap {
 .details-inner .notes-section {
     margin: 0;
     order: unset;
+    align-self: stretch;
 }
 
 .details-inner .def {
