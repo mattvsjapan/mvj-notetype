@@ -102,6 +102,7 @@ _SETTINGS = {
         ("--color-scheme", "Color Scheme", None, "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
         ("--card-transparency", "Card Transparency", ["on", "off"], "on"),
+        ("--toggle-align", "Toggle Alignment", ["left", "center"], "center"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
     "Word Text": [

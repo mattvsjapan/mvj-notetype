@@ -8,6 +8,8 @@
 
 :root,
 :root[class*=night-mode] {
+    --toggle-align: center;        /* left | center */
+
     /* Override Anki's --canvas so the Qt toolbar matches */
     --canvas: #1a0c0f;
 
@@ -713,13 +715,7 @@ rt {
 
 .jp-def-section {
     margin-top: 16px;
-    text-align: left;
-}
-
-@media (hover: none) and (max-width: 767px) {
-    .jp-def-section {
-        text-align: center;
-    }
+    text-align: var(--toggle-align);
 }
 
 .jp-def-input {

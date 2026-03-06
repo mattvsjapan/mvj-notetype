@@ -16,6 +16,7 @@
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
+    --toggle-align: center;        /* left | center                       */
     --debug: off;                  /* on | off                            */
 
     /* Word */
@@ -1494,14 +1495,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 
 .jp-def-section,
 .details-section {
-    text-align: left;
-}
-
-@media (hover: none) and (max-width: 767px) {
-    .jp-def-section,
-    .details-section {
-        text-align: center;
-    }
+    text-align: var(--toggle-align);
 }
 
 .jp-def-input {
