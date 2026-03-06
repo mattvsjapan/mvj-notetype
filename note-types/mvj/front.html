@@ -838,7 +838,11 @@ function clearLastMargin(el) {
         while ((match = re.exec(fragment)) !== null) {
             if (match.index > lastIndex) result += fragment.slice(lastIndex, match.index);
             var reading = match[2];
-            if (reading.indexOf('|') !== -1) {
+            if (reading.charAt(0) === '!') {
+                var forced = reading.slice(1);
+                if (!forced) { result += match[1]; lastIndex = re.lastIndex; continue; }
+                result += '<ruby>' + match[1] + '<rt data-front>' + forced + '</rt></ruby>';
+            } else if (reading.indexOf('|') !== -1) {
                 var front = reading.split('|')[0];
                 if (!front) { result += match[1]; lastIndex = re.lastIndex; continue; }
                 result += '<ruby>' + match[1] + '<rt data-split>' + front + '</rt></ruby>';

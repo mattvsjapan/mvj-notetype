@@ -982,7 +982,8 @@ html:not(.tategaki) .text-play:has(ruby):not(.furigana-off) {
 }
 
 /* Split furigana: always visible even when furigana-off */
-html:not(.tategaki) .text-play.furigana-off:has(rt[data-split]) {
+html:not(.tategaki) .text-play.furigana-off:has(rt[data-split]),
+html:not(.tategaki) .text-play.furigana-off:has(rt[data-front]) {
     --pill-top: var(--pill-ruby-visible);
 }
 
@@ -1002,7 +1003,8 @@ html:not(.tategaki) .back .front-content .text-play:has(ruby):not(.furigana-fron
 .tategaki .text-play:has(ruby):not(.furigana-off) {
     --pill-right: var(--pill-ruby-visible);
 }
-.tategaki .text-play.furigana-off:has(rt[data-split]) {
+.tategaki .text-play.furigana-off:has(rt[data-split]),
+.tategaki .text-play.furigana-off:has(rt[data-front]) {
     --pill-right: var(--pill-ruby-visible);
 }
 
@@ -1675,13 +1677,17 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 
 /* Split furigana: always visible on front */
 .front-content .target-word rt[data-split],
-.front-content .sentence rt[data-split] {
+.front-content .sentence rt[data-split],
+.front-content .target-word rt[data-front],
+.front-content .sentence rt[data-front] {
     visibility: visible;
 }
 
 /* Override furigana-off for split furigana */
 .target-word.furigana-off rt[data-split],
-.sentence.furigana-off rt[data-split] {
+.sentence.furigana-off rt[data-split],
+.target-word.furigana-off rt[data-front],
+.sentence.furigana-off rt[data-front] {
     display: inline !important;
     visibility: visible !important;
 }
@@ -2278,7 +2284,9 @@ html.tategaki {
 .tategaki .front-content .target-word.furigana-front rt,
 .tategaki .front-content .sentence.furigana-front rt { display: revert; }
 .tategaki .front-content .target-word rt[data-split],
-.tategaki .front-content .sentence rt[data-split] { display: revert; }
+.tategaki .front-content .sentence rt[data-split],
+.tategaki .front-content .target-word rt[data-front],
+.tategaki .front-content .sentence rt[data-front] { display: revert; }
 
 .pitch-num {
   font-family: "Hiragino Mincho ProN", "PitchNum";

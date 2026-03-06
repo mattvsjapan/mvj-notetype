@@ -302,6 +302,7 @@
     expr = expr.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
     // Strip split furigana before | gets treated as a separator
     expr = expr.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
+    expr = expr.replace(/\[!([^\]]*)\]/g, '[$1]');
     expr = expr.replace(/\s*[\/／]\s*/g, ' ; ');
     expr = expr.replace(/([。!?！？])(?!:)/g, ' $1 .');
     expr = expr.replace(/([「」|、､])/g, ' $1 ');
@@ -324,6 +325,7 @@
   function furiganaToReading(word) {
     return word.split(' ').map(part => {
       part = part.replace(/\[([^\]]*)\|([^\]]*)\]/g, '[$2]');
+      part = part.replace(/\[!([^\]]*)\]/g, '[$1]');
       part = part.replace(/([\*\^]+)([^\[\]\*\^]*)\[/g, '$2[$1');
       return part.replace(/([^\[\]]*\[|])/g, '');
     }).join('');
