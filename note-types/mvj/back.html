@@ -50,7 +50,6 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
-              item.setAttribute('data-def-lang', 'bi');
 
               for (var i = 0; i < filenames.length; i++) {
                   var audio = document.createElement('audio');
@@ -150,7 +149,6 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
-              item.setAttribute('data-def-lang', 'bi');
               item._jsAudios = buttons.filter(function(b) { return b._audioSrc; })
                   .map(function(b) { return {src: b._audioSrc}; });
               for (var i = 0; i < buttons.length; i++) {
