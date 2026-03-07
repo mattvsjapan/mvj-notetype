@@ -183,6 +183,7 @@ def _add_migrate_button(buttons, editor: Editor):
         func=lambda e=editor: _migrate_note(e),
         tip="Migrate Image pitch syntax to Word field",
         label="💈",
+        disables=False,
     )
     buttons.append(btn)
 
