@@ -201,7 +201,7 @@
               </div>
           </div>
           <div class="notes-section" style="--d:260" id="notes-section">
-              <p class="notes" id="notes"></p>
+              <div class="notes" id="notes"></div>
           </div>
           <div class="details-section" style="--d:300" id="details-section">
               <input type="checkbox" id="details-toggle" class="details-input">
@@ -1192,12 +1192,15 @@
     var notesEl = document.getElementById('notes');
     var notesSectionEl = document.getElementById('notes-section');
 
-    if (notesOn && notesRawEl && notesEl) {
+    if (notesRawEl && notesEl) {
         var notesHtml = notesRawEl.innerHTML.trim();
         if (notesHtml) {
-            notesEl.innerHTML = notesHtml;
+            notesEl.innerHTML = pitchNums(notesHtml);
             if (notesFont === 'monolingual') {
                 notesEl.setAttribute('data-font', 'jp');
+            }
+            if (!notesOn) {
+                notesSectionEl.style.display = 'none';
             }
         } else {
             notesSectionEl.style.display = 'none';
@@ -1934,11 +1937,14 @@
 
         if (_detNotesText) {
             var ns = document.getElementById('notes-section');
-            if (ns && ns.style.display !== 'none') {
+            var nsContent = ns && ns.querySelector('#notes');
+            if (ns && nsContent && nsContent.innerHTML.trim()) {
+                ns.style.display = '';
                 detailsInner.appendChild(ns);
                 detailsCount++;
             }
         }
+
 
         // Sole-item exception: if the only item in details is the jp-def-section,
         // eliminate the def-toggle so the secondary shows directly on details open

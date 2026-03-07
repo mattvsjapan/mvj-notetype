@@ -35,6 +35,9 @@ _EMPTY_PITCH_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);')
 _DEVOICED_AFTER_RE = re.compile(r'\[([^\]]+)\]d')
 _DEVOICED_BEFORE_RE = re.compile(r'\[d([^\]]+)\]')
 
+# Matches <li>DICT_NAME: PITCH_VALUES</li> in the context field
+_CONTEXT_DICT_RE = re.compile(r'<li>([^<:]+):\s*(.*?)</li>')
+
 
 def _reformat_token(text):
     """Reformat a single token from comment syntax to converter input."""
@@ -102,6 +105,18 @@ def _log(note_id, word_before, image_before, word_after):
         f.write("\n")
 
 
+def _context_to_dict_table(html):
+    """Convert Context field dictionary list HTML to a table."""
+    entries = _CONTEXT_DICT_RE.findall(html)
+    if not entries:
+        return None
+    rows = ''.join(
+        f'<tr><td>{name.strip()}</td><td>{re.sub(r"]\\[", "] [", re.sub(r"</?b>", "", values.strip()))}</td></tr>'
+        for name, values in entries
+    )
+    return f'<table class="dict-table">{rows}</table>'
+
+
 def _migrate_note(editor: Editor):
     note = editor.note
     if note is None:
@@ -114,7 +129,7 @@ def _migrate_note(editor: Editor):
         return
 
     field_names = [f["name"] for f in model["flds"]]
-    for needed in ("Image", "Word", "Word Audio", "Sentence Audio"):
+    for needed in ("Image", "Word", "Word Audio", "Sentence Audio", "Context", "Notes"):
         if needed not in field_names:
             showWarning(f"Note is missing {needed} field.")
             return
@@ -123,6 +138,8 @@ def _migrate_note(editor: Editor):
     word_idx = field_names.index("Word")
     word_audio_idx = field_names.index("Word Audio")
     sent_audio_idx = field_names.index("Sentence Audio")
+    context_idx = field_names.index("Context")
+    notes_idx = field_names.index("Notes")
 
     image_content = note.fields[img_idx]
     if not image_content.strip():
@@ -165,10 +182,20 @@ def _migrate_note(editor: Editor):
     note.fields[word_idx] = new_syntax
     note.fields[img_idx] = ""
 
+    # Convert Context field dictionary list to table in Notes field
+    context_content = note.fields[context_idx]
+    dict_table = _context_to_dict_table(context_content) if context_content.strip() else None
+    if dict_table:
+        existing_notes = note.fields[notes_idx]
+        note.fields[notes_idx] = (dict_table + existing_notes).strip()
+        note.fields[context_idx] = ""
+
     note.flush()
     editor.loadNoteKeepingFocus()
 
     msg = f"Migrated: {new_syntax}"
+    if dict_table:
+        msg += " | Dict table → Notes"
     if moved_audio:
         msg += f" | Moved {len(moved_audio)} reibun audio to Sentence Audio"
     if warnings:
@@ -186,6 +213,67 @@ def _add_migrate_button(buttons, editor: Editor):
         disables=False,
     )
     buttons.append(btn)
+
+
+_DICT_TABLE_HTML = (
+    '<table class="dict-table">'
+    '<tr><td>大辞泉</td><td>[]</td></tr>'
+    '<tr><td>ＮＨＫ</td><td>[]</td></tr>'
+    '<tr><td>新明解</td><td>[]</td></tr>'
+    '<tr><td>大辞林</td><td>[]</td></tr>'
+    '<tr><td>三省堂</td><td>[]</td></tr>'
+    '</table>'
+)
+
+
+def _insert_dict_table(editor: Editor):
+    note = editor.note
+    if note is None:
+        showWarning("No note loaded.")
+        return
+
+    model = note.note_type()
+    if model is None or model["name"] != NOTE_TYPE_NAME:
+        showWarning(f"This note is not a {NOTE_TYPE_NAME} note.")
+        return
+
+    field_names = [f["name"] for f in model["flds"]]
+    if "Notes" not in field_names:
+        showWarning("Note is missing Notes field.")
+        return
+
+    notes_idx = field_names.index("Notes")
+    existing = note.fields[notes_idx]
+
+    if '<table>' in existing:
+        tooltip("Notes field already contains a table.")
+        return
+
+    note.fields[notes_idx] = (_DICT_TABLE_HTML + existing).strip()
+    note.flush()
+    editor.loadNoteKeepingFocus()
+    tooltip("Inserted dictionary table into Notes field.")
+
+
+def _add_migrate_button(buttons, editor: Editor):
+    btn = editor.addButton(
+        icon=None,
+        cmd="migrate_pitch",
+        func=lambda e=editor: _migrate_note(e),
+        tip="Migrate Image pitch syntax to Word field",
+        label="💈",
+        disables=False,
+    )
+    buttons.append(btn)
+    btn2 = editor.addButton(
+        icon=None,
+        cmd="insert_dict_table",
+        func=lambda e=editor: _insert_dict_table(e),
+        tip="Insert dictionary lookup table into Notes field",
+        label="📄",
+        disables=False,
+    )
+    buttons.append(btn2)
 
 
 gui_hooks.editor_did_init_buttons.append(_add_migrate_button)
