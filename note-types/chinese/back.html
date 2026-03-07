@@ -441,6 +441,7 @@ function _renderBack() {
         var singleItem = document.createElement('div');
         singleItem.className = 'audio-item bi';
         singleItem.setAttribute('data-audio', 'def');
+        singleItem.setAttribute('data-def-lang', singleType === 'bilingual' ? 'bi' : 'mono');
         for (var si = 0; si < singleBtns.length; si++) {
           singleItem.appendChild(singleBtns[si]);
         }
@@ -628,6 +629,7 @@ function _renderBack() {
         var defItem = document.createElement('div');
         defItem.className = 'audio-item bi';
         defItem.setAttribute('data-audio', 'def');
+        defItem.setAttribute('data-def-lang', primaryType === 'bilingual' ? 'bi' : 'mono');
         var defBtn = document.createElement('a');
         defBtn.className = 'replay-button';
         defBtn.href = '#';
@@ -767,8 +769,12 @@ function _renderBack() {
       var _defIsBi = (_defLayout === 'dual-bi');
       var _defKey = _defIsBi ? 'def-bi' : 'def-mono';
       var _jpKey = _defIsBi ? 'def-mono' : 'def-bi';
-      if (defEl.innerHTML) window.__linkTextPlay(defEl, _defKey, _defTextPlayOpts(_defIsBi ? 'bi' : 'mono'));
-      if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, _jpKey, _defTextPlayOpts(_defIsBi ? 'mono' : 'bi'));
+      var _defLang = _defIsBi ? 'bi' : 'mono';
+      var _jpLang = _defIsBi ? 'mono' : 'bi';
+      if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + _defLang + '"]'))
+        window.__linkTextPlay(defEl, _defKey, _defTextPlayOpts(_defLang));
+      if (jpDefEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + _jpLang + '"]'))
+        window.__linkTextPlay(jpDefEl, _jpKey, _defTextPlayOpts(_jpLang));
     } else {
       if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"]')) {
         window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));

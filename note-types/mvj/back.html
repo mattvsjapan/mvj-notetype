@@ -1579,8 +1579,12 @@
           var detDefIsBi = (defLayout === 'bi-only');
           var detDefKey = detDefIsBi ? 'def-bi' : 'def-mono';
           var detJpKey = detDefIsBi ? 'def-mono' : 'def-bi';
-          if (defEl.innerHTML) window.__linkTextPlay(defEl, detDefKey, _defTextPlayOpts(detDefIsBi ? 'bi' : 'mono'));
-          if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, detJpKey, _defTextPlayOpts(detDefIsBi ? 'mono' : 'bi'));
+          var detDefLang = detDefIsBi ? 'bi' : 'mono';
+          var detJpLang = detDefIsBi ? 'mono' : 'bi';
+          if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + detDefLang + '"]'))
+            window.__linkTextPlay(defEl, detDefKey, _defTextPlayOpts(detDefLang));
+          if (jpDefEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + detJpLang + '"]'))
+            window.__linkTextPlay(jpDefEl, detJpKey, _defTextPlayOpts(detJpLang));
         } else {
           if (defEl.innerHTML) {
             window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
@@ -1594,8 +1598,12 @@
           var defIsBi = (defLayout === 'dual-bi');
           var defKey = defIsBi ? 'def-bi' : 'def-mono';
           var jpKey = defIsBi ? 'def-mono' : 'def-bi';
-          if (defEl.innerHTML) window.__linkTextPlay(defEl, defKey, _defTextPlayOpts(defIsBi ? 'bi' : 'mono'));
-          if (jpDefEl.innerHTML) window.__linkTextPlay(jpDefEl, jpKey, _defTextPlayOpts(defIsBi ? 'mono' : 'bi'));
+          var _defLang = defIsBi ? 'bi' : 'mono';
+          var _jpLang = defIsBi ? 'mono' : 'bi';
+          if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + _defLang + '"]'))
+            window.__linkTextPlay(defEl, defKey, _defTextPlayOpts(_defLang));
+          if (jpDefEl.innerHTML && document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + _jpLang + '"]'))
+            window.__linkTextPlay(jpDefEl, jpKey, _defTextPlayOpts(_jpLang));
         } else {
           // Dual text but single/no audio — link both defs to same audio
           if (defEl.innerHTML) {
