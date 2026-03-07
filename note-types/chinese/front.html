@@ -517,7 +517,6 @@ window.__playMobile = function(src, btn) {
   }
   function play(item) {
     if (!item) return;
-    window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
       link.click();
@@ -525,6 +524,7 @@ window.__playMobile = function(src, btn) {
       if (btn) animateBtn(btn);
       return;
     }
+    window.__stopAllAudio();
     var audio = item.querySelector('audio');
     if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
   }

@@ -892,7 +892,6 @@ _renderBack();
   }
   function play(item) {
     if (!item) return;
-    window.__stopAllAudio();
     var link = item.querySelector('.soundLink');
     if (link) {
       link.click();
@@ -900,6 +899,7 @@ _renderBack();
       if (btn) animateBtn(btn);
       return;
     }
+    window.__stopAllAudio();
     var audio = item.querySelector('audio');
     if (audio) { audio.currentTime = 0; window.__safePlay(audio); }
   }
