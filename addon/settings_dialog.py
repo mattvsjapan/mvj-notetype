@@ -105,7 +105,7 @@ _SETTINGS = {
         ("--toggle-align", "Toggle Alignment", ["left", "center"], "center"),
         ("--debug", "Debug Mode", ["on", "off"], "off"),
     ],
-    "Word Text": [
+    "Word": [
         ("--word-text", "Word Text", ["front & back", "back only", "off"], "front & back"),
         ("--word-audio", "Word Audio", ["front & back", "back only", "off"], "back only"),
         ("--word-audio-buttons", "Word Audio Buttons", ["front only", "back only", "front & back", "fallback", "none"], "front & back"),
@@ -115,7 +115,7 @@ _SETTINGS = {
         ("--word-pitch-color", "Word Pitch Color", ["front & back", "back only", "off"], "back only"),
         ("--pitch-graph", "Pitch Graph", ["on", "off"], "on"),
     ],
-    "Sentence Text": [
+    "Sentence": [
         ("--sentence-text", "Sentence Text", ["front & back", "back only", "off"], "front & back"),
         ("--sentence-audio", "Sentence Audio", ["front & back", "back only", "off"], "back only"),
         ("--sentence-audio-buttons", "Sentence Audio Buttons", ["front only", "back only", "front & back", "fallback", "none"], "front & back"),
