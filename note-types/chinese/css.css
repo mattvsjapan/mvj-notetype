@@ -167,7 +167,7 @@ html {
 }
 
 @media (hover: none) {
-    .card-inner { padding-top: clamp(20px, 6vw, 44px); padding-bottom: 30px; }
+    .card-inner { padding-top: clamp(20px, 6vw, 44px); padding-bottom: clamp(20px, 6vw, 44px); }
 }
 
 /* Glass sheen on card surface */
@@ -567,7 +567,10 @@ html {
     display: flex;
     flex-direction: column;
     margin-top: 24px;
-    padding-bottom: 8px;
+}
+
+@media (hover: none) {
+    .answer { margin-top: 0; }
 }
 
 /* Target word — Chinese serif with vertical bopomofo */
