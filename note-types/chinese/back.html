@@ -685,11 +685,25 @@ function _renderBack() {
   if (_sentBtn || _autoDefPlay) {
     setTimeout(function() {
       if (_sentBtn) {
-        if (_sentBtn._tapHandler) _sentBtn._tapHandler();
-        else _sentBtn.click();
-        window.__animateBtn(_sentBtn);
         var _sentAudio = (_sentItem._jsAudio || _sentItem.querySelector('audio'));
-        if (_sentAudio && _autoDefPlay) _sentAudio.onended = function() { _autoDefPlay(); };
+        if (window.matchMedia('(hover: none)').matches) {
+          window.__stopAllAudio();
+          window.__animateBtn(_sentBtn);
+          var src = _sentAudio ? _sentAudio.src : null;
+          if (src) {
+            var p = window.__playMobile(src, _sentBtn);
+            if (_autoDefPlay) {
+              p.then(function() { _autoDefPlay(); })['catch'](function() {});
+            }
+          } else if (_autoDefPlay) {
+            _autoDefPlay();
+          }
+        } else {
+          if (_sentBtn._tapHandler) _sentBtn._tapHandler();
+          else _sentBtn.click();
+          window.__animateBtn(_sentBtn);
+          if (_sentAudio && _autoDefPlay) _sentAudio.onended = function() { _autoDefPlay(); };
+        }
       } else if (_autoDefPlay) {
         _autoDefPlay();
       }
