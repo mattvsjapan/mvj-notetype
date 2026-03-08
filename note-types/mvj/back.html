@@ -2304,7 +2304,11 @@
     if (jpToggle) {
       jpToggle.addEventListener('change', function() {
         if (!jpToggle.checked) {
-          window.__stopAllAudio();
+          var secondaryItem = document.querySelector('.audio-item[data-def-role="secondary"]');
+          var sel = secondaryItem
+            ? '.audio-item[data-def-role="secondary"] .replay-button.playing'
+            : '.audio-item[data-audio="def"] .replay-button.playing';
+          if (document.querySelector(sel)) window.__stopAllAudio();
         }
       });
     }
