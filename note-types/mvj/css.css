@@ -404,6 +404,22 @@
         0 16px 36px rgba(0, 30, 38, 0.16);
 }
 
+:root[data-color-scheme="solarized"],
+:root[data-color-scheme="solarized-light"] {
+    --pitch-atamadaka: #f23749;
+    --pitch-heiban: #2b90d8;
+    --pitch-nakadaka: #d56500;
+    --pitch-kifuku: #7d80d1;
+    --pitch-odaka: #819500;
+    --pitch-keihan-heiban: #2b90d8;
+    --pitch-keihan-low-heiban: #2b90d8;
+    --pitch-keihan-atamadaka: #f23749;
+    --pitch-keihan-nakadaka: #d56500;
+    --pitch-keihan-low-nakadaka: #d56500;
+    --pitch-keihan-odaka: #819500;
+    --pitch-black: var(--text-1);
+}
+
 :root[data-color-scheme="solarized-light"] {
     --canvas: #fbf7ef;
     --bg: #fbf7ef;

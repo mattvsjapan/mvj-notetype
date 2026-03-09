@@ -1077,7 +1077,7 @@ class SettingsDialog(QDialog):
                 model["css"] = _apply_settings(model["css"], self._defaults)
                 model["css"] = _apply_modes(model["css"], self._modes)
                 mw.col.models.update_dict(model)
-        dev_sync.sync_local_templates(reset_css=reset_css, config="mvj")
+        dev_sync.sync_local_templates(reset_css=reset_css)
         self._build_ui()
         # Restore whichever side the preview was showing before rebuild
         if show_front:
