@@ -440,7 +440,6 @@ function _renderBack() {
         var singleItem = document.createElement('div');
         singleItem.className = 'audio-item bi';
         singleItem.setAttribute('data-audio', 'def');
-        singleItem.setAttribute('data-def-lang', singleType === 'bilingual' ? 'bi' : 'mono');
         for (var si = 0; si < singleBtns.length; si++) {
           singleItem.appendChild(singleBtns[si]);
         }
@@ -624,7 +623,6 @@ function _renderBack() {
         var defItem = document.createElement('div');
         defItem.className = 'audio-item bi';
         defItem.setAttribute('data-audio', 'def');
-        defItem.setAttribute('data-def-lang', primaryType === 'bilingual' ? 'bi' : 'mono');
         var defBtn = document.createElement('a');
         defBtn.className = 'replay-button';
         defBtn.href = '#';

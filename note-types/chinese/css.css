@@ -770,14 +770,14 @@ rt {
     grid-template-rows: 0fr;
     opacity: 0;
     margin-top: 4px;
-    transition: grid-template-rows 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms ease 50ms;
+    transition: grid-template-rows 250ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 180ms ease 30ms;
 }
 
 .jp-def-wrap > * {
     overflow: hidden;
     min-height: 0;
     margin: 0;
-    transition: overflow 0s 350ms;
+    transition: overflow 0s 0s;
     transition-behavior: allow-discrete;
 }
 
@@ -789,7 +789,7 @@ rt {
 .jp-def-input:checked ~ .jp-def-wrap > .jp-def.text-play,
 .jp-def-input:checked ~ .jp-def-wrap > .def.text-play {
     overflow: visible;
-    transition: overflow 0s 0s;
+    transition: overflow 0s 250ms;
     transition-behavior: allow-discrete;
 }
 
