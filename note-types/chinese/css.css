@@ -152,7 +152,7 @@ html {
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    padding: 40px clamp(20px, 6vw, 44px);
+    padding: clamp(20px, 6vw, 44px);
     max-width: 580px;
     margin: 0 auto;
     border: 1px solid var(--border);
@@ -166,9 +166,6 @@ html {
         0 16px 36px rgba(24, 8, 12, 0.16);
 }
 
-@media (hover: none) {
-    .card-inner { padding-top: clamp(20px, 6vw, 44px); padding-bottom: clamp(20px, 6vw, 44px); }
-}
 
 /* Glass sheen on card surface */
 .card-inner::after {
@@ -566,11 +563,6 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
-    margin-top: 24px;
-}
-
-@media (hover: none) {
-    .answer { margin-top: 0; }
 }
 
 /* Target word — Chinese serif with vertical bopomofo */
