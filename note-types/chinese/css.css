@@ -777,7 +777,7 @@ rt {
     overflow: hidden;
     min-height: 0;
     margin: 0;
-    transition: overflow 0s 0s;
+    transition: overflow 0s 250ms;
     transition-behavior: allow-discrete;
 }
 
@@ -789,7 +789,7 @@ rt {
 .jp-def-input:checked ~ .jp-def-wrap > .jp-def.text-play,
 .jp-def-input:checked ~ .jp-def-wrap > .def.text-play {
     overflow: visible;
-    transition: overflow 0s 250ms;
+    transition: overflow 0s 0s;
     transition-behavior: allow-discrete;
 }
 
