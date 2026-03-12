@@ -116,14 +116,29 @@ def _create_notetype(front: str, back: str, css: str) -> None:
 def _update_notetype(
     model: dict, front: str, back: str, css: str, *, reset_css: bool = False,
 ) -> None:
-    model["tmpls"][0]["qfmt"] = front
-    model["tmpls"][0]["afmt"] = back
-    model["css"] = css if reset_css else _merge_css_settings(model["css"], css)
+    mm = mw.col.models
+    # Rename fields first (e.g. Translation → Notes)
     existing_names = {f["name"] for f in model["flds"]}
     for fld in model["flds"]:
         new_name = _FIELD_RENAMES.get(fld["name"])
         if new_name and new_name not in existing_names:
-            mw.col.models.rename_field(model, fld, new_name)
+            mm.rename_field(model, fld, new_name)
+    # Add any missing fields before updating templates that reference them
+    existing_names = {f["name"] for f in model["flds"]}
+    for field_name, description, font, font_size in _FIELDS:
+        if field_name not in existing_names:
+            field = mm.new_field(field_name)
+            field["description"] = description
+            if font:
+                field["font"] = font
+            if font_size:
+                field["size"] = font_size
+            mm.add_field(model, field)
+    # Now safe to update templates — all referenced fields exist
+    model["tmpls"][0]["qfmt"] = front
+    model["tmpls"][0]["afmt"] = back
+    model["css"] = css if reset_css else _merge_css_settings(model["css"], css)
+    # Update field metadata for existing fields
     field_map = {name: (desc, font, size) for name, desc, font, size in _FIELDS}
     for fld in model["flds"]:
         if fld["name"] in field_map:
@@ -133,7 +148,7 @@ def _update_notetype(
                 fld["font"] = font
             if size:
                 fld["size"] = size
-    mw.col.models.update_dict(model)
+    mm.update_dict(model)
 
 
 def _fonts_exist() -> bool:
