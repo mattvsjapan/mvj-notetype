@@ -54,10 +54,12 @@
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;     /* on | off                            */
     --definition-pitch-color: on;  /* on | off                            */
+    --definition-align: left;      /* left | center                       */
 
     /* Notes */
     --notes-text: off;              /* on | off                            */
     --notes-font: bilingual;       /* bilingual | monolingual             */
+    --notes-align: left;           /* left | center                       */
 
     /* Details Toggle */
     --details-word-text: off;      /* on | off                            */
@@ -1485,7 +1487,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     line-height: 1.45;
     color: var(--text-1);
     margin: 0 0 16px 0;
-    text-align: left;
+    text-align: var(--definition-align);
 }
 
 .def rt, .jp-def rt {
@@ -1833,7 +1835,7 @@ html:not(.tategaki) .front-content .image-wrap {
     line-height: 1.45;
     color: var(--text-1);
     margin: 0;
-    text-align: left;
+    text-align: var(--notes-align);
 }
 
 .notes[data-font="jp"] {
