@@ -1780,6 +1780,11 @@ html:not(.tategaki) .front-content .image-wrap {
     display: none;
 }
 
+.answer[data-def-layout="bi-only"] > .def,
+.answer[data-def-layout="mono-only"] > .def {
+    margin-bottom: 16px;
+}
+
 .answer[data-def-text="off"] > .def {
     display: none;
 }

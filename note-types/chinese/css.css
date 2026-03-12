@@ -841,6 +841,11 @@ rt {
     display: none;
 }
 
+.answer[data-def-layout="bi-only"] > .def,
+.answer[data-def-layout="mono-only"] > .def {
+    margin-bottom: 16px;
+}
+
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
