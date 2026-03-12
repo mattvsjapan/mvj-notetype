@@ -487,6 +487,21 @@
     outline: 3px solid rgba(255, 0, 80, 0.8) !important;
     background-color: rgba(255, 0, 80, 0.12) !important;
 }
+[data-debug="on"] .word-pitch-group {
+    outline: 2px dashed rgba(0, 200, 100, 0.6);
+    background-color: rgba(0, 200, 100, 0.08);
+}
+[data-debug="on"] .word-pitch-group > .target-word {
+    outline: 2px solid rgba(255, 0, 200, 0.6);
+    background-color: rgba(255, 0, 200, 0.08);
+}
+[data-debug="on"] .word-pitch-group > .pitch-graph {
+    outline: 2px solid rgba(200, 200, 0, 0.7);
+    background-color: rgba(200, 200, 0, 0.08);
+}
+[data-debug="on"] .pitch-graph svg {
+    outline: 1px dotted rgba(255, 100, 0, 0.8);
+}
 /* ── END DEBUG ── */
 
 /* — Anki page background —
