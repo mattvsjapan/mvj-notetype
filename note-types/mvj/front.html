@@ -45,6 +45,7 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
+        'target-lang',
         'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
         'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
@@ -766,6 +767,9 @@ function clearLastMargin(el) {
         return v ? v.trim() : (fallback || '');
     }
 
+    var targetLang = setting('--target-lang', 'japanese');
+    var isJapanese = targetLang === 'japanese';
+
     var wordSide = setting('--word-text', 'back only');
     var sentSide = setting('--sentence-text', 'back only');
     var imageSide = setting('--image', 'back only');
@@ -819,6 +823,11 @@ function clearLastMargin(el) {
     }
     if (wordAI && _btnOff(_wab)) wordAI.setAttribute('data-btn-off', '');
     if (sentAI && _btnOff(_sab)) sentAI.setAttribute('data-btn-off', '');
+
+    if (!isJapanese) {
+        var ci = document.querySelector('.card-inner');
+        if (ci) ci.setAttribute('data-lang', 'other');
+    }
 
     // ── Shared: available on both front and back (via window) ──
     window.escapeBrackets = function(text) {
@@ -945,20 +954,32 @@ function clearLastMargin(el) {
     // ── Populate front-content children (front only) ──
     if (wordSide === 'front & back') {
         var rw = document.getElementById('raw-word');
-        var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
-        if (html) {
-            frontWord.innerHTML = html;
-            if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
-        } else { frontWord.setAttribute('data-side', 'back'); }
+        if (isJapanese) {
+            var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
+            if (html) {
+                frontWord.innerHTML = html;
+                if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
+            } else { frontWord.setAttribute('data-side', 'back'); }
+        } else {
+            var text = rw ? rw.textContent.trim().replace(/<[^>]+>/g, ' ').trim() : '';
+            if (text) { frontWord.textContent = text; }
+            else { frontWord.setAttribute('data-side', 'back'); }
+        }
     }
 
     if (sentSide === 'front & back') {
         var rs = document.getElementById('raw-sentence');
-        var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
-        if (html) {
-            frontSent.innerHTML = html;
-            if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
-        } else { frontSent.setAttribute('data-side', 'back'); }
+        if (isJapanese) {
+            var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
+            if (html) {
+                frontSent.innerHTML = html;
+                if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
+            } else { frontSent.setAttribute('data-side', 'back'); }
+        } else {
+            var text = rs ? rs.textContent.trim().replace(/<[^>]+>/g, ' ').trim() : '';
+            if (text) { frontSent.textContent = text; }
+            else { frontSent.setAttribute('data-side', 'back'); }
+        }
     }
 
     if (imageSide === 'front & back') {

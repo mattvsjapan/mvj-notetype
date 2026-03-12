@@ -98,6 +98,7 @@ _HOTKEYS = [
 
 _SETTINGS = {
     "Layout": [
+        ("--target-lang", "Target Language", ["japanese", "other"], "japanese"),
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", None, "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
@@ -162,6 +163,7 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
+    "target-lang",
     "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",

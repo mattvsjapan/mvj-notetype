@@ -860,6 +860,8 @@
     var _rootStyle = getComputedStyle(document.documentElement);
     var wordOn = _rootStyle.getPropertyValue('--word-text').trim() !== 'off';
     var sentOn = _rootStyle.getPropertyValue('--sentence-text').trim() !== 'off';
+    var targetLang = _rootStyle.getPropertyValue('--target-lang').trim() || 'japanese';
+    var isJapanese = targetLang === 'japanese';
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
@@ -900,8 +902,13 @@
     var sentIsOnFront = (sentSide === 'front & back');
     var isTategaki = document.documentElement.classList.contains('tategaki');
 
+    if (!isJapanese) {
+      var ci = document.querySelector('.card-inner');
+      if (ci) ci.setAttribute('data-lang', 'other');
+    }
+
     // Word → target word + pitch graph
-    var wordSeqs = wordRaw ? makeSequences(wordRaw) : [];
+    var wordSeqs = isJapanese && wordRaw ? makeSequences(wordRaw) : [];
 
     if (!wordOn) {
       targetEl.setAttribute('data-show', 'off');
@@ -910,13 +917,17 @@
           ? document.getElementById('front-word')
           : targetEl;
 
-      if (wordSeqs.length > 0) {
-        wordTarget.innerHTML = wordSeqs.map(makeColoredSentence).join('');
-        if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
-        if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
-        if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
-        if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
-        if (wordFurigana === 'front & back' && wordIsOnFront) wordTarget.classList.add('furigana-front');
+      if (isJapanese) {
+        if (wordSeqs.length > 0) {
+          wordTarget.innerHTML = wordSeqs.map(makeColoredSentence).join('');
+          if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
+          if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
+          if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
+          if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
+          if (wordFurigana === 'front & back' && wordIsOnFront) wordTarget.classList.add('furigana-front');
+        }
+      } else {
+        wordTarget.textContent = wordRaw.replace(/<[^>]+>/g, ' ').trim();
       }
 
       if (wordIsOnFront) {
@@ -930,7 +941,7 @@
       }
     }
 
-    if (graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
+    if (isJapanese && graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
         var svg = makeGraph(wordSeqs[s]);
@@ -1003,38 +1014,44 @@
     if (!sentOn) {
       sentEl.setAttribute('data-show', 'off');
     } else if (sentRaw) {
-      var sentSeqs = makeSequences(sentRaw);
       var sentTarget = (sentIsOnFront && !isTategaki)
           ? document.getElementById('front-sentence')
           : sentEl;
 
-      if (sentSeqs.length > 0) {
-        var hasAccent = sentSeqs.some(function(seq) {
-          return seq.some(function(s) {
-            return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+      if (isJapanese) {
+        var sentSeqs = makeSequences(sentRaw);
+        if (sentSeqs.length > 0) {
+          var hasAccent = sentSeqs.some(function(seq) {
+            return seq.some(function(s) {
+              return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+            });
           });
-        });
-        if (!hasAccent) sentTarget.classList.add('no-accent');
-        if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
-        if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
-        if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
-        if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
-        sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
+          if (!hasAccent) sentTarget.classList.add('no-accent');
+          if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
+          if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
+          if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
+          if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
+          sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
+        }
+      } else {
+        sentTarget.textContent = sentRaw.replace(/<[^>]+>/g, ' ').trim();
       }
 
       if (sentIsOnFront && !isTategaki) {
         sentEl.setAttribute('data-show', 'off');
       }
       if (sentIsOnFront && isTategaki) {
-        // Copy colored sentence to front-content so it wraps with word/image
+        // Copy sentence to front-content so it wraps with word/image
         var frontSentEl = document.getElementById('front-sentence');
         if (frontSentEl && sentEl.innerHTML) {
           frontSentEl.innerHTML = sentEl.innerHTML;
-          if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
-          if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
-          if (sentFurigana === 'front & back') frontSentEl.classList.add('furigana-front');
-          else if (sentFurigana === 'off') frontSentEl.classList.add('furigana-off');
-          if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
+          if (isJapanese) {
+            if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
+            if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
+            if (sentFurigana === 'front & back') frontSentEl.classList.add('furigana-front');
+            else if (sentFurigana === 'off') frontSentEl.classList.add('furigana-off');
+            if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
+          }
         }
         sentEl.setAttribute('data-show', 'off');
       }
@@ -1119,7 +1136,7 @@
       // Render primary in defEl
       if (monoIsPrimary) {
         defEl.innerHTML = colorizeText(primaryContent, defEl) || primaryContent;
-        defEl.setAttribute('data-font', 'jp');
+        if (isJapanese) defEl.setAttribute('data-font', 'jp');
         window.__monoUnlocked = true;
       } else {
         defEl.innerHTML = pitchNums(primaryContent);
@@ -1158,7 +1175,7 @@
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
       defEl.innerHTML = colorizeText(defs[monoKey], defEl) || defs[monoKey];
-      defEl.setAttribute('data-font', 'jp');
+      if (isJapanese) defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
     } else {
@@ -1194,7 +1211,7 @@
         var notesHtml = notesRawEl.innerHTML.trim();
         if (notesHtml) {
             notesEl.innerHTML = pitchNums(notesHtml);
-            if (notesFont === 'monolingual') {
+            if (notesFont === 'monolingual' && isJapanese) {
                 notesEl.setAttribute('data-font', 'jp');
             }
             if (!notesOn) {

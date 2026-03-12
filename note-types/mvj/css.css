@@ -12,6 +12,7 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
+    --target-lang: japanese;       /* japanese | other                    */
     --tategaki: off;               /* on | off                            */
     --color-scheme: blue;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
@@ -1767,6 +1768,22 @@ html:not(.tategaki) .front-content .image-wrap {
 [data-font="jp"] {
     font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
     line-height: 1.65;
+}
+
+[data-lang="other"] .target-word,
+[data-lang="other"] .sentence {
+    font-family: var(--sans);
+    letter-spacing: normal;
+}
+
+[data-lang="other"] .def {
+    font-family: var(--sans);
+}
+
+[data-lang="other"] .front-content .target-word,
+[data-lang="other"] .front-content .sentence {
+    font-family: var(--sans);
+    letter-spacing: normal;
 }
 
 /* Definition layout: hide sections based on data-def-layout */
