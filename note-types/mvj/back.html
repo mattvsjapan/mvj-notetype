@@ -919,7 +919,7 @@
 
       if (isJapanese) {
         if (wordSeqs.length > 0) {
-          wordTarget.innerHTML = wordSeqs.map(makeColoredSentence).join('');
+          wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
           if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
           if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
           if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
