@@ -434,6 +434,10 @@ window.__startPlaying = function(audio, btn) {
         else if (audioType) textKey = audioType;
     }
     var linkedTexts = textKey ? document.querySelectorAll('.text-play[data-text-play="' + textKey + '"]') : [];
+    // Fallback: if a lang-specific key like "def-bi" found nothing, also check the generic "def" key
+    if (!linkedTexts.length && textKey && textKey.indexOf('def-') === 0) {
+        linkedTexts = document.querySelectorAll('.text-play[data-text-play="def"]');
+    }
     for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.add('playing');
 
     function done() {
@@ -545,6 +549,10 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
 window.__linkBtnHoverToText = function(btn, audioKey) {
     if (!window.matchMedia('(hover: hover)').matches) return;
     var textEls = document.querySelectorAll('.text-play[data-text-play="' + audioKey + '"]');
+    // Fallback: if a lang-specific key like "def-bi" found nothing, also check the generic "def" key
+    if (!textEls.length && audioKey && audioKey.indexOf('def-') === 0) {
+        textEls = document.querySelectorAll('.text-play[data-text-play="def"]');
+    }
     if (!textEls.length) return;
     btn.addEventListener('mouseenter', function() {
         for (var ti = 0; ti < textEls.length; ti++) textEls[ti].classList.add('hover-linked');
@@ -591,6 +599,9 @@ window.__webAudioPlay = function(src, btn, gen) {
                         var defLang = audioItem.getAttribute('data-def-lang');
                         var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
                         if (textKey) linkedTexts = document.querySelectorAll('.text-play[data-text-play="' + textKey + '"]');
+                        if (!linkedTexts.length && textKey && textKey.indexOf('def-') === 0) {
+                            linkedTexts = document.querySelectorAll('.text-play[data-text-play="def"]');
+                        }
                     }
                     for (var ti = 0; ti < linkedTexts.length; ti++) linkedTexts[ti].classList.add('playing');
                 }

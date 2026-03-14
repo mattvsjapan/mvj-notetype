@@ -1647,6 +1647,33 @@
       });
     }
 
+    // ── Mirror native .playing state from buttons to text-play elements ──
+    // Anki's native [sound:] autoplay adds .playing to buttons directly,
+    // bypassing __startPlaying. Observe and propagate to linked text-play elements.
+    document.querySelectorAll('.audio-row .audio-item').forEach(function(item) {
+      var audioType = item.getAttribute('data-audio');
+      var defLang = item.getAttribute('data-def-lang');
+      var textKey = (audioType === 'def' && defLang) ? 'def-' + defLang : audioType;
+      if (!textKey) return;
+      item.querySelectorAll('.replay-button').forEach(function(btn) {
+        var observer = new MutationObserver(function(mutations) {
+          for (var m = 0; m < mutations.length; m++) {
+            if (mutations[m].attributeName !== 'class') continue;
+            var isPlaying = btn.classList.contains('playing');
+            var texts = document.querySelectorAll('.text-play[data-text-play="' + textKey + '"]');
+            if (!texts.length && textKey.indexOf('def-') === 0) {
+              texts = document.querySelectorAll('.text-play[data-text-play="def"]');
+            }
+            for (var ti = 0; ti < texts.length; ti++) {
+              if (isPlaying) texts[ti].classList.add('playing');
+              else texts[ti].classList.remove('playing');
+            }
+          }
+        });
+        observer.observe(btn, { attributes: true, attributeFilter: ['class'] });
+      });
+    });
+
     // ── Per-section audio button hiding (fallback + off) ──
     var _rs = getComputedStyle(document.documentElement);
     var _wab = _rs.getPropertyValue('--word-audio-buttons').trim();
@@ -1672,7 +1699,11 @@
         document.querySelectorAll('.audio-item[data-audio="def"]').forEach(function(item) {
             var defLang = item.getAttribute('data-def-lang');
             var textKey = defLang ? 'def-' + defLang : 'def';
-            if (document.querySelector('.text-play:not(.text-play-inert)[data-text-play="' + textKey + '"]')) {
+            var _tpSel = '.text-play:not(.text-play-inert)[data-text-play="' + textKey + '"]';
+            if (!document.querySelector(_tpSel) && textKey.indexOf('def-') === 0) {
+                _tpSel = '.text-play:not(.text-play-inert)[data-text-play="def"]';
+            }
+            if (document.querySelector(_tpSel)) {
                 item.setAttribute('data-btn-off', '');
             }
         });
@@ -2400,3 +2431,4 @@
     }
 })();
 </script>
+
