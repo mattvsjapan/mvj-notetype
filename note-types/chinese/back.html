@@ -673,8 +673,10 @@ function _renderBack() {
   var _sentItem = document.querySelector('.audio-row .audio-item[data-audio="sentence"]');
   var _sentBtn = _sentItem ? _sentItem.querySelector('.replay-button') : null;
 
+  var cardGen = window.__cardGen;
   if (_sentBtn || _autoDefPlay) {
     setTimeout(function() {
+      if (cardGen !== window.__cardGen) return;
       if (_sentBtn) {
         var _sentAudio = (_sentItem._jsAudio || _sentItem.querySelector('audio'));
         if (window.matchMedia('(hover: none)').matches) {

@@ -102,6 +102,7 @@ if (!window.__audioCtxVisHandler) {
 })();
 
 // Clean up previous card
+window.__cardGen = (window.__cardGen || 0) + 1;
 if (window.__stopAllAudio) window.__stopAllAudio();
 document.querySelectorAll('body > audio').forEach(function(a) {
     a.pause();
@@ -491,7 +492,9 @@ window.__playMobile = function(src, btn) {
   });
   if (!queue.length) return;
   var i = 0;
+  var cardGen = window.__cardGen;
   setTimeout(function() {
+    if (cardGen !== window.__cardGen) return;
     var gen = window.__webAudioGen;
     (function playNext() {
       if (i >= queue.length || gen !== window.__webAudioGen) return;

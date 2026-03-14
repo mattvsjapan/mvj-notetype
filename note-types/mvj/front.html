@@ -241,6 +241,7 @@ if (!window.__audioCtxVisHandler) {
 })();
 
 // Clean up previous card
+window.__cardGen = (window.__cardGen || 0) + 1;
 if (window.__stopAllAudio) window.__stopAllAudio();
 document.querySelectorAll('body > audio').forEach(function(a) {
     a.pause();
@@ -1203,7 +1204,9 @@ function clearLastMargin(el) {
 (function() {
   if (document.querySelector('.back')) return;
   var ap = window.__autoplayEnabled;
+  var cardGen = window.__cardGen;
   setTimeout(function() {
+    if (cardGen !== window.__cardGen) return;
     window.__autoplayItems('.audio-row .audio-item[data-side="front"]', function(type) {
       if (type === 'word') return ap.word === 'front only' || ap.word === 'front & back' || ap.word === 'when no def audio';
       if (type === 'sentence') return ap.sentence === 'front only' || ap.sentence === 'front & back' || ap.sentence === 'when no def audio';

@@ -2159,7 +2159,9 @@
     document.querySelectorAll('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])').forEach(function(item) {
       if (shouldDefPlayOnBack(item.getAttribute('data-def-lang'))) anyDefWillPlay = true;
     });
+    var cardGen = window.__cardGen;
     setTimeout(function() {
+      if (cardGen !== window.__cardGen) return;
       window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
         if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back' || (ap.word === 'when no def audio' && !anyDefWillPlay);
         if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back' || (ap.sentence === 'when no def audio' && !anyDefWillPlay);
