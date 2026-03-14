@@ -823,7 +823,7 @@
   
   function applyDefPrimaryFilter(defs, primary) {
       // Unlock LOCKED_monolingual for monolingual/monolingual when unlocked modes
-      if (primary === 'monolingual' || primary === 'monolingual when unlocked') {
+      if (primary === 'monolingual') {
           if (defs.LOCKED_monolingual) {
               defs.monolingual = defs.LOCKED_monolingual;
               delete defs.LOCKED_monolingual;
