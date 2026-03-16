@@ -2237,7 +2237,7 @@
       window.__playItemAudios(item);
     }
     function playAll() {
-      var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"])');
+      var items = document.querySelectorAll('.audio-row .audio-item:not([data-side="off"]):not([data-audio="def"])');
       var queue = [];
       items.forEach(function(item) {
         var btns = item.querySelectorAll('.replay-button');
