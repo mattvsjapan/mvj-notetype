@@ -988,7 +988,8 @@ _renderBack();
   function handler(ev) {
     if (ev.code === 'KeyG' || ev.key === '.') {
       var cb = document.getElementById('jp-toggle');
-      if (cb) {
+      var cbSection = cb ? cb.closest('.jp-def-section') : null;
+      if (cb && cbSection && cbSection.offsetParent !== null) {
         ev.preventDefault();
         ev.stopPropagation();
         cb.checked = !cb.checked;
