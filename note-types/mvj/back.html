@@ -1605,7 +1605,16 @@
             window.__linkTextPlay(jpDefEl, detJpKey, _defTextPlayOpts(detJpLang));
         } else {
           if (defEl.innerHTML) {
-            window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+            if (hasDualAudio) {
+              var soloLang = (defLayout === 'bi-only') ? 'bi' : 'mono';
+              var soloKey = (defLayout === 'bi-only') ? 'def-bi' : 'def-mono';
+              if (document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + soloLang + '"]'))
+                window.__linkTextPlay(defEl, soloKey, _defTextPlayOpts(soloLang));
+              else
+                window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+            } else {
+              window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+            }
           }
           if (_detSecondaryDef && jpDefEl.innerHTML) {
             window.__linkTextPlay(jpDefEl, 'def', _defTextPlayOpts(null));

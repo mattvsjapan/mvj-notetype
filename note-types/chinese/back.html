@@ -769,7 +769,16 @@ function _renderBack() {
 
   if (_defLayout === 'bi-only' || _defLayout === 'mono-only') {
     if (defEl.innerHTML && document.querySelector('.audio-item[data-audio="def"]')) {
-      window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+      if (_hasDualDefAudio) {
+        var _soloLang = (_defLayout === 'bi-only') ? 'bi' : 'mono';
+        var _soloKey = (_defLayout === 'bi-only') ? 'def-bi' : 'def-mono';
+        if (document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + _soloLang + '"]'))
+          window.__linkTextPlay(defEl, _soloKey, _defTextPlayOpts(_soloLang));
+        else
+          window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+      } else {
+        window.__linkTextPlay(defEl, 'def', _defTextPlayOpts(null));
+      }
     }
   } else if (_defLayout === 'dual-bi' || _defLayout === 'dual-mono') {
     if (_hasDualDefAudio) {
