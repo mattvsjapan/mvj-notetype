@@ -1,6 +1,9 @@
 """MVJ Note Type Tools — Anki addon for the mvj note type."""
 
+import os
 import re
+import subprocess
+import sys
 
 from anki import hooks as anki_hooks
 from anki.hooks import wrap
@@ -8,8 +11,36 @@ from aqt import gui_hooks, mw
 from aqt.editor import Editor
 from aqt.qt import QAction, Qt
 from .notetype import NOTE_TYPE_NAME
+from .media_convert import rewrite_m4a_tags, find_ffmpeg, convert_m4a_to_mp3, m4a_to_mp3_filename, _M4A_AUDIO_RE
 
 _SOUND_RE = re.compile(r"\[sound:([^\]]+)\]")
+
+
+def _media_dir() -> str | None:
+    if mw is None or mw.col is None:
+        return None
+    return mw.col.media.dir()
+
+
+def _convert_m4a_in_media(text: str) -> None:
+    """Find [audio:*.m4a] refs in text and convert each file to .mp3 if needed."""
+    media_dir = _media_dir()
+    if media_dir is None:
+        return
+    ffmpeg = find_ffmpeg()
+    if ffmpeg is None:
+        return
+    for m4a_name in _M4A_AUDIO_RE.findall(text):
+        mp3_name = m4a_to_mp3_filename(m4a_name)
+        mp3_path = os.path.join(media_dir, mp3_name)
+        m4a_path = os.path.join(media_dir, m4a_name)
+        if os.path.exists(mp3_path) or not os.path.exists(m4a_path):
+            continue
+        try:
+            convert_m4a_to_mp3(m4a_path, mp3_path, ffmpeg_path=ffmpeg)
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode(errors="replace") if isinstance(e.stderr, bytes) else e.stderr
+            sys.stderr.write(f"ffmpeg m4a→mp3 failed for {m4a_name}: {stderr}\n")
 
 
 def _is_target_note(editor: Editor) -> bool:
@@ -26,6 +57,8 @@ def _fnameToLink_wrapper(self, fname, _old=None):
     result = _old(self, fname)
     if _is_target_note(self):
         result = _SOUND_RE.sub(r"[audio:\1]", result)
+        _convert_m4a_in_media(result)
+        result = rewrite_m4a_tags(result, _media_dir())
     return result
 
 
@@ -41,7 +74,9 @@ except AttributeError:
 def _munge_sound_to_audio(txt: str, editor: Editor) -> str:
     if not _is_target_note(editor):
         return txt
-    return _SOUND_RE.sub(r"[audio:\1]", txt)
+    txt = _SOUND_RE.sub(r"[audio:\1]", txt)
+    txt = rewrite_m4a_tags(txt, _media_dir())
+    return txt
 
 
 gui_hooks.editor_will_munge_html.append(_munge_sound_to_audio)
@@ -54,9 +89,16 @@ def _convert_on_add(col, note, deck_id):
     model = note.note_type()
     if model is None or model["name"] != NOTE_TYPE_NAME:
         return
+    media_dir = _media_dir()
     for i, value in enumerate(note.fields):
-        if _SOUND_RE.search(value):
-            note.fields[i] = _SOUND_RE.sub(r"[audio:\1]", value)
+        new_value = value
+        if _SOUND_RE.search(new_value):
+            new_value = _SOUND_RE.sub(r"[audio:\1]", new_value)
+        if _M4A_AUDIO_RE.search(new_value):
+            _convert_m4a_in_media(new_value)
+            new_value = rewrite_m4a_tags(new_value, media_dir)
+        if new_value != value:
+            note.fields[i] = new_value
 
 
 anki_hooks.note_will_be_added.append(_convert_on_add)
@@ -74,10 +116,17 @@ def _convert_on_editor_load(editor: Editor):
     if not _is_target_note(editor):
         return
     note = editor.note
+    media_dir = _media_dir()
     changed = False
     for i, value in enumerate(note.fields):
-        if _SOUND_RE.search(value):
-            note.fields[i] = _SOUND_RE.sub(r"[audio:\1]", value)
+        new_value = value
+        if _SOUND_RE.search(new_value):
+            new_value = _SOUND_RE.sub(r"[audio:\1]", new_value)
+        if _M4A_AUDIO_RE.search(new_value):
+            _convert_m4a_in_media(new_value)
+            new_value = rewrite_m4a_tags(new_value, media_dir)
+        if new_value != value:
+            note.fields[i] = new_value
             changed = True
     if changed:
         _converting_editor = True

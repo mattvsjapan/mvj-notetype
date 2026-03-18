@@ -1089,6 +1089,10 @@ class SettingsDialog(QDialog):
             self._btn_back.setChecked(False)
 
     def _convert_sound_to_audio(self):
+        from .media_convert import (
+            _M4A_AUDIO_RE, rewrite_m4a_tags, convert_m4a_files,
+        )
+
         sound_re = re.compile(r"\[sound:([^\]]+)\]")
         note_ids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
         if not note_ids:
@@ -1099,13 +1103,18 @@ class SettingsDialog(QDialog):
 
         def task():
             nonlocal converted
+            media_dir = mw.col.media.dir()
             modified = []
+            m4a_files = set()
             total = len(note_ids)
+
+            # Pass 1: [sound:]→[audio:] and collect m4a filenames
             for i, nid in enumerate(note_ids):
                 note = mw.col.get_note(nid)
                 changed = False
                 for j, field in enumerate(note.fields):
                     new_field = sound_re.sub(r"[audio:\1]", field)
+                    m4a_files.update(_M4A_AUDIO_RE.findall(new_field))
                     if new_field != field:
                         note.fields[j] = new_field
                         changed = True
@@ -1118,6 +1127,46 @@ class SettingsDialog(QDialog):
                             value=v,
                         )
                     )
+
+            # Pass 2: convert m4a files to mp3
+            if m4a_files:
+                def on_convert_progress(i, total):
+                    mw.taskman.run_on_main(
+                        lambda v=i + 1, t=total: mw.progress.update(
+                            label=f"Converting audio {v}/{t}...",
+                        )
+                    )
+                try:
+                    convert_m4a_files(
+                        list(m4a_files), media_dir,
+                        on_progress=on_convert_progress,
+                    )
+                except RuntimeError:
+                    pass  # ffmpeg not found — skip m4a→mp3 rewrite
+
+            # Pass 3: rewrite [audio:*.m4a]→[audio:*.mp3] only where .mp3 exists
+            for note in modified.copy():
+                note_changed = False
+                for j, field in enumerate(note.fields):
+                    new_field = rewrite_m4a_tags(field, media_dir)
+                    if new_field != field:
+                        note.fields[j] = new_field
+                        note_changed = True
+            # Also check unmodified notes for m4a refs needing rewrite
+            modified_ids = {n.id for n in modified}
+            for nid in note_ids:
+                if nid in modified_ids:
+                    continue
+                note = mw.col.get_note(nid)
+                changed = False
+                for j, field in enumerate(note.fields):
+                    new_field = rewrite_m4a_tags(field, media_dir)
+                    if new_field != field:
+                        note.fields[j] = new_field
+                        changed = True
+                if changed:
+                    modified.append(note)
+
             converted = len(modified)
             if modified:
                 pos = mw.col.add_custom_undo_entry(
@@ -1182,6 +1231,7 @@ class SettingsDialog(QDialog):
         After completion, proceeds to Phase 2: change_notes_to_mvj().
         """
         from .pitch_converter import convert_word_field, convert_sentence_field
+        from .media_convert import _M4A_AUDIO_RE, rewrite_m4a_tags, convert_m4a_files
 
         sound_re = re.compile(r"\[sound:([^\]]+)\]")
         note_ids = mw.col.find_notes(f'"note:{old_note_type_name}"')
@@ -1196,7 +1246,9 @@ class SettingsDialog(QDialog):
 
         def task():
             nonlocal converted_count, flagged_count, recovered_count
+            media_dir = mw.col.media.dir()
             modified = []
+            m4a_files = set()
             total = len(note_ids)
 
             for i, nid in enumerate(note_ids):
@@ -1218,6 +1270,9 @@ class SettingsDialog(QDialog):
 
                     # [sound:] → [audio:] for all fields
                     new_value = sound_re.sub(r"[audio:\1]", new_value)
+
+                    # Collect m4a refs (rewriting happens after conversion)
+                    m4a_files.update(_M4A_AUDIO_RE.findall(new_value))
 
                     if new_value != fld_value:
                         note.fields[j] = new_value
@@ -1265,6 +1320,34 @@ class SettingsDialog(QDialog):
                             value=v,
                         )
                     )
+
+            # Convert m4a files to mp3
+            if m4a_files:
+                try:
+                    convert_m4a_files(list(m4a_files), media_dir)
+                except RuntimeError:
+                    pass  # ffmpeg not found — skip m4a→mp3 rewrite
+
+            # Rewrite [audio:*.m4a]→[audio:*.mp3] only where .mp3 exists
+            for note in modified:
+                for j, field in enumerate(note.fields):
+                    new_field = rewrite_m4a_tags(field, media_dir)
+                    if new_field != field:
+                        note.fields[j] = new_field
+            # Check unmodified notes too
+            modified_ids = {n.id for n in modified}
+            for nid in note_ids:
+                if nid in modified_ids:
+                    continue
+                note = mw.col.get_note(nid)
+                note_changed = False
+                for j, field in enumerate(note.fields):
+                    new_field = rewrite_m4a_tags(field, media_dir)
+                    if new_field != field:
+                        note.fields[j] = new_field
+                        note_changed = True
+                if note_changed:
+                    modified.append(note)
 
             converted_count = len(modified)
             if modified:
