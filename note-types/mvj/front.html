@@ -241,7 +241,36 @@ if (!window.__audioCtxVisHandler) {
 })();
 
 // Clean up previous card
-window.__cardGen = (window.__cardGen || 0) + 1;
+window.__activateCardScope = function(root) {
+    if (window.__cardScopeObserver) {
+        window.__cardScopeObserver.disconnect();
+        window.__cardScopeObserver = null;
+    }
+    var scope = { root: root, stale: !root };
+    window.__currentCardScope = scope;
+    if (!root || !document.body) return scope;
+    var obs = new MutationObserver(function() {
+        if (window.__currentCardScope !== scope) {
+            obs.disconnect();
+            return;
+        }
+        if (scope.root && scope.root.isConnected) return;
+        scope.stale = true;
+        obs.disconnect();
+        if (window.__cardScopeObserver === obs) window.__cardScopeObserver = null;
+        if (window.__stopAllAudio) window.__stopAllAudio();
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    window.__cardScopeObserver = obs;
+    return scope;
+};
+
+window.__isCardScopeActive = function(scope) {
+    return !!scope && !scope.stale && !!scope.root
+        && scope.root.isConnected && window.__currentCardScope === scope;
+};
+
+window.__activateCardScope(document.querySelector('.card-inner'));
 if (window.__stopAllAudio) window.__stopAllAudio();
 document.querySelectorAll('body > audio').forEach(function(a) {
     a.pause();
@@ -405,7 +434,9 @@ window.__stopAllAudio = function(except) {
     });
 };
 
-window.__safePlay = function(audio) {
+window.__safePlay = function(audio, scope) {
+    if (scope === undefined) scope = window.__currentCardScope;
+    if (!window.__isCardScopeActive(scope)) return;
     var p = audio.play();
     if (p && p['catch']) p['catch'](function(e) {
         if (e && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;
@@ -413,10 +444,14 @@ window.__safePlay = function(audio) {
             audio.load();
             audio.addEventListener('canplaythrough', function retry() {
                 audio.removeEventListener('canplaythrough', retry);
+                if (!window.__isCardScopeActive(scope)) return;
                 audio.play()['catch'](function() {});
             });
         } else {
-            setTimeout(function() { audio.play()['catch'](function() {}); }, 50);
+            setTimeout(function() {
+                if (!window.__isCardScopeActive(scope)) return;
+                audio.play()['catch'](function() {});
+            }, 50);
         }
     });
 };
@@ -457,7 +492,9 @@ window.__startPlaying = function(audio, btn) {
     }, 1000);
 };
 
-window.__freshPlay = function(src, btn) {
+window.__freshPlay = function(src, btn, scope) {
+    if (scope === undefined) scope = window.__currentCardScope;
+    if (!window.__isCardScopeActive(scope)) return null;
     if (btn && btn._freshAudio) {
         btn._freshAudio.pause();
         btn._freshAudio.removeAttribute('src');
@@ -509,8 +546,9 @@ window.__linkTextPlay = function(textEl, audioKey, opts) {
         }
 
         var gen = window.__webAudioGen;
-        window.__playMobile(src, null).then(function() {
-            if (gen === window.__webAudioGen) {
+        var scope = window.__currentCardScope;
+        window.__playMobile(src, null, scope).then(function() {
+            if (gen === window.__webAudioGen && window.__isCardScopeActive(scope)) {
                 textEl.classList.remove('playing');
                 for (var i = 0; i < allBtns.length; i++) {
                     allBtns[i].classList.remove('playing');
@@ -577,12 +615,15 @@ window.__checkImageFit = function() {
     });
 };
 
-window.__webAudioPlay = function(src, btn, gen) {
+window.__webAudioPlay = function(src, btn, gen, scope) {
+    if (scope === undefined) scope = window.__currentCardScope;
+    if (!window.__isCardScopeActive(scope)) return Promise.resolve();
     return fetch(src)
         .then(function(r) { return r.arrayBuffer(); })
         .then(function(buf) { return window.__audioCtx.decodeAudioData(buf); })
         .then(function(audioBuf) {
-            if (gen !== undefined && gen !== window.__webAudioGen) return;
+            if ((gen !== undefined && gen !== window.__webAudioGen)
+                || !window.__isCardScopeActive(scope)) return;
             return new Promise(function(resolve) {
                 var source = window.__audioCtx.createBufferSource();
                 source.buffer = audioBuf;
@@ -617,11 +658,14 @@ window.__webAudioPlay = function(src, btn, gen) {
         });
 };
 
-window.__playMobile = function(src, btn) {
+window.__playMobile = function(src, btn, scope) {
+    if (scope === undefined) scope = window.__currentCardScope;
+    if (!window.__isCardScopeActive(scope)) return Promise.resolve();
     if (window.__audioCtx && window.__audioCtx.state === 'running') {
-        return window.__webAudioPlay(src, btn, window.__webAudioGen);
+        return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
     }
-    var fa = window.__freshPlay(src, btn);
+    var fa = window.__freshPlay(src, btn, scope);
+    if (!fa) return Promise.resolve();
     window.__startPlaying(fa, btn);
     return new Promise(function(resolve) { fa.onended = resolve; });
 };
@@ -629,6 +673,7 @@ window.__playMobile = function(src, btn) {
 window.__playItemAudios = function(item) {
     if (!item) return;
     window.__stopAllAudio();
+    var scope = window.__currentCardScope;
     var queue = [];
     var btns = item.querySelectorAll('.replay-button');
     if (item._jsAudios && item._jsAudios.length) {
@@ -645,12 +690,19 @@ window.__playItemAudios = function(item) {
     var gen = window.__webAudioGen;
     var idx = 0;
     (function next() {
-        if (idx >= queue.length || gen !== window.__webAudioGen) return;
+        if (idx >= queue.length || gen !== window.__webAudioGen
+            || !window.__isCardScopeActive(scope)) return;
         var entry = queue[idx++];
         if (entry.btn) window.__animateBtn(entry.btn);
-        window.__playMobile(entry.src, entry.btn)
-            .then(function() { if (gen === window.__webAudioGen) next(); })
-            ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+        window.__playMobile(entry.src, entry.btn, scope)
+            .then(function() {
+                if (gen === window.__webAudioGen
+                    && window.__isCardScopeActive(scope)) next();
+            })
+            ['catch'](function() {
+                if (gen === window.__webAudioGen
+                    && window.__isCardScopeActive(scope)) next();
+            });
     })();
 };
 
@@ -691,16 +743,23 @@ window.__autoplayItems = function(selector, filterFn, onDone) {
         }
     });
     if (!queue.length) { if (onDone) onDone(); return; }
+    var scope = window.__currentCardScope;
     var gen = window.__webAudioGen;
     var i = 0;
     (function playNext() {
-        if (gen !== window.__webAudioGen) return;
+        if (gen !== window.__webAudioGen || !window.__isCardScopeActive(scope)) return;
         if (i < queue.length) {
             var entry = queue[i++];
             if (entry.btn) window.__animateBtn(entry.btn);
-            window.__playMobile(entry.src, entry.btn)
-                .then(function() { if (gen === window.__webAudioGen) playNext(); })
-                ['catch'](function() { if (gen === window.__webAudioGen) playNext(); });
+            window.__playMobile(entry.src, entry.btn, scope)
+                .then(function() {
+                    if (gen === window.__webAudioGen
+                        && window.__isCardScopeActive(scope)) playNext();
+                })
+                ['catch'](function() {
+                    if (gen === window.__webAudioGen
+                        && window.__isCardScopeActive(scope)) playNext();
+                });
         } else if (onDone) { onDone(); }
     })();
 };
@@ -1204,9 +1263,9 @@ function clearLastMargin(el) {
 (function() {
   if (document.querySelector('.back')) return;
   var ap = window.__autoplayEnabled;
-  var cardGen = window.__cardGen;
+  var cardScope = window.__currentCardScope;
   setTimeout(function() {
-    if (cardGen !== window.__cardGen) return;
+    if (!window.__isCardScopeActive(cardScope)) return;
     window.__autoplayItems('.audio-row .audio-item[data-side="front"]', function(type) {
       if (type === 'word') return ap.word === 'front only' || ap.word === 'front & back' || ap.word === 'when no def audio';
       if (type === 'sentence') return ap.sentence === 'front only' || ap.sentence === 'front & back' || ap.sentence === 'when no def audio';

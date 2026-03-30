@@ -2168,9 +2168,9 @@
     document.querySelectorAll('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])').forEach(function(item) {
       if (shouldDefPlayOnBack(item.getAttribute('data-def-lang'))) anyDefWillPlay = true;
     });
-    var cardGen = window.__cardGen;
+    var cardScope = window.__currentCardScope;
     setTimeout(function() {
-      if (cardGen !== window.__cardGen) return;
+      if (!window.__isCardScopeActive(cardScope)) return;
       window.__autoplayItems('.audio-row .audio-item:not([data-side="off"])', function(type, item) {
         if (type === 'word') return ap.word === 'back only' || ap.word === 'front & back' || (ap.word === 'when no def audio' && !anyDefWillPlay);
         if (type === 'sentence') return ap.sentence === 'back only' || ap.sentence === 'front & back' || (ap.sentence === 'when no def audio' && !anyDefWillPlay);
@@ -2201,7 +2201,9 @@
           if (hasItems) {
             window.__stopAllAudio();
             detailsAudioGen = window.__webAudioGen;
+            var detailsScope = window.__currentCardScope;
             setTimeout(function() {
+              if (!window.__isCardScopeActive(detailsScope)) return;
               window.__autoplayItems(detailsSel, detailsFilter);
             }, 0);
           }
@@ -2444,4 +2446,3 @@
     }
 })();
 </script>
-

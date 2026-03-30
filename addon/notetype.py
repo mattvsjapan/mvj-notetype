@@ -208,7 +208,7 @@ def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
             showWarning(f"Failed to update note type: {e}")
             return
 
-        _inject_cardgen_guard()
+        _remove_cardgen_guard()
 
         if on_success:
             on_success()
@@ -217,28 +217,23 @@ def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Cross-note-type autoplay guard
+# Remove legacy cross-note-type autoplay guard
 # ---------------------------------------------------------------------------
 
 _CARDGEN_SNIPPET = '<script>window.__cardGen=(window.__cardGen||0)+1;</script>'
 
 
-def _inject_cardgen_guard():
-    """Add cardGen increment to every other note type's front template.
-
-    When transitioning from an MvJ card to a card of a different note type,
-    the deferred autoplay setTimeout from MvJ can fire after the new card
-    loads.  Incrementing __cardGen on every front template invalidates those
-    stale callbacks.
-    """
+def _remove_cardgen_guard():
+    """Remove the legacy cardGen snippet from non-MvJ front templates."""
     mm = mw.col.models
     for model in mm.all():
         if model["name"] == NOTE_TYPE_NAME:
             continue
         changed = False
         for tmpl in model["tmpls"]:
-            if _CARDGEN_SNIPPET not in tmpl["qfmt"]:
-                tmpl["qfmt"] = tmpl["qfmt"] + "\n" + _CARDGEN_SNIPPET
+            if _CARDGEN_SNIPPET in tmpl["qfmt"]:
+                tmpl["qfmt"] = tmpl["qfmt"].replace("\n" + _CARDGEN_SNIPPET, "")
+                tmpl["qfmt"] = tmpl["qfmt"].replace(_CARDGEN_SNIPPET, "")
                 changed = True
         if changed:
             mm.update_dict(model)
