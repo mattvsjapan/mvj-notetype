@@ -2266,7 +2266,7 @@
       var k = 0;
       function next() {
         if (k >= queue.length) {
-          if (document.querySelector('.audio-row .audio-item[data-audio="def"]:not([data-side="off"])') && window.__playLockedDefAudio) {
+          if (document.querySelector('.audio-row .audio-item[data-audio="def"]:not([data-side="off"]):not([data-btn-off])') && window.__playLockedDefAudio) {
             window.__playLockedDefAudio();
           }
           return;
