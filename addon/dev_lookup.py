@@ -10,7 +10,9 @@ It adds a button to the editor toolbar that:
 
 import os
 import re
+import shutil
 import sqlite3
+import subprocess
 
 from aqt import gui_hooks, mw
 from aqt.editor import Editor
@@ -90,17 +92,17 @@ def _find_entries(word: str, conn: sqlite3.Connection) -> list[str]:
     return sorted(row[0] for row in cur2.fetchall())
 
 
-def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, str | None]] | None:
-    """Get distinct (pitch_drop, split) tuples for a single entry."""
+def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, str | None, str | None]] | None:
+    """Get distinct (pitch_drop, split, audio) tuples for a single entry."""
     cur = conn.cursor()
     cur.execute(
-        "SELECT DISTINCT pitch_drop, split FROM accents "
+        "SELECT DISTINCT pitch_drop, split, audio FROM accents "
         "WHERE entry_id = ? AND pitch_drop IS NOT NULL "
         "AND (metadata IS NULL OR (metadata NOT LIKE '%【御】%' AND metadata NOT LIKE '%【複】%')) "
         "ORDER BY priority",
         (entry_id,),
     )
-    rows = [(r[0], r[1]) for r in cur.fetchall() if r[0]]
+    rows = [(r[0], r[1], r[2]) for r in cur.fetchall() if r[0]]
     return rows or None
 
 
@@ -638,6 +640,11 @@ def _lookup_note(editor: Editor):
 
         pitch_rows = _get_pitch(selected, conn)
         reading_info = _get_reading(selected, conn)
+
+        cur = conn.cursor()
+        cur.execute("SELECT 表記 FROM headwords WHERE id = ? LIMIT 1", (selected,))
+        row = cur.fetchone()
+        hyouki = row[0].split('┊')[0] if row and row[0] else None
     finally:
         conn.close()
 
@@ -651,15 +658,50 @@ def _lookup_note(editor: Editor):
         clean_reading, raw_reading = None, None
 
     lines: list[str] = []
-    for pitch_drop, split in pitch_rows:
+    audio_files: list[str] = []
+    for pitch_drop, split, audio in pitch_rows:
         if split is not None and raw_reading:
             line = _split_compound(word, raw_reading, split, pitch_drop)
         else:
             word_value = _align_reading(word, clean_reading) if clean_reading else word
             line = f"{word_value}:{pitch_drop}-"
         lines.append(line)
+        if audio:
+            audio_files.append(audio)
 
     note.fields[word_idx] = '<br>'.join(lines)
+
+    # Copy audio files and populate Word Audio field
+    if audio_files and "Word Audio" in field_names:
+        seen: set[tuple[str, str]] = set()
+        unique_pairs: list[tuple[str, str]] = []
+        for (pitch_drop, _split, audio) in pitch_rows:
+            if audio and (audio, str(pitch_drop)) not in seen:
+                seen.add((audio, str(pitch_drop)))
+                unique_pairs.append((audio, str(pitch_drop)))
+
+        audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "audio")
+        media_dir = mw.col.media.dir()
+        new_names: list[str] = []
+        for orig_audio, pitch in unique_pairs:
+            pitch_part = pitch.replace(',', '-')
+            if hyouki and clean_reading and hyouki != clean_reading:
+                new_name = f"{hyouki}_{clean_reading}_{pitch_part}_DAIJISEN2.mp3"
+            elif hyouki:
+                new_name = f"{hyouki}_{pitch_part}_DAIJISEN2.mp3"
+            else:
+                new_name = os.path.splitext(orig_audio)[0] + '.mp3'
+            src = os.path.join(audio_dir, orig_audio)
+            dst = os.path.join(media_dir, new_name)
+            if os.path.exists(src) and not os.path.exists(dst):
+                subprocess.run(
+                    ['ffmpeg', '-i', src, '-q:a', '2', dst],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            new_names.append(new_name)
+
+        audio_idx = field_names.index("Word Audio")
+        note.fields[audio_idx] = ''.join(f'[sound:{name}]' for name in new_names)
 
     if note.id:
         mw.col.update_note(note)
