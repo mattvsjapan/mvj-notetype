@@ -14,11 +14,11 @@ from .notetype import NOTE_TYPE_NAME, _update_notetype, _merge_css_settings
 
 _CONFIGS = {
     "mvj": {
-        "dir": "/Volumes/OWC Envoy Pro FX/Documents/dev/pitch-graphs/note-types/mvj",
+        "dir": "/Users/matt/Documents/Code Files/mvj_notetype/note-types/mvj",
         "note_type": NOTE_TYPE_NAME,  # 🇯🇵 MvJ
     },
     "chinese": {
-        "dir": "/Volumes/OWC Envoy Pro FX/Documents/dev/pitch-graphs/note-types/chinese",
+        "dir": "/Users/matt/Documents/Code Files/mvj_notetype/note-types/chinese",
         "note_type": "🇹🇼 Chinese",
     },
 }

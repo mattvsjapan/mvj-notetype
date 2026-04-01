@@ -256,3 +256,9 @@ try:
     from . import dev_migrate  # noqa: F401
 except ImportError:
     pass
+
+# Dev-only dictionary pitch lookup (excluded from packaging)
+try:
+    from . import dev_lookup  # noqa: F401
+except ImportError:
+    pass

@@ -48,6 +48,9 @@ def _reformat_token(text):
     text = _PITCH_OUTSIDE_RE.sub(r'[\1;\3]\2', text)
     # Empty pitch (trailing ";") defaults to 0
     text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
+    # Bare token with ;pitch but no brackets → wrap in brackets
+    if '[' not in text and ';' in text:
+        text = re.sub(r'^([^;]+);(\S+)$', r'[\1;\2]', text)
     return text
 
 
@@ -129,7 +132,7 @@ def _migrate_note(editor: Editor):
         return
 
     field_names = [f["name"] for f in model["flds"]]
-    for needed in ("Image", "Word", "Word Audio", "Sentence Audio", "Context", "Notes"):
+    for needed in ("Image", "Word", "Word Audio", "Sentence Audio", "Context", "Notes", "Definition"):
         if needed not in field_names:
             showWarning(f"Note is missing {needed} field.")
             return
@@ -140,6 +143,7 @@ def _migrate_note(editor: Editor):
     sent_audio_idx = field_names.index("Sentence Audio")
     context_idx = field_names.index("Context")
     notes_idx = field_names.index("Notes")
+    def_idx = field_names.index("Definition")
 
     image_content = note.fields[img_idx]
     if not image_content.strip():
@@ -182,6 +186,21 @@ def _migrate_note(editor: Editor):
     note.fields[word_idx] = new_syntax
     note.fields[img_idx] = ""
 
+    # Wrap Definition in bilingual comments if content is English
+    def_content = note.fields[def_idx]
+    def_wrapped = False
+    if def_content.strip() and '<!-- def-type=' not in def_content:
+        has_japanese = any(
+            '\u3040' <= ch <= '\u309f' or
+            '\u30a0' <= ch <= '\u30ff' or
+            '\u4e00' <= ch <= '\u9fff' or
+            '\u3400' <= ch <= '\u4dbf'
+            for ch in def_content
+        )
+        if not has_japanese:
+            note.fields[def_idx] = f'<!-- def-type="bilingual" -->\n{def_content}\n<!-- def-end -->'
+            def_wrapped = True
+
     # Convert Context field dictionary list to table in Notes field
     context_content = note.fields[context_idx]
     dict_table = _context_to_dict_table(context_content) if context_content.strip() else None
@@ -194,6 +213,8 @@ def _migrate_note(editor: Editor):
     editor.loadNoteKeepingFocus()
 
     msg = f"Migrated: {new_syntax}"
+    if def_wrapped:
+        msg += " | Wrapped def as bilingual"
     if dict_table:
         msg += " | Dict table → Notes"
     if moved_audio:
@@ -255,6 +276,39 @@ def _insert_dict_table(editor: Editor):
     tooltip("Inserted dictionary table into Notes field.")
 
 
+def _wrap_bilingual_def(editor: Editor):
+    note = editor.note
+    if note is None:
+        showWarning("No note loaded.")
+        return
+
+    model = note.note_type()
+    if model is None or model["name"] != NOTE_TYPE_NAME:
+        showWarning(f"This note is not a {NOTE_TYPE_NAME} note.")
+        return
+
+    field_names = [f["name"] for f in model["flds"]]
+    if "Definition" not in field_names:
+        showWarning("Note is missing Definition field.")
+        return
+
+    def_idx = field_names.index("Definition")
+    content = note.fields[def_idx]
+
+    if '<!-- def-type="bilingual" -->' in content:
+        tooltip("Definition already has bilingual wrapper.")
+        return
+
+    if not content.strip():
+        tooltip("Definition field is empty.")
+        return
+
+    note.fields[def_idx] = f'<!-- def-type="bilingual" -->\n{content}\n<!-- def-end -->'
+    note.flush()
+    editor.loadNoteKeepingFocus()
+    tooltip("Wrapped definition in bilingual comments.")
+
+
 def _add_migrate_button(buttons, editor: Editor):
     btn = editor.addButton(
         icon=None,
@@ -274,6 +328,15 @@ def _add_migrate_button(buttons, editor: Editor):
         disables=False,
     )
     buttons.append(btn2)
+    btn3 = editor.addButton(
+        icon=None,
+        cmd="wrap_bilingual_def",
+        func=lambda e=editor: _wrap_bilingual_def(e),
+        tip="Wrap Definition in bilingual comments",
+        label="🔡",
+        disables=False,
+    )
+    buttons.append(btn3)
 
 
 gui_hooks.editor_did_init_buttons.append(_add_migrate_button)
