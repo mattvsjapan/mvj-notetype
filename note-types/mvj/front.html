@@ -900,6 +900,13 @@ function clearLastMargin(el) {
         if (ci) ci.setAttribute('data-lang', 'other');
     }
 
+    function rawFieldText(el) {
+        if (!el) return '';
+        var d = document.createElement('span');
+        d.innerHTML = el.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+        return (d.textContent.trim().split('\n')[0] || '').trim();
+    }
+
     // ── Shared: available on both front and back (via window) ──
     window.escapeBrackets = function(text) {
         text = text.replace(/\\ /g, '&nbsp;');
@@ -1026,13 +1033,13 @@ function clearLastMargin(el) {
     if (wordSide === 'front & back') {
         var rw = document.getElementById('raw-word');
         if (isJapanese) {
-            var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rw.textContent.trim()) : '';
+            var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rawFieldText(rw)) : '';
             if (html) {
                 frontWord.innerHTML = html;
                 if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
             } else { frontWord.setAttribute('data-side', 'back'); }
         } else {
-            var text = rw ? rw.textContent.trim().replace(/<[^>]+>/g, ' ').trim() : '';
+            var text = rw ? rawFieldText(rw).replace(/<[^>]+>/g, ' ').trim() : '';
             if (text) { frontWord.textContent = text; }
             else { frontWord.setAttribute('data-side', 'back'); }
         }
@@ -1041,13 +1048,13 @@ function clearLastMargin(el) {
     if (sentSide === 'front & back') {
         var rs = document.getElementById('raw-sentence');
         if (isJapanese) {
-            var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rs.textContent.trim()) : '';
+            var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rawFieldText(rs)) : '';
             if (html) {
                 frontSent.innerHTML = html;
                 if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
             } else { frontSent.setAttribute('data-side', 'back'); }
         } else {
-            var text = rs ? rs.textContent.trim().replace(/<[^>]+>/g, ' ').trim() : '';
+            var text = rs ? rawFieldText(rs).replace(/<[^>]+>/g, ' ').trim() : '';
             if (text) { frontSent.textContent = text; }
             else { frontSent.setAttribute('data-side', 'back'); }
         }
