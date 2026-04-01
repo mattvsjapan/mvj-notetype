@@ -98,7 +98,7 @@ def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, int |
         "WHERE entry_id = ? AND pitch_drop IS NOT NULL ORDER BY priority",
         (entry_id,),
     )
-    rows = [(r[0], r[1]) for r in cur.fetchall() if r[0]]
+    rows = [(r[0], int(r[1]) if r[1] is not None else None) for r in cur.fetchall() if r[0]]
     return rows or None
 
 
