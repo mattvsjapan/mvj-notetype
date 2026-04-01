@@ -43,7 +43,8 @@ zip -r "$OUTPUT_PATH" . \
     -x ".DS_Store" \
     -x "*/.DS_Store" \
     -x "dev_sync.py" \
-    -x "dev_migrate.py"
+    -x "dev_migrate.py" \
+    -x "dev_lookup.py"
 
 echo ""
 echo "Packaged: $OUTPUT_PATH"
