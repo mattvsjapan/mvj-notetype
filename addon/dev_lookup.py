@@ -90,15 +90,17 @@ def _find_entries(word: str, conn: sqlite3.Connection) -> list[str]:
     return sorted(row[0] for row in cur2.fetchall())
 
 
-def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, int | None]] | None:
+def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, str | None]] | None:
     """Get distinct (pitch_drop, split) tuples for a single entry."""
     cur = conn.cursor()
     cur.execute(
         "SELECT DISTINCT pitch_drop, split FROM accents "
-        "WHERE entry_id = ? AND pitch_drop IS NOT NULL ORDER BY priority",
+        "WHERE entry_id = ? AND pitch_drop IS NOT NULL "
+        "AND (metadata IS NULL OR (metadata NOT LIKE '%【御】%' AND metadata NOT LIKE '%【複】%')) "
+        "ORDER BY priority",
         (entry_id,),
     )
-    rows = [(r[0], int(r[1]) if r[1] is not None else None) for r in cur.fetchall() if r[0]]
+    rows = [(r[0], r[1]) for r in cur.fetchall() if r[0]]
     return rows or None
 
 
@@ -464,55 +466,62 @@ def _split_surface(surface: str, reading1: str, reading2: str) -> tuple[str, str
     return surface[:cut], surface[cut:]
 
 
-def _split_compound(surface: str, raw_reading: str, split_mora: int, pitch_drop: str) -> str:
-    """Format a compound word as two pitch units split at the given mora boundary."""
-    pitches = pitch_drop.split(',')
-    if len(pitches) < 2:
+def _split_surface_n(surface: str, readings: list[str]) -> list[str]:
+    """Split surface into N parts matching the given readings."""
+    if len(readings) <= 1:
+        return [surface]
+    if len(readings) == 2:
+        return list(_split_surface(surface, readings[0], readings[1]))
+    # Split off first part, recurse on remainder
+    rest_reading = ''.join(readings[1:])
+    s1, s_rest = _split_surface(surface, readings[0], rest_reading)
+    return [s1] + _split_surface_n(s_rest, readings[1:])
+
+
+def _split_compound(surface: str, raw_reading: str, split_str: str, pitch_drop: str) -> str:
+    """Format a compound word as N pitch units split at the given mora boundaries."""
+    split_points = [int(x) for x in split_str.split(',')]
+    pitches = [p.strip() for p in pitch_drop.split(',')]
+    n_parts = len(split_points) + 1
+
+    if len(pitches) < n_parts:
         clean = _READING_STRIP_RE.sub('', raw_reading)
         aligned = _align_reading(surface, clean)
         return f"{aligned}:{pitch_drop}-"
 
-    p1, p2 = pitches[0].strip(), pitches[1].strip()
-
-    # Split reading into morphemes at ‐ separators
+    # Build part readings from morphemes or mora counts
     if '‐' in raw_reading:
         morphemes = [m.replace('・', '') for m in raw_reading.split('‐') if m]
+        parts_morphemes: list[list[str]] = [[] for _ in range(n_parts)]
+        cumulative = 0
+        part_idx = 0
+        for m in morphemes:
+            cumulative += _count_morae(m)
+            while part_idx < len(split_points) and cumulative > split_points[part_idx]:
+                part_idx += 1
+            parts_morphemes[min(part_idx, n_parts - 1)].append(m)
+        parts_readings = [''.join(pm) for pm in parts_morphemes]
     else:
-        # No morpheme separators — split by mora count directly
         clean = _READING_STRIP_RE.sub('', raw_reading)
-        part1_reading = _take_morae(clean, split_mora)
-        part2_reading = clean[len(part1_reading):]
-        if not part1_reading or not part2_reading:
-            aligned = _align_reading(surface, clean)
-            return f"{aligned}:{pitch_drop}-"
-        s1, s2 = _split_surface(surface, part1_reading, part2_reading)
-        a1 = _align_reading(s1, part1_reading)
-        a2 = _align_reading(s2, part2_reading)
-        return f"{a1}:{p1} / {a2}:{p2}-"
+        parts_readings = []
+        remaining = clean
+        prev = 0
+        for sp in split_points:
+            part = _take_morae(remaining, sp - prev)
+            parts_readings.append(part)
+            remaining = remaining[len(part):]
+            prev = sp
+        parts_readings.append(remaining)
 
-    # Group morphemes by cumulative morae reaching split_mora
-    part1_morphemes: list[str] = []
-    part2_morphemes: list[str] = []
-    cumulative = 0
-    for m in morphemes:
-        cumulative += _count_morae(m)
-        if cumulative <= split_mora:
-            part1_morphemes.append(m)
-        else:
-            part2_morphemes.append(m)
-
-    if not part1_morphemes or not part2_morphemes:
+    if any(not r for r in parts_readings):
         clean = _READING_STRIP_RE.sub('', raw_reading)
         aligned = _align_reading(surface, clean)
         return f"{aligned}:{pitch_drop}-"
 
-    part1_reading = ''.join(part1_morphemes)
-    part2_reading = ''.join(part2_morphemes)
-
-    s1, s2 = _split_surface(surface, part1_reading, part2_reading)
-    a1 = _align_reading(s1, part1_reading)
-    a2 = _align_reading(s2, part2_reading)
-    return f"{a1}:{p1} / {a2}:{p2}-"
+    parts_surfaces = _split_surface_n(surface, parts_readings)
+    formatted = [f"{_align_reading(s, r)}:{p}"
+                 for s, r, p in zip(parts_surfaces, parts_readings, pitches)]
+    return ' / '.join(formatted) + '-'
 
 
 def _entry_display(entry_id: str, conn: sqlite3.Connection) -> str:
