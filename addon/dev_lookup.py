@@ -124,23 +124,22 @@ def _take_morae(kana: str, n: int) -> str:
     return kana
 
 
-def _get_reading(entry_id: str, conn: sqlite3.Connection) -> tuple[str, str, str] | None:
-    """Get reading info for an entry with a kanji form (表記).
+def _get_reading(entry_id: str, conn: sqlite3.Connection) -> tuple[str, str] | None:
+    """Get the kana reading for an entry.
 
-    Returns (clean_reading, raw_reading_with_separators, surface) or None.
+    Returns (clean_reading, raw_reading_with_‐_separators) or None.
     """
     cur = conn.cursor()
-    cur.execute("SELECT 見出, 表記 FROM headwords WHERE id = ? LIMIT 1", (entry_id,))
+    cur.execute("SELECT 見出 FROM headwords WHERE id = ? LIMIT 1", (entry_id,))
     row = cur.fetchone()
-    if not row or not row[1]:
+    if not row or not row[0]:
         return None
     raw = row[0]
-    surface = row[1]
     clean = _READING_STRIP_RE.sub('', raw)
     raw_with_sep = _READING_KEEP_SEP_RE.sub('', raw)
     if not clean:
         return None
-    return (clean, raw_with_sep, surface)
+    return (clean, raw_with_sep)
 
 
 def _katakana_to_hiragana(text: str) -> str:
@@ -638,16 +637,16 @@ def _lookup_note(editor: Editor):
         return
 
     if reading_info:
-        clean_reading, raw_reading, surface = reading_info
+        clean_reading, raw_reading = reading_info
     else:
-        clean_reading, raw_reading, surface = None, None, None
+        clean_reading, raw_reading = None, None
 
     lines: list[str] = []
     for pitch_drop, split in pitch_rows:
-        if split is not None and reading_info:
-            line = _split_compound(surface, raw_reading, split, pitch_drop)
+        if split is not None and raw_reading:
+            line = _split_compound(word, raw_reading, split, pitch_drop)
         else:
-            word_value = _align_reading(surface, clean_reading) if reading_info else word
+            word_value = _align_reading(word, clean_reading) if clean_reading else word
             line = f"{word_value}:{pitch_drop}-"
         lines.append(line)
 
