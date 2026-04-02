@@ -1201,7 +1201,7 @@ function clearLastMargin(el) {
         btn.className = 'replay-button soundLink';
         btn.href = '#';
         btn.innerHTML = SVG;
-        item.insertBefore(btn, item.firstChild);
+        item.appendChild(btn);
         (function(a, b) {
           window.__onTap(b, function() {
             if (window.matchMedia('(hover: none)').matches) {
@@ -1236,7 +1236,7 @@ function clearLastMargin(el) {
     btn.className = 'replay-button soundLink';
     btn.href = '#';
     btn.innerHTML = SVG;
-    item.insertBefore(btn, item.firstChild);
+    item.appendChild(btn);
     window.__onTap(btn, function() {
       if (window.matchMedia('(hover: none)').matches) {
         window.__stopAllAudio();
