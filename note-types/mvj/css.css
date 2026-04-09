@@ -100,6 +100,7 @@
     --mode-1-toggle-align: center;
     --mode-1-word-text: off;
     --mode-1-word-audio-buttons: front & back;
+    --mode-1-sentence-autoplay: front only;
     --mode-1-sentence-text: off;
     --mode-1-notes-text: off;
 
@@ -1218,13 +1219,13 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
     width: 40px !important;
     height: 40px !important;
     overflow: hidden;
-    animation: btnSettle 0.35s var(--ease) both;
+    animation: btnSettle 0.3s var(--ease) 50ms both;
 }
 .back .audio-item .replay-button svg,
 .back .audio-item .replay-button img {
     width: 40px !important;
     height: 40px !important;
-    animation: btnSettle 0.35s var(--ease) both;
+    animation: btnSettle 0.3s var(--ease) 50ms both;
 }
 
 .back .audio-label {
