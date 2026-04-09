@@ -612,6 +612,10 @@ class SettingsDialog(QDialog):
         self._reset_css_cb = QCheckBox("Reset CSS")
         self._reset_css_cb.setToolTip("Overwrite all CSS including custom settings")
         btn_box.addButton(self._reset_css_cb, QDialogButtonBox.ButtonRole.ActionRole)
+        config = mw.addonManager.getConfig(__name__) or {}
+        self._auto_install_cb = QCheckBox("Auto Install Note Type")
+        self._auto_install_cb.setChecked(config.get("auto_install", True))
+        btn_box.addButton(self._auto_install_cb, QDialogButtonBox.ButtonRole.ActionRole)
         convert_btn = QPushButton("Convert [sound:] \u2192 [audio:]")
         convert_btn.clicked.connect(self._convert_sound_to_audio)
         btn_box.addButton(convert_btn, QDialogButtonBox.ButtonRole.ActionRole)
@@ -1411,6 +1415,11 @@ class SettingsDialog(QDialog):
         model["css"] = _apply_settings(model["css"], self._defaults)
         model["css"] = _apply_modes(model["css"], self._modes)
         mw.col.models.update_dict(model)
+
+        # Save addon-level config
+        config = mw.addonManager.getConfig(__name__) or {}
+        config["auto_install"] = self._auto_install_cb.isChecked()
+        mw.addonManager.writeConfig(__name__, config)
 
         self._cleanup()
         self.accept()

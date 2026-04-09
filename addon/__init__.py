@@ -265,7 +265,13 @@ def _intercept_check_media(_mw=None) -> None:
 gui_hooks.main_window_did_init.append(_intercept_check_media)
 
 
+def _get_config() -> dict:
+    return mw.addonManager.getConfig(__name__) or {}
+
+
 def _auto_install_notetype():
+    if not _get_config().get("auto_install", True):
+        return
     if mw.col and not mw.col.models.by_name(NOTE_TYPE_NAME):
         install_notetype(on_success=lambda: showInfo(
             f"{NOTE_TYPE_NAME} note type installed successfully."
