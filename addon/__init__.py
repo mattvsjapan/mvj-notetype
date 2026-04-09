@@ -9,7 +9,7 @@ from anki import hooks as anki_hooks
 from anki.hooks import wrap
 from aqt import gui_hooks, mw
 from aqt.editor import Editor
-from aqt.qt import QAction, Qt
+from aqt.qt import QAction, QMenu, Qt
 from .notetype import NOTE_TYPE_NAME
 from .media_convert import rewrite_m4a_tags, find_ffmpeg, convert_m4a_to_mp3, m4a_to_mp3_filename, _M4A_AUDIO_RE
 
@@ -154,11 +154,30 @@ def _on_tools_action():
         ))
 
 
+def _on_kaishi_install():
+    from .kaishi import run_install
+    run_install()
+
+
+def _on_kaishi_migrate():
+    from .kaishi import run_migrate
+    run_migrate()
+
+
 _tools_action = QAction("", mw)
 _tools_action.triggered.connect(_on_tools_action)
 _tools_action.setShortcut("Alt+S")
 mw.form.menuTools.addSeparator()
 mw.form.menuTools.addAction(_tools_action)
+
+_kaishi_menu = QMenu("MvJ Kaishi", mw)
+_kaishi_install_action = QAction("Install...", mw)
+_kaishi_install_action.triggered.connect(_on_kaishi_install)
+_kaishi_menu.addAction(_kaishi_install_action)
+_kaishi_migrate_action = QAction("Migrate...", mw)
+_kaishi_migrate_action.triggered.connect(_on_kaishi_migrate)
+_kaishi_menu.addAction(_kaishi_migrate_action)
+mw.form.menuTools.addMenu(_kaishi_menu)
 
 
 def _update_tools_label():
@@ -169,6 +188,7 @@ def _update_tools_label():
         _tools_action.setText("\U0001f1ef\U0001f1f5 MvJ Note Type")
     else:
         _tools_action.setText("Install \U0001f1ef\U0001f1f5 MvJ Note Type")
+    _kaishi_menu.menuAction().setVisible(installed)
 
 
 mw.form.menuTools.aboutToShow.connect(_update_tools_label)
