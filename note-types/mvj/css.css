@@ -14,10 +14,10 @@
     /* Layout */
     --target-lang: japanese;       /* japanese | other                    */
     --tategaki: off;               /* on | off                            */
-    --color-scheme: blue;          /* blue | black | red | purple | white */
+    --color-scheme: black;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
     --card-transparency: on;       /* on | off                            */
-    --toggle-align: left;        /* left | center                       */
+    --toggle-align: center;        /* left | center                       */
     --debug: off;                  /* on | off                            */
 
     /* Word */
@@ -57,7 +57,7 @@
     --definition-align: left;      /* left | center                       */
 
     /* Notes */
-    --notes-text: off;              /* on | off                            */
+    --notes-text: on;              /* on | off                            */
     --notes-font: bilingual;       /* bilingual | monolingual             */
     --notes-align: left;           /* left | center                       */
 
@@ -93,50 +93,60 @@
        from defaults above). Lower modes beat higher modes,
        and tag matches unconditionally beat deck matches.
        ═══════════════════════════════════════════════════════ */
-    /* —— Mode 1: Word Audio Only ——————————————————————————————— */
-    --mode-1-name: Word Audio Only;
-    --mode-1-tag: _jp::word;
+    /* —— Mode 1: Raw Listening ————————————————————————————————— */
+    --mode-1-name: Raw Listening;
+    --mode-1-tag: _mvj::raw-listening;
     --mode-1-deck: ;
-    --mode-1-sentence-audio: back only;
+    --mode-1-toggle-align: center;
+    --mode-1-word-text: off;
+    --mode-1-word-audio-buttons: front & back;
+    --mode-1-sentence-text: off;
+    --mode-1-notes-text: off;
 
-    /* —— Mode 2: Sentence Audio Only ——————————————————————————— */
-    --mode-2-name: Sentence Audio Only;
-    --mode-2-tag: _jp::sentence;
+    /* —— Mode 2: Word Audio Only ——————————————————————————————— */
+    --mode-2-name: Word Audio Only;
+    --mode-2-tag: _jp::word;
     --mode-2-deck: ;
-    --mode-2-word-audio: back only;
+    --mode-2-sentence-audio: back only;
 
-    /* —— Mode 3: Image ————————————————————————————————————————— */
-    --mode-3-name: Image;
-    --mode-3-tag: _jp::image;
+    /* —— Mode 3: Sentence Audio Only ——————————————————————————— */
+    --mode-3-name: Sentence Audio Only;
+    --mode-3-tag: _jp::sentence;
     --mode-3-deck: ;
     --mode-3-word-audio: back only;
-    --mode-3-sentence-audio: back only;
-    --mode-3-image: front & back;
 
-    /* —— Mode 4: Reading ——————————————————————————————————————— */
-    --mode-4-name: Reading;
-    --mode-4-tag: _jp::reading;
+    /* —— Mode 4: Image ————————————————————————————————————————— */
+    --mode-4-name: Image;
+    --mode-4-tag: _jp::image;
     --mode-4-deck: ;
-    --mode-4-tategaki: on;
     --mode-4-word-audio: back only;
-    --mode-4-sentence-text: front & back;
     --mode-4-sentence-audio: back only;
-    --mode-4-definition-text: on;
+    --mode-4-image: front & back;
 
-    /* —— Mode 5: Vocab ————————————————————————————————————————— */
-    --mode-5-name: Vocab;
-    --mode-5-tag: _jp::vocab;
+    /* —— Mode 5: Reading ——————————————————————————————————————— */
+    --mode-5-name: Reading;
+    --mode-5-tag: _jp::reading;
     --mode-5-deck: ;
-    --mode-5-word-text: front & back;
+    --mode-5-tategaki: on;
     --mode-5-word-audio: back only;
+    --mode-5-sentence-text: front & back;
     --mode-5-sentence-audio: back only;
+    --mode-5-definition-text: on;
 
-    /* —— Mode 6: Furigana —————————————————————————————————————— */
-    --mode-6-name: Furigana;
-    --mode-6-tag: jp_::furigana;
+    /* —— Mode 6: Vocab ————————————————————————————————————————— */
+    --mode-6-name: Vocab;
+    --mode-6-tag: _jp::vocab;
     --mode-6-deck: ;
-    --mode-6-word-furigana: front & back;
-    --mode-6-sentence-furigana: front & back;
+    --mode-6-word-text: front & back;
+    --mode-6-word-audio: back only;
+    --mode-6-sentence-audio: back only;
+
+    /* —— Mode 7: Furigana —————————————————————————————————————— */
+    --mode-7-name: Furigana;
+    --mode-7-tag: jp_::furigana;
+    --mode-7-deck: ;
+    --mode-7-word-furigana: front & back;
+    --mode-7-sentence-furigana: front & back;
 
     /* ═══════════════════════════════════════════════════════ */
 
