@@ -847,9 +847,11 @@
     var wordRaw = wordEl ? wordEl.innerHTML.trim() : '';
     var sentEl = document.getElementById('raw-sentence');
     var sentRaw = '';
+    var sentHtml = '';
     if (sentEl) {
+        sentHtml = sentEl.innerHTML;
         var _d = document.createElement('span');
-        _d.innerHTML = sentEl.innerHTML.replace(/<[^>]+>/g, ' ');
+        _d.innerHTML = sentHtml.replace(/<[^>]+>/g, ' ');
         sentRaw = _d.textContent.trim();
     }
     var defHtml = document.getElementById('raw-definition').innerHTML;
@@ -1024,9 +1026,20 @@
           : sentEl;
 
       if (isJapanese) {
-        var sentSeqs = makeSequences(sentRaw);
-        if (sentSeqs.length > 0) {
-          var hasAccent = sentSeqs.some(function(seq) {
+        var sentLines = sentHtml.split(/<br\s*\/?>/gi);
+        var allSeqs = [];
+        var lineHtmls = sentLines.map(function(part) {
+          var _d = document.createElement('span');
+          _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
+          var lineText = _d.textContent.trim();
+          if (!lineText) return '';
+          var seqs = makeSequences(lineText);
+          allSeqs = allSeqs.concat(seqs);
+          if (seqs.length === 0) return '';
+          return seqs.map(makeColoredSentence).join('');
+        }).filter(Boolean);
+        if (allSeqs.length > 0) {
+          var hasAccent = allSeqs.some(function(seq) {
             return seq.some(function(s) {
               return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
             });
@@ -1036,10 +1049,15 @@
           if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
           if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
           if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
-          sentTarget.innerHTML = sentSeqs.map(makeColoredSentence).join('');
+          sentTarget.innerHTML = lineHtmls.join('<br>');
         }
       } else {
-        sentTarget.textContent = sentRaw.replace(/<[^>]+>/g, ' ').trim();
+        var nonJpLines = sentHtml.split(/<br\s*\/?>/gi).map(function(part) {
+          var _d = document.createElement('span');
+          _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
+          return _d.textContent.trim();
+        }).filter(Boolean);
+        sentTarget.innerHTML = nonJpLines.join('<br>');
       }
 
       if (sentIsOnFront && !isTategaki) {
