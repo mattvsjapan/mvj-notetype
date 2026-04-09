@@ -265,6 +265,16 @@ def _intercept_check_media(_mw=None) -> None:
 gui_hooks.main_window_did_init.append(_intercept_check_media)
 
 
+def _auto_install_notetype():
+    if mw.col and not mw.col.models.by_name(NOTE_TYPE_NAME):
+        install_notetype(on_success=lambda: showInfo(
+            f"{NOTE_TYPE_NAME} note type installed successfully."
+        ))
+
+
+gui_hooks.profile_did_open.append(_auto_install_notetype)
+
+
 # Dev-only local template sync (file is .gitignored and excluded from packaging)
 try:
     from . import dev_sync  # noqa: F401

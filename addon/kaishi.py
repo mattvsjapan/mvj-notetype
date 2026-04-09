@@ -278,6 +278,19 @@ def _set_deck_description(deck_id: int) -> None:
         pass
 
 
+def _media_already_installed() -> bool:
+    """Spot-check whether Kaishi media files already exist in Anki's media folder."""
+    media_dir = mw.col.media.dir()
+    for name in (
+        "mvj-monolingual-definition-00001.mp3",
+        "mvj-monolingual-definition-00750.mp3",
+        "mvj-monolingual-definition-01500.mp3",
+    ):
+        if not os.path.exists(os.path.join(media_dir, name)):
+            return False
+    return True
+
+
 def _download_and_extract_zip(url: str, label: str) -> int:
     """Download a zip to a temp file, extract to media dir, clean up."""
     tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
@@ -319,12 +332,18 @@ def run_install() -> None:
             return
 
     deck_name = _pick_deck_name()
+    has_media = _media_already_installed()
 
+    msg = (
+        f'This will create 1,500 cards in deck "{deck_name}".'
+        if has_media
+        else f"This will download ~92 MB of media and create 1,500 cards "
+        f'in deck "{deck_name}".'
+    )
     reply = QMessageBox.question(
         mw,
         "Install MvJ Kaishi",
-        f"This will download ~92 MB of media and create 1,500 cards "
-        f'in deck "{deck_name}".\n\nContinue?',
+        f"{msg}\n\nContinue?",
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
     )
     if reply != QMessageBox.StandardButton.Yes:
@@ -335,7 +354,8 @@ def run_install() -> None:
     def task():
         tsv_data = _download_bytes(_CARDS_TSV_URL)
         rows = _parse_cards_tsv(tsv_data)
-        _download_and_extract_zip(_FULL_MEDIA_ZIP_URL, "Downloading media")
+        if not has_media:
+            _download_and_extract_zip(_FULL_MEDIA_ZIP_URL, "Downloading media")
         return rows
 
     def on_done(future):
@@ -452,14 +472,17 @@ def run_migrate() -> None:
             showInfo("No matching Kaishi cards found in your collection.")
             return
 
+        has_media = _media_already_installed()
+
         msg = (
             f"Found {len(matched)} matching Kaishi cards"
             f" (out of {total_scanned} scanned).\n\n"
             f"This will:\n"
             f"\u2022 Change note type to {NOTE_TYPE_NAME}\n"
             f"\u2022 Overwrite fields with latest card data\n"
-            f"\u2022 Download ~20 MB of definition audio\n"
         )
+        if not has_media:
+            msg += f"\u2022 Download ~20 MB of definition audio\n"
         if skipped:
             msg += (
                 f"\n{skipped} cards didn\u2019t match and will be "
@@ -474,17 +497,18 @@ def run_migrate() -> None:
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        _start_migrate_download(matched)
+        _start_migrate_download(matched, has_media)
 
     mw.taskman.run_in_background(scan_task, on_scan_done)
 
 
-def _start_migrate_download(matched: dict) -> None:
+def _start_migrate_download(matched: dict, has_media: bool) -> None:
     """Phase 2: download definition audio, then apply migration."""
     mw.progress.start(label="Downloading definition audio...", parent=mw)
 
     def download_task():
-        _download_and_extract_zip(_DEF_AUDIO_ZIP_URL, "Downloading definition audio")
+        if not has_media:
+            _download_and_extract_zip(_DEF_AUDIO_ZIP_URL, "Downloading definition audio")
 
     def on_download_done(future):
         mw.progress.finish()
