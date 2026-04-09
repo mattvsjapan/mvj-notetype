@@ -1995,7 +1995,7 @@
             }
         }
 
-        if (_detNotesText) {
+        if (_detNotesText && notesOn) {
             var ns = document.getElementById('notes-section');
             var nsContent = ns && ns.querySelector('#notes');
             if (ns && nsContent && nsContent.innerHTML.trim()) {
