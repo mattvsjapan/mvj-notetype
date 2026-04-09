@@ -393,6 +393,7 @@ def run_install() -> None:
                 note = mw.col.new_note(model)
                 for field in _TSV_FIELDS:
                     note[field] = _sound_to_audio(row[field])
+                note.tags = mw.col.tags.split("_mvj::raw-listening")
                 requests.append(AddNoteRequest(note=note, deck_id=deck_id))
             mw.col.add_notes(requests)
         finally:
@@ -452,12 +453,19 @@ def run_migrate() -> None:
                 else:
                     skipped += 1
 
-        return matched, skipped, total_scanned
+        # Partition by card state so the user can choose new-only
+        new_nids = set()
+        for nid in matched:
+            cards = mw.col.get_note(nid).cards()
+            if all(c.type == 0 for c in cards):
+                new_nids.add(nid)
+
+        return matched, skipped, total_scanned, new_nids
 
     def on_scan_done(future):
         mw.progress.finish()
         try:
-            matched, skipped, total_scanned = future.result()
+            matched, skipped, total_scanned, new_nids = future.result()
         except HTTPError as e:
             showWarning(f"Download failed: HTTP {e.code}")
             return
@@ -473,6 +481,8 @@ def run_migrate() -> None:
             return
 
         has_media = _media_already_installed()
+        num_new = len(new_nids)
+        num_reviewed = len(matched) - num_new
 
         msg = (
             f"Found {len(matched)} matching Kaishi cards"
@@ -488,14 +498,43 @@ def run_migrate() -> None:
                 f"\n{skipped} cards didn\u2019t match and will be "
                 f"left unchanged.\n"
             )
-        msg += "\nScheduling will be preserved. Continue?"
+        msg += "\nScheduling will be preserved."
 
-        reply = QMessageBox.question(
-            mw, "Migrate Kaishi", msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
+        # If there's a mix of new and reviewed cards, offer the choice
+        if num_new > 0 and num_reviewed > 0:
+            msg += (
+                f"\n\nYou have {num_reviewed} reviewed and "
+                f"{num_new} new cards. Converting only new cards "
+                f"will leave your reviewed cards in their original "
+                f"format."
+            )
+            dlg = QMessageBox(mw)
+            dlg.setWindowTitle("Migrate Kaishi")
+            dlg.setText(msg)
+            new_btn = dlg.addButton(
+                f"New cards only ({num_new})",
+                QMessageBox.ButtonRole.AcceptRole,
+            )
+            all_btn = dlg.addButton(
+                f"All cards ({len(matched)})",
+                QMessageBox.ButtonRole.AcceptRole,
+            )
+            dlg.addButton(QMessageBox.StandardButton.Cancel)
+            dlg.exec()
+            clicked = dlg.clickedButton()
+            if clicked == new_btn:
+                matched = {nid: v for nid, v in matched.items()
+                           if nid in new_nids}
+            elif clicked != all_btn:
+                return
+        else:
+            reply = QMessageBox.question(
+                mw, "Migrate Kaishi", msg + "\n\nContinue?",
+                QMessageBox.StandardButton.Yes
+                | QMessageBox.StandardButton.No,
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
 
         _start_migrate_download(matched, has_media)
 
@@ -566,6 +605,8 @@ def _apply_migration(matched: dict) -> None:
         note = mw.col.get_note(nid)
         for field in _TSV_FIELDS:
             note[field] = _sound_to_audio(row[field])
+        if "_mvj::raw-listening" not in note.tags:
+            note.tags.append("_mvj::raw-listening")
         modified.append(note)
     mw.col.update_notes(modified)
     mw.col.merge_undo_entries(pos)
