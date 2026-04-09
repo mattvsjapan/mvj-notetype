@@ -83,6 +83,7 @@ _DECK_DESCRIPTION = (
     "<li><code>h</code> \u2013 Reveal hidden definition</li>"
     "<li><code>n</code> \u2013 Reveal details</li>"
     "</ul>"
+    "You can also directly click the word, sentence, or definition text to replay its audio.<br>"
     "<br>"
     "\u2013<i>Matt vs Japan</i>"
 )
@@ -247,6 +248,23 @@ def _set_deck_options(deck_id: int) -> None:
         deck = mw.col.decks.get(deck_id)
         deck["conf"] = conf["id"]
         mw.col.decks.save(deck)
+    except Exception:
+        pass
+
+    # Enable FSRS via the protobuf API (collection-level toggle)
+    try:
+        from anki import deck_config_pb2
+        current = mw.col.decks.get_deck_configs_for_update(deck_id)
+        if not current.fsrs:
+            req = deck_config_pb2.UpdateDeckConfigsRequest()
+            req.target_deck_id = deck_id
+            for cfg_with_extra in current.all_config:
+                req.configs.append(cfg_with_extra.config)
+            req.fsrs = True
+            req.new_cards_ignore_review_limit = current.new_cards_ignore_review_limit
+            req.apply_all_parent_limits = current.apply_all_parent_limits
+            req.card_state_customizer = current.card_state_customizer
+            mw.col.decks.update_deck_configs(req)
     except Exception:
         pass
 
