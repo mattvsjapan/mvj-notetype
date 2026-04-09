@@ -1208,6 +1208,7 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
     width: 40px !important;
     height: 40px !important;
     overflow: hidden;
+    animation: btnSettle 0.35s var(--ease) both;
 }
 .back .audio-item .replay-button svg,
 .back .audio-item .replay-button img {
@@ -1230,6 +1231,7 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
 
     .back .audio-row,
     .back .audio-item,
+    .back .audio-item .replay-button,
     .back .audio-item .replay-button svg,
     .back .audio-item .replay-button img,
     .back .audio-label {
