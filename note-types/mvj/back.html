@@ -294,7 +294,7 @@
   
   function normalizeForParsing(expr) {
     expr = expr.replace(/<br\s*\/?>/gi, ' . ');
-    expr = expr.replace(/<[^<>]+>/gi, '');
+    expr = expr.replace(/<[^<>]+>/gi, ' ');
     expr = escapeBrackets(expr);
     // Protect digit-only brackets from furigana regex (not valid readings)
     expr = expr.replace(/\[(\d+)\]/g, '\u2045$1\u2046');
@@ -846,7 +846,12 @@
     var wordEl = document.getElementById('raw-word');
     var wordRaw = wordEl ? wordEl.innerHTML.trim() : '';
     var sentEl = document.getElementById('raw-sentence');
-    var sentRaw = sentEl ? sentEl.textContent.trim() : '';
+    var sentRaw = '';
+    if (sentEl) {
+        var _d = document.createElement('span');
+        _d.innerHTML = sentEl.innerHTML.replace(/<[^>]+>/g, ' ');
+        sentRaw = _d.textContent.trim();
+    }
     var defHtml = document.getElementById('raw-definition').innerHTML;
   
     var targetEl = document.getElementById('target-word');

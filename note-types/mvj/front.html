@@ -903,7 +903,9 @@ function clearLastMargin(el) {
     function rawFieldText(el) {
         if (!el) return '';
         var d = document.createElement('span');
-        d.innerHTML = el.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+        var html = el.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+        html = html.replace(/<[^>]+>/g, ' ');
+        d.innerHTML = html;
         return (d.textContent.trim().split('\n')[0] || '').trim();
     }
 
