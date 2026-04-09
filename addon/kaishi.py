@@ -418,8 +418,9 @@ def run_install() -> None:
 def run_migrate() -> None:
     """Entry point for Tools > MvJ Kaishi > Migrate."""
     kaishi_types = _find_kaishi_note_types()
-    if not kaishi_types:
-        showInfo("No Kaishi or MvJ Listening notes found to migrate.")
+    has_mvj = mw.col.models.by_name(NOTE_TYPE_NAME) is not None
+    if not kaishi_types and not has_mvj:
+        showInfo("No Kaishi or MvJ notes found to update.")
         return
 
     mw.progress.start(label="Downloading card data...", parent=mw)
@@ -450,6 +451,23 @@ def run_migrate() -> None:
                 key = _normalize_key(sentence)
                 if key in key_index:
                     matched[nid] = (key_index[key], model["id"])
+                else:
+                    skipped += 1
+
+        # Also scan existing 🇯🇵 MvJ notes for content updates
+        mvj = mw.col.models.by_name(NOTE_TYPE_NAME)
+        if mvj:
+            mvj_nids = mw.col.find_notes(f'"note:{NOTE_TYPE_NAME}"')
+            for nid in mvj_nids:
+                total_scanned += 1
+                note = mw.col.get_note(nid)
+                sentence = _get_sentence_field(note, mvj)
+                if not sentence:
+                    skipped += 1
+                    continue
+                key = _normalize_key(sentence)
+                if key in key_index:
+                    matched[nid] = (key_index[key], mvj["id"])
                 else:
                     skipped += 1
 
@@ -484,13 +502,22 @@ def run_migrate() -> None:
         num_new = len(new_nids)
         num_reviewed = len(matched) - num_new
 
+        mvj_model = mw.col.models.by_name(NOTE_TYPE_NAME)
+        mvj_id = mvj_model["id"] if mvj_model else None
+        num_update = sum(1 for _, (_, sid) in matched.items()
+                         if sid == mvj_id)
+        num_migrate = len(matched) - num_update
+
         msg = (
             f"Found {len(matched)} matching Kaishi cards"
             f" (out of {total_scanned} scanned).\n\n"
             f"This will:\n"
-            f"\u2022 Change note type to {NOTE_TYPE_NAME}\n"
-            f"\u2022 Overwrite fields with latest card data\n"
         )
+        if num_migrate:
+            msg += f"\u2022 Migrate {num_migrate} cards to {NOTE_TYPE_NAME}\n"
+        if num_update:
+            msg += f"\u2022 Update {num_update} existing {NOTE_TYPE_NAME} cards\n"
+        msg += f"\u2022 Overwrite fields with latest card data\n"
         if not has_media:
             msg += f"\u2022 Download ~20 MB of definition audio\n"
         if skipped:
@@ -567,9 +594,22 @@ def _start_migrate_download(matched: dict, has_media: bool) -> None:
         _migrate_deck()
         mw.reset()
 
+        mvj_model = mw.col.models.by_name(NOTE_TYPE_NAME)
+        mvj_id = mvj_model["id"] if mvj_model else None
+        num_update = sum(1 for _, (_, sid) in matched.items()
+                         if sid == mvj_id)
+        num_migrate = len(matched) - num_update
+
+        lines = []
+        if num_migrate:
+            lines.append(
+                f"\u2022 {num_migrate} cards migrated to {NOTE_TYPE_NAME}")
+        if num_update:
+            lines.append(f"\u2022 {num_update} cards updated")
+        detail = "\n".join(lines)
+
         showInfo(
-            f"Migration complete!\n\n"
-            f"\u2022 {len(matched)} cards migrated to {NOTE_TYPE_NAME}\n\n"
+            f"Complete!\n\n{detail}\n\n"
             f"You can undo with Edit \u2192 Undo."
         )
 
@@ -588,8 +628,10 @@ def _apply_migration(matched: dict) -> None:
     for nid, (_, source_id) in matched.items():
         by_source.setdefault(source_id, []).append(nid)
 
-    # Change note types (preserves scheduling)
+    # Change note types (preserves scheduling); skip notes already on MvJ
     for source_id, nids in by_source.items():
+        if source_id == mvj_model["id"]:
+            continue
         info = mw.col.models.change_notetype_info(
             old_notetype_id=source_id,
             new_notetype_id=mvj_model["id"],
