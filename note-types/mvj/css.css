@@ -46,7 +46,7 @@
     --definition-text: on;         /* on | off                            */
     --definition-audio: on;        /* on | off                            */
     --definition-audio-buttons: fallback;/* on | fallback | off                 */
-    --definition-autoplay-bi: when primary or on reveal;  /* always | only when primary | when primary or on reveal | off */
+    --definition-autoplay-bi: off;  /* always | only when primary | when primary or on reveal | off */
     --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-primary: monolingual when unlocked; /* bilingual | monolingual | monolingual when unlocked */
