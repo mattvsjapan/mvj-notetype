@@ -25,10 +25,10 @@ _CARDS_TSV_URL = (
 )
 _RELEASE_BASE = (
     "https://github.com/mattvsjapan/mvj-notetype/"
-    "releases/download/kaishi-media-v1/"
+    "releases/download/kaishi-media-v2/"
 )
-_FULL_MEDIA_ZIP_URL = _RELEASE_BASE + "kaishi-media-full-v1.zip"
-_DEF_AUDIO_ZIP_URL = _RELEASE_BASE + "kaishi-def-audio-v1.zip"
+_FULL_MEDIA_ZIP_URL = _RELEASE_BASE + "kaishi-media-full-v2.zip"
+_DEF_AUDIO_ZIP_URL = _RELEASE_BASE + "kaishi-def-audio-v2.zip"
 
 _DECK_NAME = "MvJ Kaishi 1.5k"
 _EXISTING_DECK_NAMES = ["Kaishi 1.5k", "MvJ Kaishi 1.5k"]
