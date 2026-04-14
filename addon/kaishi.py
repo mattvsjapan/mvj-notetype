@@ -285,8 +285,9 @@ def _media_already_installed() -> bool:
     media_dir = mw.col.media.dir()
     for name in (
         "mvj-monolingual-definition-00001.mp3",
-        "mvj-monolingual-definition-00750.mp3",
         "mvj-monolingual-definition-01500.mp3",
+        "mvj-bilingual-definition-00001.mp3",
+        "mvj-bilingual-definition-01500.mp3",
     ):
         if not os.path.exists(os.path.join(media_dir, name)):
             return False
