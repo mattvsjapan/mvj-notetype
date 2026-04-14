@@ -126,7 +126,9 @@ def _build_key_index(rows: list[dict]) -> dict[str, dict]:
     """Build {normalized_sentence_key: row} lookup for matching."""
     index = {}
     for row in rows:
-        for col in ("sentence_key_furigana", "sentence_key_plain"):
+        for col in ("sentence_key_furigana", "sentence_key_plain", "sentence_key_legacy"):
+            if not row.get(col):
+                continue
             key = _normalize_key(row[col])
             if key not in index:
                 index[key] = row
