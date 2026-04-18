@@ -630,6 +630,7 @@ html {
     position: relative;
     overflow: hidden;
     box-shadow: var(--card-shadow);
+    transform: translateZ(0);
 }
 
 /* Glass sheen on card surface */
