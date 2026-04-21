@@ -32,7 +32,6 @@ _DEF_AUDIO_ZIP_URL = _RELEASE_BASE + "kaishi-def-audio-v2.zip"
 
 _DECK_NAME = "MvJ Kaishi 1.5k"
 _EXISTING_DECK_NAMES = ["Kaishi 1.5k", "MvJ Kaishi 1.5k"]
-_KAISHI_NOTE_TYPE = "Kaishi 1.5k"
 
 # TSV columns that map 1:1 to MvJ note type fields (columns 2–9)
 _TSV_FIELDS = [
@@ -219,7 +218,7 @@ def _find_kaishi_note_types() -> list[str]:
         name = model["name"]
         if name == NOTE_TYPE_NAME:
             continue
-        if name.lower() == _KAISHI_NOTE_TYPE.lower() or name in _OLD_NOTE_TYPE_NAMES:
+        if "kaishi" in name.lower() or name in _OLD_NOTE_TYPE_NAMES:
             result.append(name)
     return result
 
