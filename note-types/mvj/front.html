@@ -161,6 +161,18 @@ if (window.__audioCtx.state === 'suspended') {
     window.__audioCtx.resume()['catch'](function() {});
 }
 
+// Mark context dirty whenever iOS moves it out of 'running' (e.g., when
+// AnkiMobile's native [sound:] player takes the AVAudioSession on a
+// prior card). Next __playMobile call runs recovery before playback.
+if (!window.__audioCtxStateHandler) {
+    window.__audioCtxStateHandler = function() {
+        if (window.__audioCtx && window.__audioCtx.state !== 'running') {
+            window.__audioCtxDirty = true;
+        }
+    };
+    window.__audioCtx.addEventListener('statechange', window.__audioCtxStateHandler);
+}
+
 // Safety net: if AudioContext is still suspended after page load,
 // resume it on the next user gesture.
 if (!window.__audioCtxTouchHandler) {
@@ -661,13 +673,26 @@ window.__webAudioPlay = function(src, btn, gen, scope) {
 window.__playMobile = function(src, btn, scope) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
-    if (window.__audioCtx && window.__audioCtx.state === 'running') {
-        return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
+    function proceed() {
+        if (window.__audioCtx && window.__audioCtx.state === 'running') {
+            return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
+        }
+        var fa = window.__freshPlay(src, btn, scope);
+        if (!fa) return Promise.resolve();
+        window.__startPlaying(fa, btn);
+        return new Promise(function(resolve) { fa.onended = resolve; });
     }
-    var fa = window.__freshPlay(src, btn, scope);
-    if (!fa) return Promise.resolve();
-    window.__startPlaying(fa, btn);
-    return new Promise(function(resolve) { fa.onended = resolve; });
+    if (window.__audioCtxDirty && window.__audioCtx) {
+        return window.__audioCtx.suspend()
+            .then(function() { return window.__audioCtx.resume(); })
+            .then(function() { window.__audioCtxDirty = false; })
+            ['catch'](function() {})
+            .then(function() {
+                if (!window.__isCardScopeActive(scope)) return;
+                return proceed();
+            });
+    }
+    return proceed();
 };
 
 window.__playItemAudios = function(item) {
