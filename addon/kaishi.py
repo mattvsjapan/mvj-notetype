@@ -458,7 +458,8 @@ def run_migrate() -> None:
     def scan_task():
         tsv_data = _download_bytes(_CARDS_TSV_URL)
         rows = _parse_cards_tsv(tsv_data)
-        manifest = _fetch_manifest(_DEF_AUDIO_MANIFEST_URL)
+        full_manifest = _fetch_manifest(_FULL_MEDIA_MANIFEST_URL)
+        def_audio_manifest = _fetch_manifest(_DEF_AUDIO_MANIFEST_URL)
         key_index = _build_key_index(rows)
 
         # Scan collection for matching notes
@@ -509,12 +510,14 @@ def run_migrate() -> None:
             if all(c.type == 0 for c in cards):
                 new_nids.add(nid)
 
-        return matched, skipped, total_scanned, new_nids, manifest
+        return (matched, skipped, total_scanned, new_nids,
+                full_manifest, def_audio_manifest)
 
     def on_scan_done(future):
         mw.progress.finish()
         try:
-            matched, skipped, total_scanned, new_nids, manifest = future.result()
+            (matched, skipped, total_scanned, new_nids,
+             full_manifest, def_audio_manifest) = future.result()
         except HTTPError as e:
             showWarning(f"Download failed: HTTP {e.code}")
             return
@@ -529,7 +532,25 @@ def run_migrate() -> None:
             showInfo("No matching Kaishi cards found in your collection.")
             return
 
-        missing = _missing_media(manifest)
+        missing_full = _missing_media(full_manifest)
+        # If anything outside def-audio is missing, use the full zip;
+        # otherwise the small def-audio zip is sufficient.
+        non_def_audio_missing = [
+            n for n in missing_full if n not in def_audio_manifest
+        ]
+        if non_def_audio_missing:
+            download_url = _FULL_MEDIA_ZIP_URL
+            download_label = "Downloading media"
+            download_size_msg = "Download ~92 MB of media"
+        elif missing_full:
+            download_url = _DEF_AUDIO_ZIP_URL
+            download_label = "Downloading definition audio"
+            download_size_msg = "Download ~20 MB of definition audio"
+        else:
+            download_url = None
+            download_label = ""
+            download_size_msg = ""
+
         num_new = len(new_nids)
         num_reviewed = len(matched) - num_new
 
@@ -549,8 +570,8 @@ def run_migrate() -> None:
         if num_update:
             msg += f"\u2022 Update {num_update} existing {NOTE_TYPE_NAME} cards\n"
         msg += f"\u2022 Overwrite fields with latest card data\n"
-        if missing:
-            msg += f"\u2022 Download ~20 MB of definition audio\n"
+        if download_url:
+            msg += f"\u2022 {download_size_msg}\n"
         if skipped:
             msg += (
                 f"\n{skipped} cards didn\u2019t match and will be "
@@ -594,18 +615,25 @@ def run_migrate() -> None:
             if reply != QMessageBox.StandardButton.Yes:
                 return
 
-        _start_migrate_download(matched, missing)
+        _start_migrate_download(matched, download_url, download_label)
 
     mw.taskman.run_in_background(scan_task, on_scan_done)
 
 
-def _start_migrate_download(matched: dict, missing: list[str]) -> None:
-    """Phase 2: download definition audio, then apply migration."""
-    mw.progress.start(label="Downloading definition audio...", parent=mw)
+def _start_migrate_download(
+    matched: dict,
+    download_url: str | None,
+    download_label: str,
+) -> None:
+    """Phase 2: download any missing media, then apply migration."""
+    mw.progress.start(
+        label=f"{download_label}..." if download_url else "Migrating...",
+        parent=mw,
+    )
 
     def download_task():
-        if missing:
-            _download_and_extract_zip(_DEF_AUDIO_ZIP_URL, "Downloading definition audio")
+        if download_url:
+            _download_and_extract_zip(download_url, download_label)
 
     def on_download_done(future):
         mw.progress.finish()
