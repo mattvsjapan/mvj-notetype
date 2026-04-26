@@ -807,7 +807,109 @@
     sequences = sequences.map(buildHighLow);
     return sequences;
   }
-  
+
+  // ── renderMixed ──
+  // Unified processor for any field. Walks raw char-by-char, segments by
+  // script class (JP vs other), routes JP segments to makeSequences →
+  // makeColoredSentence and emits non-JP segments as prose. Whitespace and
+  // bracketed readings stick to the current segment; a Latin char with a
+  // [reading] immediately following is treated as JP (furigana exception);
+  // pitch-annotation chars (`:0-9*^~;|,-`) continue a JP run only when they
+  // immediately follow a JP char.
+  // Returns { html, sequences } — sequences is the concat of every JP
+  // segment's pitch sequences.
+  // Mirror of front.html renderMixed (~1058); contexts can't share JS.
+  function renderMixed(raw) {
+    if (!raw) return { html: '', sequences: [] };
+
+    function isJpChar(ch) {
+      var c = ch.charCodeAt(0);
+      return (c >= 0x3040 && c <= 0x309F) ||
+             (c >= 0x30A0 && c <= 0x30FF) ||
+             (c >= 0x4E00 && c <= 0x9FFF) ||
+             (c >= 0x3400 && c <= 0x4DBF) ||
+             (c >= 0x3000 && c <= 0x303F) ||
+             (c >= 0xFF00 && c <= 0xFFEF);
+    }
+
+    var units = [];
+    var i = 0;
+    while (i < raw.length) {
+      var ch = raw.charAt(i);
+      if (ch === '<') {
+        var endTag = raw.indexOf('>', i);
+        if (endTag !== -1) {
+          units.push({ cls: 'neutral', text: raw.substring(i, endTag + 1) });
+          i = endTag + 1;
+          continue;
+        }
+      }
+      if (ch === '[') {
+        var endBr = raw.indexOf(']', i);
+        if (endBr !== -1) {
+          units.push({ cls: 'neutral', text: raw.substring(i, endBr + 1) });
+          i = endBr + 1;
+          continue;
+        }
+      }
+      var cls;
+      if (/\s/.test(ch)) {
+        cls = 'neutral';
+      } else if (isJpChar(ch)) {
+        cls = 'jp';
+      } else if (/[A-Za-z]/.test(ch) && raw.charAt(i + 1) === '[') {
+        cls = 'jp';
+      } else if (/[:0-9*^~;|,\-]/.test(ch)) {
+        var prev = null;
+        for (var p = units.length - 1; p >= 0; p--) {
+          if (units[p].cls === 'jp' || units[p].cls === 'other') { prev = units[p].cls; break; }
+        }
+        cls = (prev === 'jp') ? 'jp' : 'other';
+      } else {
+        cls = 'other';
+      }
+      units.push({ cls: cls, text: ch });
+      i++;
+    }
+
+    var segs = [];
+    var current = null;
+    var pending = '';
+    for (var k = 0; k < units.length; k++) {
+      var u = units[k];
+      if (u.cls === 'neutral') {
+        if (current) current.text += u.text;
+        else pending += u.text;
+      } else if (!current) {
+        current = { cls: u.cls, text: pending + u.text };
+        pending = '';
+      } else if (current.cls === u.cls) {
+        current.text += u.text;
+      } else {
+        segs.push(current);
+        current = { cls: u.cls, text: u.text };
+      }
+    }
+    if (current) segs.push(current);
+    else if (pending) segs.push({ cls: 'other', text: pending });
+
+    var htmlParts = [];
+    var allSequences = [];
+    for (var s = 0; s < segs.length; s++) {
+      var seg = segs[s];
+      if (seg.cls === 'jp') {
+        var stripped = seg.text.replace(/<[^>]+>/g, ' ');
+        var seqs = makeSequences(stripped);
+        allSequences = allSequences.concat(seqs);
+        htmlParts.push(seqs.map(makeColoredSentence).join(''));
+      } else {
+        htmlParts.push(seg.text);
+      }
+    }
+
+    return { html: htmlParts.join(''), sequences: allSequences };
+  }
+
   // ── parseDefinitions ──
   function parseDefinitions(html) {
     const defs = {};
@@ -867,8 +969,6 @@
     var _rootStyle = getComputedStyle(document.documentElement);
     var wordOn = _rootStyle.getPropertyValue('--word-text').trim() !== 'off';
     var sentOn = _rootStyle.getPropertyValue('--sentence-text').trim() !== 'off';
-    var targetLang = _rootStyle.getPropertyValue('--target-lang').trim() || 'japanese';
-    var isJapanese = targetLang === 'japanese';
     var graphOn = _rootStyle.getPropertyValue('--pitch-graph').trim() !== 'off';
 
     var defText = _rootStyle.getPropertyValue('--definition-text').trim() !== 'off';
@@ -909,13 +1009,14 @@
     var sentIsOnFront = (sentSide === 'front & back');
     var isTategaki = document.documentElement.classList.contains('tategaki');
 
-    if (!isJapanese) {
-      var ci = document.querySelector('.card-inner');
-      if (ci) ci.setAttribute('data-lang', 'other');
-    }
-
     // Word → target word + pitch graph
-    var wordSeqs = isJapanese && wordRaw ? makeSequences(wordRaw) : [];
+    var wordRendered = wordRaw ? renderMixed(wordRaw) : { html: '', sequences: [] };
+    var wordSeqs = wordRendered.sequences;
+    var wordHasAccent = wordSeqs.some(function(seq) {
+      return seq.some(function(s) {
+        return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+      });
+    });
 
     if (!wordOn) {
       targetEl.setAttribute('data-show', 'off');
@@ -924,17 +1025,13 @@
           ? document.getElementById('front-word')
           : targetEl;
 
-      if (isJapanese) {
-        if (wordSeqs.length > 0) {
-          wordTarget.innerHTML = makeColoredSentence(wordSeqs[0]);
-          if (wordRaw.indexOf(':') === -1) wordTarget.classList.add('no-accent');
-          if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
-          if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
-          if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
-          if (wordFurigana === 'front & back' && wordIsOnFront) wordTarget.classList.add('furigana-front');
-        }
-      } else {
-        wordTarget.textContent = wordRaw.replace(/<[^>]+>/g, ' ').trim();
+      if (wordRendered.html) {
+        wordTarget.innerHTML = wordRendered.html;
+        if (!wordHasAccent) wordTarget.classList.add('no-accent');
+        if (wordPitchColor === 'off') wordTarget.classList.add('no-pitch-color');
+        if (wordPitchColor === 'front & back' && wordIsOnFront) wordTarget.classList.add('pitch-color-front');
+        if (wordFurigana === 'off') wordTarget.classList.add('furigana-off');
+        if (wordFurigana === 'front & back' && wordIsOnFront) wordTarget.classList.add('furigana-front');
       }
 
       if (wordIsOnFront) {
@@ -948,7 +1045,7 @@
       }
     }
 
-    if (isJapanese && graphOn && wordSeqs.length > 0 && wordRaw.indexOf(':') !== -1) {
+    if (graphOn && wordSeqs.length > 0 && wordHasAccent) {
       var svgs = [];
       for (var s = 0; s < wordSeqs.length; s++) {
         var svg = makeGraph(wordSeqs[s]);
@@ -1025,39 +1122,29 @@
           ? document.getElementById('front-sentence')
           : sentEl;
 
-      if (isJapanese) {
-        var sentLines = sentHtml.split(/<br\s*\/?>/gi);
-        var allSeqs = [];
-        var lineHtmls = sentLines.map(function(part) {
-          var _d = document.createElement('span');
-          _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
-          var lineText = _d.textContent.trim();
-          if (!lineText) return '';
-          var seqs = makeSequences(lineText);
-          allSeqs = allSeqs.concat(seqs);
-          if (seqs.length === 0) return '';
-          return seqs.map(makeColoredSentence).join('');
-        }).filter(Boolean);
-        if (allSeqs.length > 0) {
-          var hasAccent = allSeqs.some(function(seq) {
-            return seq.some(function(s) {
-              return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
-            });
+      var sentLines = sentHtml.split(/<br\s*\/?>/gi);
+      var allSeqs = [];
+      var lineHtmls = sentLines.map(function(part) {
+        var _d = document.createElement('span');
+        _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
+        var lineText = _d.textContent.trim();
+        if (!lineText) return '';
+        var rendered = renderMixed(lineText);
+        allSeqs = allSeqs.concat(rendered.sequences);
+        return rendered.html;
+      }).filter(Boolean);
+      if (lineHtmls.length > 0) {
+        var hasAccent = allSeqs.some(function(seq) {
+          return seq.some(function(s) {
+            return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
           });
-          if (!hasAccent) sentTarget.classList.add('no-accent');
-          if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
-          if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
-          if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
-          if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
-          sentTarget.innerHTML = lineHtmls.join('<br>');
-        }
-      } else {
-        var nonJpLines = sentHtml.split(/<br\s*\/?>/gi).map(function(part) {
-          var _d = document.createElement('span');
-          _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
-          return _d.textContent.trim();
-        }).filter(Boolean);
-        sentTarget.innerHTML = nonJpLines.join('<br>');
+        });
+        if (!hasAccent) sentTarget.classList.add('no-accent');
+        if (sentPitchColor === 'off') sentTarget.classList.add('no-pitch-color');
+        if (sentPitchColor === 'front & back' && sentIsOnFront) sentTarget.classList.add('pitch-color-front');
+        if (sentFurigana === 'off') sentTarget.classList.add('furigana-off');
+        if (sentFurigana === 'front & back' && sentIsOnFront) sentTarget.classList.add('furigana-front');
+        sentTarget.innerHTML = lineHtmls.join('<br>');
       }
 
       if (sentIsOnFront && !isTategaki) {
@@ -1068,13 +1155,11 @@
         var frontSentEl = document.getElementById('front-sentence');
         if (frontSentEl && sentEl.innerHTML) {
           frontSentEl.innerHTML = sentEl.innerHTML;
-          if (isJapanese) {
-            if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
-            if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
-            if (sentFurigana === 'front & back') frontSentEl.classList.add('furigana-front');
-            else if (sentFurigana === 'off') frontSentEl.classList.add('furigana-off');
-            if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
-          }
+          if (sentEl.classList.contains('no-accent')) frontSentEl.classList.add('no-accent');
+          if (sentEl.classList.contains('no-pitch-color')) frontSentEl.classList.add('no-pitch-color');
+          if (sentFurigana === 'front & back') frontSentEl.classList.add('furigana-front');
+          else if (sentFurigana === 'off') frontSentEl.classList.add('furigana-off');
+          if (sentPitchColor === 'front & back') frontSentEl.classList.add('pitch-color-front');
         }
         sentEl.setAttribute('data-show', 'off');
       }
@@ -1130,14 +1215,22 @@
     function colorizeText(raw, el) {
       if (!raw) return '';
       if (/<(ul|ol|li|div|table|dd|dt|dl)[\s>]/i.test(raw)) return pitchNums(raw);
-      if (el && raw.indexOf(':') === -1) el.classList.add('no-accent');
       var lines = raw.split(/<br\s*\/?>/gi);
+      var allSeqs = [];
       var colored = lines.map(function(line) {
-        var seqs = makeSequences(line);
-        if (seqs.length === 0) return line;
-        return seqs.map(makeColoredSentence).join('');
+        var rendered = renderMixed(line);
+        allSeqs = allSeqs.concat(rendered.sequences);
+        return rendered.html || line;
       });
-      return colored.join('<br>');
+      if (el) {
+        var hasAccent = allSeqs.some(function(seq) {
+          return seq.some(function(s) {
+            return s.role !== 'particle' && s.role !== 'empty' && !s.isParticle;
+          });
+        });
+        if (!hasAccent) el.classList.add('no-accent');
+      }
+      return pitchNums(colored.join('<br>'));
     }
     var defs = parseDefinitions(defHtml);
     // Plain definition without comment markers → use --definition-default
@@ -1159,24 +1252,25 @@
       // Render primary in defEl
       if (monoIsPrimary) {
         defEl.innerHTML = colorizeText(primaryContent, defEl) || primaryContent;
-        if (isJapanese) defEl.setAttribute('data-font', 'jp');
         window.__monoUnlocked = true;
       } else {
-        defEl.innerHTML = pitchNums(primaryContent);
+        defEl.innerHTML = colorizeText(primaryContent, defEl) || primaryContent;
       }
+      defEl.setAttribute('data-font', 'jp');
 
       if (defSecondary === 'off') {
         answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'mono-only' : 'bi-only');
       } else {
         // Render secondary in jpDefEl
         if (monoIsPrimary) {
-          jpDefEl.innerHTML = pitchNums(secondaryContent);
+          jpDefEl.innerHTML = colorizeText(secondaryContent, jpDefEl) || secondaryContent;
           jpDefEl.className = 'def';
           var toggleLabel = document.querySelector('.jp-def-toggle');
           if (toggleLabel) toggleLabel.textContent = 'Bilingual';
         } else {
           jpDefEl.innerHTML = colorizeText(secondaryContent, jpDefEl) || secondaryContent;
         }
+        jpDefEl.setAttribute('data-font', 'jp');
 
         if (defSecondary === 'on') {
           var jpToggleOn = document.getElementById('jp-toggle');
@@ -1194,11 +1288,12 @@
         }
       }
     } else if (hasBi && !hasMono) {
-      defEl.innerHTML = pitchNums(defs.bilingual);
+      defEl.innerHTML = colorizeText(defs.bilingual, defEl) || defs.bilingual;
+      defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
       defEl.innerHTML = colorizeText(defs[monoKey], defEl) || defs[monoKey];
-      if (isJapanese) defEl.setAttribute('data-font', 'jp');
+      defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
     } else {
@@ -1233,8 +1328,8 @@
     if (notesRawEl && notesEl) {
         var notesHtml = notesRawEl.innerHTML.trim();
         if (notesHtml) {
-            notesEl.innerHTML = pitchNums(notesHtml);
-            if (notesFont === 'monolingual' && isJapanese) {
+            notesEl.innerHTML = colorizeText(notesHtml, notesEl) || notesHtml;
+            if (notesFont === 'monolingual') {
                 notesEl.setAttribute('data-font', 'jp');
             }
             if (!notesOn) {

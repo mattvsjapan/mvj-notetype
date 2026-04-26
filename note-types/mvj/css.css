@@ -1,8 +1,16 @@
 /* Fonts — add .woff2 files to Anki media folder (prefix _ prevents cleanup) */
-@font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900; }
-@font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }
-@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700; }
-@font-face { font-family: 'YuKyokasho'; src: url('_yukyokasho-bold.woff2') format('woff2'); font-weight: 600 900; }
+/* Unicode-range scoping lets the browser pick the right font per character:
+   Latin → Inter / JetBrains Mono; CJK → Noto Serif JP / YuKyokasho. The body
+   font stack must list a Latin font first and a JP font second so the cascade
+   has somewhere to fall through to. */
+@font-face { font-family: 'Inter'; src: url('_inter.woff2') format('woff2'); font-weight: 100 900;
+    unicode-range: U+0000-024F, U+2000-206F, U+20A0-20CF, U+2100-214F; }
+@font-face { font-family: 'JetBrains Mono'; src: url('_jetbrains-mono.woff2') format('woff2'); font-weight: 400 500;
+    unicode-range: U+0000-024F, U+2000-206F, U+20A0-20CF, U+2100-214F; }
+@font-face { font-family: 'Noto Serif JP'; src: url('_noto-serif-jp.woff2') format('woff2'); font-weight: 400 700;
+    unicode-range: U+3000-303F, U+3040-309F, U+30A0-30FF, U+4E00-9FFF, U+3400-4DBF, U+FF00-FFEF; }
+@font-face { font-family: 'YuKyokasho'; src: url('_yukyokasho-bold.woff2') format('woff2'); font-weight: 600 900;
+    unicode-range: U+3000-303F, U+3040-309F, U+30A0-30FF, U+4E00-9FFF, U+3400-4DBF, U+FF00-FFEF; }
 @font-face { font-family: 'PitchNum'; src: url('_pitch_num.woff2') format('woff2'); font-weight: 100 900; }
 
 :root,
@@ -12,7 +20,6 @@
        ═══════════════════════════════════════════════════════ */
 
     /* Layout */
-    --target-lang: japanese;       /* japanese | other                    */
     --tategaki: off;               /* on | off                            */
     --color-scheme: black;          /* blue | black | red | purple | white */
     --audio-labels: on;            /* on | off                            */
@@ -619,7 +626,7 @@ html {
     box-sizing: border-box;
     background: var(--card-bg);
     color: var(--text-1);
-    font-family: var(--sans);
+    font-family: var(--sans), var(--jp);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding: clamp(20px, 6vw, 44px);
@@ -1797,24 +1804,8 @@ html:not(.tategaki) .front-content .image-wrap {
 .back .front-content .sentence.pitch-color-front span { animation: none; }
 
 [data-font="jp"] {
-    font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    font-family: 'Inter', 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
     line-height: 1.65;
-}
-
-[data-lang="other"] .target-word,
-[data-lang="other"] .sentence {
-    font-family: var(--sans);
-    letter-spacing: normal;
-}
-
-[data-lang="other"] .def {
-    font-family: var(--sans);
-}
-
-[data-lang="other"] .front-content .target-word,
-[data-lang="other"] .front-content .sentence {
-    font-family: var(--sans);
-    letter-spacing: normal;
 }
 
 /* Definition layout: hide sections based on data-def-layout */

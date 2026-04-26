@@ -45,7 +45,6 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'target-lang',
         'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
         'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
@@ -863,9 +862,6 @@ function clearLastMargin(el) {
         return v ? v.trim() : (fallback || '');
     }
 
-    var targetLang = setting('--target-lang', 'japanese');
-    var isJapanese = targetLang === 'japanese';
-
     var wordSide = setting('--word-text', 'back only');
     var sentSide = setting('--sentence-text', 'back only');
     var imageSide = setting('--image', 'back only');
@@ -919,11 +915,6 @@ function clearLastMargin(el) {
     }
     if (wordAI && _btnOff(_wab)) wordAI.setAttribute('data-btn-off', '');
     if (sentAI && _btnOff(_sab)) sentAI.setAttribute('data-btn-off', '');
-
-    if (!isJapanese) {
-        var ci = document.querySelector('.card-inner');
-        if (ci) ci.setAttribute('data-lang', 'other');
-    }
 
     function rawFieldText(el) {
         if (!el) return '';
@@ -1056,35 +1047,119 @@ function clearLastMargin(el) {
         return out.join('');
     }
 
+    // ── renderMixed ──
+    // Unified processor for any field. Walks raw char-by-char, segments by
+    // script class (JP vs other). JP segments → coloredRuby/plainRuby per
+    // opts.colored; non-JP segments emit verbatim. Whitespace and bracketed
+    // readings stick to the current segment; a Latin char with a [reading]
+    // immediately following is treated as JP (furigana exception); pitch-
+    // annotation chars (`:0-9*^~;|,-`) continue a JP run only when they
+    // immediately follow a JP char.
+    // Mirror of back.html renderMixed (~810); contexts can't share JS.
+    function renderMixed(raw, opts) {
+        if (!raw) return '';
+        var colored = opts && opts.colored;
+
+        function isJpChar(ch) {
+            var c = ch.charCodeAt(0);
+            return (c >= 0x3040 && c <= 0x309F) ||
+                   (c >= 0x30A0 && c <= 0x30FF) ||
+                   (c >= 0x4E00 && c <= 0x9FFF) ||
+                   (c >= 0x3400 && c <= 0x4DBF) ||
+                   (c >= 0x3000 && c <= 0x303F) ||
+                   (c >= 0xFF00 && c <= 0xFFEF);
+        }
+
+        var units = [];
+        var i = 0;
+        while (i < raw.length) {
+            var ch = raw.charAt(i);
+            if (ch === '<') {
+                var endTag = raw.indexOf('>', i);
+                if (endTag !== -1) {
+                    units.push({ cls: 'neutral', text: raw.substring(i, endTag + 1) });
+                    i = endTag + 1;
+                    continue;
+                }
+            }
+            if (ch === '[') {
+                var endBr = raw.indexOf(']', i);
+                if (endBr !== -1) {
+                    units.push({ cls: 'neutral', text: raw.substring(i, endBr + 1) });
+                    i = endBr + 1;
+                    continue;
+                }
+            }
+            var cls;
+            if (/\s/.test(ch)) {
+                cls = 'neutral';
+            } else if (isJpChar(ch)) {
+                cls = 'jp';
+            } else if (/[A-Za-z]/.test(ch) && raw.charAt(i + 1) === '[') {
+                cls = 'jp';
+            } else if (/[:0-9*^~;|,\-]/.test(ch)) {
+                var prev = null;
+                for (var p = units.length - 1; p >= 0; p--) {
+                    if (units[p].cls === 'jp' || units[p].cls === 'other') { prev = units[p].cls; break; }
+                }
+                cls = (prev === 'jp') ? 'jp' : 'other';
+            } else {
+                cls = 'other';
+            }
+            units.push({ cls: cls, text: ch });
+            i++;
+        }
+
+        var segs = [];
+        var current = null;
+        var pending = '';
+        for (var k = 0; k < units.length; k++) {
+            var u = units[k];
+            if (u.cls === 'neutral') {
+                if (current) current.text += u.text;
+                else pending += u.text;
+            } else if (!current) {
+                current = { cls: u.cls, text: pending + u.text };
+                pending = '';
+            } else if (current.cls === u.cls) {
+                current.text += u.text;
+            } else {
+                segs.push(current);
+                current = { cls: u.cls, text: u.text };
+            }
+        }
+        if (current) segs.push(current);
+        else if (pending) segs.push({ cls: 'other', text: pending });
+
+        var out = [];
+        for (var s = 0; s < segs.length; s++) {
+            var seg = segs[s];
+            if (seg.cls === 'jp') {
+                out.push((colored ? coloredRuby : plainRuby)(seg.text));
+            } else {
+                out.push(seg.text.replace(/<[^>]+>/g, ' '));
+            }
+        }
+        return out.join('');
+    }
+
     // ── Populate front-content children (front only) ──
     if (wordSide === 'front & back') {
         var rw = document.getElementById('raw-word');
-        if (isJapanese) {
-            var html = rw ? (wordPC === 'front & back' ? coloredRuby : plainRuby)(rawFieldText(rw)) : '';
-            if (html) {
-                frontWord.innerHTML = html;
-                if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
-            } else { frontWord.setAttribute('data-side', 'back'); }
-        } else {
-            var text = rw ? rawFieldText(rw).replace(/<[^>]+>/g, ' ').trim() : '';
-            if (text) { frontWord.textContent = text; }
-            else { frontWord.setAttribute('data-side', 'back'); }
-        }
+        var html = rw ? renderMixed(rawFieldText(rw), { colored: wordPC === 'front & back' }) : '';
+        if (html) {
+            frontWord.innerHTML = html;
+            if (wordPC === 'front & back') frontWord.classList.add('pitch-color-front');
+        } else { frontWord.setAttribute('data-side', 'back'); }
     }
 
     if (sentSide === 'front & back') {
         var rs = document.getElementById('raw-sentence');
-        if (isJapanese) {
-            var html = rs ? (sentPC === 'front & back' ? coloredRuby : plainRuby)(rawFieldText(rs)) : '';
-            if (html) {
-                frontSent.innerHTML = html;
-                if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
-            } else { frontSent.setAttribute('data-side', 'back'); }
-        } else {
-            var text = rs ? rawFieldText(rs).replace(/<[^>]+>/g, ' ').trim() : '';
-            if (text) { frontSent.textContent = text; }
-            else { frontSent.setAttribute('data-side', 'back'); }
-        }
+        var html = rs ? renderMixed(rawFieldText(rs), { colored: sentPC === 'front & back' }) : '';
+        if (html) {
+            frontSent.innerHTML = html;
+            if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
+        } else { frontSent.setAttribute('data-side', 'back'); }
     }
 
     if (imageSide === 'front & back') {
