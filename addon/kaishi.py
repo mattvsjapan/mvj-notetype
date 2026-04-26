@@ -2,6 +2,7 @@
 
 import csv
 import io
+import json
 import os
 import re
 import tempfile
@@ -19,10 +20,13 @@ from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES
 # Constants
 # ---------------------------------------------------------------------------
 
-_CARDS_TSV_URL = (
+_KAISHI_RAW_BASE = (
     "https://raw.githubusercontent.com/"
-    "mattvsjapan/mvj-notetype/main/kaishi/cards.tsv"
+    "mattvsjapan/mvj-notetype/main/kaishi/"
 )
+_CARDS_TSV_URL = _KAISHI_RAW_BASE + "cards.tsv"
+_FULL_MEDIA_MANIFEST_URL = _KAISHI_RAW_BASE + "media-manifest.json"
+_DEF_AUDIO_MANIFEST_URL = _KAISHI_RAW_BASE + "def-audio-manifest.json"
 _RELEASE_BASE = (
     "https://github.com/mattvsjapan/mvj-notetype/"
     "releases/download/kaishi-media-v2/"
@@ -138,6 +142,11 @@ def _download_bytes(url: str) -> bytes:
     req = urllib.request.Request(url)
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read()
+
+
+def _fetch_manifest(url: str) -> dict:
+    """Fetch and parse a media manifest (filename → checksum)."""
+    return json.loads(_download_bytes(url).decode("utf-8"))
 
 
 def _download_with_progress(url: str, dest: str, label: str) -> None:
@@ -279,18 +288,13 @@ def _set_deck_description(deck_id: int) -> None:
         pass
 
 
-def _media_already_installed() -> bool:
-    """Spot-check whether Kaishi media files already exist in Anki's media folder."""
+def _missing_media(manifest: dict) -> list[str]:
+    """Return manifest filenames not present in Anki's media folder."""
     media_dir = mw.col.media.dir()
-    for name in (
-        "mvj-monolingual-definition-00001.mp3",
-        "mvj-monolingual-definition-01500.mp3",
-        "mvj-bilingual-definition-00001.mp3",
-        "mvj-bilingual-definition-01500.mp3",
-    ):
-        if not os.path.exists(os.path.join(media_dir, name)):
-            return False
-    return True
+    return [
+        name for name in manifest
+        if not os.path.exists(os.path.join(media_dir, name))
+    ]
 
 
 def _download_and_extract_zip(url: str, label: str) -> int:
@@ -334,29 +338,53 @@ def run_install() -> None:
             return
 
     deck_name = _pick_deck_name()
-    has_media = _media_already_installed()
+    mw.progress.start(label="Checking media...", parent=mw)
 
-    msg = (
-        f'This will create 1,500 cards in deck "{deck_name}".'
-        if has_media
-        else f"This will download ~92 MB of media and create 1,500 cards "
-        f'in deck "{deck_name}".'
-    )
-    reply = QMessageBox.question(
-        mw,
-        "Install MvJ Kaishi",
-        f"{msg}\n\nContinue?",
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-    )
-    if reply != QMessageBox.StandardButton.Yes:
-        return
+    def precheck_task():
+        return _fetch_manifest(_FULL_MEDIA_MANIFEST_URL)
 
+    def on_precheck(future):
+        mw.progress.finish()
+        try:
+            manifest = future.result()
+        except HTTPError as e:
+            showWarning(f"Download failed: HTTP {e.code}")
+            return
+        except URLError as e:
+            showWarning(f"Connection failed: {e.reason}")
+            return
+        except Exception as e:
+            showWarning(f"Install failed: {e}")
+            return
+
+        missing = _missing_media(manifest)
+        msg = (
+            f'This will create 1,500 cards in deck "{deck_name}".'
+            if not missing
+            else f"This will download ~92 MB of media and create 1,500 cards "
+            f'in deck "{deck_name}".'
+        )
+        reply = QMessageBox.question(
+            mw,
+            "Install MvJ Kaishi",
+            f"{msg}\n\nContinue?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        _start_install_download(deck_name, missing)
+
+    mw.taskman.run_in_background(precheck_task, on_precheck)
+
+
+def _start_install_download(deck_name: str, missing: list[str]) -> None:
     mw.progress.start(label="Downloading card data...", parent=mw)
 
     def task():
         tsv_data = _download_bytes(_CARDS_TSV_URL)
         rows = _parse_cards_tsv(tsv_data)
-        if not has_media:
+        if missing:
             _download_and_extract_zip(_FULL_MEDIA_ZIP_URL, "Downloading media")
         return rows
 
@@ -430,6 +458,7 @@ def run_migrate() -> None:
     def scan_task():
         tsv_data = _download_bytes(_CARDS_TSV_URL)
         rows = _parse_cards_tsv(tsv_data)
+        manifest = _fetch_manifest(_DEF_AUDIO_MANIFEST_URL)
         key_index = _build_key_index(rows)
 
         # Scan collection for matching notes
@@ -480,12 +509,12 @@ def run_migrate() -> None:
             if all(c.type == 0 for c in cards):
                 new_nids.add(nid)
 
-        return matched, skipped, total_scanned, new_nids
+        return matched, skipped, total_scanned, new_nids, manifest
 
     def on_scan_done(future):
         mw.progress.finish()
         try:
-            matched, skipped, total_scanned, new_nids = future.result()
+            matched, skipped, total_scanned, new_nids, manifest = future.result()
         except HTTPError as e:
             showWarning(f"Download failed: HTTP {e.code}")
             return
@@ -500,7 +529,7 @@ def run_migrate() -> None:
             showInfo("No matching Kaishi cards found in your collection.")
             return
 
-        has_media = _media_already_installed()
+        missing = _missing_media(manifest)
         num_new = len(new_nids)
         num_reviewed = len(matched) - num_new
 
@@ -520,7 +549,7 @@ def run_migrate() -> None:
         if num_update:
             msg += f"\u2022 Update {num_update} existing {NOTE_TYPE_NAME} cards\n"
         msg += f"\u2022 Overwrite fields with latest card data\n"
-        if not has_media:
+        if missing:
             msg += f"\u2022 Download ~20 MB of definition audio\n"
         if skipped:
             msg += (
@@ -565,17 +594,17 @@ def run_migrate() -> None:
             if reply != QMessageBox.StandardButton.Yes:
                 return
 
-        _start_migrate_download(matched, has_media)
+        _start_migrate_download(matched, missing)
 
     mw.taskman.run_in_background(scan_task, on_scan_done)
 
 
-def _start_migrate_download(matched: dict, has_media: bool) -> None:
+def _start_migrate_download(matched: dict, missing: list[str]) -> None:
     """Phase 2: download definition audio, then apply migration."""
     mw.progress.start(label="Downloading definition audio...", parent=mw)
 
     def download_task():
-        if not has_media:
+        if missing:
             _download_and_extract_zip(_DEF_AUDIO_ZIP_URL, "Downloading definition audio")
 
     def on_download_done(future):
