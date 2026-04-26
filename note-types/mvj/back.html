@@ -847,7 +847,14 @@
       if (ch === '[') {
         var endBr = raw.indexOf(']', i);
         if (endBr !== -1) {
-          units.push({ cls: 'neutral', text: raw.substring(i, endBr + 1) });
+          // A [reading] bracket is attached to the preceding word — inherit
+          // its class so it stays in that segment instead of drifting across
+          // a script boundary as a "neutral" run.
+          var brPrev = null;
+          for (var bp = units.length - 1; bp >= 0; bp--) {
+            if (units[bp].cls === 'jp' || units[bp].cls === 'other') { brPrev = units[bp].cls; break; }
+          }
+          units.push({ cls: brPrev || 'other', text: raw.substring(i, endBr + 1) });
           i = endBr + 1;
           continue;
         }
@@ -878,20 +885,25 @@
     for (var k = 0; k < units.length; k++) {
       var u = units[k];
       if (u.cls === 'neutral') {
-        if (current) current.text += u.text;
-        else pending += u.text;
+        pending += u.text;
       } else if (!current) {
         current = { cls: u.cls, text: pending + u.text };
         pending = '';
       } else if (current.cls === u.cls) {
-        current.text += u.text;
+        current.text += pending + u.text;
+        pending = '';
       } else {
         segs.push(current);
+        if (pending) { segs.push({ cls: 'neutral', text: pending }); pending = ''; }
         current = { cls: u.cls, text: u.text };
       }
     }
-    if (current) segs.push(current);
-    else if (pending) segs.push({ cls: 'other', text: pending });
+    if (current) {
+      segs.push(current);
+      if (pending) segs.push({ cls: 'neutral', text: pending });
+    } else if (pending) {
+      segs.push({ cls: 'other', text: pending });
+    }
 
     var htmlParts = [];
     var allSequences = [];
