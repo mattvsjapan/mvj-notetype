@@ -1355,6 +1355,9 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
 
 ruby {
     ruby-align: center;
+    /* Render Latin chars carrying furigana (e.g. T in T[ティー]シャツ) in the
+       JP font so they harmonize with the surrounding kanji/kana. */
+    font-family: var(--jp), var(--sans);
 }
 
 rt {
