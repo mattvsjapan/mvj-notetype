@@ -963,6 +963,101 @@ function clearLastMargin(el) {
                      .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
     };
 
+    // ── segmentMixed: shared by front and back via window ──
+    // Walks raw char-by-char, classifies each char as JP / non-JP / neutral,
+    // and groups them into segments. Neutral runs that bridge different-class
+    // segments are emitted as standalone passthrough chunks; neutral runs
+    // internal to a single-class run stay inside the segment. Bracketed
+    // [reading] units inherit the class of the preceding word so they don't
+    // drift across script boundaries. Returns segments[] of { cls, text }
+    // where cls is 'jp' | 'other' | 'neutral'. Each side's renderMixed
+    // dispatches over these.
+    window.segmentMixed = function(raw) {
+        if (!raw) return [];
+
+        function isJpChar(ch) {
+            var c = ch.charCodeAt(0);
+            return (c >= 0x3040 && c <= 0x309F) ||
+                   (c >= 0x30A0 && c <= 0x30FF) ||
+                   (c >= 0x4E00 && c <= 0x9FFF) ||
+                   (c >= 0x3400 && c <= 0x4DBF) ||
+                   (c >= 0x3000 && c <= 0x303F) ||
+                   (c >= 0xFF00 && c <= 0xFFEF);
+        }
+        function lookbackCls(units) {
+            for (var p = units.length - 1; p >= 0; p--) {
+                if (units[p].cls === 'jp' || units[p].cls === 'other') return units[p].cls;
+            }
+            return null;
+        }
+
+        var units = [];
+        var i = 0;
+        while (i < raw.length) {
+            var ch = raw.charAt(i);
+            if (ch === '<') {
+                var endTag = raw.indexOf('>', i);
+                if (endTag !== -1) {
+                    units.push({ cls: 'neutral', text: raw.substring(i, endTag + 1) });
+                    i = endTag + 1;
+                    continue;
+                }
+            }
+            if (ch === '[') {
+                var endBr = raw.indexOf(']', i);
+                if (endBr !== -1) {
+                    // A [reading] bracket is attached to the preceding word —
+                    // inherit its class so it stays in that segment instead of
+                    // drifting across a script boundary.
+                    units.push({ cls: lookbackCls(units) || 'other', text: raw.substring(i, endBr + 1) });
+                    i = endBr + 1;
+                    continue;
+                }
+            }
+            var cls;
+            if (/\s/.test(ch)) {
+                cls = 'neutral';
+            } else if (isJpChar(ch)) {
+                cls = 'jp';
+            } else if (/[A-Za-z]/.test(ch) && raw.charAt(i + 1) === '[') {
+                cls = 'jp';
+            } else if (/[:0-9*^~;|,\-]/.test(ch)) {
+                cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
+            } else {
+                cls = 'other';
+            }
+            units.push({ cls: cls, text: ch });
+            i++;
+        }
+
+        var segs = [];
+        var current = null;
+        var pending = '';
+        for (var k = 0; k < units.length; k++) {
+            var u = units[k];
+            if (u.cls === 'neutral') {
+                pending += u.text;
+            } else if (!current) {
+                current = { cls: u.cls, text: pending + u.text };
+                pending = '';
+            } else if (current.cls === u.cls) {
+                current.text += pending + u.text;
+                pending = '';
+            } else {
+                segs.push(current);
+                if (pending) { segs.push({ cls: 'neutral', text: pending }); pending = ''; }
+                current = { cls: u.cls, text: u.text };
+            }
+        }
+        if (current) {
+            segs.push(current);
+            if (pending) segs.push({ cls: 'neutral', text: pending });
+        } else if (pending) {
+            segs.push({ cls: 'other', text: pending });
+        }
+        return segs;
+    };
+
     // ── Everything below is front-only ──
     if (document.querySelector('.back')) return;
 
@@ -1047,102 +1142,13 @@ function clearLastMargin(el) {
         return out.join('');
     }
 
-    // ── renderMixed ──
-    // Unified processor for any field. Walks raw char-by-char, segments by
-    // script class (JP vs other). JP segments → coloredRuby/plainRuby per
-    // opts.colored; non-JP segments emit verbatim. Whitespace and bracketed
-    // readings stick to the current segment; a Latin char with a [reading]
-    // immediately following is treated as JP (furigana exception); pitch-
-    // annotation chars (`:0-9*^~;|,-`) continue a JP run only when they
-    // immediately follow a JP char.
-    // Mirror of back.html renderMixed (~810); contexts can't share JS.
+    // Front-side renderer: routes JP segments through coloredRuby/plainRuby,
+    // strips inline HTML from non-JP. Segmentation is shared via
+    // window.segmentMixed.
     function renderMixed(raw, opts) {
         if (!raw) return '';
         var colored = opts && opts.colored;
-
-        function isJpChar(ch) {
-            var c = ch.charCodeAt(0);
-            return (c >= 0x3040 && c <= 0x309F) ||
-                   (c >= 0x30A0 && c <= 0x30FF) ||
-                   (c >= 0x4E00 && c <= 0x9FFF) ||
-                   (c >= 0x3400 && c <= 0x4DBF) ||
-                   (c >= 0x3000 && c <= 0x303F) ||
-                   (c >= 0xFF00 && c <= 0xFFEF);
-        }
-
-        var units = [];
-        var i = 0;
-        while (i < raw.length) {
-            var ch = raw.charAt(i);
-            if (ch === '<') {
-                var endTag = raw.indexOf('>', i);
-                if (endTag !== -1) {
-                    units.push({ cls: 'neutral', text: raw.substring(i, endTag + 1) });
-                    i = endTag + 1;
-                    continue;
-                }
-            }
-            if (ch === '[') {
-                var endBr = raw.indexOf(']', i);
-                if (endBr !== -1) {
-                    // A [reading] bracket is attached to the preceding word —
-                    // inherit its class so it stays in that segment instead of
-                    // drifting across a script boundary as a "neutral" run.
-                    var brPrev = null;
-                    for (var bp = units.length - 1; bp >= 0; bp--) {
-                        if (units[bp].cls === 'jp' || units[bp].cls === 'other') { brPrev = units[bp].cls; break; }
-                    }
-                    units.push({ cls: brPrev || 'other', text: raw.substring(i, endBr + 1) });
-                    i = endBr + 1;
-                    continue;
-                }
-            }
-            var cls;
-            if (/\s/.test(ch)) {
-                cls = 'neutral';
-            } else if (isJpChar(ch)) {
-                cls = 'jp';
-            } else if (/[A-Za-z]/.test(ch) && raw.charAt(i + 1) === '[') {
-                cls = 'jp';
-            } else if (/[:0-9*^~;|,\-]/.test(ch)) {
-                var prev = null;
-                for (var p = units.length - 1; p >= 0; p--) {
-                    if (units[p].cls === 'jp' || units[p].cls === 'other') { prev = units[p].cls; break; }
-                }
-                cls = (prev === 'jp') ? 'jp' : 'other';
-            } else {
-                cls = 'other';
-            }
-            units.push({ cls: cls, text: ch });
-            i++;
-        }
-
-        var segs = [];
-        var current = null;
-        var pending = '';
-        for (var k = 0; k < units.length; k++) {
-            var u = units[k];
-            if (u.cls === 'neutral') {
-                pending += u.text;
-            } else if (!current) {
-                current = { cls: u.cls, text: pending + u.text };
-                pending = '';
-            } else if (current.cls === u.cls) {
-                current.text += pending + u.text;
-                pending = '';
-            } else {
-                segs.push(current);
-                if (pending) { segs.push({ cls: 'neutral', text: pending }); pending = ''; }
-                current = { cls: u.cls, text: u.text };
-            }
-        }
-        if (current) {
-            segs.push(current);
-            if (pending) segs.push({ cls: 'neutral', text: pending });
-        } else if (pending) {
-            segs.push({ cls: 'other', text: pending });
-        }
-
+        var segs = window.segmentMixed(raw);
         var out = [];
         for (var s = 0; s < segs.length; s++) {
             var seg = segs[s];
