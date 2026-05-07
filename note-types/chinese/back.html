@@ -531,18 +531,22 @@ function _renderBack() {
       var SVG_DEF = window.__audioSVG;
       var animateBtnDef = window.__animateBtn;
 
-      var playGroup = function(audioEls, btn) {
+      var playGroup = function(audioEls, btn, opts) {
         var mob = window.matchMedia('(hover: none)').matches;
         if (mob) {
           window.__stopAllAudio();
-          var gen = window.__webAudioGen;
+          // genRef (not a fixed capture) so __playMobile's internal
+          // cancellation during contaminated-autoplay recovery can update
+          // the queue's halt token. External __stopAllAudio still halts.
+          var genRef = { gen: window.__webAudioGen };
+          var passOpts = Object.assign({ genRef: genRef }, opts || {});
           var idx = 0;
           (function next() {
-            if (idx >= audioEls.length || gen !== window.__webAudioGen) return;
+            if (idx >= audioEls.length || genRef.gen !== window.__webAudioGen) return;
             var cur = idx++;
-            window.__playMobile(audioEls[cur].src, btn)
-                .then(function() { if (gen === window.__webAudioGen) next(); })
-                ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+            window.__playMobile(audioEls[cur].src, btn, undefined, passOpts)
+                .then(function() { if (genRef.gen === window.__webAudioGen) next(); })
+                ['catch'](function() { if (genRef.gen === window.__webAudioGen) next(); });
           })();
         } else {
           window.__stopAllAudio(audioEls[0]);
@@ -578,8 +582,8 @@ function _renderBack() {
           lbl.textContent = label;
           item.appendChild(lbl);
           if (audioRow) audioRow.appendChild(item);
-          var playFn = function() {
-            playGroup(audioEls, btn);
+          var playFn = function(opts) {
+            playGroup(audioEls, btn, opts);
             animateBtnDef(btn);
           };
           window.__onTap(btn, function() {
@@ -634,8 +638,8 @@ function _renderBack() {
         defItem.appendChild(defLabel);
         if (audioRow) audioRow.appendChild(defItem);
 
-        var playPrimary = function() {
-          playGroup(primaryAudios, defBtn);
+        var playPrimary = function(opts) {
+          playGroup(primaryAudios, defBtn, opts);
           animateBtnDef(defBtn);
         };
 
@@ -684,10 +688,10 @@ function _renderBack() {
           window.__animateBtn(_sentBtn);
           var src = _sentAudio ? _sentAudio.src : null;
           if (src) {
-            var p = window.__playMobile(src, _sentBtn, cardScope);
+            var p = window.__playMobile(src, _sentBtn, cardScope, { autoplay: true });
             if (_autoDefPlay) {
               p.then(function() {
-                if (window.__isCardScopeActive(cardScope)) _autoDefPlay();
+                if (window.__isCardScopeActive(cardScope)) _autoDefPlay({ autoplay: true });
               })['catch'](function() {});
             }
           } else if (_autoDefPlay) {

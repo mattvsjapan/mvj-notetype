@@ -30,17 +30,78 @@ if (window.__audioCtx.state === 'suspended') {
     window.__audioCtx.resume()['catch'](function() {});
 }
 
-// Mark context dirty whenever iOS moves it out of 'running' (e.g., when
-// AnkiMobile's native [sound:] player takes the AVAudioSession on a
-// prior card). Next __playMobile call runs recovery before playback.
-if (!window.__audioCtxStateHandler) {
-    window.__audioCtxStateHandler = function() {
-        if (window.__audioCtx && window.__audioCtx.state !== 'running') {
-            window.__audioCtxDirty = true;
-        }
-    };
-    window.__audioCtx.addEventListener('statechange', window.__audioCtxStateHandler);
-}
+// iOS WebKit gate: capability + touch + explicit not-Android. The
+// AudioContext recovery path below targets a WebKit-specific stall
+// (bug #263627) and must not run on other engines.
+window.__isIosWebKit = function() {
+    return !!navigator.audioSession
+        && window.matchMedia('(hover: none)').matches
+        && !document.documentElement.classList.contains('android');
+};
+
+// Pure read: samples currentTime, waits, resolves whether the clock
+// advanced. Required because WebKit can report state==='running' on
+// a stalled context (AVAudioSession contention from a prior native
+// [sound:]). Instance-stable: a probe started against ctx-A must not
+// report healthy if recovery has swapped in ctx-B mid-wait.
+window.__audioCtxProbe = function(ms) {
+    return new Promise(function(resolve) {
+        var ctx = window.__audioCtx;
+        if (!ctx || ctx.state !== 'running') { resolve(false); return; }
+        var t0 = ctx.currentTime;
+        setTimeout(function() {
+            resolve(window.__audioCtx === ctx
+                && ctx.state === 'running'
+                && ctx.currentTime > t0);
+        }, ms || 80);
+    });
+};
+
+// Single-flight escalation: probe → resume-or-suspend/resume → recreate,
+// re-probing after each step. Coalesced via __audioCtxRecoverPromise so
+// concurrent callers (scope-activation + first autoplay) share one chain.
+window.__audioCtxRecover = function() {
+    if (window.__audioCtxRecoverPromise) return window.__audioCtxRecoverPromise;
+    var p = window.__audioCtxProbe(80).then(function(ok) {
+        if (ok) return true;
+        var ctx = window.__audioCtx;
+        if (!ctx) return false;
+        var step2 = (ctx.state === 'running')
+            ? ctx.suspend().then(function(){ return ctx.resume(); })
+            : ctx.resume();
+        return step2['catch'](function(){})
+            .then(function(){ return window.__audioCtxProbe(80); })
+            .then(function(ok2) {
+                if (ok2) return true;
+                // Narrow cleanup before discarding: dying contexts may not
+                // fire `onended` on close, leaving __webAudioSource and the
+                // .playing class pointing at a dead source. Do NOT call
+                // __stopAllAudio() here — it would pause <audio> fallback
+                // playback already in progress and bump __webAudioGen,
+                // re-stranding any autoplay queue that synced its genRef.
+                if (window.__webAudioSource) {
+                    try { window.__webAudioSource.stop(); } catch(e) {}
+                    window.__webAudioSource = null;
+                }
+                return ctx.close()['catch'](function(){})
+                    .then(function() {
+                        window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        return window.__audioCtx.resume()['catch'](function(){});
+                    })
+                    .then(function(){ return window.__audioCtxProbe(80); });
+            });
+    }).then(function(ok) {
+        return ok;
+    }, function() {
+        return false;
+    }).then(function(ok) {
+        window.__audioCtxState = ok ? 'healthy' : 'failed';
+        window.__audioCtxRecoverPromise = null;
+        return ok;
+    });
+    window.__audioCtxRecoverPromise = p;
+    return p;
+};
 
 // Safety net: if AudioContext is still suspended after page load,
 // resume it on the next user gesture.
@@ -54,26 +115,16 @@ if (!window.__audioCtxTouchHandler) {
 }
 
 // Resume AudioContext after iOS app background/foreground switch.
-// iOS suspends the WebView's audio session when backgrounded;
-// the context moves to 'suspended' or the non-standard 'interrupted'
-// state and does not auto-resume.
+// iOS suspends the WebView's audio session when backgrounded; the
+// context moves to 'suspended' or the non-standard 'interrupted' and
+// does not auto-resume. Also: a card already marked 'healthy' before
+// backgrounding must be re-probed, otherwise a fast tap-after-foreground
+// would take the dead Web Audio path before recovery completes.
 if (!window.__audioCtxVisHandler) {
     window.__audioCtxVisHandler = function() {
         if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
-        if (window.__audioCtx.state !== 'running') {
-            window.__audioCtx.resume()['catch'](function() {});
-        } else {
-            // Context may claim 'running' while stalled (WebKit bug #263627).
-            var t = window.__audioCtx.currentTime;
-            setTimeout(function() {
-                if (window.__audioCtx && window.__audioCtx.state === 'running'
-                    && window.__audioCtx.currentTime === t) {
-                    window.__audioCtx.suspend().then(function() {
-                        return window.__audioCtx.resume();
-                    })['catch'](function() {});
-                }
-            }, 200);
-        }
+        window.__audioCtxState = 'unknown';
+        window.__audioCtxRecover();
     };
     document.addEventListener('visibilitychange', window.__audioCtxVisHandler);
 }
@@ -155,6 +206,13 @@ if (window.__observers) {
     for (var i = 0; i < window.__observers.length; i++) window.__observers[i].disconnect();
 }
 window.__observers = [];
+
+// Each card may follow a foreign [sound:] card that took the AVAudioSession.
+// Downgrade to 'unknown' and kick recovery now (after the teardown above
+// settles), so by the time autoplay's setTimeout(0) fires the probe is
+// running against a settled context.
+window.__audioCtxState = 'unknown';
+if (window.__audioCtxRecover) window.__audioCtxRecover();
 
 // Shared audio utilities (available on back via {{FrontSide}})
 window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
@@ -365,7 +423,12 @@ window.__freshPlay = function(src, btn, scope) {
     a.style.display = 'none';
     document.body.appendChild(a);
     if (btn) btn._freshAudio = a;
-    a.play()['catch'](function() {});
+    var p = a.play();
+    if (p && p['catch']) p['catch'](function() {
+        // Surface as 'error' so caller wrappers that resolve on ended/error
+        // don't hang the autoplay queue when play() rejects.
+        a.dispatchEvent(new Event('error'));
+    });
     return a;
 };
 
@@ -453,29 +516,63 @@ window.__webAudioPlay = function(src, btn, gen, scope) {
         });
 };
 
-window.__playMobile = function(src, btn, scope) {
+// Hybrid dispatch by call kind. On iOS-unknown, autoplay gets an
+// optimistic Web Audio start with a parallel clock-advancement probe
+// (zero added latency on healthy cards); tap dispatches synchronously
+// to __freshPlay to preserve the user-activation gesture.
+window.__playMobile = function(src, btn, scope, opts) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
-    function proceed() {
-        if (window.__audioCtx && window.__audioCtx.state === 'running') {
-            return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
-        }
+    opts = opts || {};
+    var ctx = window.__audioCtx;
+    var ios = window.__isIosWebKit && window.__isIosWebKit();
+
+    function viaFresh() {
         var fa = window.__freshPlay(src, btn, scope);
         if (!fa) return Promise.resolve();
         window.__startPlaying(fa, btn);
-        return new Promise(function(resolve) { fa.onended = resolve; });
+        return new Promise(function(resolve) {
+            var done = false, finish = function(){ if (!done) { done = true; resolve(); } };
+            fa.addEventListener('ended', finish, { once: true });
+            fa.addEventListener('error', finish, { once: true });
+        });
     }
-    if (window.__audioCtxDirty && window.__audioCtx) {
-        return window.__audioCtx.suspend()
-            .then(function() { return window.__audioCtx.resume(); })
-            .then(function() { window.__audioCtxDirty = false; })
-            ['catch'](function() {})
-            .then(function() {
-                if (!window.__isCardScopeActive(scope)) return;
-                return proceed();
-            });
+
+    if (!ios || window.__audioCtxState === 'healthy') {
+        if (ctx && ctx.state === 'running')
+            return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
+        return viaFresh();
     }
-    return proceed();
+    if (window.__audioCtxState === 'failed') return viaFresh();
+
+    if (!opts.autoplay) {
+        // Tap on iOS-unknown: synchronous fresh playback inside the gesture.
+        if (!window.__audioCtxRecoverPromise) window.__audioCtxRecover();
+        return viaFresh();
+    }
+
+    if (!ctx || ctx.state !== 'running') {
+        if (!window.__audioCtxRecoverPromise) window.__audioCtxRecover();
+        return viaFresh();
+    }
+    var gen = window.__webAudioGen;
+    var optimistic = window.__webAudioPlay(src, btn, gen, scope);
+    // Sink the optimistic promise eagerly: if the unhealthy branch abandons
+    // it and __webAudioPlay's chain later rejects (fetch/decode error or
+    // close-race during recovery), it would otherwise become unhandled.
+    if (optimistic && optimistic['catch']) optimistic['catch'](function(){});
+    return window.__audioCtxProbe(80).then(function(healthy) {
+        if (!window.__isCardScopeActive(scope)) return;
+        if (healthy) { window.__audioCtxState = 'healthy'; return optimistic; }
+        // Cancel the silent optimistic. __stopAllAudio() bumps __webAudioGen
+        // so the queue's halt token must be re-synced via opts.genRef to keep
+        // the autoplay queue advancing past this internal cancellation.
+        if (gen === window.__webAudioGen) window.__stopAllAudio();
+        if (opts.genRef) opts.genRef.gen = window.__webAudioGen;
+        return window.__audioCtxRecover().then(function() {
+            if (window.__isCardScopeActive(scope)) return viaFresh();
+        });
+    });
 };
 </script>
 
@@ -563,19 +660,23 @@ window.__playMobile = function(src, btn, scope) {
   var cardScope = window.__currentCardScope;
   setTimeout(function() {
     if (!window.__isCardScopeActive(cardScope)) return;
-    var gen = window.__webAudioGen;
+    // genRef (not a fixed capture) so __playMobile's internal cancellation
+    // during contaminated-autoplay recovery can update the queue's halt
+    // token. External __stopAllAudio still halts: it bumps __webAudioGen
+    // but does not touch genRef.gen.
+    var genRef = { gen: window.__webAudioGen };
     (function playNext() {
-      if (i >= queue.length || gen !== window.__webAudioGen
+      if (i >= queue.length || genRef.gen !== window.__webAudioGen
           || !window.__isCardScopeActive(cardScope)) return;
       var entry = queue[i++];
       if (entry.btn) animateBtn(entry.btn);
-      window.__playMobile(entry.audio.src, entry.btn, cardScope)
+      window.__playMobile(entry.audio.src, entry.btn, cardScope, { autoplay: true, genRef: genRef })
           .then(function() {
-            if (gen === window.__webAudioGen
+            if (genRef.gen === window.__webAudioGen
                 && window.__isCardScopeActive(cardScope)) playNext();
           })
           ['catch'](function() {
-            if (gen === window.__webAudioGen
+            if (genRef.gen === window.__webAudioGen
                 && window.__isCardScopeActive(cardScope)) playNext();
           });
     })();
