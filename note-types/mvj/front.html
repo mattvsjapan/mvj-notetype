@@ -1120,9 +1120,15 @@ function clearLastMargin(el) {
                 cls = 'neutral';
             } else if (isJpChar(ch)) {
                 cls = 'jp';
-            } else if (/[A-Za-z]/.test(ch) && raw.charAt(i + 1) === '[') {
-                cls = 'jp';
-            } else if (/[:0-9*^~;|,\-]/.test(ch)) {
+            } else if (/[A-Za-z]/.test(ch)) {
+                if (raw.charAt(i + 1) === '[') {
+                    cls = 'jp';
+                } else {
+                    var prev = units.length ? units[units.length - 1] : null;
+                    cls = (prev && prev.cls === 'jp' && (prev.text === ':' || /[A-Za-z]/.test(prev.text)))
+                        ? 'jp' : 'other';
+                }
+            } else if (/[:0-9*^~;|,\-.\/\\]/.test(ch)) {
                 cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
             } else {
                 cls = 'other';
