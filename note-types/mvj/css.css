@@ -57,7 +57,6 @@
 
     /* Notes */
     --notes-text: on;              /* on | off                            */
-    --notes-font: bilingual;       /* bilingual | monolingual             */
     --notes-align: left;           /* left | center                       */
 
     /* Details Toggle */
@@ -1357,7 +1356,7 @@ ruby {
     ruby-align: center;
     /* Render Latin chars carrying furigana (e.g. T in T[ティー]シャツ) in the
        JP font so they harmonize with the surrounding kanji/kana. */
-    font-family: var(--jp), var(--sans);
+    font-family: var(--jp);
 }
 
 rt {
@@ -1626,7 +1625,6 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 }
 
 .jp-def {
-    font-family: var(--jp);
     font-size: 20px;
     font-weight: 400;
     line-height: 1.7;
@@ -1798,8 +1796,7 @@ html:not(.tategaki) .front-content .image-wrap {
 .back .front-content .target-word.pitch-color-front span,
 .back .front-content .sentence.pitch-color-front span { animation: none; }
 
-[data-font="jp"] {
-    font-family: 'Inter', 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+.def, .jp-def {
     line-height: 1.65;
 }
 
@@ -1836,11 +1833,6 @@ html:not(.tategaki) .front-content .image-wrap {
     color: var(--text-1);
     margin: 0;
     text-align: var(--notes-align);
-}
-
-.notes[data-font="jp"] {
-    font-family: var(--jp);
-    line-height: 1.7;
 }
 
 /* Details section — collapsible container for elements with details toggle on */
@@ -2053,8 +2045,8 @@ html:not(.tategaki) .answer .details-section {
 
 /* Non-tategaki: Japanese text line-height */
 html:not(.tategaki) .sentence,
-html:not(.tategaki) .jp-def,
-html:not(.tategaki) [data-font="jp"] {
+html:not(.tategaki) .def,
+html:not(.tategaki) .jp-def {
     line-height: 1.7;
 }
 

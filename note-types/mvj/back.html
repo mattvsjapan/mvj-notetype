@@ -1176,7 +1176,6 @@
       } else {
         defEl.innerHTML = colorizeText(primaryContent, defEl) || primaryContent;
       }
-      defEl.setAttribute('data-font', 'jp');
 
       if (defSecondary === 'off') {
         answerEl.setAttribute('data-def-layout', monoIsPrimary ? 'mono-only' : 'bi-only');
@@ -1190,7 +1189,6 @@
         } else {
           jpDefEl.innerHTML = colorizeText(secondaryContent, jpDefEl) || secondaryContent;
         }
-        jpDefEl.setAttribute('data-font', 'jp');
 
         if (defSecondary === 'on') {
           var jpToggleOn = document.getElementById('jp-toggle');
@@ -1209,11 +1207,9 @@
       }
     } else if (hasBi && !hasMono) {
       defEl.innerHTML = colorizeText(defs.bilingual, defEl) || defs.bilingual;
-      defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'bi-only');
     } else if (hasMono && !hasBi) {
       defEl.innerHTML = colorizeText(defs[monoKey], defEl) || defs[monoKey];
-      defEl.setAttribute('data-font', 'jp');
       answerEl.setAttribute('data-def-layout', 'mono-only');
       window.__monoUnlocked = true;
     } else {
@@ -1240,7 +1236,6 @@
 
     // ── Notes ──
     var notesOn = _rootStyle.getPropertyValue('--notes-text').trim() !== 'off';
-    var notesFont = _rootStyle.getPropertyValue('--notes-font').trim() || 'bilingual';
     var notesRawEl = document.getElementById('raw-notes');
     var notesEl = document.getElementById('notes');
     var notesSectionEl = document.getElementById('notes-section');
@@ -1249,9 +1244,6 @@
         var notesHtml = notesRawEl.innerHTML.trim();
         if (notesHtml) {
             notesEl.innerHTML = colorizeText(notesHtml, notesEl) || notesHtml;
-            if (notesFont === 'monolingual') {
-                notesEl.setAttribute('data-font', 'jp');
-            }
             if (!notesOn) {
                 notesSectionEl.style.display = 'none';
             }

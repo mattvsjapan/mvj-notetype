@@ -143,7 +143,6 @@ _SETTINGS = {
     ],
     "Notes": [
         ("--notes-text", "Notes Text", ["on", "off"], "on"),
-        ("--notes-font", "Notes Font", ["bilingual", "monolingual"], "bilingual"),
         ("--notes-align", "Notes Alignment", ["left", "center"], "left"),
     ],
     "Details Toggle": [
@@ -170,7 +169,7 @@ _OVERRIDABLE = [
     "image",
     "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-primary", "definition-secondary", "definition-default",
     "definition-furigana", "definition-pitch-color", "definition-align",
-    "notes-text", "notes-font", "notes-align",
+    "notes-text", "notes-align",
     "details-word-text", "details-word-audio", "details-word-autoplay", "details-pitch-graph",
     "details-sentence-text", "details-sentence-audio", "details-sentence-autoplay",
     "details-image", "details-definition-text", "details-definition-audio", "details-definition-secondary", "details-notes-text",
@@ -266,9 +265,11 @@ def _apply_settings(css: str, settings: dict[str, str]) -> str:
     settings), insert it before the Hotkeys section.
     """
     # Strip retired settings from user CSS so they don't linger as dead lines.
-    # --target-lang was removed when mixed-language rendering was unified.
+    # --target-lang and --notes-font were removed when mixed-language rendering
+    # was unified — both bilingual/monolingual font modes now collapse to a
+    # single per-glyph cascade.
     css = re.sub(
-        r"^[ \t]*--(?:mode-\d+-)?target-lang:[^;\n]*;[ \t]*(?:/\*[^*]*\*/[ \t]*)?\n",
+        r"^[ \t]*--(?:mode-\d+-)?(?:target-lang|notes-font):[^;\n]*;[ \t]*(?:/\*[^*]*\*/[ \t]*)?\n",
         "",
         css,
         flags=re.MULTILINE,
