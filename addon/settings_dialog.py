@@ -98,7 +98,6 @@ _HOTKEYS = [
 
 _SETTINGS = {
     "Layout": [
-        ("--target-lang", "Target Language", ["japanese", "other"], "japanese"),
         ("--tategaki", "Tategaki", ["on", "off"], "off"),
         ("--color-scheme", "Color Scheme", None, "blue"),
         ("--audio-labels", "Audio Labels", ["on", "off"], "on"),
@@ -165,7 +164,6 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
-    "target-lang",
     "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
@@ -267,6 +265,15 @@ def _apply_settings(css: str, settings: dict[str, str]) -> str:
     If a variable doesn't exist yet (e.g. after a template update adds new
     settings), insert it before the Hotkeys section.
     """
+    # Strip retired settings from user CSS so they don't linger as dead lines.
+    # --target-lang was removed when mixed-language rendering was unified.
+    css = re.sub(
+        r"^[ \t]*--(?:mode-\d+-)?target-lang:[^;\n]*;[ \t]*(?:/\*[^*]*\*/[ \t]*)?\n",
+        "",
+        css,
+        flags=re.MULTILINE,
+    )
+
     for var, value in settings.items():
         new_css, n = re.subn(
             rf"({re.escape(var)}:\s*).+?(;)",
