@@ -136,7 +136,7 @@ _SETTINGS = {
         ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
         ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
-        ("--definition-default", "Definition Default Font", ["monolingual", "bilingual"], "monolingual"),
+        ("--definition-default", "Default Definition Type", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
         ("--definition-pitch-color", "Definition Pitch Color", ["on", "off"], "on"),
         ("--definition-align", "Definition Alignment", ["left", "center"], "left"),
