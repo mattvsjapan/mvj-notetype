@@ -50,7 +50,16 @@ def _reformat_token(text):
     text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
     # Bare token with ;pitch but no brackets → wrap in brackets
     if '[' not in text and ';' in text:
-        text = re.sub(r'^([^;]+);(\S+)$', r'[\1;\2]', text)
+        m = re.match(r'^([^;]+);(\S+)$', text)
+        if m:
+            word, pitch = m.group(1), m.group(2)
+            is_all_kana = word and all(
+                '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ'
+                for ch in word
+            )
+            # Pure-kana word: use kana[pitch] form so the converter treats
+            # the kana as the word, not as a "reading" needing brackets.
+            text = f'{word}[{pitch}]' if is_all_kana else f'[{word};{pitch}]'
     return text
 
 
