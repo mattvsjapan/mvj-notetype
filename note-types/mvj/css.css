@@ -1354,13 +1354,18 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content
 
 ruby {
     ruby-align: center;
-    /* Render Latin chars carrying furigana (e.g. T in T[ティー]シャツ) in the
-       JP font so they harmonize with the surrounding kanji/kana. */
+}
+
+/* Render ruby (Latin chars carrying furigana like T in T[ティー]シャツ, plus
+   the rt itself) in the JP font in body-cascade contexts where the parent
+   would otherwise route Latin to Inter. .target-word and .sentence already
+   use a JP font on their own, so their ruby/rt inherits it without help. */
+.def ruby, .jp-def ruby, .notes ruby,
+.def rt, .jp-def rt, .notes rt {
     font-family: var(--jp);
 }
 
 rt {
-    font-family: var(--jp);
     font-weight: 400;
     color: var(--text-1);
 }
