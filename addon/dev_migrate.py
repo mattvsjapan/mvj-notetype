@@ -117,16 +117,36 @@ def _log(note_id, word_before, image_before, word_after):
         f.write("\n")
 
 
+_DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '三省堂', '新選', '例解')
+
+
+def _format_dict_value(values):
+    return re.sub(r'\]\[', '] [', re.sub(r'</?b>', '', values.strip()))
+
+
+def _build_dict_table(values_by_name):
+    """Render the dict-table with canonical rows first (defaulting to []),
+    then any extra entries from the source preserved at the end."""
+    rows = [
+        f'<tr><td>{name}</td><td>{values_by_name.get(name, "[]")}</td></tr>'
+        for name in _DICT_NAMES
+    ]
+    canonical = set(_DICT_NAMES)
+    rows.extend(
+        f'<tr><td>{name}</td><td>{value}</td></tr>'
+        for name, value in values_by_name.items()
+        if name not in canonical
+    )
+    return f'<table class="dict-table">{"".join(rows)}</table>'
+
+
 def _context_to_dict_table(html):
     """Convert Context field dictionary list HTML to a table."""
     entries = _CONTEXT_DICT_RE.findall(html)
     if not entries:
         return None
-    rows = ''.join(
-        f'<tr><td>{name.strip()}</td><td>{re.sub(r"]\\[", "] [", re.sub(r"</?b>", "", values.strip()))}</td></tr>'
-        for name, values in entries
-    )
-    return f'<table class="dict-table">{rows}</table>'
+    values_by_name = {name.strip(): _format_dict_value(values) for name, values in entries}
+    return _build_dict_table(values_by_name)
 
 
 def _migrate_note(editor: Editor):
@@ -215,15 +235,7 @@ def _migrate_note(editor: Editor):
     tooltip(msg)
 
 
-_DICT_TABLE_HTML = (
-    '<table class="dict-table">'
-    '<tr><td>大辞泉</td><td>[]</td></tr>'
-    '<tr><td>ＮＨＫ</td><td>[]</td></tr>'
-    '<tr><td>新明解</td><td>[]</td></tr>'
-    '<tr><td>大辞林</td><td>[]</td></tr>'
-    '<tr><td>三省堂</td><td>[]</td></tr>'
-    '</table>'
-)
+_DICT_TABLE_HTML = _build_dict_table({})
 
 
 def _insert_dict_table(editor: Editor):
