@@ -3081,11 +3081,11 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
 }
 
 /* Dictionary lookup table (Notes field) */
-#notes table {
+table.dict-table {
     border-collapse: collapse;
     margin: 0;
 }
-#notes td {
+table.dict-table td {
     border: 1px solid #ccc;
     padding: 2px 8px;
 }

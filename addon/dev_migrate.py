@@ -119,25 +119,35 @@ def _log(note_id, word_before, image_before, word_after):
 
 _DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '三省堂', '新選', '例解')
 
+# Inline styles so the table renders in the editor field view too — Anki's
+# editor (desktop and mobile) doesn't apply the note type's card CSS to
+# field content. Override from card CSS with !important if needed.
+_TABLE_STYLE = 'border-collapse:collapse;margin:0'
+_CELL_STYLE = 'border:1px solid #ccc;padding:2px 8px'
+
 
 def _format_dict_value(values):
     return re.sub(r'\]\[', '] [', re.sub(r'</?b>', '', values.strip()))
 
 
+def _row(name, value):
+    return (
+        f'<tr><td style="{_CELL_STYLE}">{name}</td>'
+        f'<td style="{_CELL_STYLE}">{value}</td></tr>'
+    )
+
+
 def _build_dict_table(values_by_name):
     """Render the dict-table with canonical rows first (defaulting to []),
     then any extra entries from the source preserved at the end."""
-    rows = [
-        f'<tr><td>{name}</td><td>{values_by_name.get(name, "[]")}</td></tr>'
-        for name in _DICT_NAMES
-    ]
+    rows = [_row(name, values_by_name.get(name, '[]')) for name in _DICT_NAMES]
     canonical = set(_DICT_NAMES)
     rows.extend(
-        f'<tr><td>{name}</td><td>{value}</td></tr>'
+        _row(name, value)
         for name, value in values_by_name.items()
         if name not in canonical
     )
-    return f'<table class="dict-table">{"".join(rows)}</table>'
+    return f'<table class="dict-table" style="{_TABLE_STYLE}">{"".join(rows)}</table>'
 
 
 def _context_to_dict_table(html):
