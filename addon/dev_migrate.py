@@ -222,7 +222,9 @@ def _migrate_note(editor: Editor):
         note.fields[notes_idx] = (dict_table + existing_notes).strip()
         note.fields[context_idx] = ""
 
-    note.flush()
+    # New notes (in the Add dialog) have no id yet and can't be flushed.
+    if note.id:
+        note.flush()
     editor.loadNoteKeepingFocus()
 
     msg = f"Migrated: {new_syntax}"
@@ -262,7 +264,8 @@ def _insert_dict_table(editor: Editor):
         return
 
     note.fields[notes_idx] = (_DICT_TABLE_HTML + existing).strip()
-    note.flush()
+    if note.id:
+        note.flush()
     editor.loadNoteKeepingFocus()
     tooltip("Inserted dictionary table into Notes field.")
 
