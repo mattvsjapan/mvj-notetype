@@ -3080,7 +3080,8 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
     will-change: transform;
 }
 
-/* Dictionary lookup table (Notes field) */
+/* Dictionary lookup table (Notes field) — card-side overrides
+   need !important to beat the inline styles set by addon/dev_migrate.py */
 table.dict-table {
     border-collapse: collapse;
     margin: 0;
