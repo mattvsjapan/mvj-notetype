@@ -49,10 +49,11 @@ def _reformat_token(text):
     # Empty pitch (trailing ";") defaults to 0
     text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
     # Bare token with ;pitch but no brackets → wrap in brackets
+    # (empty pitch defaults to 0, matching the bracketed _EMPTY_PITCH_RE rule)
     if '[' not in text and ';' in text:
-        m = re.match(r'^([^;]+);(\S+)$', text)
+        m = re.match(r'^([^;]+);(\S*)$', text)
         if m:
-            word, pitch = m.group(1), m.group(2)
+            word, pitch = m.group(1), m.group(2) or '0'
             is_all_kana = word and all(
                 '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ'
                 for ch in word
