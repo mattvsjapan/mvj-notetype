@@ -127,7 +127,7 @@ _CELL_STYLE = 'border:1px solid #ccc;padding:2px 8px'
 
 
 def _format_dict_value(values):
-    return re.sub(r'\]\[', '] [', re.sub(r'</?b>', '', values.strip()))
+    return re.sub(r'</?b>', '', values.strip())
 
 
 def _row(name, value):
@@ -191,45 +191,41 @@ def _migrate_note(editor: Editor):
     notes_idx = field_names.index("Notes")
 
     image_content = note.fields[img_idx]
-    if not image_content.strip():
-        tooltip("Image field is empty, nothing to migrate.")
-        return
-
-    m = _SYNTAX_COMMENT_RE.search(image_content)
-    if not m:
-        tooltip("No pitch syntax comment found in Image field.")
-        return
-
-    new_syntax, warnings = _convert_comment_syntax(m.group(1))
-
-    # Move sentence audio from Word Audio to Sentence Audio:
-    # - filenames containing "reibun"
-    # - filenames with no Japanese characters (kanji/kana)
-    word_audio = note.fields[word_audio_idx]
-    audio_files = _AUDIO_RE.findall(word_audio)
+    new_syntax = None
+    warnings = []
     moved_audio = []
-    for fname in audio_files:
-        is_reibun = 'reibun' in fname
-        has_japanese = any(
-            '\u3040' <= ch <= '\u309f' or  # hiragana
-            '\u30a0' <= ch <= '\u30ff' or  # katakana
-            '\u4e00' <= ch <= '\u9fff' or  # CJK
-            '\u3400' <= ch <= '\u4dbf'     # CJK ext A
-            for ch in fname
-        )
-        if is_reibun or not has_japanese:
-            tag = f"[audio:{fname}]"
-            word_audio = word_audio.replace(tag, "")
-            moved_audio.append(tag)
-    if moved_audio:
-        note.fields[word_audio_idx] = word_audio.strip()
-        note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
 
-    word_before = note.fields[word_idx]
-    _log(note.id, word_before, image_content, new_syntax)
+    m = _SYNTAX_COMMENT_RE.search(image_content) if image_content.strip() else None
+    if m:
+        new_syntax, warnings = _convert_comment_syntax(m.group(1))
 
-    note.fields[word_idx] = new_syntax
-    note.fields[img_idx] = ""
+        # Move sentence audio from Word Audio to Sentence Audio:
+        # - filenames containing "reibun"
+        # - filenames with no Japanese characters (kanji/kana)
+        word_audio = note.fields[word_audio_idx]
+        audio_files = _AUDIO_RE.findall(word_audio)
+        for fname in audio_files:
+            is_reibun = 'reibun' in fname
+            has_japanese = any(
+                '\u3040' <= ch <= '\u309f' or  # hiragana
+                '\u30a0' <= ch <= '\u30ff' or  # katakana
+                '\u4e00' <= ch <= '\u9fff' or  # CJK
+                '\u3400' <= ch <= '\u4dbf'     # CJK ext A
+                for ch in fname
+            )
+            if is_reibun or not has_japanese:
+                tag = f"[audio:{fname}]"
+                word_audio = word_audio.replace(tag, "")
+                moved_audio.append(tag)
+        if moved_audio:
+            note.fields[word_audio_idx] = word_audio.strip()
+            note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
+
+        word_before = note.fields[word_idx]
+        _log(note.id, word_before, image_content, new_syntax)
+
+        note.fields[word_idx] = new_syntax
+        note.fields[img_idx] = ""
 
     # Convert Context field dictionary list to table in Notes field
     context_content = note.fields[context_idx]
@@ -239,16 +235,26 @@ def _migrate_note(editor: Editor):
         note.fields[notes_idx] = (dict_table + existing_notes).strip()
         note.fields[context_idx] = ""
 
+    if new_syntax is None and not dict_table:
+        if not image_content.strip():
+            tooltip("Image field is empty, nothing to migrate.")
+        else:
+            tooltip("No pitch syntax comment found in Image field.")
+        return
+
     # New notes (in the Add dialog) have no id yet and can't be flushed.
     if note.id:
         note.flush()
     editor.loadNoteKeepingFocus()
 
-    msg = f"Migrated: {new_syntax}"
+    parts = []
+    if new_syntax is not None:
+        parts.append(f"Migrated: {new_syntax}")
     if dict_table:
-        msg += " | Dict table → Notes"
+        parts.append("Dict table → Notes")
     if moved_audio:
-        msg += f" | Moved {len(moved_audio)} reibun audio to Sentence Audio"
+        parts.append(f"Moved {len(moved_audio)} reibun audio to Sentence Audio")
+    msg = " | ".join(parts)
     if warnings:
         msg += f" (warnings: {', '.join(warnings)})"
     tooltip(msg)
