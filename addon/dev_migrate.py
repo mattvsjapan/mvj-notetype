@@ -166,22 +166,22 @@ def _context_to_dict_table(html):
     return _build_dict_table(values_by_name)
 
 
-def _migrate_note(editor: Editor):
-    note = editor.note
-    if note is None:
-        showWarning("No note loaded.")
-        return
+def _migrate_note_core(note) -> bool:
+    """Run the migration on a loaded note. Returns True if the note was modified.
 
+    Issues warnings/tooltips for validation failures and no-op outcomes itself,
+    so callers only need to handle UI refresh on a True return.
+    """
     model = note.note_type()
     if model is None or model["name"] != NOTE_TYPE_NAME:
         showWarning(f"This note is not a {NOTE_TYPE_NAME} note.")
-        return
+        return False
 
     field_names = [f["name"] for f in model["flds"]]
     for needed in ("Image", "Word", "Word Audio", "Sentence Audio", "Context", "Notes"):
         if needed not in field_names:
             showWarning(f"Note is missing {needed} field.")
-            return
+            return False
 
     img_idx = field_names.index("Image")
     word_idx = field_names.index("Word")
@@ -240,12 +240,11 @@ def _migrate_note(editor: Editor):
             tooltip("Image field is empty, nothing to migrate.")
         else:
             tooltip("No pitch syntax comment found in Image field.")
-        return
+        return False
 
     # New notes (in the Add dialog) have no id yet and can't be flushed.
     if note.id:
         note.flush()
-    editor.loadNoteKeepingFocus()
 
     parts = []
     if new_syntax is not None:
@@ -258,6 +257,24 @@ def _migrate_note(editor: Editor):
     if warnings:
         msg += f" (warnings: {', '.join(warnings)})"
     tooltip(msg)
+    return True
+
+
+def _migrate_note(editor: Editor):
+    if editor.note is None:
+        showWarning("No note loaded.")
+        return
+    if _migrate_note_core(editor.note):
+        editor.loadNoteKeepingFocus()
+
+
+def _migrate_note_from_reviewer():
+    if mw.reviewer is None or mw.reviewer.card is None:
+        showWarning("No card.")
+        return
+    note = mw.reviewer.card.note()
+    if _migrate_note_core(note):
+        mw.reset()
 
 
 _DICT_TABLE_HTML = _build_dict_table({})
@@ -314,4 +331,10 @@ def _add_migrate_button(buttons, editor: Editor):
     buttons.append(btn2)
 
 
+def _add_reviewer_menu(reviewer, menu):
+    action = menu.addAction("\U0001F488 Migrate pitch syntax")
+    action.triggered.connect(_migrate_note_from_reviewer)
+
+
 gui_hooks.editor_did_init_buttons.append(_add_migrate_button)
+gui_hooks.reviewer_will_show_context_menu.append(_add_reviewer_menu)
