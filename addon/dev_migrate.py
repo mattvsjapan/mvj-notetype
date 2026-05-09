@@ -18,7 +18,10 @@ from aqt.editor import Editor
 from aqt.utils import showWarning, tooltip
 
 from .notetype import NOTE_TYPE_NAME
-from .pitch_migration import convert_comment_syntax as _convert_comment_syntax
+from .pitch_migration import (
+    convert_comment_syntax as _convert_comment_syntax,
+    splice_word_kanji as _splice_word_kanji,
+)
 
 _LOG_DIR = os.path.join(os.path.dirname(__file__), "user_files")
 _LOG_FILE = os.path.join(_LOG_DIR, "migration_log.txt")
@@ -147,6 +150,12 @@ def _migrate_note_core(note) -> bool:
             note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
 
         word_before = note.fields[word_idx]
+
+        # Preserve kanji form from the existing Word field when the comment
+        # syntax was kana-only.
+        new_syntax, splice_warnings = _splice_word_kanji(new_syntax, word_before)
+        warnings.extend(splice_warnings)
+
         _log(note.id, word_before, image_content, new_syntax)
 
         note.fields[word_idx] = new_syntax

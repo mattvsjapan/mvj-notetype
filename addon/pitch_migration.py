@@ -48,6 +48,65 @@ def _reformat_token(text):
     return text
 
 
+# --- Word-field kanji splice -----------------------------------------------
+# When the Image-comment syntax is kana-only but the Word field already has
+# the kanji+furigana form, splice the Word-field surface into the converter
+# output so the kanji isn't lost.
+
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_KANJI_RANGES_RE = re.compile(r'[一-鿿㐀-䶿々-〇]')
+_KANJI_FURIGANA_RE = re.compile(
+    r'[一-鿿㐀-䶿々-〇]+\[([^\]]+)\]'
+)
+# Pitch suffix at end of a single-group converter output: ':' then digits/
+# letters/commas/+/~, optionally followed by trailing '-' (ghost particle).
+_PITCH_SUFFIX_RE = re.compile(r':[0-9a-zA-Z,+~]+-?$')
+
+
+def _has_kanji(text):
+    return bool(_KANJI_RANGES_RE.search(text))
+
+
+def _word_field_surface(word_field):
+    """Strip HTML wrappers; return the bare Anki-furigana surface text."""
+    return _HTML_TAG_RE.sub('', word_field).strip()
+
+
+def _bare_kana(surface):
+    """Reduce an Anki-furigana surface to its kana reading.
+
+    '当[あ]たり 外[はず]れ' → 'あたりはずれ'
+    """
+    surface = _KANJI_FURIGANA_RE.sub(r'\1', surface)
+    surface = re.sub(r'\[[^\]]*\]', '', surface)
+    return surface.replace(' ', '').strip()
+
+
+def splice_word_kanji(converted, word_field):
+    """If converter output is kana-only but Word field has the kanji form,
+    substitute the Word-field surface in (keeping the pitch suffix).
+
+    Returns (spliced_or_unchanged, warnings).
+    """
+    warnings = []
+    if not converted or '/' in converted:
+        return converted, warnings  # skip multi-group / split compounds
+    word_surface = _word_field_surface(word_field)
+    if not word_surface or not _has_kanji(word_surface):
+        return converted, warnings
+    if _has_kanji(converted):
+        return converted, warnings  # converter already produced kanji
+    m = _PITCH_SUFFIX_RE.search(converted)
+    if not m:
+        return converted, warnings
+    surface_part = converted[:m.start()]
+    pitch_part = converted[m.start():]
+    if _bare_kana(word_surface) != surface_part:
+        warnings.append('word_kana_mismatch')
+        return converted, warnings
+    return word_surface + pitch_part, warnings
+
+
 def convert_comment_syntax(raw):
     """Convert full comment syntax string to new notation.
 
