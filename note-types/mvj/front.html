@@ -1061,7 +1061,7 @@ function clearLastMargin(el) {
         }
         if (lastIndex < fragment.length) result += fragment.slice(lastIndex);
         return result.replace(/\u2045/g, '[').replace(/\u2046/g, ']')
-                     .replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
+                     .replace(/\[(\d+)\]/g, '<span class="pitch-num"><i class="bk">[</i>$1<i class="bk">]</i></span>');
     };
 
     // ── segmentMixed: shared by front and back via window ──

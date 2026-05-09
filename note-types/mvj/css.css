@@ -2340,6 +2340,10 @@ html.tategaki {
   font-size: 1em;
   vertical-align: baseline;
 }
+.pitch-num .bk {
+  font-size: 0;
+  font-style: normal;
+}
 
 /* Reset flex order inside front-content — .tategaki .sentence sets order:-3
    for the back's .answer layout, but front-content should use HTML order. */

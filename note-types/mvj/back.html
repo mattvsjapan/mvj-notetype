@@ -1130,7 +1130,7 @@
 
     // Definition → bilingual + monolingual
     function pitchNums(html) {
-      return html.replace(/\[(\d+)\]/g, '<span class="pitch-num">$1</span>');
+      return html.replace(/\[(\d+)\]/g, '<span class="pitch-num"><i class="bk">[</i>$1<i class="bk">]</i></span>');
     }
     function colorizeText(raw, el) {
       if (!raw) return '';
