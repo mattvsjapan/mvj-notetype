@@ -139,7 +139,9 @@ def _row(name, value):
 
 def _build_dict_table(values_by_name):
     """Render the dict-table with canonical rows first (defaulting to []),
-    then any extra entries from the source preserved at the end."""
+    then any extra entries from the source preserved at the end.
+    Newlines between rows make the field's HTML view easier to hand-edit;
+    whitespace between <tr>s is ignored by the renderer."""
     rows = [_row(name, values_by_name.get(name, '[]')) for name in _DICT_NAMES]
     canonical = set(_DICT_NAMES)
     rows.extend(
@@ -147,7 +149,11 @@ def _build_dict_table(values_by_name):
         for name, value in values_by_name.items()
         if name not in canonical
     )
-    return f'<table class="dict-table" style="{_TABLE_STYLE}">{"".join(rows)}</table>'
+    return (
+        f'<table class="dict-table" style="{_TABLE_STYLE}">\n'
+        + '\n'.join(rows)
+        + '\n</table>'
+    )
 
 
 def _context_to_dict_table(html):
