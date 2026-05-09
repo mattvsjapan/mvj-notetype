@@ -30,6 +30,8 @@ from aqt.utils import showWarning, tooltip
 from .notetype import NOTE_TYPE_NAME
 
 _DB_PATH = os.path.join(os.path.dirname(__file__), "dictionary", "daijisen.db")
+_NHK_DB_PATH = os.path.join(os.path.dirname(__file__), "dictionary", "nhk", "nhk.db")
+_NHK_KINDS = ('accent', 'pattern')
 
 # Strip bracket+semicolon notation: [たべる;2] → たべる
 _BRACKET_PITCH_RE = re.compile(r'\[([^;\]]+);[\d]+\]')
@@ -161,6 +163,115 @@ def _extract_hyouki(writings: str | None) -> str | None:
         return None
     first = writings.strip('【】').split('・')[0]
     return _WRITING_MARKER_RE.sub('', first).strip() or None
+
+
+def _extract_nhk_hyouki(headline: str | None) -> str | None:
+    """Extract the kanji form from NHK headline ('たべる【食べる】' → '食べる')."""
+    if not headline:
+        return None
+    m = re.search(r'【(.+?)】', headline)
+    if not m:
+        return None
+    return _extract_hyouki(f'【{m.group(1)}】')
+
+
+def _find_entries_nhk(word: str, conn: sqlite3.Connection) -> list[str]:
+    """Find NHK entry IDs for a word, restricted to those with usable pron rows."""
+    cur = conn.cursor()
+    candidates = sorted({word, _hira_to_kata(word), _katakana_to_hiragana(word)})
+    placeholders = ','.join('?' * len(candidates))
+    cur.execute(
+        f"SELECT entry_id FROM keystore WHERE key IN ({placeholders})",
+        candidates,
+    )
+    ids = {row[0] for row in cur.fetchall()}
+    if not ids:
+        return []
+    id_ph = ','.join('?' * len(ids))
+    kind_ph = ','.join('?' * len(_NHK_KINDS))
+    cur.execute(
+        f"SELECT DISTINCT entry_id FROM pronunciations "
+        f"WHERE entry_id IN ({id_ph}) AND kind IN ({kind_ph}) "
+        f"AND drops IS NOT NULL",
+        sorted(ids) + list(_NHK_KINDS),
+    )
+    return sorted(row[0] for row in cur.fetchall())
+
+
+def _get_nhk_pitch(entry_id: str, conn: sqlite3.Connection):
+    """Distinct (drops, splits, audio_file, devoiced) for an NHK entry's accent/pattern rows."""
+    cur = conn.cursor()
+    kind_ph = ','.join('?' * len(_NHK_KINDS))
+    cur.execute(
+        f"SELECT DISTINCT drops, splits, audio_file, devoiced FROM pronunciations "
+        f"WHERE entry_id = ? AND kind IN ({kind_ph}) AND drops IS NOT NULL "
+        f"ORDER BY position",
+        (entry_id, *_NHK_KINDS),
+    )
+    rows = [(r[0], r[1], r[2], r[3]) for r in cur.fetchall() if r[0]]
+    return rows or None
+
+
+def _nhk_devoiced_for_word(word: str, conn: sqlite3.Connection) -> tuple[dict[str, str], str | None]:
+    """Map drops -> devoiced for NHK accent/pattern rows matching `word`.
+
+    Returns (by_drops, fallback) where fallback is any non-empty devoiced
+    string from a matching row (used when an exact drops match is missing).
+    """
+    cur = conn.cursor()
+    candidates = sorted({word, _hira_to_kata(word), _katakana_to_hiragana(word)})
+    placeholders = ','.join('?' * len(candidates))
+    kind_ph = ','.join('?' * len(_NHK_KINDS))
+    cur.execute(
+        f"SELECT p.drops, p.devoiced FROM pronunciations p "
+        f"JOIN keystore k ON k.entry_id = p.entry_id "
+        f"WHERE k.key IN ({placeholders}) "
+        f"AND p.kind IN ({kind_ph}) "
+        f"AND p.drops IS NOT NULL "
+        f"AND p.devoiced IS NOT NULL AND p.devoiced != ''",
+        candidates + list(_NHK_KINDS),
+    )
+    by_drops: dict[str, str] = {}
+    fallback: str | None = None
+    for drops, devoiced in cur.fetchall():
+        if drops not in by_drops:
+            by_drops[drops] = devoiced
+        if fallback is None:
+            fallback = devoiced
+    return by_drops, fallback
+
+
+def _inject_devoiced_aligned(aligned: str, devoiced: str | None) -> str:
+    """Insert `*` before each devoiced mora (NHK uses 1-indexed positions).
+
+    Walks `aligned` (which may contain `kanji[reading]` brackets and trailing
+    kana). Counts morae across both bracket-internal kana and kana outside,
+    skipping kanji. Inserts `*` before each char that begins a devoiced mora.
+    """
+    if not devoiced or not aligned:
+        return aligned
+    positions = {int(p) for p in devoiced.split(',') if p.strip().isdigit()}
+    if not positions:
+        return aligned
+    out: list[str] = []
+    mora = 0
+    in_bracket = False
+    for c in aligned:
+        if c == '[':
+            in_bracket = True
+            out.append(c)
+            continue
+        if c == ']':
+            in_bracket = False
+            out.append(c)
+            continue
+        if in_bracket or not _is_kanji(c):
+            if c not in _SMALL_KANA and c not in (' ', '・', '‐', '＝', '='):
+                mora += 1
+                if mora in positions:
+                    out.append('*')
+        out.append(c)
+    return ''.join(out)
 
 
 def _katakana_to_hiragana(text: str) -> str:
@@ -543,51 +654,75 @@ def _split_compound(surface: str, raw_reading: str, split_str: str, pitch_drop: 
     return ' / '.join(formatted) + '-'
 
 
-def _entry_display(entry_id: str, conn: sqlite3.Connection) -> str:
+def _entry_display(entry_id: str, conn: sqlite3.Connection, source: str = 'daijisen') -> str:
     """Build a display string for a single entry (for the picker list)."""
     cur = conn.cursor()
 
-    cur.execute("SELECT form, writings FROM entries WHERE id = ? LIMIT 1", (entry_id,))
-    row = cur.fetchone()
-    reading = row[0] if row and row[0] else "?"
-    writings = row[1] if row else None
+    if source == 'nhk':
+        cur.execute("SELECT form, headline FROM entries WHERE id = ? LIMIT 1", (entry_id,))
+        row = cur.fetchone()
+        reading = row[0] if row and row[0] else "?"
+        label = None
+        if row and row[1]:
+            # Headline is `<kana>【<kanji>】<optional annotations>` — keep everything
+            # from the first 【 onward so place-name / category tags disambiguate.
+            idx = row[1].find('【')
+            label = row[1][idx:] if idx >= 0 else None
+        rows = _get_nhk_pitch(entry_id, conn)
+        pitch_list = [r[0] for r in rows] if rows else []
+    else:
+        cur.execute("SELECT form, writings FROM entries WHERE id = ? LIMIT 1", (entry_id,))
+        row = cur.fetchone()
+        reading = row[0] if row and row[0] else "?"
+        label = row[1] if row else None
+        rows = _get_pitch(entry_id, conn)
+        pitch_list = [r[0] for r in rows] if rows else []
 
-    rows = _get_pitch(entry_id, conn)
-    pitch = ', '.join(r[0] for r in rows) if rows else "—"
+    pitch = ', '.join(pitch_list) if pitch_list else "—"
 
-    cur.execute(
-        "SELECT definition FROM senses WHERE entry_id = ? ORDER BY sense_number LIMIT 1",
-        (entry_id,),
-    )
-    row = cur.fetchone()
     defn = ""
-    if row and row[0]:
-        defn = re.sub(r'\[\[[^|]*\|([^\]]+)\]\]', r'\1', row[0])
-        defn = re.sub(r'\[\[([^\]]+)\]\]', r'\1', defn)
-        defn = re.sub(r'<[^>]+>', '', defn)[:80]
+    if source == 'daijisen':
+        cur.execute(
+            "SELECT definition FROM senses WHERE entry_id = ? ORDER BY sense_number LIMIT 1",
+            (entry_id,),
+        )
+        row = cur.fetchone()
+        if row and row[0]:
+            defn = re.sub(r'\[\[[^|]*\|([^\]]+)\]\]', r'\1', row[0])
+            defn = re.sub(r'\[\[([^\]]+)\]\]', r'\1', defn)
+            defn = re.sub(r'<[^>]+>', '', defn)[:80]
 
     parts = [reading]
-    if writings:
-        parts.append(writings)  # already wrapped 【…】
+    if label:
+        parts.append(label)
     parts.append(f"[{pitch}]")
     if defn:
         parts.append(f"— {defn}")
     return " ".join(parts)
 
 
-def _show_entry_picker(entry_ids: list[str], word: str, conn: sqlite3.Connection) -> str | None:
-    """Show a dialog to pick one entry. Returns entry ID or None."""
+def _show_entry_picker(
+    candidates: list[tuple[str, str]],
+    word: str,
+    conns: dict[str, sqlite3.Connection],
+) -> tuple[str, str] | None:
+    """Show a dialog with entries from one or more sources.
+
+    candidates: list of (source, entry_id) pairs.
+    Returns the selected (source, entry_id) or None if cancelled.
+    """
     dlg = QDialog(mw)
     dlg.setWindowTitle("Select entry")
-    dlg.setMinimumWidth(500)
+    dlg.setMinimumWidth(540)
     layout = QVBoxLayout(dlg)
 
     layout.addWidget(QLabel(f"Multiple entries match <b>{word}</b>:"))
 
     lst = QListWidget()
-    for eid in entry_ids:
-        item = QListWidgetItem(_entry_display(eid, conn))
-        item.setData(Qt.ItemDataRole.UserRole, eid)
+    for src, eid in candidates:
+        tag = '[daijisen]' if src == 'daijisen' else '[NHK]'
+        item = QListWidgetItem(f"{tag} {_entry_display(eid, conns[src], src)}")
+        item.setData(Qt.ItemDataRole.UserRole, (src, eid))
         lst.addItem(item)
     lst.setCurrentRow(0)
     layout.addWidget(lst)
@@ -629,38 +764,86 @@ def _lookup_note(editor: Editor):
         tooltip("Word field is empty.")
         return
 
-    if not os.path.exists(_DB_PATH):
-        tooltip("Dictionary database not found.")
+    if not os.path.exists(_DB_PATH) and not os.path.exists(_NHK_DB_PATH):
+        tooltip("No dictionary databases found.")
         return
 
-    conn = sqlite3.connect(f"file:{_DB_PATH}?mode=ro", uri=True)
-    try:
-        entry_ids = _find_entries(word, conn)
+    daijisen_conn = (
+        sqlite3.connect(f"file:{_DB_PATH}?mode=ro", uri=True)
+        if os.path.exists(_DB_PATH) else None
+    )
+    nhk_conn = (
+        sqlite3.connect(f"file:{_NHK_DB_PATH}?mode=ro", uri=True)
+        if os.path.exists(_NHK_DB_PATH) else None
+    )
 
-        if not entry_ids:
+    source: str | None = None
+    selected: str | None = None
+    pitch_rows: list[tuple[str, str | None, str | None, str | None]] | None = None
+    reading_info: tuple[str, str] | None = None
+    hyouki: str | None = None
+
+    try:
+        candidates: list[tuple[str, str]] = []
+        if daijisen_conn:
+            candidates += [('daijisen', eid) for eid in _find_entries(word, daijisen_conn)]
+        if nhk_conn:
+            candidates += [('nhk', eid) for eid in _find_entries_nhk(word, nhk_conn)]
+
+        if not candidates:
             tooltip(f"No match found for: {word}")
             return
 
-        if len(entry_ids) == 1:
-            selected = entry_ids[0]
+        if len(candidates) == 1:
+            source, selected = candidates[0]
         else:
-            selected = _show_entry_picker(entry_ids, word, conn)
-            if selected is None:
+            conns = {}
+            if daijisen_conn:
+                conns['daijisen'] = daijisen_conn
+            if nhk_conn:
+                conns['nhk'] = nhk_conn
+            picked = _show_entry_picker(candidates, word, conns)
+            if picked is None:
                 return
+            source, selected = picked
 
-        pitch_rows = _get_pitch(selected, conn)
-        reading_info = _get_reading(selected, conn)
+        if source == 'daijisen':
+            assert daijisen_conn is not None
+            rows3 = _get_pitch(selected, daijisen_conn)
+            if rows3:
+                pitch_rows = [(d, s, a, None) for (d, s, a) in rows3]
+                reading_info = _get_reading(selected, daijisen_conn)
+                cur = daijisen_conn.cursor()
+                cur.execute("SELECT writings FROM entries WHERE id = ? LIMIT 1", (selected,))
+                row = cur.fetchone()
+                hyouki = _extract_hyouki(row[0] if row else None)
+        else:
+            assert nhk_conn is not None
+            rows4 = _get_nhk_pitch(selected, nhk_conn)
+            if rows4:
+                pitch_rows = rows4
+                reading_info = _get_reading(selected, nhk_conn)
+                cur = nhk_conn.cursor()
+                cur.execute("SELECT headline FROM entries WHERE id = ? LIMIT 1", (selected,))
+                row = cur.fetchone()
+                hyouki = _extract_nhk_hyouki(row[0] if row else None)
 
-        cur = conn.cursor()
-        cur.execute("SELECT writings FROM entries WHERE id = ? LIMIT 1", (selected,))
-        row = cur.fetchone()
-        hyouki = _extract_hyouki(row[0] if row else None)
+        if pitch_rows is None:
+            tooltip(f"No pitch data for: {word}")
+            return
+
+        # When daijisen is primary, enrich each variant with NHK devoicing.
+        if source == 'daijisen' and nhk_conn:
+            by_drops, fallback = _nhk_devoiced_for_word(word, nhk_conn)
+            pitch_rows = [
+                (d, s, a, by_drops.get(d) or fallback)
+                for (d, s, a, _) in pitch_rows
+            ]
     finally:
-        conn.close()
-
-    if pitch_rows is None:
-        tooltip(f"No pitch accent found for: {word}")
-        return
+        if daijisen_conn:
+            daijisen_conn.close()
+        if nhk_conn:
+            nhk_conn.close()
 
     if reading_info:
         clean_reading, raw_reading = reading_info
@@ -669,11 +852,12 @@ def _lookup_note(editor: Editor):
 
     lines: list[str] = []
     audio_files: list[str] = []
-    for pitch_drop, split, audio in pitch_rows:
+    for pitch_drop, split, audio, devoiced in pitch_rows:
         if split is not None and raw_reading:
             line = _split_compound(word, raw_reading, split, pitch_drop)
         else:
             word_value = _align_reading(word, clean_reading) if clean_reading else word
+            word_value = _inject_devoiced_aligned(word_value, devoiced)
             line = f"{word_value}:{pitch_drop}-"
         lines.append(line)
         if audio:
@@ -685,12 +869,17 @@ def _lookup_note(editor: Editor):
     if audio_files and "Word Audio" in field_names:
         seen: set[tuple[str, str]] = set()
         unique_pairs: list[tuple[str, str]] = []
-        for (pitch_drop, _split, audio) in pitch_rows:
+        for (pitch_drop, _split, audio, _dv) in pitch_rows:
             if audio and (audio, str(pitch_drop)) not in seen:
                 seen.add((audio, str(pitch_drop)))
                 unique_pairs.append((audio, str(pitch_drop)))
 
-        audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "audio")
+        if source == 'daijisen':
+            audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "audio")
+            audio_suffix = 'DAIJISEN2'
+        else:
+            audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "nhk", "audio")
+            audio_suffix = 'NHK'
         media_dir = mw.col.media.dir()
         # macOS GUI apps don't inherit the shell PATH, so resolve ffmpeg explicitly.
         ffmpeg = shutil.which('ffmpeg') or next(
@@ -705,9 +894,9 @@ def _lookup_note(editor: Editor):
         for orig_audio, pitch in unique_pairs:
             pitch_part = pitch.replace(',', '-')
             if h_clean and r_clean and h_clean != r_clean:
-                new_name = f"{h_clean}_{r_clean}_{pitch_part}_DAIJISEN2{ext}"
+                new_name = f"{h_clean}_{r_clean}_{pitch_part}_{audio_suffix}{ext}"
             elif h_clean:
-                new_name = f"{h_clean}_{pitch_part}_DAIJISEN2{ext}"
+                new_name = f"{h_clean}_{pitch_part}_{audio_suffix}{ext}"
             else:
                 new_name = os.path.splitext(orig_audio)[0] + ext
             src = os.path.join(audio_dir, orig_audio)
@@ -725,8 +914,8 @@ def _lookup_note(editor: Editor):
         audio_idx = field_names.index("Word Audio")
         existing = note.fields[audio_idx]
         appended = ''.join(
-            f'[sound:{name}]' for name in new_names
-            if f'[sound:{name}]' not in existing
+            f'[audio:{name}]' for name in new_names
+            if f'[audio:{name}]' not in existing
         )
         note.fields[audio_idx] = (existing + appended).strip()
 
@@ -734,7 +923,7 @@ def _lookup_note(editor: Editor):
         mw.col.update_note(note)
     editor.loadNoteKeepingFocus()
     display = ', '.join(r[0] for r in pitch_rows)
-    tooltip(f"{word} → {display}")
+    tooltip(f"{word} → {display} ({source})")
 
 
 def _add_lookup_button(buttons, editor: Editor):
