@@ -606,8 +606,9 @@ def _escape_trailing_i(text):
     return text
 
 
-# Matches tokens ending with a numeric-only pitch (no verb/adjective letter)
-_NUMERIC_PITCH_END_RE = re.compile(r':[0-9,~]+$')
+# Matches tokens ending with a noun pitch (numeric, range, or odaka 'o') —
+# excludes verb/adjective letters h/k which don't take a ghost particle.
+_NUMERIC_PITCH_END_RE = re.compile(r':[0-9,~o]+$')
 
 
 def _convert_word_text(text):
