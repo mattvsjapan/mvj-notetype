@@ -18,7 +18,7 @@ from aqt.editor import Editor
 from aqt.utils import showWarning, tooltip
 
 from .notetype import NOTE_TYPE_NAME
-from .pitch_converter import convert_word_field
+from .pitch_migration import convert_comment_syntax as _convert_comment_syntax
 
 _LOG_DIR = os.path.join(os.path.dirname(__file__), "user_files")
 _LOG_FILE = os.path.join(_LOG_DIR, "migration_log.txt")
@@ -28,84 +28,8 @@ _SYNTAX_COMMENT_RE = re.compile(
 )
 _AUDIO_RE = re.compile(r'\[audio:([^\]]+)\]')
 
-# Matches [reading]okurigana;pitch — okurigana may be empty
-_PITCH_OUTSIDE_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);(\S+)')
-_EMPTY_PITCH_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);')
-# d = devoiced → * prefix on reading (d can be after bracket or before reading)
-_DEVOICED_AFTER_RE = re.compile(r'\[([^\]]+)\]d')
-_DEVOICED_BEFORE_RE = re.compile(r'\[d([^\]]+)\]')
-
 # Matches <li>DICT_NAME: PITCH_VALUES</li> in the context field
 _CONTEXT_DICT_RE = re.compile(r'<li>([^<:]+):\s*(.*?)</li>')
-
-
-def _reformat_token(text):
-    """Reformat a single token from comment syntax to converter input."""
-    # d modifier → * prefix inside bracket
-    text = _DEVOICED_AFTER_RE.sub(r'[*\1]', text)
-    text = _DEVOICED_BEFORE_RE.sub(r'[*\1]', text)
-    # Move ;pitch inside brackets
-    text = _PITCH_OUTSIDE_RE.sub(r'[\1;\3]\2', text)
-    # Empty pitch (trailing ";") defaults to 0
-    text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
-    # Bare token with ;pitch but no brackets → wrap in brackets
-    # (empty pitch defaults to 0, matching the bracketed _EMPTY_PITCH_RE rule)
-    if '[' not in text and ';' in text:
-        m = re.match(r'^([^;]+);(\S*)$', text)
-        if m:
-            word, pitch = m.group(1), m.group(2) or '0'
-            is_all_kana = word and all(
-                '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ'
-                for ch in word
-            )
-            # Pure-kana word: use kana[pitch] form so the converter treats
-            # the kana as the word, not as a "reading" needing brackets.
-            text = f'{word}[{pitch}]' if is_all_kana else f'[{word};{pitch}]'
-    return text
-
-
-def _convert_comment_syntax(raw):
-    """Convert full comment syntax string to new notation."""
-    # Strip trailing " -" ghost particle — convert_word_field adds its own
-    raw = re.sub(r'\s+-\s*$', '', raw)
-    # Split on standalone ; between word groups
-    groups = re.split(r'\s+;\s+', raw)
-    all_warnings = []
-    converted_groups = []
-
-    multi = len(groups) > 1
-
-    for group in groups:
-        group = re.sub(r'\s+-\s*$', '', group)
-        tokens = group.split()
-        pitched = []
-        for token in tokens:
-            reformatted = _reformat_token(token)
-            result, warnings = convert_word_field(reformatted)
-            # In multi-group expressions, strip the auto-added ghost particle
-            if multi:
-                result = re.sub(r'-$', '', result)
-            all_warnings.extend(warnings)
-            pitched.append(result)
-
-        converted_groups.append(' '.join(pitched))
-
-    # Join word groups with /
-    result = ' / '.join(converted_groups)
-
-    # Add : to bare particles between accented tokens
-    parts = result.split(' ')
-    for i in range(len(parts)):
-        if ':' in parts[i] or parts[i] == '/':
-            continue
-        # Check if there's an accented token before and after
-        has_before = any(':' in parts[j] for j in range(i))
-        has_after = any(':' in parts[j] for j in range(i + 1, len(parts)))
-        if has_before and has_after:
-            parts[i] = parts[i] + ':'
-    result = ' '.join(parts)
-
-    return result, all_warnings
 
 
 def _log(note_id, word_before, image_before, word_after):
