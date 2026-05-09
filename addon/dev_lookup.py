@@ -29,7 +29,7 @@ from aqt.utils import showWarning, tooltip
 
 from .notetype import NOTE_TYPE_NAME
 
-_DB_PATH = os.path.join(os.path.dirname(__file__), "dictionary", "daijisen.db")
+_DB_PATH = os.path.join(os.path.dirname(__file__), "dictionary", "daijisen", "daijisen.db")
 _NHK_DB_PATH = os.path.join(os.path.dirname(__file__), "dictionary", "nhk", "nhk.db")
 _NHK_KINDS = ('accent', 'pattern')
 
@@ -875,7 +875,7 @@ def _lookup_note(editor: Editor):
                 unique_pairs.append((audio, str(pitch_drop)))
 
         if source == 'daijisen':
-            audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "audio")
+            audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "daijisen", "audio")
             audio_suffix = 'DAIJISEN2'
         else:
             audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "nhk", "audio")
