@@ -3,9 +3,9 @@
 This file is excluded from packaging (see package_addon.sh).
 It adds a button to the editor toolbar that:
 1. Reads the Word field and strips pitch markup to get the bare word
-2. Searches daijisen.db for the word
-3. Fetches pitch_drop values from the accents table
-4. Appends the result to the Notes field
+2. Searches daijisen.db (keystore) for the word
+3. Fetches drops/splits/audio from the pronunciations table
+4. Writes pitch notation to Word and audio to Word Audio
 """
 
 import os
@@ -65,41 +65,46 @@ def _strip_pitch(word_field: str) -> str:
     return tokens[0].strip() if tokens else ''
 
 
+def _hira_to_kata(text: str) -> str:
+    """Convert hiragana to katakana."""
+    return ''.join(
+        chr(ord(c) + 0x60) if 'ぁ' <= c <= 'ゖ' else c
+        for c in text
+    )
+
+
 def _find_entries(word: str, conn: sqlite3.Connection) -> list[str]:
-    """Find all matching entry IDs across lookup and headword fields."""
+    """Find all matching entry IDs via the keystore."""
     cur = conn.cursor()
-    ids: set[str] = set()
-
-    for query in (
-        "SELECT id FROM lookup WHERE normalized = ?",
-        "SELECT id FROM lookup WHERE reading = ?",
-        "SELECT id FROM headwords WHERE 表記 = ?",
-        "SELECT id FROM headwords WHERE 見出 = ?",
-    ):
-        cur.execute(query, (word,))
-        ids.update(row[0] for row in cur.fetchall())
-
+    # keystore keys store kana parts as katakana; try both directions plus raw.
+    candidates = sorted({word, _hira_to_kata(word), _katakana_to_hiragana(word)})
+    placeholders = ','.join('?' * len(candidates))
+    cur.execute(
+        f"SELECT entry_id FROM keystore WHERE key IN ({placeholders})",
+        candidates,
+    )
+    ids = {row[0] for row in cur.fetchall()}
     if not ids:
         return []
 
-    # Exclude entries with no pitch accent data
+    # Exclude entries with no pitch data.
     cur2 = conn.cursor()
     placeholders = ','.join('?' * len(ids))
     cur2.execute(
-        f"SELECT DISTINCT entry_id FROM accents WHERE entry_id IN ({placeholders}) AND pitch_drop IS NOT NULL",
+        f"SELECT DISTINCT entry_id FROM pronunciations "
+        f"WHERE entry_id IN ({placeholders}) AND drops IS NOT NULL",
         sorted(ids),
     )
     return sorted(row[0] for row in cur2.fetchall())
 
 
 def _get_pitch(entry_id: str, conn: sqlite3.Connection) -> list[tuple[str, str | None, str | None]] | None:
-    """Get distinct (pitch_drop, split, audio) tuples for a single entry."""
+    """Get distinct (drops, splits, audio_file) tuples for a single entry."""
     cur = conn.cursor()
     cur.execute(
-        "SELECT DISTINCT pitch_drop, split, audio FROM accents "
-        "WHERE entry_id = ? AND pitch_drop IS NOT NULL "
-        "AND (metadata IS NULL OR (metadata NOT LIKE '%【御】%' AND metadata NOT LIKE '%【複】%')) "
-        "ORDER BY priority",
+        "SELECT DISTINCT drops, splits, audio_file FROM pronunciations "
+        "WHERE entry_id = ? AND drops IS NOT NULL "
+        "ORDER BY position",
         (entry_id,),
     )
     rows = [(r[0], r[1], r[2]) for r in cur.fetchall() if r[0]]
@@ -134,7 +139,7 @@ def _get_reading(entry_id: str, conn: sqlite3.Connection) -> tuple[str, str] | N
     Returns (clean_reading, raw_reading_with_‐_separators) or None.
     """
     cur = conn.cursor()
-    cur.execute("SELECT 見出 FROM headwords WHERE id = ? LIMIT 1", (entry_id,))
+    cur.execute("SELECT form FROM entries WHERE id = ? LIMIT 1", (entry_id,))
     row = cur.fetchone()
     if not row or not row[0]:
         return None
@@ -144,6 +149,18 @@ def _get_reading(entry_id: str, conn: sqlite3.Connection) -> tuple[str, str] | N
     if not clean:
         return None
     return (clean, raw_with_sep)
+
+
+# writings is wrapped as 【…】 with `・` separating variants; ×/▽/＝ are markers.
+_WRITING_MARKER_RE = re.compile(r'[【】×▽＝=]')
+
+
+def _extract_hyouki(writings: str | None) -> str | None:
+    """Extract the primary kanji form from entries.writings ('【食べる】' → '食べる')."""
+    if not writings:
+        return None
+    first = writings.strip('【】').split('・')[0]
+    return _WRITING_MARKER_RE.sub('', first).strip() or None
 
 
 def _katakana_to_hiragana(text: str) -> str:
@@ -530,21 +547,14 @@ def _entry_display(entry_id: str, conn: sqlite3.Connection) -> str:
     """Build a display string for a single entry (for the picker list)."""
     cur = conn.cursor()
 
-    # Reading from lookup
-    cur.execute("SELECT reading FROM lookup WHERE id = ? LIMIT 1", (entry_id,))
+    cur.execute("SELECT form, writings FROM entries WHERE id = ? LIMIT 1", (entry_id,))
     row = cur.fetchone()
     reading = row[0] if row and row[0] else "?"
+    writings = row[1] if row else None
 
-    # Headword from headwords
-    cur.execute("SELECT 見出 FROM headwords WHERE id = ? LIMIT 1", (entry_id,))
-    row = cur.fetchone()
-    headword = row[0] if row and row[0] else ""
-
-    # Pitch
     rows = _get_pitch(entry_id, conn)
     pitch = ', '.join(r[0] for r in rows) if rows else "—"
 
-    # First definition preview
     cur.execute(
         "SELECT definition FROM senses WHERE entry_id = ? ORDER BY sense_number LIMIT 1",
         (entry_id,),
@@ -557,8 +567,8 @@ def _entry_display(entry_id: str, conn: sqlite3.Connection) -> str:
         defn = re.sub(r'<[^>]+>', '', defn)[:80]
 
     parts = [reading]
-    if headword and headword != reading:
-        parts.append(f"【{headword}】")
+    if writings:
+        parts.append(writings)  # already wrapped 【…】
     parts.append(f"[{pitch}]")
     if defn:
         parts.append(f"— {defn}")
@@ -642,9 +652,9 @@ def _lookup_note(editor: Editor):
         reading_info = _get_reading(selected, conn)
 
         cur = conn.cursor()
-        cur.execute("SELECT 表記 FROM headwords WHERE id = ? LIMIT 1", (selected,))
+        cur.execute("SELECT writings FROM entries WHERE id = ? LIMIT 1", (selected,))
         row = cur.fetchone()
-        hyouki = row[0].split('┊')[0] if row and row[0] else None
+        hyouki = _extract_hyouki(row[0] if row else None)
     finally:
         conn.close()
 
@@ -682,26 +692,43 @@ def _lookup_note(editor: Editor):
 
         audio_dir = os.path.join(os.path.dirname(__file__), "dictionary", "audio")
         media_dir = mw.col.media.dir()
+        # macOS GUI apps don't inherit the shell PATH, so resolve ffmpeg explicitly.
+        ffmpeg = shutil.which('ffmpeg') or next(
+            (p for p in ('/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg') if os.path.exists(p)),
+            None,
+        )
+        ext = '.mp3' if ffmpeg else '.aac'
+        _strip_parens = lambda s: re.sub(r'[（）()]', '', s) if s else s
+        h_clean = _strip_parens(hyouki)
+        r_clean = _strip_parens(clean_reading)
         new_names: list[str] = []
         for orig_audio, pitch in unique_pairs:
             pitch_part = pitch.replace(',', '-')
-            if hyouki and clean_reading and hyouki != clean_reading:
-                new_name = f"{hyouki}_{clean_reading}_{pitch_part}_DAIJISEN2.mp3"
-            elif hyouki:
-                new_name = f"{hyouki}_{pitch_part}_DAIJISEN2.mp3"
+            if h_clean and r_clean and h_clean != r_clean:
+                new_name = f"{h_clean}_{r_clean}_{pitch_part}_DAIJISEN2{ext}"
+            elif h_clean:
+                new_name = f"{h_clean}_{pitch_part}_DAIJISEN2{ext}"
             else:
-                new_name = os.path.splitext(orig_audio)[0] + '.mp3'
+                new_name = os.path.splitext(orig_audio)[0] + ext
             src = os.path.join(audio_dir, orig_audio)
             dst = os.path.join(media_dir, new_name)
             if os.path.exists(src) and not os.path.exists(dst):
-                subprocess.run(
-                    ['ffmpeg', '-i', src, '-q:a', '2', dst],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                )
+                if ffmpeg:
+                    subprocess.run(
+                        [ffmpeg, '-i', src, '-q:a', '2', dst],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    )
+                else:
+                    shutil.copyfile(src, dst)
             new_names.append(new_name)
 
         audio_idx = field_names.index("Word Audio")
-        note.fields[audio_idx] = ''.join(f'[sound:{name}]' for name in new_names)
+        existing = note.fields[audio_idx]
+        appended = ''.join(
+            f'[sound:{name}]' for name in new_names
+            if f'[sound:{name}]' not in existing
+        )
+        note.fields[audio_idx] = (existing + appended).strip()
 
     if note.id:
         mw.col.update_note(note)
