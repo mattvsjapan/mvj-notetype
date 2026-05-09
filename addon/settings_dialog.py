@@ -129,7 +129,7 @@ _SETTINGS = {
     ],
     "Definitions": [
         ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "monolingual when unlocked"], "monolingual when unlocked"),
-        ("--definition-text", "Primary Definition Text", ["on", "off"], "on"),
+        ("--definition-text", "Primary Definition Text", ["on", "off", "on when monolingual", "on when bilingual"], "on"),
         ("--definition-secondary", "Secondary Definition Text", ["on", "off", "separate toggle"], "separate toggle"),
         ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "fallback", "off"], "on"),
