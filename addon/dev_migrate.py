@@ -151,8 +151,9 @@ def _build_dict_table(values_by_name):
     )
     return (
         f'<table class="dict-table" style="{_TABLE_STYLE}">\n'
+        '<tbody>\n'
         + '\n'.join(rows)
-        + '\n</table>'
+        + '\n</tbody></table>'
     )
 
 
