@@ -153,8 +153,9 @@ def _get_reading(entry_id: str, conn: sqlite3.Connection) -> tuple[str, str] | N
     return (clean, raw_with_sep)
 
 
-# writings is wrapped as 【…】 with `・` separating variants; ×/▽/＝ are markers.
-_WRITING_MARKER_RE = re.compile(r'[【】×▽＝=]')
+# writings is wrapped as 【…】 (or 《…》 in NHK for uncommon kanji), with `・`
+# separating variants; ×/▽/＝ are markers.
+_WRITING_MARKER_RE = re.compile(r'[【】《》×▽＝=]')
 
 
 def _extract_hyouki(writings: str | None) -> str | None:
@@ -166,10 +167,14 @@ def _extract_hyouki(writings: str | None) -> str | None:
 
 
 def _extract_nhk_hyouki(headline: str | None) -> str | None:
-    """Extract the kanji form from NHK headline ('たべる【食べる】' → '食べる')."""
+    """Extract the kanji form from NHK headline.
+
+    Common form uses 【】 ('たべる【食べる】' → '食べる'); uncommon kanji use
+    《》 ('くぎ《×釘》' → '釘').
+    """
     if not headline:
         return None
-    m = re.search(r'【(.+?)】', headline)
+    m = re.search(r'[【《](.+?)[】》]', headline)
     if not m:
         return None
     return _extract_hyouki(f'【{m.group(1)}】')
@@ -196,6 +201,30 @@ def _find_entries_nhk(word: str, conn: sqlite3.Connection) -> list[str]:
         sorted(ids) + list(_NHK_KINDS),
     )
     return sorted(row[0] for row in cur.fetchall())
+
+
+def _find_nhk_particle_siblings(bare_id: str, conn: sqlite3.Connection) -> list[str]:
+    """Return sibling entry IDs of `bare_id` representing the bare word + a
+    generic case particle (を/に) and having usable accent/pattern pron rows.
+
+    NHK encodes 'X + を' as a separate entry with the same numeric prefix and a
+    suffix other than -0000 (typically -0001), with form like '合方を' and an
+    empty headline. These never reach the keystore, so we walk siblings here.
+    """
+    prefix = bare_id.split('-')[0] + '-'
+    kind_ph = ','.join('?' * len(_NHK_KINDS))
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT DISTINCT e.id FROM entries e "
+        f"WHERE e.id LIKE ? AND e.id != ? "
+        f"AND (e.headline IS NULL OR e.headline = '') "
+        f"AND (e.form LIKE '%を' OR e.form LIKE '%に') "
+        f"AND EXISTS (SELECT 1 FROM pronunciations p WHERE p.entry_id = e.id "
+        f"AND p.kind IN ({kind_ph}) AND p.drops IS NOT NULL) "
+        f"ORDER BY e.id",
+        [prefix + '%', bare_id, *_NHK_KINDS],
+    )
+    return [row[0] for row in cur.fetchall()]
 
 
 def _get_nhk_pitch(entry_id: str, conn: sqlite3.Connection):
@@ -788,7 +817,10 @@ def _lookup_note(editor: Editor):
         if daijisen_conn:
             candidates += [('daijisen', eid) for eid in _find_entries(word, daijisen_conn)]
         if nhk_conn:
-            candidates += [('nhk', eid) for eid in _find_entries_nhk(word, nhk_conn)]
+            for bare_id in _find_entries_nhk(word, nhk_conn):
+                candidates.append(('nhk', bare_id))
+                for sib in _find_nhk_particle_siblings(bare_id, nhk_conn):
+                    candidates.append(('nhk', sib))
 
         if not candidates:
             tooltip(f"No match found for: {word}")
@@ -821,12 +853,39 @@ def _lookup_note(editor: Editor):
             assert nhk_conn is not None
             rows4 = _get_nhk_pitch(selected, nhk_conn)
             if rows4:
-                pitch_rows = rows4
-                reading_info = _get_reading(selected, nhk_conn)
                 cur = nhk_conn.cursor()
                 cur.execute("SELECT headline FROM entries WHERE id = ? LIMIT 1", (selected,))
-                row = cur.fetchone()
-                hyouki = _extract_nhk_hyouki(row[0] if row else None)
+                e_row = cur.fetchone()
+                e_headline = e_row[0] if e_row else None
+                if e_headline:
+                    pitch_rows = rows4
+                    reading_info = _get_reading(selected, nhk_conn)
+                    hyouki = _extract_nhk_hyouki(e_headline)
+                else:
+                    # Particle sub-entry: write the bare word's text but use the
+                    # +particle audio (which actually voices the trailing particle).
+                    bare_id = selected.split('-')[0] + '-0000'
+                    bare_rows = _get_nhk_pitch(bare_id, nhk_conn)
+                    if bare_rows:
+                        particle_audio_by_drops = {
+                            d: a for (d, _s, a, _dv) in rows4 if a
+                        }
+                        fallback_audio = next(iter(particle_audio_by_drops.values()), None)
+                        pitch_rows = [
+                            (d, s, particle_audio_by_drops.get(d, fallback_audio), dv)
+                            for (d, s, _a, dv) in bare_rows
+                        ]
+                        reading_info = _get_reading(bare_id, nhk_conn)
+                        cur.execute(
+                            "SELECT headline FROM entries WHERE id = ? LIMIT 1",
+                            (bare_id,),
+                        )
+                        b_row = cur.fetchone()
+                        hyouki = _extract_nhk_hyouki(b_row[0] if b_row else None)
+                    else:
+                        pitch_rows = rows4
+                        reading_info = _get_reading(selected, nhk_conn)
+                        hyouki = None
 
         if pitch_rows is None:
             tooltip(f"No pitch data for: {word}")
@@ -913,11 +972,13 @@ def _lookup_note(editor: Editor):
 
         audio_idx = field_names.index("Word Audio")
         existing = note.fields[audio_idx]
-        appended = ''.join(
+        new_tags = [
             f'[audio:{name}]' for name in new_names
             if f'[audio:{name}]' not in existing
-        )
-        note.fields[audio_idx] = (existing + appended).strip()
+        ]
+        if new_tags:
+            sep = '<br>' if existing.strip() else ''
+            note.fields[audio_idx] = (existing.rstrip() + sep + '<br>'.join(new_tags)).strip()
 
     if note.id:
         mw.col.update_note(note)
