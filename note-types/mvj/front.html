@@ -49,11 +49,11 @@
         'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
         'image',
-        'definition-text', 'definition-audio', 'definition-audio-buttons', 'definition-autoplay-bi', 'definition-autoplay-mono', 'definition-text-play', 'definition-primary', 'definition-secondary', 'definition-default', 'definition-furigana', 'definition-pitch-color', 'definition-align',
+        'definition-text-mono', 'definition-text-bi', 'definition-audio-buttons', 'definition-autoplay-bi', 'definition-autoplay-mono', 'definition-text-play', 'definition-default', 'definition-furigana', 'definition-pitch-color', 'definition-align',
         'notes-text', 'notes-align',
         'details-word-text', 'details-word-audio', 'details-word-autoplay', 'details-pitch-graph',
         'details-sentence-text', 'details-sentence-audio', 'details-sentence-autoplay',
-        'details-image', 'details-definition-text', 'details-definition-audio', 'details-definition-secondary', 'details-notes-text'
+        'details-image', 'details-definition-text-mono', 'details-definition-text-bi', 'details-definition-audio', 'details-notes-text'
     ];
 
     // Find last defined mode
@@ -132,12 +132,12 @@
 (function() {
     var rs = getComputedStyle(document.documentElement);
     function apVal(v) { v = v.trim() || 'front & back'; return v === 'on' ? 'front & back' : v === 'off' ? 'none' : v; }
-    function defApVal(v) { v = v.trim() || 'always'; return v === 'on' ? 'always' : v; }
+    function defApVal(v, fallback) { return v.trim() || fallback; }
     window.__autoplayEnabled = {
         word: apVal(rs.getPropertyValue('--word-autoplay')),
         sentence: apVal(rs.getPropertyValue('--sentence-autoplay')),
-        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi')),
-        definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'))
+        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi'), 'on when mono is locked or on reveal'),
+        definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'), 'on when unlocked or on reveal')
     };
 })();
 
@@ -880,21 +880,6 @@ window.__autoplayItems = function(selector, filterFn, onDone) {
         var type = item.getAttribute('data-audio');
         if (filterFn(type, item)) matched.push(item);
     });
-    // Ensure primary def audio plays before secondary (stable among def items only)
-    var defStart = -1;
-    for (var di = 0; di < matched.length; di++) {
-        if (matched[di].getAttribute('data-audio') === 'def') { defStart = di; break; }
-    }
-    if (defStart >= 0) {
-        var defs = matched.splice(defStart);
-        defs.sort(function(a, b) {
-            var ra = a.getAttribute('data-def-role'), rb = b.getAttribute('data-def-role');
-            if (ra === 'primary' && rb !== 'primary') return -1;
-            if (rb === 'primary' && ra !== 'primary') return 1;
-            return 0;
-        });
-        matched = matched.concat(defs);
-    }
     var queue = [];
     matched.forEach(function(item) {
         var btns = item.querySelectorAll('.replay-button');

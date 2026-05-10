@@ -92,7 +92,7 @@ _HOTKEYS = [
     ("--hotkey-definition-audio", "Definition Audio", ","),
     ("--hotkey-play-all", "Play All", "z"),
     ("--hotkey-stop-all", "Stop All", "?"),
-    ("--hotkey-jp-toggle", "Reveal Definition Toggle", "."),
+    ("--hotkey-def-toggle", "Reveal Definition Toggle", "."),
     ("--hotkey-details-toggle", "Reveal Details", "n"),
 ]
 
@@ -128,13 +128,11 @@ _SETTINGS = {
         ("--image", "Image", ["front & back", "back only", "off"], "back only"),
     ],
     "Definitions": [
-        ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "monolingual when unlocked"], "monolingual when unlocked"),
-        ("--definition-text", "Primary Definition Text", ["on", "off", "on when monolingual", "on when bilingual"], "on"),
-        ("--definition-secondary", "Secondary Definition Text", ["on", "off", "separate toggle"], "separate toggle"),
-        ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
+        ("--definition-text-mono", "Definition Text (Monolingual)", ["on", "off", "on when unlocked, otherwise off", "on when unlocked, otherwise toggle"], "on when unlocked, otherwise toggle"),
+        ("--definition-text-bi", "Definition Text (Bilingual)", ["on", "off", "on when mono locked, otherwise off", "on when mono locked, otherwise toggle"], "on when mono locked, otherwise toggle"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "fallback", "off"], "on"),
-        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
-        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
+        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "on when unlocked", "on when unlocked or on reveal", "off"], "on when unlocked or on reveal"),
+        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "on when mono is locked", "on when mono is locked or on reveal", "off"], "on when mono is locked or on reveal"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-default", "Default Definition Type", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
@@ -154,8 +152,8 @@ _SETTINGS = {
         ("--details-sentence-audio", "Sentence Audio", ["on", "off"], "off"),
         ("--details-sentence-autoplay", "Sentence Autoplay", ["on", "off"], "off"),
         ("--details-image", "Image", ["on", "off"], "off"),
-        ("--details-definition-text", "Primary Definition", ["on", "off"], "off"),
-        ("--details-definition-secondary", "Secondary Definition", ["on", "off"], "off"),
+        ("--details-definition-text-mono", "Definition Text (Monolingual)", ["on", "off"], "off"),
+        ("--details-definition-text-bi", "Definition Text (Bilingual)", ["on", "off"], "off"),
         ("--details-definition-audio", "Definition Audio", ["on", "off"], "off"),
         ("--details-notes-text", "Notes Text", ["on", "off"], "off"),
     ],
@@ -167,12 +165,12 @@ _OVERRIDABLE = [
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-primary", "definition-secondary", "definition-default",
+    "definition-text-mono", "definition-text-bi", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-default",
     "definition-furigana", "definition-pitch-color", "definition-align",
     "notes-text", "notes-align",
     "details-word-text", "details-word-audio", "details-word-autoplay", "details-pitch-graph",
     "details-sentence-text", "details-sentence-audio", "details-sentence-autoplay",
-    "details-image", "details-definition-text", "details-definition-audio", "details-definition-secondary", "details-notes-text",
+    "details-image", "details-definition-text-mono", "details-definition-text-bi", "details-definition-audio", "details-notes-text",
 ]
 
 # Regex to find the modes *content* (between the MODES banner and the closing ═══ banner).
@@ -230,11 +228,24 @@ _DETAILS_TOGGLE_MIGRATION = {
     "--sentence-audio": ("--details-sentence-audio", "back only"),
     "--sentence-autoplay": ("--details-sentence-autoplay", "none"),
     "--image": ("--details-image", "back only"),
-    "--definition-text": ("--details-definition-text", "on"),
-    "--definition-audio": ("--details-definition-audio", "on"),
-    "--definition-secondary": ("--details-definition-secondary", "on"),
     "--notes-text": ("--details-notes-text", "on"),
 }
+
+_SETTING_VALUE_ALIASES = {
+    "--definition-text-mono": {
+        "on when unlocked": "on when unlocked, otherwise off",
+        "on when unlocked, toggle when locked": "on when unlocked, otherwise toggle",
+    },
+    "--definition-text-bi": {
+        "on when mono is locked": "on when mono locked, otherwise off",
+        "on when mono is locked, toggle when mono is unlocked": "on when mono locked, otherwise toggle",
+    },
+}
+
+
+def _normalize_setting_value(var: str, value: str) -> str:
+    """Map retired option labels to their current names."""
+    return _SETTING_VALUE_ALIASES.get(var, {}).get(value, value)
 
 
 def _parse_settings(css: str) -> dict[str, str]:
@@ -244,7 +255,7 @@ def _parse_settings(css: str) -> dict[str, str]:
         for var, _label, _options, default in entries:
             # Match e.g.  --tategaki: off;  (with optional whitespace/comments)
             m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
-            values[var] = m.group(1) if m else default
+            values[var] = _normalize_setting_value(var, m.group(1) if m else default)
     for var, _label, default in _HOTKEYS:
         m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
         values[var] = m.group(1) if m else default
@@ -323,7 +334,8 @@ def _parse_modes(css: str) -> list[Mode]:
                 rf"--mode-{i}-{re.escape(setting)}:\s*(.+?)\s*;", css
             )
             if m:
-                overrides[f"--{setting}"] = m.group(1)
+                var = f"--{setting}"
+                overrides[var] = _normalize_setting_value(var, m.group(1))
 
         modes.append(Mode(name=name, tag=tag, deck=deck, overrides=overrides))
     return modes

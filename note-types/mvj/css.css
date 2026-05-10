@@ -42,14 +42,12 @@
     --image: back only;            /* front & back | back only | off      */
 
     /* Definitions */
-    --definition-text: on;         /* on | off | on when monolingual | on when bilingual */
-    --definition-audio: on;        /* on | off                            */
+    --definition-text-mono: on when unlocked, otherwise toggle;/* on | off | on when unlocked, otherwise off | on when unlocked, otherwise toggle */
+    --definition-text-bi: on when mono locked, otherwise toggle;/* on | off | on when mono locked, otherwise off | on when mono locked, otherwise toggle */
     --definition-audio-buttons: fallback;/* on | fallback | off                 */
-    --definition-autoplay-bi: off;  /* always | only when primary | when primary or on reveal | off */
-    --definition-autoplay-mono: when primary or on reveal;/* always | only when primary | when primary or on reveal | off */
+    --definition-autoplay-mono: on when unlocked or on reveal;/* on | on when unlocked | on when unlocked or on reveal | off */
+    --definition-autoplay-bi: on when mono is locked or on reveal;/* on | on when mono is locked | on when mono is locked or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
-    --definition-primary: monolingual when unlocked; /* bilingual | monolingual | monolingual when unlocked */
-    --definition-secondary: separate toggle;    /* on | off | separate toggle          */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;     /* on | off                            */
     --definition-pitch-color: on;  /* on | off                            */
@@ -68,9 +66,9 @@
     --details-sentence-audio: off; /* on | off                            */
     --details-sentence-autoplay: off;/* on | off                          */
     --details-image: off;          /* on | off                            */
-    --details-definition-text: off;/* on | off                            */
+    --details-definition-text-mono: off;/* on | off                       */
+    --details-definition-text-bi: off;/* on | off                         */
     --details-definition-audio: off;/* on | off                           */
-    --details-definition-secondary: off;/* on | off                        */
     --details-notes-text: on;      /* on | off                            */
 
     /* Hotkeys */
@@ -79,7 +77,7 @@
     --hotkey-definition-audio: c;  /* keyboard key (back only)            */
     --hotkey-play-all: ,;          /* keyboard key                        */
     --hotkey-stop-all: .;          /* keyboard key                        */
-    --hotkey-jp-toggle: h;         /* keyboard key (back only)            */
+    --hotkey-def-toggle: h;        /* keyboard key (back only)            */
     --hotkey-details-toggle: n;    /* keyboard key (back only)            */
 
     /* ═══════════════════════════════════════════════════════
@@ -130,7 +128,6 @@
     --mode-5-word-audio: back only;
     --mode-5-sentence-text: front & back;
     --mode-5-sentence-audio: back only;
-    --mode-5-definition-text: on;
 
     /* —— Mode 6: Vocab ————————————————————————————————————————— */
     --mode-6-name: Vocab;
@@ -789,13 +786,13 @@ html {
 .keihan_odaka,
 .keihan_low_odaka { color: var(--pitch-keihan-odaka); }
 .target-word.no-accent span { color: var(--text-1) !important; }
-.def.no-accent span, .jp-def.no-accent span { color: var(--text-1) !important; }
-.def .particle, .jp-def .particle { color: inherit; }
+.def.no-accent span { color: var(--text-1) !important; }
+.def .particle { color: inherit; }
 .target-word.no-pitch-color span { color: var(--text-1) !important; }
 .target-word.no-pitch-color rt { color: var(--text-1) !important; }
 .sentence.no-pitch-color span { color: var(--text-1) !important; }
 .sentence.no-pitch-color rt { color: var(--text-1) !important; }
-.def.no-pitch-color span, .jp-def.no-pitch-color span { color: var(--text-1) !important; }
+.def.no-pitch-color span { color: var(--text-1) !important; }
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
@@ -1007,8 +1004,7 @@ html:not(.tategaki) .pitch-graph.text-play::after {
 /* ── Pill position: per-element tuning variables ── */
 .target-word.text-play      { --pill-ruby-hidden: 0.33em; --pill-ruby-visible: -2px; }
 .sentence.text-play         { --pill-ruby-hidden: 0.2em;  --pill-ruby-visible: -0.22em; }
-.def.text-play,
-.jp-def.text-play           { --pill-ruby-visible: -0.22em; }
+.def.text-play              { --pill-ruby-visible: -0.22em; }
 .word-pitch-group.text-play { --pill-ruby-visible: -6px; }
 
 /* ── Pill position: state resolution (non-tategaki) ── */
@@ -1205,9 +1201,7 @@ html:not(.tategaki) :not(.back) > .card-inner > .front:has(.front-content [data-
 /* Audio item ordering — top row (desktop) */
 .back .audio-row .audio-item[data-audio="word"] { order: 0; }
 .back .audio-row .audio-item[data-audio="sentence"] { order: 1; }
-.back .audio-row .audio-item[data-audio="def"][data-def-role="primary"],
-.back .audio-row .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-.back .audio-row .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+.back .audio-row .audio-item[data-audio="def"] { order: 2; }
 
 .back .audio-item {
     gap: 6px;
@@ -1274,9 +1268,7 @@ html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-
 }
 html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+html:not(.tategaki) .back:not(:has(.audio-row [data-side="front"]:not([data-btn-off]))) .audio-row-bottom .audio-item[data-audio="def"] { order: 2; }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"]) .front-content {
     order: -1;
@@ -1360,8 +1352,8 @@ ruby {
    the rt itself) in the JP font in body-cascade contexts where the parent
    would otherwise route Latin to Inter. .target-word and .sentence already
    use a JP font on their own, so their ruby/rt inherits it without help. */
-.def ruby, .jp-def ruby, .notes ruby,
-.def rt, .jp-def rt, .notes rt {
+.def ruby, .notes ruby,
+.def rt, .notes rt {
     font-family: var(--jp);
 }
 
@@ -1390,8 +1382,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         html:not(.tategaki) .sentence:has(ruby):not(.furigana-off) {
             padding-top: 0.45em;
         }
-        html:not(.tategaki) .def:has(ruby):not(.furigana-off),
-        html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
+        html:not(.tategaki) .def:has(ruby):not(.furigana-off) {
             padding-top: 0.45em;
         }
     }
@@ -1510,44 +1501,44 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     text-align: var(--definition-align);
 }
 
-.def rt, .jp-def rt {
+.def rt {
     color: inherit;
     transform: translateY(-1px);
 }
 
 @media (hover: none) {
-    .def rt, .jp-def rt {
+    .def rt {
         transform: translateY(7px);
     }
 }
 
-.tategaki .def rt,
-.tategaki .jp-def rt {
+.tategaki .def rt {
     font-size: 0.47em;
     letter-spacing: 0.1em;
 }
 
 @media (hover: none) {
-    .tategaki .def rt,
-    .tategaki .jp-def rt {
+    .tategaki .def rt {
         font-size: 0.5em;
         transform: translate(-5px, 1px);
     }
 }
 
-/* Japanese definition — pure CSS toggle */
+/* Definition section — per-language CSS toggle */
 
-.jp-def-section {
+.def-section {
+    display: flex;
+    flex-direction: column;
     margin-top: 0;
     margin-bottom: 16px;
+    text-align: var(--toggle-align);
 }
 
-.jp-def-section,
 .details-section {
     text-align: var(--toggle-align);
 }
 
-.jp-def-input {
+.def-toggle-input {
     position: absolute;
     width: 0;
     height: 0;
@@ -1555,9 +1546,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     pointer-events: none;
 }
 
-.jp-def-toggle {
+.def-toggle-label {
     display: inline-flex;
     align-items: center;
+    align-self: var(--def-toggle-align, center);
     background: var(--toggle-bg);
     border: 1px solid var(--toggle-border);
     border-radius: 6px;
@@ -1575,67 +1567,51 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 }
 
 @media (hover: hover) {
-    .jp-def-toggle:hover {
+    .def-toggle-label:hover {
         color: var(--text-1);
         border-color: var(--toggle-hover-border);
         background: var(--toggle-hover-bg);
     }
 }
 
-.jp-def-toggle::after {
+.def-toggle-label::after {
     content: '▸';
     font-size: 10px;
     transition: transform 200ms ease;
 }
 
-.jp-def-input:checked + .jp-def-toggle::after {
+.def-toggle-input:checked + .def-toggle-label::after {
     transform: rotate(90deg);
 }
 
-.jp-def-wrap {
-    text-align: initial;
-    display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    pointer-events: none;
-    margin-top: 4px;
-    transition: grid-template-rows 250ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 180ms ease 30ms;
+.def[data-def-show="hidden"] {
+    display: none;
 }
 
-.jp-def-wrap > * {
-    overflow: hidden;
-    min-height: 0;
-    margin: 0;
-    transition: overflow 0s 250ms;
-    transition-behavior: allow-discrete;
+.def-section:not(:has(#def-toggle:checked)) .def[data-def-show="toggle"] {
+    display: none;
 }
 
-/* Zero padding/margin when collapsed so 0fr grid track fully collapses */
-.jp-def-input:not(:checked) ~ .jp-def-wrap > * {
-    padding: 0;
-    margin: 0;
+.def-section:not(:has(.def[data-def-show="toggle"])) > #def-toggle,
+.def-section:not(:has(.def[data-def-show="toggle"])) > .def-toggle-label {
+    display: none;
 }
 
-.jp-def-input:checked ~ .jp-def-wrap {
-    grid-template-rows: 1fr;
-    opacity: 1;
-    pointer-events: auto;
+.def-section:not(:has(.def[data-def-show="inline"], .def[data-def-show="toggle"])) {
+    display: none;
 }
 
-.jp-def-input:checked ~ .jp-def-wrap > .jp-def.text-play,
-.jp-def-input:checked ~ .jp-def-wrap > .def.text-play {
-    overflow: visible;
-    transition: overflow 0s 0s;
-    transition-behavior: allow-discrete;
+.def[data-def-show="inline"] {
+    order: 1;
 }
 
-.jp-def {
-    font-size: 20px;
-    font-weight: 400;
-    line-height: 1.7;
-    color: var(--text-1);
-    margin: 0;
-    padding-top: 0;
+#def-toggle,
+.def-toggle-label {
+    order: 2;
+}
+
+.def[data-def-show="toggle"] {
+    order: 3;
 }
 
 
@@ -1719,7 +1695,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 /* furigana-off: hide rt everywhere, including back-side reveal */
 .target-word.furigana-off rt,
 .sentence.furigana-off rt,
-.def.furigana-off rt, .jp-def.furigana-off rt { display: none !important; }
+.def.furigana-off rt { display: none !important; }
 
 /* Split furigana: always visible on front */
 .front-content .target-word rt[data-split],
@@ -1801,30 +1777,9 @@ html:not(.tategaki) .front-content .image-wrap {
 .back .front-content .target-word.pitch-color-front span,
 .back .front-content .sentence.pitch-color-front span { animation: none; }
 
-.def, .jp-def {
+.def {
     line-height: 1.65;
 }
-
-/* Definition layout: hide sections based on data-def-layout */
-.answer[data-def-layout="none"] .def,
-.answer[data-def-layout="none"] .jp-def-section {
-    display: none;
-}
-
-.answer[data-def-layout="bi-only"] .jp-def-section,
-.answer[data-def-layout="mono-only"] .jp-def-section {
-    display: none;
-}
-
-.answer[data-def-layout="bi-only"] > .def,
-.answer[data-def-layout="mono-only"] > .def {
-    margin-bottom: 16px;
-}
-
-.answer[data-def-text="off"] > .def {
-    display: none;
-}
-
 
 /* Notes section */
 .notes-section {
@@ -1962,13 +1917,13 @@ html:not(.tategaki) .front-content .image-wrap {
     align-self: stretch;
 }
 
-.details-inner .def {
+.details-inner > .def {
     margin: 0;
     order: unset;
 }
 
-.details-inner.details-inner .jp-def-section {
-    display: block;
+.details-inner.details-inner .def-section {
+    display: flex;
     margin: 0;
     order: unset;
 }
@@ -1982,9 +1937,7 @@ html:not(.tategaki) .front-content .image-wrap {
 /* Audio item ordering — bottom row (mobile) */
 .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
-.audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-.audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-.audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+.audio-row-bottom .audio-item[data-audio="def"] { order: 2; }
 
 /* Bottom audio row — mobile only duplicate */
 
@@ -2039,8 +1992,7 @@ html:not(.tategaki) .answer .image-wrap {
 html:not(.tategaki) .answer .audio-row-bottom {
     order: -3;
 }
-html:not(.tategaki) .answer .def,
-html:not(.tategaki) .answer .jp-def-section,
+html:not(.tategaki) .answer .def-section,
 html:not(.tategaki) .answer .notes-section {
     order: 1;
 }
@@ -2050,8 +2002,7 @@ html:not(.tategaki) .answer .details-section {
 
 /* Non-tategaki: Japanese text line-height */
 html:not(.tategaki) .sentence,
-html:not(.tategaki) .def,
-html:not(.tategaki) .jp-def {
+html:not(.tategaki) .def {
     line-height: 1.7;
 }
 
@@ -2459,9 +2410,7 @@ html.tategaki {
 .tategaki .audio-row-bottom .audio-item { flex: 0 0 auto; }
 .tategaki .audio-row-bottom .audio-item[data-audio="word"] { order: 0; }
 .tategaki .audio-row-bottom .audio-item[data-audio="sentence"] { order: 1; }
-.tategaki .audio-row-bottom .audio-item[data-audio="def"][data-def-role="primary"],
-.tategaki .audio-row-bottom .audio-item[data-audio="def"]:not([data-def-role]) { order: 2; }
-.tategaki .audio-row-bottom .audio-item[data-audio="def"][data-def-role="secondary"] { order: 3; }
+.tategaki .audio-row-bottom .audio-item[data-audio="def"] { order: 2; }
 
 .tategaki .audio-row-bottom .audio-item .replay-button {
     width: 52px !important;
@@ -2536,8 +2485,7 @@ html.tategaki {
     padding-right: 0.38em;
 }
 
-.tategaki .def:has(ruby):not(.furigana-off),
-.tategaki .jp-def:has(ruby):not(.furigana-off) {
+.tategaki .def:has(ruby):not(.furigana-off) {
     padding-right: 0.35em;
 }
 
@@ -2561,8 +2509,7 @@ html.tategaki {
        to keep furigana visually above the base text. */
     /* iPhone default — furigana slightly closer to base text */
     html:not(.tategaki) .sentence rt,
-    html:not(.tategaki) .def rt,
-    html:not(.tategaki) .jp-def rt {
+    html:not(.tategaki) .def rt {
         margin-block: -0.5em;
         transform: translateY(0.25em);
     }
@@ -2573,23 +2520,20 @@ html.tategaki {
         margin-block: -0.5em;
         transform: translate(-0.15em, 0.07em);
     }
-    .tategaki .def rt,
-    .tategaki .jp-def rt {
+    .tategaki .def rt {
         margin-block: -0.5em;
         transform: translate(-0.1em, 0.07em);
     }
     /* iPad — larger annotation gap needs more offset */
     @media (min-width: 768px) {
         html:not(.tategaki) .sentence rt,
-        html:not(.tategaki) .def rt,
-        html:not(.tategaki) .jp-def rt {
+        html:not(.tategaki) .def rt {
             transform: translateY(-0.35em);
         }
         .tategaki .sentence rt {
             transform: translate(0.35em, 0.07em);
         }
-        .tategaki .def rt,
-        .tategaki .jp-def rt {
+        .tategaki .def rt {
             transform: translate(0.4em, 0.07em);
         }
     }
@@ -2597,30 +2541,26 @@ html.tategaki {
         padding-top: 0.08em;
     }
     html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .def:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .jp-def:has(ruby):not(.furigana-off) {
+    html:not(.tategaki) .def:has(ruby):not(.furigana-off) {
         padding-top: 0.2em;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off) {
         padding-right: 0;
     }
     .tategaki .sentence:has(ruby):not(.furigana-off),
-    .tategaki .def:has(ruby):not(.furigana-off),
-    .tategaki .jp-def:has(ruby):not(.furigana-off) {
+    .tategaki .def:has(ruby):not(.furigana-off) {
         padding-right: 0.25em;
     }
     /* Pill position: iOS overrides (non-tategaki) */
     .target-word.text-play  { --pill-ruby-hidden: 0.45em; --pill-ruby-visible: 0.1em; }
     .sentence.text-play     { --pill-ruby-hidden: 0.35em; --pill-ruby-visible: 0.1em; }
-    .def.text-play,
-    .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
+    .def.text-play          { --pill-ruby-visible: 0.1em; }
     .word-pitch-group.text-play { --pill-ruby-visible: 0.1em; }
 
     /* Pill position: iOS overrides (tategaki) */
     .tategaki .target-word.text-play  { --pill-ruby-visible: -0.04em; }
     .tategaki .sentence.text-play,
-    .tategaki .def.text-play,
-    .tategaki .jp-def.text-play       { --pill-ruby-visible: 0.1em; }
+    .tategaki .def.text-play          { --pill-ruby-visible: 0.1em; }
 }
 
 /* Collapse ruby-annotation padding when rt is hidden on tategaki front —
@@ -2672,8 +2612,7 @@ html.tategaki {
 }
 .tategaki .mid-audio-row .audio-item[data-audio="word"] { order: -2; }
 .tategaki .mid-audio-row .audio-item[data-audio="sentence"] { order: -1; }
-.tategaki .mid-audio-row .audio-item[data-def-role="primary"] { order: 0; }
-.tategaki .mid-audio-row .audio-item[data-def-role="secondary"] { order: 1; }
+.tategaki .mid-audio-row .audio-item[data-audio="def"] { order: 0; }
 
 .tategaki .mid-audio-row .replay-button {
     width: 52px !important;
@@ -2778,7 +2717,7 @@ html.tategaki {
 }
 
 /* Definition — placed right after audio buttons in R→L flow */
-.tategaki .answer > .def {
+.tategaki .answer > .def-section {
     box-sizing: border-box;
     margin: 0 0 0 16px;
     order: -2;
@@ -2786,39 +2725,22 @@ html.tategaki {
     line-height: 1.7;
 }
 
-/* JP def section — follows definition */
-.tategaki .jp-def-section {
-    margin: 0 0 0 16px;
-    margin-block-start: 0;
-    order: -1;
-    height: 100%;
-}
-
 @media (hover: none) {
-    .tategaki .jp-def-section {
+    .tategaki .def-section {
         text-align: start;
     }
 }
 
-.tategaki .jp-def-wrap {
-    margin-top: 0;
-    margin-right: 6px;
-}
-
-.tategaki .jp-def-wrap > * {
-    min-width: 0;
-}
-
-.tategaki .jp-def-toggle {
+.tategaki .def-toggle-label {
     writing-mode: vertical-rl;
     padding: 14px 3px;
 }
 
-.tategaki .jp-def-toggle::after {
+.tategaki .def-toggle-label::after {
     transform: rotate(90deg);
 }
 
-.tategaki .jp-def-input:checked + .jp-def-toggle::after {
+.tategaki .def-toggle-input:checked + .def-toggle-label::after {
     transform: rotate(180deg);
 }
 
@@ -2872,8 +2794,8 @@ html.tategaki {
 .tategaki .details-inner .image-wrap,
 .tategaki .details-inner .sentence,
 .tategaki .details-inner .notes-section,
-.tategaki .details-inner .jp-def-section,
-.tategaki .details-inner .def {
+.tategaki .details-inner .def-section,
+.tategaki .details-inner > .def {
     margin: 0;
     height: 100%;
 }
@@ -2922,12 +2844,12 @@ html:not(.tategaki) .divider {
 }
 
 html:not(.tategaki) .back:not(:has(.front-content [data-side="front"]))
-    .answer:not([data-def-text="off"]):not([data-def-layout="none"]):has(> .sentence:not([data-show="off"]):not(:empty)):has(> .def:not(:empty)) .divider {
+    .answer:has(> .sentence:not([data-show="off"]):not(:empty)):has(.def[data-def-show="inline"], .def[data-def-show="toggle"]) .divider {
     display: block;
 }
 
 html:not(.tategaki) .back:has(.front-content [data-side="front"])
-    .answer:not([data-def-layout="none"]):not([data-def-text="off"]) .divider,
+    .answer:has(.def[data-def-show="inline"], .def[data-def-show="toggle"]) .divider,
 html:not(.tategaki) .back:has(.front-content [data-side="front"])
     .answer:has(
         .target-word:not([data-show="off"]):not(:empty),
