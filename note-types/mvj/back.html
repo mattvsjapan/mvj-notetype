@@ -975,7 +975,25 @@
     var isTategaki = document.documentElement.classList.contains('tategaki');
 
     // Word → target word + pitch graph
-    var wordRendered = wordRaw ? renderMixed(wordRaw) : { html: '', sequences: [] };
+    // Pre-split on <br> so each line becomes its own sequence and graph,
+    // mirroring the sentence/definition flows below. renderMixed strips tags
+    // internally, so feeding raw multi-line HTML would collapse the lines
+    // into a single tangled sequence.
+    var wordRendered = { html: '', sequences: [] };
+    if (wordRaw) {
+      var wordLines = wordRaw.split(/<br\s*\/?>/gi);
+      var wordAllSeqs = [];
+      var wordLineHtmls = wordLines.map(function(part) {
+        var _d = document.createElement('span');
+        _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
+        var lineText = _d.textContent.trim();
+        if (!lineText) return '';
+        var rendered = renderMixed(lineText);
+        wordAllSeqs = wordAllSeqs.concat(rendered.sequences);
+        return rendered.html;
+      }).filter(Boolean);
+      wordRendered = { html: wordLineHtmls[0] || '', sequences: wordAllSeqs };
+    }
     var wordSeqs = wordRendered.sequences;
     var wordHasAccent = wordSeqs.some(function(seq) {
       return seq.some(function(s) {
