@@ -787,6 +787,7 @@ html {
 .keihan_low_odaka { color: var(--pitch-keihan-odaka); }
 .target-word.no-accent span { color: var(--text-1) !important; }
 .def.no-accent span { color: var(--text-1) !important; }
+.notes.no-accent span { color: var(--text-1) !important; }
 .def .particle { color: inherit; }
 .target-word.no-pitch-color span { color: var(--text-1) !important; }
 .target-word.no-pitch-color rt { color: var(--text-1) !important; }
@@ -1468,7 +1469,8 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     margin: 0 0 20px;
 }
 
-.sentence .particle {
+.sentence .particle,
+.notes .particle {
     color: inherit;
 }
 .particle.atamadaka { color: var(--pitch-atamadaka); }
