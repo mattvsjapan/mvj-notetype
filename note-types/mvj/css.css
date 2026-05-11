@@ -2775,6 +2775,10 @@ html.tategaki {
     transform: rotate(180deg);
 }
 
+.tategaki .answer > .def-section > .def.text-play {
+    height: 100%;
+}
+
 .tategaki .def[data-def-show="toggle"] {
     margin-top: 0;
     margin-right: 6px;
