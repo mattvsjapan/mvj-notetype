@@ -39,8 +39,8 @@ def _to_hiragana(text):
 
 
 def _is_all_kana(text):
-    """True if every character in text is kana."""
-    return bool(text) and all(_is_kana(ch) for ch in text)
+    """True if every character in text is kana (or a '*' devoicing marker)."""
+    return bool(text) and all(_is_kana(ch) or ch == '*' for ch in text)
 
 
 # ---------------------------------------------------------------------------

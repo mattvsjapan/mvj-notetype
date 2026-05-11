@@ -31,6 +31,11 @@ CONVERT_CASES = [
         '学者[がdくしゃ]; -',
         '学者[が*くしゃ]:0-',
     ),
+    (
+        'bare-kana token with inline devoicing',
+        'いdきき;2 -',
+        'い*きき:2-',
+    ),
 ]
 
 # (label, converter output, Word-field-before, expected spliced output)

@@ -14,20 +14,17 @@ except ImportError:  # standalone (test) import
 # Matches [reading]okurigana;pitch — okurigana may be empty
 _PITCH_OUTSIDE_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);(\S+)')
 _EMPTY_PITCH_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);')
-# d = devoiced: 'd' immediately preceding a kana inside a bracket marks that
-# kana as devoiced; rewrite as '*' in the same position. Handles d at the
-# start of the bracket ([dきし] → [*きし]) and inline ([がdくしゃ] → [が*くしゃ]).
-_BRACKET_RE = re.compile(r'\[([^\]]+)\]')
+# d = devoiced: 'd' immediately preceding a kana marks that kana as devoiced;
+# rewrite as '*' in the same position. Applies wherever the pattern appears
+# — inside brackets ([dきし] → [*きし], [がdくしゃ] → [が*くしゃ]) or in bare
+# kana tokens (いdきき → い*きき).
 _INLINE_DEVOICED_RE = re.compile(r'd(?=[぀-ヿ])')
 
 
 def _reformat_token(text):
     """Reformat a single token from comment syntax to converter input."""
-    # d modifier → * inserted at the same position inside the bracket
-    text = _BRACKET_RE.sub(
-        lambda m: '[' + _INLINE_DEVOICED_RE.sub('*', m.group(1)) + ']',
-        text,
-    )
+    # d modifier → * (everywhere, before the bare-kana check below sees it)
+    text = _INLINE_DEVOICED_RE.sub('*', text)
     # Move ;pitch inside brackets
     text = _PITCH_OUTSIDE_RE.sub(r'[\1;\3]\2', text)
     # Empty pitch (trailing ";") defaults to 0
@@ -39,7 +36,7 @@ def _reformat_token(text):
         if m:
             word, pitch = m.group(1), m.group(2) or '0'
             is_all_kana = word and all(
-                '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ'
+                '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ' or ch == '*'
                 for ch in word
             )
             # Pure-kana word: use kana[pitch] form so the converter treats
