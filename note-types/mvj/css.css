@@ -3056,7 +3056,7 @@ html:not(.tategaki) .back:has(.front-content [data-side="front"]) .answer::befor
    need !important to beat the inline styles set by addon/dev_migrate.py */
 table.dict-table {
     border-collapse: collapse;
-    margin: 0;
+    margin: 0 auto !important;
 }
 table.dict-table td {
     border: 1px solid #ccc;
