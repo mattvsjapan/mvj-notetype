@@ -45,7 +45,7 @@ def _log(note_id, word_before, image_before, word_after):
         f.write("\n")
 
 
-_DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '三省堂', '新選', '例解')
+_DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '新選', '三省堂', '例解')
 
 # Inline styles so the table renders in the editor field view too — Anki's
 # editor (desktop and mobile) doesn't apply the note type's card CSS to
