@@ -2779,6 +2779,10 @@ html.tategaki {
     height: 100%;
 }
 
+.tategaki .answer > .def-section:has(.def[data-def-show="toggle"]) > .def[data-def-show="inline"].text-play {
+    margin-left: 6px;
+}
+
 .tategaki .def[data-def-show="toggle"] {
     margin-top: 0;
     margin-right: 6px;
