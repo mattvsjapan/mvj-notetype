@@ -200,10 +200,14 @@
           <div class="audio-row-bottom" id="audio-row-bottom" style="--d:150"></div>
           <div class="divider" style="--d:160"></div>
           <div class="def-section" id="def-section" style="--d:170">
-              <div class="def" id="def-bilingual" data-def-lang="bi"></div>
+              <div class="def" id="def-bilingual" data-def-lang="bi">
+                  <div class="def-inner"></div>
+              </div>
               <input type="checkbox" id="def-toggle" class="def-toggle-input">
               <label for="def-toggle" class="def-toggle-label" onclick=""></label>
-              <div class="def" id="def-monolingual" data-def-lang="mono"></div>
+              <div class="def" id="def-monolingual" data-def-lang="mono">
+                  <div class="def-inner"></div>
+              </div>
           </div>
           <div class="notes-section" style="--d:260" id="notes-section">
               <div class="notes" id="notes"></div>
@@ -1210,13 +1214,15 @@
     answerEl.setAttribute('data-bi-state', defStates.biPresent ? 'present' : 'absent');
 
     if (defEl) {
-      defEl.innerHTML = defs.bilingual ? (colorizeText(defs.bilingual, defEl) || defs.bilingual) : '';
+      var defInner = defEl.querySelector('.def-inner') || defEl;
+      defInner.innerHTML = defs.bilingual ? (colorizeText(defs.bilingual, defEl) || defs.bilingual) : '';
       defEl.setAttribute('data-def-lang', 'bi');
       defEl.setAttribute('data-def-show', defStates.biShow);
     }
     if (monoDefEl) {
       var monoHtml = monoKey ? defs[monoKey] : '';
-      monoDefEl.innerHTML = monoHtml ? (colorizeText(monoHtml, monoDefEl) || monoHtml) : '';
+      var monoDefInner = monoDefEl.querySelector('.def-inner') || monoDefEl;
+      monoDefInner.innerHTML = monoHtml ? (colorizeText(monoHtml, monoDefEl) || monoHtml) : '';
       monoDefEl.setAttribute('data-def-lang', 'mono');
       monoDefEl.setAttribute('data-def-show', defStates.monoShow);
     }
@@ -1585,7 +1591,7 @@
 
       [['bi', defEl], ['mono', monoDefEl]].forEach(function(pair) {
         var lang = pair[0], slot = pair[1];
-        if (!slot || slot.getAttribute('data-def-show') === 'hidden' || !slot.innerHTML.trim()) return;
+        if (!slot || slot.getAttribute('data-def-show') === 'hidden' || !slot.textContent.trim()) return;
         if (document.querySelector('.audio-item[data-audio="def"][data-def-lang="' + lang + '"]')) {
           window.__linkTextPlay(slot, 'def-' + lang, _defTextPlayOpts(lang));
         } else {

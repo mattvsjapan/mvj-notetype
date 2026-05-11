@@ -1382,7 +1382,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
         html:not(.tategaki) .sentence:has(ruby):not(.furigana-off) {
             padding-top: 0.45em;
         }
-        html:not(.tategaki) .def:has(ruby):not(.furigana-off) {
+        html:not(.tategaki) .def:not(.furigana-off) > .def-inner:has(ruby) {
             padding-top: 0.45em;
         }
     }
@@ -1501,6 +1501,11 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     text-align: var(--definition-align);
 }
 
+.def > .def-inner {
+    min-height: 0;
+    min-width: 0;
+}
+
 .def rt {
     color: inherit;
     transform: translateY(-1px);
@@ -1588,8 +1593,34 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     display: none;
 }
 
-.def-section:not(:has(#def-toggle:checked)) .def[data-def-show="toggle"] {
-    display: none;
+.def[data-def-show="toggle"] {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    margin-top: 4px;
+    margin-bottom: 0;
+    transition: grid-template-rows 250ms cubic-bezier(0.25, 0.1, 0.25, 1),
+                opacity 180ms ease 30ms,
+                margin-bottom 250ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.def[data-def-show="toggle"] > .def-inner {
+    overflow: hidden;
+    transition: overflow 0s 0s;
+    transition-behavior: allow-discrete;
+}
+
+.def-section:has(#def-toggle:checked) .def[data-def-show="toggle"] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.def-section:has(#def-toggle:checked) .def[data-def-show="toggle"] > .def-inner {
+    overflow: visible;
+    transition: overflow 0s 250ms;
+    transition-behavior: allow-discrete;
 }
 
 .def-section:not(:has(.def[data-def-show="toggle"])) > #def-toggle,
@@ -2485,7 +2516,7 @@ html.tategaki {
     padding-right: 0.38em;
 }
 
-.tategaki .def:has(ruby):not(.furigana-off) {
+.tategaki .def:not(.furigana-off) > .def-inner:has(ruby) {
     padding-right: 0.35em;
 }
 
@@ -2541,14 +2572,14 @@ html.tategaki {
         padding-top: 0.08em;
     }
     html:not(.tategaki) .sentence:has(ruby):not(.furigana-off),
-    html:not(.tategaki) .def:has(ruby):not(.furigana-off) {
+    html:not(.tategaki) .def:not(.furigana-off) > .def-inner:has(ruby) {
         padding-top: 0.2em;
     }
     .tategaki .target-word:has(ruby):not(.furigana-off) {
         padding-right: 0;
     }
     .tategaki .sentence:has(ruby):not(.furigana-off),
-    .tategaki .def:has(ruby):not(.furigana-off) {
+    .tategaki .def:not(.furigana-off) > .def-inner:has(ruby) {
         padding-right: 0.25em;
     }
     /* Pill position: iOS overrides (non-tategaki) */
@@ -2742,6 +2773,11 @@ html.tategaki {
 
 .tategaki .def-toggle-input:checked + .def-toggle-label::after {
     transform: rotate(180deg);
+}
+
+.tategaki .def[data-def-show="toggle"] {
+    margin-top: 0;
+    margin-right: 6px;
 }
 
 /* Notes — follows definitions in tategaki R→L flow */
