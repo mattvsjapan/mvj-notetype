@@ -137,7 +137,7 @@
                       toggle.addEventListener('change', function() {
                           var s = window.__autoplayEnabled.definitionBi;
                           var slot = document.querySelector('.def[data-def-lang="bi"][data-def-show="toggle"]');
-                          if (toggle.checked && slot && s === 'on when mono is locked or on reveal') playAll();
+                          if (toggle.checked && slot && (s === 'on when mono locked or on reveal' || s === 'on when mono locked or on reveal, otherwise off' || s === 'on when mono is locked or on reveal')) playAll();
                       });
                       toggle._defRevealListenerAttached = true;
                   }
@@ -178,7 +178,7 @@
                       toggle.addEventListener('change', function() {
                           var s = window.__autoplayEnabled.definitionBi;
                           var slot = document.querySelector('.def[data-def-lang="bi"][data-def-show="toggle"]');
-                          if (toggle.checked && slot && s === 'on when mono is locked or on reveal') buttons[0].click();
+                          if (toggle.checked && slot && (s === 'on when mono locked or on reveal' || s === 'on when mono locked or on reveal, otherwise off' || s === 'on when mono is locked or on reveal')) buttons[0].click();
                       });
                       toggle._defRevealListenerAttached = true;
                   }
@@ -935,7 +935,7 @@
     var defTextMono = _rootStyle.getPropertyValue('--definition-text-mono').trim() || 'on when unlocked, otherwise toggle';
     var defTextBi = _rootStyle.getPropertyValue('--definition-text-bi').trim() || 'on when mono locked, otherwise toggle';
     var defAutoplayMono = _rootStyle.getPropertyValue('--definition-autoplay-mono').trim() || 'on when unlocked or on reveal';
-    var defAutoplayBi = _rootStyle.getPropertyValue('--definition-autoplay-bi').trim() || 'on when mono is locked or on reveal';
+    var defAutoplayBi = _rootStyle.getPropertyValue('--definition-autoplay-bi').trim() || 'on when mono locked or on reveal';
 
     var rawWPC = _rootStyle.getPropertyValue('--word-pitch-color').trim();
     var wordPitchColor = (rawWPC === 'front & back' || rawWPC === 'front' || rawWPC === 'both') ? 'front & back' : (rawWPC === 'off') ? 'off' : 'back only';
@@ -1993,21 +1993,29 @@
 
     // ── Auto-play back-side audio (word/sentence set to "back", then definition) ──
     var ap = window.__autoplayEnabled || {};
+    function normalizeDefAutoplayValue(value) {
+      if (value === 'on when unlocked') return 'on when unlocked, otherwise off';
+      if (value === 'on when unlocked or on reveal, otherwise off') return 'on when unlocked or on reveal';
+      if (value === 'on when mono is locked') return 'on when mono locked, otherwise off';
+      if (value === 'on when mono is locked or on reveal') return 'on when mono locked or on reveal';
+      if (value === 'on when mono locked or on reveal, otherwise off') return 'on when mono locked or on reveal';
+      return value;
+    }
     function defSetting(defLang) {
-      return defLang === 'mono'
+      return normalizeDefAutoplayValue(defLang === 'mono'
         ? (ap.definitionMono || defAutoplayMono || 'on when unlocked or on reveal')
-        : (ap.definitionBi || defAutoplayBi || 'on when mono is locked or on reveal');
+        : (ap.definitionBi || defAutoplayBi || 'on when mono locked or on reveal'));
     }
     function defBackPredicate(defLang) {
       var s = defSetting(defLang);
       if (s === 'off') return false;
       if (s === 'on') return true;
       if (defLang === 'mono') {
-        if (s === 'on when unlocked' || s === 'on when unlocked or on reveal') {
+        if (s === 'on when unlocked, otherwise off' || s === 'on when unlocked or on reveal') {
           return defStates.monoState === 'unlocked';
         }
       } else if (defLang === 'bi') {
-        if (s === 'on when mono is locked' || s === 'on when mono is locked or on reveal') {
+        if (s === 'on when mono locked, otherwise off' || s === 'on when mono locked or on reveal') {
           return defStates.monoState !== 'unlocked';
         }
       }
@@ -2019,7 +2027,7 @@
     function shouldDefPlayOnToggleReveal(defLang) {
       var s = defSetting(defLang);
       return (defLang === 'mono' && s === 'on when unlocked or on reveal')
-          || (defLang === 'bi' && s === 'on when mono is locked or on reveal');
+          || (defLang === 'bi' && s === 'on when mono locked or on reveal');
     }
     function shouldDefPlayOnDetailsReveal(defLang) {
       var s = defSetting(defLang);

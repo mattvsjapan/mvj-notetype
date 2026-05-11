@@ -132,11 +132,19 @@
 (function() {
     var rs = getComputedStyle(document.documentElement);
     function apVal(v) { v = v.trim() || 'front & back'; return v === 'on' ? 'front & back' : v === 'off' ? 'none' : v; }
-    function defApVal(v, fallback) { return v.trim() || fallback; }
+    function defApVal(v, fallback) {
+        v = v.trim() || fallback;
+        if (v === 'on when unlocked') return 'on when unlocked, otherwise off';
+        if (v === 'on when unlocked or on reveal, otherwise off') return 'on when unlocked or on reveal';
+        if (v === 'on when mono is locked') return 'on when mono locked, otherwise off';
+        if (v === 'on when mono is locked or on reveal') return 'on when mono locked or on reveal';
+        if (v === 'on when mono locked or on reveal, otherwise off') return 'on when mono locked or on reveal';
+        return v;
+    }
     window.__autoplayEnabled = {
         word: apVal(rs.getPropertyValue('--word-autoplay')),
         sentence: apVal(rs.getPropertyValue('--sentence-autoplay')),
-        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi'), 'on when mono is locked or on reveal'),
+        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi'), 'on when mono locked or on reveal'),
         definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'), 'on when unlocked or on reveal')
     };
 })();

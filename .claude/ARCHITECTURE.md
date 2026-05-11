@@ -103,8 +103,8 @@ and both settings evaluate to `hidden`, both stay hidden.
 
 | Variable | Values | Default |
 | --- | --- | --- |
-| `--definition-autoplay-mono` | `on`, `on when unlocked`, `on when unlocked or on reveal`, `off` | `on when unlocked or on reveal` |
-| `--definition-autoplay-bi` | `on`, `on when mono is locked`, `on when mono is locked or on reveal`, `off` | `on when mono is locked or on reveal` |
+| `--definition-autoplay-mono` | `on`, `on when unlocked, otherwise off`, `on when unlocked or on reveal`, `off` | `on when unlocked or on reveal` |
+| `--definition-autoplay-bi` | `on`, `on when mono locked, otherwise off`, `on when mono locked or on reveal`, `off` | `on when mono locked or on reveal` |
 
 Back autoplay only considers `.audio-row` items that are not `data-side="off"`.
 If `--details-definition-audio: on` moves definition audio into details, that

@@ -45,8 +45,8 @@
     --definition-text-mono: on when unlocked, otherwise toggle;/* on | off | on when unlocked, otherwise off | on when unlocked, otherwise toggle */
     --definition-text-bi: on when mono locked, otherwise toggle;/* on | off | on when mono locked, otherwise off | on when mono locked, otherwise toggle */
     --definition-audio-buttons: fallback;/* on | fallback | off                 */
-    --definition-autoplay-mono: on when unlocked or on reveal;/* on | on when unlocked | on when unlocked or on reveal | off */
-    --definition-autoplay-bi: on when mono is locked or on reveal;/* on | on when mono is locked | on when mono is locked or on reveal | off */
+    --definition-autoplay-mono: on when unlocked or on reveal;/* on | on when unlocked, otherwise off | on when unlocked or on reveal | off */
+    --definition-autoplay-bi: on when mono locked or on reveal;/* on | on when mono locked, otherwise off | on when mono locked or on reveal | off */
     --definition-text-play: on;    /* on | off                            */
     --definition-default: bilingual; /* monolingual | bilingual             */
     --definition-furigana: on;     /* on | off                            */

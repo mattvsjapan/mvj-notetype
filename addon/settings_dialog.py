@@ -28,6 +28,7 @@ from aqt.qt import (
     QPushButton,
     QScrollArea,
     QShortcut,
+    QSizePolicy,
     QSplitter,
     Qt,
     QKeySequence,
@@ -131,8 +132,8 @@ _SETTINGS = {
         ("--definition-text-mono", "Definition Text (Monolingual)", ["on", "off", "on when unlocked, otherwise off", "on when unlocked, otherwise toggle"], "on when unlocked, otherwise toggle"),
         ("--definition-text-bi", "Definition Text (Bilingual)", ["on", "off", "on when mono locked, otherwise off", "on when mono locked, otherwise toggle"], "on when mono locked, otherwise toggle"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "fallback", "off"], "on"),
-        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "on when unlocked", "on when unlocked or on reveal", "off"], "on when unlocked or on reveal"),
-        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "on when mono is locked", "on when mono is locked or on reveal", "off"], "on when mono is locked or on reveal"),
+        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "on when unlocked, otherwise off", "on when unlocked or on reveal", "off"], "on when unlocked or on reveal"),
+        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "on when mono locked, otherwise off", "on when mono locked or on reveal", "off"], "on when mono locked or on reveal"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-default", "Default Definition Type", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
@@ -239,6 +240,15 @@ _SETTING_VALUE_ALIASES = {
     "--definition-text-bi": {
         "on when mono is locked": "on when mono locked, otherwise off",
         "on when mono is locked, toggle when mono is unlocked": "on when mono locked, otherwise toggle",
+    },
+    "--definition-autoplay-mono": {
+        "on when unlocked": "on when unlocked, otherwise off",
+        "on when unlocked or on reveal, otherwise off": "on when unlocked or on reveal",
+    },
+    "--definition-autoplay-bi": {
+        "on when mono is locked": "on when mono locked, otherwise off",
+        "on when mono is locked or on reveal": "on when mono locked or on reveal",
+        "on when mono locked or on reveal, otherwise off": "on when mono locked or on reveal",
     },
 }
 
@@ -434,6 +444,14 @@ class _NoScrollComboBox(QComboBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.setMinimumContentsLength(12)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
 
     def wheelEvent(self, event) -> None:  # type: ignore[override]
         if self.hasFocus():
@@ -656,17 +674,14 @@ class SettingsDialog(QDialog):
 
         # --- Populate mode list & detail panel ---
         self._rebuild_mode_list()
-
-        # Measure ideal left width from a mode view before building defaults
-        if self._modes:
-            tmp = self._build_mode_view(self._modes[0])
-            scrollbar_w = left_scroll.verticalScrollBar().sizeHint().width()
-            left_w = tmp.sizeHint().width() + scrollbar_w + 2
-            tmp.deleteLater()
-            splitter.setSizes([left_w, self.width() - left_w])
-
         self._rebuild_detail_panel()
         self._update_button_states()
+
+        scrollbar_w = left_scroll.verticalScrollBar().sizeHint().width()
+        left_w = left_inner.sizeHint().width() + scrollbar_w + 2
+        left_w = max(left_scroll.minimumWidth(), left_w)
+        left_w = min(left_w, int(self.width() * 0.4))
+        splitter.setSizes([left_w, self.width() - left_w])
 
     # --- Mode list ---
 
