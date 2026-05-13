@@ -57,20 +57,59 @@ window.__audioCtxProbe = function(ms) {
     });
 };
 
+// Intentionally duplicated in each note type. Takes a factory so recovery
+// can skip branches without starting Web Audio operations.
+if (!window.__audioOpWithTimeout) {
+    window.__audioOpWithTimeout = function(label, promiseFactory, timeoutMs) {
+        timeoutMs = timeoutMs || 400;
+        var opLabel = label || 'audio-op';
+        return new Promise(function(resolve) {
+            var settled = false;
+            var timer = setTimeout(function() {
+                window.__audioCtxLastTimeout = opLabel;
+                if (document.documentElement.getAttribute('data-debug') === 'on'
+                    && window.console && window.console.warn) {
+                    window.console.warn('AudioContext recovery timed out:', opLabel);
+                }
+                done(false);
+            }, timeoutMs);
+            function done(ok) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                resolve(!!ok);
+            }
+            try {
+                var p = promiseFactory();
+                if (!p || !p.then) { done(true); return; }
+                p.then(function() { done(true); }, function() { done(false); });
+            } catch(e) {
+                done(false);
+            }
+        });
+    };
+}
+
 // Single-flight escalation: probe → resume-or-suspend/resume → recreate,
 // re-probing after each step. Coalesced via __audioCtxRecoverPromise so
 // concurrent callers (scope-activation + first autoplay) share one chain.
 window.__audioCtxRecover = function() {
     if (window.__audioCtxRecoverPromise) return window.__audioCtxRecoverPromise;
+    if (window.__audioCtxLastFailedAt && Date.now() - window.__audioCtxLastFailedAt < 5000) {
+        window.__audioCtxState = 'failed';
+        return Promise.resolve(false);
+    }
     var p = window.__audioCtxProbe(80).then(function(ok) {
         if (ok) return true;
         var ctx = window.__audioCtx;
         if (!ctx) return false;
+        var op = window.__audioOpWithTimeout;
         var step2 = (ctx.state === 'running')
-            ? ctx.suspend().then(function(){ return ctx.resume(); })
-            : ctx.resume();
-        return step2['catch'](function(){})
-            .then(function(){ return window.__audioCtxProbe(80); })
+            ? op('suspend', function(){ return ctx.suspend(); })
+                .then(function(ok){ return ok ? op('resume', function(){ return ctx.resume(); }) : false; })
+            : op('resume', function(){ return ctx.resume(); });
+        return step2
+            .then(function(ok){ return ok ? window.__audioCtxProbe(80) : false; })
             .then(function(ok2) {
                 if (ok2) return true;
                 // Narrow cleanup before discarding: dying contexts may not
@@ -83,19 +122,24 @@ window.__audioCtxRecover = function() {
                     try { window.__webAudioSource.stop(); } catch(e) {}
                     window.__webAudioSource = null;
                 }
-                return ctx.close()['catch'](function(){})
+                return op('close', function(){ return ctx.close(); })
                     .then(function() {
-                        window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        return window.__audioCtx.resume()['catch'](function(){});
+                        try {
+                            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        } catch(e) {
+                            return false;
+                        }
+                        return op('resume-new', function(){ return window.__audioCtx.resume(); });
                     })
                     .then(function(){ return window.__audioCtxProbe(80); });
             });
     }).then(function(ok) {
-        return ok;
+        return !!ok;
     }, function() {
         return false;
     }).then(function(ok) {
         window.__audioCtxState = ok ? 'healthy' : 'failed';
+        window.__audioCtxLastFailedAt = ok ? 0 : Date.now();
         window.__audioCtxRecoverPromise = null;
         return ok;
     });
