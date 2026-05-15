@@ -79,6 +79,47 @@ def _bare_kana(surface):
     return surface.replace(' ', '').strip()
 
 
+def _inject_inline_markers(word_surface, kana_with_markers):
+    """Splice `*` markers from `kana_with_markers` into `word_surface` at the
+    matching kana positions. Kana inside [...] brackets and bare kana outside
+    them are both consumed in stream order; spaces and kanji in the surface
+    are skipped. Markers land immediately before the kana they belong to —
+    inside the bracket when the kana lives there, outside otherwise.
+    """
+    if '*' not in kana_with_markers:
+        return word_surface
+    result: list[str] = []
+    src_idx = 0
+    in_bracket = False
+
+    def flush_markers():
+        nonlocal src_idx
+        while src_idx < len(kana_with_markers) and kana_with_markers[src_idx] == '*':
+            result.append(kana_with_markers[src_idx])
+            src_idx += 1
+
+    for ch in word_surface:
+        if ch == '[':
+            in_bracket = True
+            result.append(ch)
+            continue
+        if ch == ']':
+            in_bracket = False
+            result.append(ch)
+            continue
+        if ch == ' ':
+            result.append(ch)
+            continue
+        if in_bracket or not _KANJI_RANGES_RE.match(ch):
+            flush_markers()
+            if src_idx < len(kana_with_markers):
+                src_idx += 1
+        result.append(ch)
+
+    flush_markers()
+    return ''.join(result)
+
+
 _FRONT_VISIBLE_RE = re.compile(r'class\s*=\s*"[^"]*\bfront_visible\b[^"]*"')
 # Bracket contents not starting with `!` or a digit — i.e. a furigana
 # reading, not an already-marked bracket or a pitch-only bracket like [0].
@@ -118,10 +159,13 @@ def splice_word_kanji(converted, word_field):
         return converted, warnings
     surface_part = converted[:m.start()]
     pitch_part = converted[m.start():]
-    if _bare_kana(word_surface) != surface_part:
+    # Strip inline markers (`*` for devoicing) for the plain-kana compare;
+    # they're re-injected into the kanji form below.
+    plain_surface = surface_part.replace('*', '')
+    if _bare_kana(word_surface) != plain_surface:
         warnings.append('word_kana_mismatch')
         return converted, warnings
-    return word_surface + pitch_part, warnings
+    return _inject_inline_markers(word_surface, surface_part) + pitch_part, warnings
 
 
 def convert_comment_syntax(raw):

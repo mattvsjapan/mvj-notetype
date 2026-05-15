@@ -78,6 +78,18 @@ SPLICE_CASES = [
         '<span class="atamadaka">豊田[とよた]</span><span class="atamadaka">船長[せんちょう]</span>',
         '豊田[とよた]:1 / 船長[せんちょう]:1',
     ),
+    (
+        'splice re-injects * marker into the matching bracket',
+        'まっ*ぷたつ:3-',
+        '<span class="nakadaka">真[ま]っ 二[ぷた]つ</span>',
+        '真[ま]っ 二[*ぷた]つ:3-',
+    ),
+    (
+        'splice re-injects * marker on bare kana outside brackets',
+        'い*きたい:2-',
+        '<span class="atamadaka">行[い]きたい</span>',
+        '行[い]*きたい:2-',
+    ),
 ]
 
 
