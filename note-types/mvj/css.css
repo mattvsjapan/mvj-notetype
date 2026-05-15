@@ -1564,7 +1564,7 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 .def-toggle-label {
     display: inline-flex;
     align-items: center;
-    align-self: var(--def-toggle-align, center);
+    align-self: var(--toggle-align-flex, center);
     background: var(--toggle-bg);
     border: 1px solid var(--toggle-border);
     border-radius: 6px;

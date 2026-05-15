@@ -45,7 +45,7 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency', 'toggle-align',
         'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
         'image',
@@ -93,6 +93,12 @@
 </script>
 
 <script>
+// Toggle alignment — translate left|center to flex-start|center for flex contexts
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--toggle-align').trim();
+    document.documentElement.style.setProperty('--toggle-align-flex', v === 'left' ? 'flex-start' : 'center');
+})();
+
 // Tategaki mode — read CSS variable and add class before any rendering
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--tategaki');

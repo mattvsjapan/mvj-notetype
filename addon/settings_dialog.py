@@ -162,7 +162,7 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
-    "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
+    "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency", "toggle-align",
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
