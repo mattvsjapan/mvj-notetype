@@ -56,7 +56,12 @@ _CELL_STYLE = 'border:1px solid #ccc;padding:2px 8px'
 
 
 def _format_dict_value(values):
-    return re.sub(r'</?b>', '', values.strip())
+    cleaned = re.sub(r'</?b>', '', values.strip())
+    # Collapse whitespace immediately before furigana brackets — Anki's
+    # convention puts the inter-word space after the previous segment, not
+    # before `[`, so `単語 [たんご]:0` should be `単語[たんご]:0`.
+    cleaned = re.sub(r'\s+\[', '[', cleaned)
+    return cleaned
 
 
 def _row(name, value):
