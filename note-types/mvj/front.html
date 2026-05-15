@@ -1171,7 +1171,14 @@ function clearLastMargin(el) {
                     cls = (prev && prev.cls === 'jp' && (prev.text === ':' || /[A-Za-z]/.test(prev.text)))
                         ? 'jp' : 'other';
                 }
-            } else if (/[:0-9*^~;|\-.\/\\]/.test(ch)) {
+            } else if (ch === '*' || ch === '^' || ch === '\\') {
+                // Pitch prefix markers (devoiced/high/literal) attach to the
+                // kana that FOLLOWS, so look ahead past any further markers.
+                var pk = i + 1;
+                while (pk < raw.length && (raw.charAt(pk) === '*' || raw.charAt(pk) === '^' || raw.charAt(pk) === '\\')) pk++;
+                cls = (pk < raw.length && isJpChar(raw.charAt(pk))) ? 'jp'
+                    : (lookbackCls(units) === 'jp') ? 'jp' : 'other';
+            } else if (/[:0-9~;|\-.\/]/.test(ch)) {
                 cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
             } else {
                 cls = 'other';
