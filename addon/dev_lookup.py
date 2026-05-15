@@ -37,8 +37,10 @@ _NHK_KINDS = ('accent', 'pattern')
 _BRACKET_PITCH_RE = re.compile(r'\[([^;\]]+);[\d]+\]')
 # Strip furigana brackets: 食[た]べ → 食べ
 _FURIGANA_RE = re.compile(r'\[[^\]]*\]')
-# Strip colon+number: コーヒー:3 → コーヒー
-_COLON_PITCH_RE = re.compile(r':[\d,]+-?')
+# Strip colon+pitch suffix: コーヒー:3 → コーヒー, X:h~- → X, X:1,2- → X.
+# Matches the same char set as pitch_migration._PITCH_SUFFIX_RE so letter
+# codes (h, k, n…) and modifiers (~, +, ,) are stripped along with digits.
+_COLON_PITCH_RE = re.compile(r':[0-9a-zA-Z,+~]+-?')
 # Strip devoiced marker
 _DEVOICED_RE = re.compile(r'\*')
 
@@ -64,13 +66,11 @@ def _strip_pitch(word_field: str) -> str:
     text = _DEVOICED_RE.sub('', text)
     # Remove HTML tags
     text = re.sub(r'<[^>]+>', '', text)
+    # `/` marks a split compound — concatenate the parts so we look up the
+    # whole compound (e.g. 氏 / 素性 → 氏素性), not just the first morpheme.
+    text = text.replace('/', '')
     # Remove furigana spaces and strip
-    text = text.replace(' ', '').strip()
-    if not text:
-        return ''
-    # Take first meaningful token (split on /)
-    tokens = re.split(r'/+', text)
-    return tokens[0].strip() if tokens else ''
+    return text.replace(' ', '').strip()
 
 
 def _hira_to_kata(text: str) -> str:
