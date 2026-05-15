@@ -564,6 +564,13 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    flex: 0 0 auto;
+}
+
+.answer > .def,
+.answer > .jp-def-section {
+    flex: 0 0 auto;
 }
 
 /* Target word — Chinese serif with vertical bopomofo */
@@ -718,6 +725,10 @@ rt {
 .jp-def-section {
     margin-top: 16px;
     text-align: var(--toggle-align);
+}
+
+#notes-section {
+    margin-top: 16px;
 }
 
 .jp-def-input {
