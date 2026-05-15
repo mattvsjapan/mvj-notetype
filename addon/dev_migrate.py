@@ -20,6 +20,7 @@ from aqt.utils import showWarning, tooltip
 from .notetype import NOTE_TYPE_NAME
 from .pitch_migration import (
     convert_comment_syntax as _convert_comment_syntax,
+    mark_front_visible as _mark_front_visible,
     splice_word_kanji as _splice_word_kanji,
 )
 
@@ -155,6 +156,7 @@ def _migrate_note_core(note) -> bool:
         # syntax was kana-only.
         new_syntax, splice_warnings = _splice_word_kanji(new_syntax, word_before)
         warnings.extend(splice_warnings)
+        new_syntax = _mark_front_visible(new_syntax, word_before)
 
         _log(note.id, word_before, image_content, new_syntax)
 

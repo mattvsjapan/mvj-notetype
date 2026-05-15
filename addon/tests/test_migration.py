@@ -11,7 +11,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pitch_migration import convert_comment_syntax, splice_word_kanji  # noqa: E402
+from pitch_migration import (  # noqa: E402
+    convert_comment_syntax,
+    mark_front_visible,
+    splice_word_kanji,
+)
 
 
 # (label, image-comment input, expected converter output)
@@ -67,6 +71,41 @@ SPLICE_CASES = [
 ]
 
 
+# (label, converter output, Word-field-before, expected output)
+FRONT_VISIBLE_CASES = [
+    (
+        'inject ! into kanji-furigana when front_visible class present',
+        '後々[あとあと]:0-',
+        '<span class="front_visible"><span class="heiban">後々[あとあと]</span></span>',
+        '後々[!あとあと]:0-',
+    ),
+    (
+        'multi-word: ! injected into every furigana bracket',
+        '当[あ]たり 外[はず]れ:0-',
+        '<span class="front_visible"><span class="heiban">当[あ]たり 外[はず]れ</span></span>',
+        '当[!あ]たり 外[!はず]れ:0-',
+    ),
+    (
+        'no front_visible class → no change',
+        '後々[あとあと]:0-',
+        '<span class="heiban">後々[あとあと]</span>',
+        '後々[あとあと]:0-',
+    ),
+    (
+        'idempotent: existing ! not doubled',
+        '後々[!あとあと]:0-',
+        '<span class="front_visible"><span class="heiban">後々[あとあと]</span></span>',
+        '後々[!あとあと]:0-',
+    ),
+    (
+        'front_visible with devoiced marker keeps * inside the !',
+        '岸[*きし]:o-',
+        '<span class="front_visible"><span class="odaka">岸[きし]</span></span>',
+        '岸[!*きし]:o-',
+    ),
+]
+
+
 def _check(label, actual, expected):
     if actual == expected:
         print(f'PASS  {label}')
@@ -86,7 +125,10 @@ def main() -> int:
     for label, converted, word_field, expected in SPLICE_CASES:
         actual, _ = splice_word_kanji(converted, word_field)
         failed += _check(label, actual, expected)
-    total = len(CONVERT_CASES) + len(SPLICE_CASES)
+    for label, converted, word_field, expected in FRONT_VISIBLE_CASES:
+        actual = mark_front_visible(converted, word_field)
+        failed += _check(label, actual, expected)
+    total = len(CONVERT_CASES) + len(SPLICE_CASES) + len(FRONT_VISIBLE_CASES)
     print()
     print(f'{total - failed}/{total} passed')
     return 1 if failed else 0

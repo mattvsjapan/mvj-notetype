@@ -79,6 +79,26 @@ def _bare_kana(surface):
     return surface.replace(' ', '').strip()
 
 
+_FRONT_VISIBLE_RE = re.compile(r'class\s*=\s*"[^"]*\bfront_visible\b[^"]*"')
+# Bracket contents not starting with `!` or a digit — i.e. a furigana
+# reading, not an already-marked bracket or a pitch-only bracket like [0].
+_FURIGANA_BRACKET_RE = re.compile(r'\[([^\]!0-9][^\]]*)\]')
+
+
+def mark_front_visible(converted, word_field):
+    """If the legacy Word field carries `class="front_visible"`, prefix each
+    furigana bracket in `converted` with `!` so the new note type renders
+    the reading on the front (see note-types/mvj/front.html `textToRuby`:
+    `reading.charAt(0) === '!'` → `<rt data-front>...</rt>`).
+
+    Idempotent. Brackets whose contents start with `!` or a digit are left
+    alone, so `[0]`-style empty-pitch brackets aren't touched.
+    """
+    if not _FRONT_VISIBLE_RE.search(word_field):
+        return converted
+    return _FURIGANA_BRACKET_RE.sub(r'[!\1]', converted)
+
+
 def splice_word_kanji(converted, word_field):
     """If converter output is kana-only but Word field has the kanji form,
     substitute the Word-field surface in (keeping the pitch suffix).
