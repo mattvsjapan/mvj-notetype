@@ -1050,6 +1050,11 @@ def _lookup_note(editor: Editor):
                 new_name = f"{h_clean}_{r_clean}_{pitch_part}_{audio_suffix}{ext}"
             elif h_clean:
                 new_name = f"{h_clean}_{pitch_part}_{audio_suffix}{ext}"
+            elif r_clean:
+                # Kana-only word (e.g. katakana loanword チキン): no kanji
+                # hyouki, but the reading still gives a stable, suffixed name
+                # so re-lookup can strip it via _LOOKUP_AUDIO_TAG_RE.
+                new_name = f"{r_clean}_{pitch_part}_{audio_suffix}{ext}"
             else:
                 new_name = os.path.splitext(orig_audio)[0] + ext
             src = os.path.join(audio_dir, orig_audio)
