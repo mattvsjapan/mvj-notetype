@@ -130,6 +130,11 @@ def _normalize_pitch(raw_pitch):
     # Handle ~ modifier: ensure it's present (both positions work in new syntax)
     # ~0, 0~ both acceptable — leave as-is after + and b handling
 
+    # Old `-1` suffix is the legacy linker marker → new syntax uses `~`.
+    # E.g. k-1 → k~, 1-1 → 1~, -1 → ~.
+    if pitch.endswith('-1'):
+        pitch = pitch[:-2] + '~'
+
     return pitch, suffix
 
 

@@ -40,6 +40,16 @@ CONVERT_CASES = [
         'いdきき;2 -',
         'い*きき:2-',
     ),
+    (
+        'k-1 legacy linker → k~ in 4-group compound',
+        '手[て];1 取[と]り;k-1 ; 足[あdし];o ; 取[と]り;k1',
+        '手[て]:1 取[と]り:k~ / 足[あ*し]:o / 取[と]り:k1',
+    ),
+    (
+        'k-1 linker on both halves of a 2-group compound',
+        '手[て];1 取[と]り;k-1 ; 足[あdし];o 取[と]り;k-1',
+        '手[て]:1 取[と]り:k~ / 足[あ*し]:o 取[と]り:k~',
+    ),
 ]
 
 # (label, converter output, Word-field-before, expected spliced output)
