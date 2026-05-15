@@ -1165,7 +1165,7 @@ function clearLastMargin(el) {
                     cls = (prev && prev.cls === 'jp' && (prev.text === ':' || /[A-Za-z]/.test(prev.text)))
                         ? 'jp' : 'other';
                 }
-            } else if (/[:0-9*^~;|,\-.\/\\]/.test(ch)) {
+            } else if (/[:0-9*^~;|\-.\/\\]/.test(ch)) {
                 cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
             } else {
                 cls = 'other';
