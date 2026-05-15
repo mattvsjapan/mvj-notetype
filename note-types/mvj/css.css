@@ -797,6 +797,10 @@ html {
 
 /* Devoiced markers are hollow */
 circle.devoiced, rect.devoiced { fill: none !important; }
+/* Per-role `.<role> circle, .<role> line` rules above don't target rect,
+   so rect.devoiced (used for multi-char moras like しゅ) has no stroke
+   source. Pick up the role color via inherited `color`. */
+rect.devoiced { stroke: currentColor; }
 
 /* — Replay button (targets Anki's generated .replay-button) — */
 
