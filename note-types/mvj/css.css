@@ -1508,6 +1508,14 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
     min-width: 0;
 }
 
+.def > .def-inner > :first-child {
+    margin-top: 0;
+}
+
+.def > .def-inner > :last-child {
+    margin-bottom: 0;
+}
+
 .def rt {
     color: inherit;
     transform: translateY(-1px);
@@ -1632,6 +1640,10 @@ html:not(.tategaki) .target-word:has(ruby):not(.furigana-off) {
 
 .def-section:not(:has(.def[data-def-show="inline"], .def[data-def-show="toggle"])) {
     display: none;
+}
+
+.def-section:not(:has(.def[data-def-show="toggle"])) > .def[data-def-show="inline"] {
+    margin-bottom: 0;
 }
 
 .def[data-def-show="inline"] {
