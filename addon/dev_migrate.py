@@ -278,5 +278,11 @@ def _add_reviewer_menu(reviewer, menu):
     action.triggered.connect(_migrate_note_from_reviewer)
 
 
+def _add_reviewer_shortcut(state, shortcuts):
+    if state == "review":
+        shortcuts.append(("Alt+M", _migrate_note_from_reviewer))
+
+
 gui_hooks.editor_did_init_buttons.append(_add_migrate_button)
 gui_hooks.reviewer_will_show_context_menu.append(_add_reviewer_menu)
+gui_hooks.state_shortcuts_will_change.append(_add_reviewer_shortcut)
