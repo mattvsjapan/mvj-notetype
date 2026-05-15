@@ -185,17 +185,16 @@ def convert_comment_syntax(raw):
     for group in groups:
         group = re.sub(r'\s+-\s*$', '', group)
         tokens = group.split()
-        pitched = []
-        for token in tokens:
-            reformatted = _reformat_token(token)
-            result, warnings = convert_word_field(reformatted)
-            # In multi-group expressions, strip the auto-added ghost particle
-            if multi:
-                result = re.sub(r'-$', '', result)
-            all_warnings.extend(warnings)
-            pitched.append(result)
-
-        converted_groups.append(' '.join(pitched))
+        # Convert the group as a whole so convert_word_field's "ghost dash
+        # only on the last numeric-pitched token" rule applies — calling it
+        # per token makes every numeric token think it's the last.
+        reformatted = ' '.join(_reformat_token(t) for t in tokens)
+        result, warnings = convert_word_field(reformatted)
+        # In multi-group expressions, strip the auto-added ghost particle
+        if multi:
+            result = re.sub(r'-$', '', result)
+        all_warnings.extend(warnings)
+        converted_groups.append(result)
 
     # Join word groups with /
     result = ' / '.join(converted_groups)

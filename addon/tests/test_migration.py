@@ -50,6 +50,11 @@ CONVERT_CASES = [
         '手[て];1 取[と]り;k-1 ; 足[あdし];o 取[と]り;k-1',
         '手[て]:1 取[と]り:k~ / 足[あ*し]:o 取[と]り:k~',
     ),
+    (
+        'no ghost dash on accented noun followed by a real particle',
+        '今[いま]まで;n0 以上[いじょう];1 に',
+        '今[いま]まで:n0 以上[いじょう]:1 に',
+    ),
 ]
 
 # (label, converter output, Word-field-before, expected spliced output)
