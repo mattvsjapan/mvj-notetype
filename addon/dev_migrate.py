@@ -124,9 +124,23 @@ def _migrate_note_core(note) -> bool:
     warnings = []
     moved_audio = []
 
-    m = _SYNTAX_COMMENT_RE.search(image_content) if image_content.strip() else None
-    if m:
-        new_syntax, warnings = _convert_comment_syntax(m.group(1))
+    syntax_matches = _SYNTAX_COMMENT_RE.findall(image_content) if image_content.strip() else []
+    if syntax_matches:
+        word_before = note.fields[word_idx]
+
+        # Each syntax comment becomes its own line in the new Word field
+        # (one graph per line on the MvJ back; see commit 217cab6).
+        converted_lines = []
+        for raw in syntax_matches:
+            converted, conv_warnings = _convert_comment_syntax(raw)
+            warnings.extend(conv_warnings)
+            # Preserve kanji form from the existing Word field when the
+            # comment syntax was kana-only.
+            converted, splice_warnings = _splice_word_kanji(converted, word_before)
+            warnings.extend(splice_warnings)
+            converted_lines.append(converted)
+        new_syntax = '<br>'.join(converted_lines)
+        new_syntax = _mark_front_visible(new_syntax, word_before)
 
         # Move sentence audio from Word Audio to Sentence Audio:
         # - filenames containing "reibun"
@@ -149,14 +163,6 @@ def _migrate_note_core(note) -> bool:
         if moved_audio:
             note.fields[word_audio_idx] = word_audio.strip()
             note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
-
-        word_before = note.fields[word_idx]
-
-        # Preserve kanji form from the existing Word field when the comment
-        # syntax was kana-only.
-        new_syntax, splice_warnings = _splice_word_kanji(new_syntax, word_before)
-        warnings.extend(splice_warnings)
-        new_syntax = _mark_front_visible(new_syntax, word_before)
 
         _log(note.id, word_before, image_content, new_syntax)
 
