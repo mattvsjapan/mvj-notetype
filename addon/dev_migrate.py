@@ -35,6 +35,13 @@ _AUDIO_RE = re.compile(r'\[audio:([^\]]+)\]')
 # Matches <li>DICT_NAME: PITCH_VALUES</li> in the context field
 _CONTEXT_DICT_RE = re.compile(r'<li>([^<:]+):\s*(.*?)</li>')
 
+# Space immediately before a furigana bracket: real whitespace (\s also covers
+# NBSP \xa0 and full-width 　) or the literal &nbsp; / numeric entity that
+# Anki's editor writes into field HTML instead of a plain space.
+_SPACE_BEFORE_BRACKET_RE = re.compile(
+    r'(?:\s|&nbsp;|&#x0*a0;|&#0*160;)+\[', re.IGNORECASE
+)
+
 
 def _log(note_id, word_before, image_before, word_after):
     os.makedirs(_LOG_DIR, exist_ok=True)
@@ -59,8 +66,9 @@ def _format_dict_value(values):
     cleaned = re.sub(r'</?b>', '', values.strip())
     # Collapse whitespace immediately before furigana brackets — Anki's
     # convention puts the inter-word space after the previous segment, not
-    # before `[`, so `単語 [たんご]:0` should be `単語[たんご]:0`.
-    cleaned = re.sub(r'\s+\[', '[', cleaned)
+    # before `[`, so `単語 [たんご]:0` should be `単語[たんご]:0`. The editor
+    # stores that space as a literal &nbsp; entity, which \s does not match.
+    cleaned = _SPACE_BEFORE_BRACKET_RE.sub('[', cleaned)
     return cleaned
 
 
