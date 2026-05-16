@@ -1178,7 +1178,33 @@ function clearLastMargin(el) {
                 while (pk < raw.length && (raw.charAt(pk) === '*' || raw.charAt(pk) === '^' || raw.charAt(pk) === '\\')) pk++;
                 cls = (pk < raw.length && isJpChar(raw.charAt(pk))) ? 'jp'
                     : (lookbackCls(units) === 'jp') ? 'jp' : 'other';
-            } else if (/[:0-9~;|\-.\/]/.test(ch)) {
+            } else if (/[0-9]/.test(ch)) {
+                if (lookbackCls(units) === 'jp') {
+                    cls = 'jp';
+                } else {
+                    // No JP context behind a digit (e.g. a number at the very
+                    // start of a field). Look forward past the digit run: a
+                    // following JP char, or a furigana *reading* bracket,
+                    // means this number is part of a Japanese word and its
+                    // [reading] must render as ruby. The reading test mirrors
+                    // textToRuby (forced [!..], split [..|..] either side, or
+                    // kana/Latin body) but excludes digit-only pitch [0].
+                    var dj = i;
+                    while (dj < raw.length && /[0-9]/.test(raw.charAt(dj))) dj++;
+                    var rb = false;
+                    if (raw.charAt(dj) === '[') {
+                        var be = raw.indexOf(']', dj);
+                        if (be !== -1) {
+                            var b = raw.substring(dj + 1, be);
+                            rb = !!b && !/^[0-9]+$/.test(b) && (
+                                b.charAt(0) === '!' ? b.length > 1
+                              : b.indexOf('|') !== -1 ? b.split('|').join('') !== ''
+                              : /[぀-ゟ゠-ヿa-zA-Z]/.test(b));
+                        }
+                    }
+                    cls = ((dj < raw.length && isJpChar(raw.charAt(dj))) || rb) ? 'jp' : 'other';
+                }
+            } else if (/[:~;|\-.\/]/.test(ch)) {
                 cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
             } else {
                 cls = 'other';
