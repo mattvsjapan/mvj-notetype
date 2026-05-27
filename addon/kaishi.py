@@ -14,6 +14,12 @@ from aqt import mw
 from aqt.qt import QMessageBox
 from aqt.utils import showInfo, showWarning
 
+from .downloader import (
+    CorruptDownloadError,
+    DownloadError,
+    download_to_file,
+    verify_zip,
+)
 from .notetype import NOTE_TYPE_NAME, _OLD_NOTE_TYPE_NAMES
 
 # ---------------------------------------------------------------------------
@@ -150,25 +156,19 @@ def _fetch_manifest(url: str) -> dict:
 
 
 def _download_with_progress(url: str, dest: str, label: str) -> None:
-    """Download a large file with progress updates (call from background thread)."""
-    req = urllib.request.Request(url)
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        total = int(resp.headers.get("Content-Length", 0))
-        downloaded = 0
-        with open(dest, "wb") as f:
-            while True:
-                chunk = resp.read(65536)
-                if not chunk:
-                    break
-                f.write(chunk)
-                downloaded += len(chunk)
-                if total:
-                    pct = downloaded * 100 // total
-                    mw.taskman.run_on_main(
-                        lambda p=pct, l=label: mw.progress.update(
-                            label=f"{l} ({p}%)..."
-                        )
-                    )
+    """Download a large file with progress updates (call from background thread).
+
+    Delegates to downloader.download_to_file, which verifies the byte count,
+    resumes interrupted transfers via HTTP Range, and retries -- so a dropped
+    connection no longer leaves a truncated file masquerading as a complete one.
+    """
+    def on_progress(downloaded: int, total: int) -> None:
+        pct = downloaded * 100 // total
+        mw.taskman.run_on_main(
+            lambda p=pct, l=label: mw.progress.update(label=f"{l} ({p}%)...")
+        )
+
+    download_to_file(url, dest, on_progress=on_progress)
 
 
 def _fix_zip_filename(name: str) -> str:
@@ -304,10 +304,19 @@ def _download_and_extract_zip(url: str, label: str) -> int:
     tmp.close()
     try:
         _download_with_progress(url, tmp_path, label)
+        verify_zip(tmp_path)
         mw.taskman.run_on_main(
             lambda: mw.progress.update(label="Extracting files...")
         )
-        return _extract_zip_to_media(tmp_path)
+        try:
+            return _extract_zip_to_media(tmp_path)
+        except zipfile.BadZipFile as e:
+            # is_zipfile() passed but a member is corrupt (bad CRC / data) —
+            # surface the same actionable message as a truncated download.
+            raise CorruptDownloadError(
+                "The downloaded media file is corrupted (failed to extract). "
+                "Please try again."
+            ) from e
     finally:
         try:
             os.unlink(tmp_path)
@@ -361,7 +370,7 @@ def run_install() -> None:
         msg = (
             f'This will create 1,500 cards in deck "{deck_name}".'
             if not missing
-            else f"This will download ~92 MB of media and create 1,500 cards "
+            else f"This will download ~200 MB of media and create 1,500 cards "
             f'in deck "{deck_name}".'
         )
         reply = QMessageBox.question(
@@ -397,6 +406,9 @@ def _start_install_download(deck_name: str, missing: list[str]) -> None:
             return
         except URLError as e:
             showWarning(f"Connection failed: {e.reason}")
+            return
+        except DownloadError as e:
+            showWarning(str(e))
             return
         except Exception as e:
             showWarning(f"Install failed: {e}")
@@ -541,11 +553,11 @@ def run_migrate() -> None:
         if non_def_audio_missing:
             download_url = _FULL_MEDIA_ZIP_URL
             download_label = "Downloading media"
-            download_size_msg = "Download ~92 MB of media"
+            download_size_msg = "Download ~200 MB of media"
         elif missing_full:
             download_url = _DEF_AUDIO_ZIP_URL
             download_label = "Downloading definition audio"
-            download_size_msg = "Download ~20 MB of definition audio"
+            download_size_msg = "Download ~100 MB of definition audio"
         else:
             download_url = None
             download_label = ""
@@ -644,6 +656,9 @@ def _start_migrate_download(
             return
         except URLError as e:
             showWarning(f"Connection failed: {e.reason}")
+            return
+        except DownloadError as e:
+            showWarning(str(e))
             return
         except Exception as e:
             showWarning(f"Download failed: {e}")
