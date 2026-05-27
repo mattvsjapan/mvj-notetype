@@ -48,7 +48,9 @@ zip -r "$OUTPUT_PATH" . \
     -x "dev_nhk1998_index.py" \
     -x "meta.json" \
     -x "user_files/*" \
-    -x "dictionary/*"
+    -x "dictionary/*" \
+    -x "tests/*" \
+    -x ".pytest_cache/*"
 
 echo ""
 echo "Packaged: $OUTPUT_PATH"
