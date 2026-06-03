@@ -45,6 +45,7 @@ zip -r "$OUTPUT_PATH" . \
     -x "dev_sync.py" \
     -x "dev_migrate.py" \
     -x "dev_lookup.py" \
+    -x "dev_nhk1998_index.py" \
     -x "meta.json" \
     -x "user_files/*" \
     -x "dictionary/*" \

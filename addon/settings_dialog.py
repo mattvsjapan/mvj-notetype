@@ -28,6 +28,7 @@ from aqt.qt import (
     QPushButton,
     QScrollArea,
     QShortcut,
+    QSizePolicy,
     QSplitter,
     Qt,
     QKeySequence,
@@ -92,7 +93,7 @@ _HOTKEYS = [
     ("--hotkey-definition-audio", "Definition Audio", ","),
     ("--hotkey-play-all", "Play All", "z"),
     ("--hotkey-stop-all", "Stop All", "?"),
-    ("--hotkey-jp-toggle", "Reveal Definition Toggle", "."),
+    ("--hotkey-def-toggle", "Reveal Definition Toggle", "."),
     ("--hotkey-details-toggle", "Reveal Details", "n"),
 ]
 
@@ -128,13 +129,11 @@ _SETTINGS = {
         ("--image", "Image", ["front & back", "back only", "off"], "back only"),
     ],
     "Definitions": [
-        ("--definition-primary", "Primary Selection", ["bilingual", "monolingual", "monolingual when unlocked"], "monolingual when unlocked"),
-        ("--definition-text", "Primary Definition Text", ["on", "off", "on when monolingual", "on when bilingual"], "on"),
-        ("--definition-secondary", "Secondary Definition Text", ["on", "off", "separate toggle"], "separate toggle"),
-        ("--definition-audio", "Definition Audio", ["on", "off"], "on"),
+        ("--definition-text-mono", "Definition Text (Monolingual)", ["on", "off", "on when unlocked, otherwise off", "on when unlocked, otherwise toggle"], "on when unlocked, otherwise toggle"),
+        ("--definition-text-bi", "Definition Text (Bilingual)", ["on", "off", "on when mono locked, otherwise off", "on when mono locked, otherwise toggle"], "on when mono locked, otherwise toggle"),
         ("--definition-audio-buttons", "Definition Audio Buttons", ["on", "fallback", "off"], "on"),
-        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
-        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["always", "only when primary", "when primary or on reveal", "off"], "always"),
+        ("--definition-autoplay-mono", "Definition Autoplay (Monolingual)", ["on", "on when unlocked, otherwise off", "on when unlocked or on reveal", "off"], "on when unlocked or on reveal"),
+        ("--definition-autoplay-bi", "Definition Autoplay (Bilingual)", ["on", "on when mono locked, otherwise off", "on when mono locked or on reveal", "off"], "on when mono locked or on reveal"),
         ("--definition-text-play", "Definition Text Play", ["on", "off"], "on"),
         ("--definition-default", "Default Definition Type", ["monolingual", "bilingual"], "monolingual"),
         ("--definition-furigana", "Definition Furigana", ["on", "off"], "on"),
@@ -154,8 +153,8 @@ _SETTINGS = {
         ("--details-sentence-audio", "Sentence Audio", ["on", "off"], "off"),
         ("--details-sentence-autoplay", "Sentence Autoplay", ["on", "off"], "off"),
         ("--details-image", "Image", ["on", "off"], "off"),
-        ("--details-definition-text", "Primary Definition", ["on", "off"], "off"),
-        ("--details-definition-secondary", "Secondary Definition", ["on", "off"], "off"),
+        ("--details-definition-text-mono", "Definition Text (Monolingual)", ["on", "off"], "off"),
+        ("--details-definition-text-bi", "Definition Text (Bilingual)", ["on", "off"], "off"),
         ("--details-definition-audio", "Definition Audio", ["on", "off"], "off"),
         ("--details-notes-text", "Notes Text", ["on", "off"], "off"),
     ],
@@ -163,16 +162,16 @@ _SETTINGS = {
 
 # All settings the JS mode system can override (matches front.html settings array).
 _OVERRIDABLE = [
-    "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency",
+    "tategaki", "color-scheme", "debug", "audio-labels", "card-transparency", "toggle-align",
     "word-text", "word-audio", "word-audio-buttons", "word-autoplay", "word-text-play", "word-furigana", "word-pitch-color", "pitch-graph",
     "sentence-text", "sentence-audio", "sentence-audio-buttons", "sentence-autoplay", "sentence-text-play", "sentence-furigana", "sentence-pitch-color",
     "image",
-    "definition-text", "definition-audio", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-primary", "definition-secondary", "definition-default",
+    "definition-text-mono", "definition-text-bi", "definition-audio-buttons", "definition-autoplay-bi", "definition-autoplay-mono", "definition-text-play", "definition-default",
     "definition-furigana", "definition-pitch-color", "definition-align",
     "notes-text", "notes-align",
     "details-word-text", "details-word-audio", "details-word-autoplay", "details-pitch-graph",
     "details-sentence-text", "details-sentence-audio", "details-sentence-autoplay",
-    "details-image", "details-definition-text", "details-definition-audio", "details-definition-secondary", "details-notes-text",
+    "details-image", "details-definition-text-mono", "details-definition-text-bi", "details-definition-audio", "details-notes-text",
 ]
 
 # Regex to find the modes *content* (between the MODES banner and the closing ═══ banner).
@@ -209,6 +208,8 @@ def _parse_color_schemes(css: str) -> list[str]:
     return ["blue"] + [n for n in others if n != "blue"]
 
 _OVERRIDE_ACTIVE_COLOR = QColor(76, 175, 80, 25)
+_COMBO_MIN_WIDTH = 96
+_COMBO_TEXT_PADDING = 56
 
 
 @dataclass
@@ -230,11 +231,33 @@ _DETAILS_TOGGLE_MIGRATION = {
     "--sentence-audio": ("--details-sentence-audio", "back only"),
     "--sentence-autoplay": ("--details-sentence-autoplay", "none"),
     "--image": ("--details-image", "back only"),
-    "--definition-text": ("--details-definition-text", "on"),
-    "--definition-audio": ("--details-definition-audio", "on"),
-    "--definition-secondary": ("--details-definition-secondary", "on"),
     "--notes-text": ("--details-notes-text", "on"),
 }
+
+_SETTING_VALUE_ALIASES = {
+    "--definition-text-mono": {
+        "on when unlocked": "on when unlocked, otherwise off",
+        "on when unlocked, toggle when locked": "on when unlocked, otherwise toggle",
+    },
+    "--definition-text-bi": {
+        "on when mono is locked": "on when mono locked, otherwise off",
+        "on when mono is locked, toggle when mono is unlocked": "on when mono locked, otherwise toggle",
+    },
+    "--definition-autoplay-mono": {
+        "on when unlocked": "on when unlocked, otherwise off",
+        "on when unlocked or on reveal, otherwise off": "on when unlocked or on reveal",
+    },
+    "--definition-autoplay-bi": {
+        "on when mono is locked": "on when mono locked, otherwise off",
+        "on when mono is locked or on reveal": "on when mono locked or on reveal",
+        "on when mono locked or on reveal, otherwise off": "on when mono locked or on reveal",
+    },
+}
+
+
+def _normalize_setting_value(var: str, value: str) -> str:
+    """Map retired option labels to their current names."""
+    return _SETTING_VALUE_ALIASES.get(var, {}).get(value, value)
 
 
 def _parse_settings(css: str) -> dict[str, str]:
@@ -244,7 +267,7 @@ def _parse_settings(css: str) -> dict[str, str]:
         for var, _label, _options, default in entries:
             # Match e.g.  --tategaki: off;  (with optional whitespace/comments)
             m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
-            values[var] = m.group(1) if m else default
+            values[var] = _normalize_setting_value(var, m.group(1) if m else default)
     for var, _label, default in _HOTKEYS:
         m = re.search(rf"{re.escape(var)}:\s*(.+?)\s*;", css)
         values[var] = m.group(1) if m else default
@@ -323,7 +346,8 @@ def _parse_modes(css: str) -> list[Mode]:
                 rf"--mode-{i}-{re.escape(setting)}:\s*(.+?)\s*;", css
             )
             if m:
-                overrides[f"--{setting}"] = m.group(1)
+                var = f"--{setting}"
+                overrides[var] = _normalize_setting_value(var, m.group(1))
 
         modes.append(Mode(name=name, tag=tag, deck=deck, overrides=overrides))
     return modes
@@ -422,12 +446,38 @@ class _NoScrollComboBox(QComboBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.setMinimumContentsLength(4)
+        self.setMinimumWidth(_COMBO_MIN_WIDTH)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+
+    def minimumSizeHint(self):  # type: ignore[override]
+        hint = super().minimumSizeHint()
+        hint.setWidth(_COMBO_MIN_WIDTH)
+        return hint
 
     def wheelEvent(self, event) -> None:  # type: ignore[override]
         if self.hasFocus():
             super().wheelEvent(event)
         else:
             event.ignore()
+
+    def cap_width_to_contents(self) -> None:
+        if self.count() <= 0:
+            return
+        metrics = self.fontMetrics()
+        widest = max(
+            metrics.horizontalAdvance(self.itemText(i))
+            for i in range(self.count())
+        )
+        self.setMaximumWidth(
+            max(self.minimumSizeHint().width(), widest + _COMBO_TEXT_PADDING)
+        )
 
 
 class _DeckComboBox(_NoScrollComboBox):
@@ -468,6 +518,7 @@ class _DeckComboBox(_NoScrollComboBox):
             else:
                 item.setCheckState(Qt.CheckState.Unchecked)
         self._update_text()
+        self.cap_width_to_contents()
 
     def checkedTexts(self) -> list[str]:
         texts = []
@@ -518,6 +569,7 @@ class SettingsDialog(QDialog):
         self._defaults = _parse_settings(css)
         self._modes = _parse_modes(css)
         self._selected_index = -1  # -1 = Defaults
+        self._settings_combo_widths = self._calculate_settings_combo_widths()
 
         # Widget refs (populated by detail panel builders)
         self._combos: dict[str, QComboBox] = {}
@@ -570,6 +622,9 @@ class SettingsDialog(QDialog):
 
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
+        left_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         left_scroll.setMinimumWidth(320)
         left_scroll.setWidget(left_inner)
 
@@ -644,17 +699,14 @@ class SettingsDialog(QDialog):
 
         # --- Populate mode list & detail panel ---
         self._rebuild_mode_list()
-
-        # Measure ideal left width from a mode view before building defaults
-        if self._modes:
-            tmp = self._build_mode_view(self._modes[0])
-            scrollbar_w = left_scroll.verticalScrollBar().sizeHint().width()
-            left_w = tmp.sizeHint().width() + scrollbar_w + 2
-            tmp.deleteLater()
-            splitter.setSizes([left_w, self.width() - left_w])
-
         self._rebuild_detail_panel()
         self._update_button_states()
+
+        scrollbar_w = left_scroll.verticalScrollBar().sizeHint().width()
+        left_w = left_inner.sizeHint().width() + scrollbar_w + 2
+        left_w = max(left_scroll.minimumWidth(), left_w)
+        left_w = min(left_w, int(self.width() * 0.4))
+        splitter.setSizes([left_w, self.width() - left_w])
 
     # --- Mode list ---
 
@@ -699,6 +751,23 @@ class SettingsDialog(QDialog):
             not is_default and self._selected_index < len(self._modes) - 1
         )
 
+    def _calculate_settings_combo_widths(self) -> dict[str, int]:
+        widths: dict[str, int] = {}
+        metrics = self.fontMetrics()
+        for section, entries in _SETTINGS.items():
+            texts: list[str] = []
+            for _var, _label, options, _default in entries:
+                texts.extend(options if options is not None else self._color_schemes)
+            if texts:
+                widest = max(metrics.horizontalAdvance(text) for text in texts)
+                widths[section] = max(
+                    _COMBO_MIN_WIDTH,
+                    widest + _COMBO_TEXT_PADDING,
+                )
+            else:
+                widths[section] = _COMBO_MIN_WIDTH
+        return widths
+
     def _on_mode_list_selection_changed(self, row: int) -> None:
         if row < 0:
             return
@@ -730,15 +799,21 @@ class SettingsDialog(QDialog):
 
         for section, entries in _SETTINGS.items():
             group_box = QGroupBox(section)
+            section_combo_width = self._settings_combo_widths[section]
             form = QFormLayout()
             form.setVerticalSpacing(8)
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.setFieldGrowthPolicy(
+                QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+            )
+            form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
             )
             for var, label, options, default in entries:
                 combo = _NoScrollComboBox()
                 combo.addItems(options if options is not None else self._color_schemes)
+                combo.setMaximumWidth(section_combo_width)
                 combo.setCurrentText(self._defaults.get(var, default))
                 combo.currentTextChanged.connect(self._on_setting_changed)
                 form.addRow(label + ":", combo)
@@ -752,6 +827,10 @@ class SettingsDialog(QDialog):
         hotkey_form = QFormLayout()
         hotkey_form.setVerticalSpacing(8)
         hotkey_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        hotkey_form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+        )
+        hotkey_form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         hotkey_form.setFormAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
         )
@@ -780,19 +859,31 @@ class SettingsDialog(QDialog):
         triggers_form = QFormLayout()
         triggers_form.setVerticalSpacing(8)
         triggers_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        triggers_form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+        )
+        triggers_form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         triggers_form.setFormAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
         )
 
         self._mode_name_input = QLineEdit(mode.name)
         self._mode_name_input.setPlaceholderText("e.g. Sentence")
-        self._mode_name_input.setMinimumWidth(250)
+        self._mode_name_input.setMinimumWidth(96)
+        self._mode_name_input.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
         self._mode_name_input.textChanged.connect(self._on_mode_name_changed)
         triggers_form.addRow("Name:", self._mode_name_input)
 
         self._mode_tag_input = QLineEdit(mode.tag)
         self._mode_tag_input.setPlaceholderText("e.g. _jp::sentence")
-        self._mode_tag_input.setMinimumWidth(250)
+        self._mode_tag_input.setMinimumWidth(96)
+        self._mode_tag_input.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
         self._mode_tag_input.textChanged.connect(self._on_setting_changed)
         triggers_form.addRow("Tag:", self._mode_tag_input)
 
@@ -814,9 +905,14 @@ class SettingsDialog(QDialog):
         # --- Override sections (same groups as defaults, minus Hotkeys) ---
         for section, entries in _SETTINGS.items():
             group_box = QGroupBox(section)
+            section_combo_width = self._settings_combo_widths[section]
             form = QFormLayout()
             form.setVerticalSpacing(8)
             form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.setFieldGrowthPolicy(
+                QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+            )
+            form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
             form.setFormAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
             )
@@ -825,6 +921,7 @@ class SettingsDialog(QDialog):
                 cb = QCheckBox()
                 combo = _NoScrollComboBox()
                 combo.addItems(options if options is not None else self._color_schemes)
+                combo.setMaximumWidth(section_combo_width)
 
                 is_overridden = var in mode.overrides
                 cb.setChecked(is_overridden)

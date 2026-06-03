@@ -45,15 +45,15 @@
     var root = document.documentElement;
     var rs = getComputedStyle(root);
     var settings = [
-        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency',
+        'tategaki', 'color-scheme', 'debug', 'audio-labels', 'card-transparency', 'toggle-align',
         'word-text', 'word-audio', 'word-audio-buttons', 'word-autoplay', 'word-text-play', 'word-furigana', 'word-pitch-color', 'pitch-graph',
         'sentence-text', 'sentence-audio', 'sentence-audio-buttons', 'sentence-autoplay', 'sentence-text-play', 'sentence-furigana', 'sentence-pitch-color',
         'image',
-        'definition-text', 'definition-audio', 'definition-audio-buttons', 'definition-autoplay-bi', 'definition-autoplay-mono', 'definition-text-play', 'definition-primary', 'definition-secondary', 'definition-default', 'definition-furigana', 'definition-pitch-color', 'definition-align',
+        'definition-text-mono', 'definition-text-bi', 'definition-audio-buttons', 'definition-autoplay-bi', 'definition-autoplay-mono', 'definition-text-play', 'definition-default', 'definition-furigana', 'definition-pitch-color', 'definition-align',
         'notes-text', 'notes-align',
         'details-word-text', 'details-word-audio', 'details-word-autoplay', 'details-pitch-graph',
         'details-sentence-text', 'details-sentence-audio', 'details-sentence-autoplay',
-        'details-image', 'details-definition-text', 'details-definition-audio', 'details-definition-secondary', 'details-notes-text'
+        'details-image', 'details-definition-text-mono', 'details-definition-text-bi', 'details-definition-audio', 'details-notes-text'
     ];
 
     // Find last defined mode
@@ -93,6 +93,12 @@
 </script>
 
 <script>
+// Toggle alignment — translate left|center to flex-start|center for flex contexts
+(function() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--toggle-align').trim();
+    document.documentElement.style.setProperty('--toggle-align-flex', v === 'left' ? 'flex-start' : 'center');
+})();
+
 // Tategaki mode — read CSS variable and add class before any rendering
 (function() {
     var v = getComputedStyle(document.documentElement).getPropertyValue('--tategaki');
@@ -132,12 +138,20 @@
 (function() {
     var rs = getComputedStyle(document.documentElement);
     function apVal(v) { v = v.trim() || 'front & back'; return v === 'on' ? 'front & back' : v === 'off' ? 'none' : v; }
-    function defApVal(v) { v = v.trim() || 'always'; return v === 'on' ? 'always' : v; }
+    function defApVal(v, fallback) {
+        v = v.trim() || fallback;
+        if (v === 'on when unlocked') return 'on when unlocked, otherwise off';
+        if (v === 'on when unlocked or on reveal, otherwise off') return 'on when unlocked or on reveal';
+        if (v === 'on when mono is locked') return 'on when mono locked, otherwise off';
+        if (v === 'on when mono is locked or on reveal') return 'on when mono locked or on reveal';
+        if (v === 'on when mono locked or on reveal, otherwise off') return 'on when mono locked or on reveal';
+        return v;
+    }
     window.__autoplayEnabled = {
         word: apVal(rs.getPropertyValue('--word-autoplay')),
         sentence: apVal(rs.getPropertyValue('--sentence-autoplay')),
-        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi')),
-        definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'))
+        definitionBi: defApVal(rs.getPropertyValue('--definition-autoplay-bi'), 'on when mono locked or on reveal'),
+        definitionMono: defApVal(rs.getPropertyValue('--definition-autoplay-mono'), 'on when unlocked or on reveal')
     };
 })();
 
@@ -150,14 +164,32 @@
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
+// AnkiDroid gate. AnkiDroid's WebView allows <audio> autoplay
+// (setMediaPlaybackRequiresUserGesture(false)) but does NOT lift the separate
+// AudioContext autoplay policy, so Web Audio needs a user gesture to start and the
+// recovery machinery wedges on card transition. Web Audio exists solely for the iOS
+// WebKit stall — Android must stay on the native <audio> path (the known-good behavior
+// prior to the Feb-2026 Web Audio port). UA check backstops the class in case AnkiDroid
+// omits it. Defined before the AudioContext lifecycle below so Android can skip it.
+window.__isAndroid = function() {
+    return document.documentElement.classList.contains('android')
+        || (document.body && document.body.classList.contains('android'))
+        || (navigator.userAgentData && navigator.userAgentData.platform === 'Android')
+        || /Android/i.test(navigator.userAgent);
+};
+
 // Create AudioContext eagerly — Anki's WKWebView sets
 // mediaTypesRequiringUserActionForPlayback=[] which allows
-// AudioContext to reach 'running' without a gesture.
-if (!window.__audioCtx) {
-    window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-if (window.__audioCtx.state === 'suspended') {
-    window.__audioCtx.resume()['catch'](function() {});
+// AudioContext to reach 'running' without a gesture. Skipped on Android,
+// which never plays through Web Audio (see __playMobile), so the whole
+// AudioContext lifecycle (create/resume/recover/probe) is dead weight there.
+if (!window.__isAndroid()) {
+    if (!window.__audioCtx) {
+        window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.__audioCtx.state === 'suspended') {
+        window.__audioCtx.resume()['catch'](function() {});
+    }
 }
 
 // iOS WebKit gate: capability + touch + explicit not-Android. The
@@ -278,8 +310,8 @@ window.__audioCtxRecover = function() {
 };
 
 // Safety net: if AudioContext is still suspended after page load,
-// resume it on the next user gesture.
-if (!window.__audioCtxTouchHandler) {
+// resume it on the next user gesture. (Android has no AudioContext to resume.)
+if (!window.__isAndroid() && !window.__audioCtxTouchHandler) {
     window.__audioCtxTouchHandler = function() {
         if (window.__audioCtx && window.__audioCtx.state !== 'running') {
             window.__audioCtx.resume()['catch'](function() {});
@@ -294,7 +326,7 @@ if (!window.__audioCtxTouchHandler) {
 // does not auto-resume. Also: a card already marked 'healthy' before
 // backgrounding must be re-probed, otherwise a fast tap-after-foreground
 // would take the dead Web Audio path before recovery completes.
-if (!window.__audioCtxVisHandler) {
+if (!window.__isAndroid() && !window.__audioCtxVisHandler) {
     window.__audioCtxVisHandler = function() {
         if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
         window.__audioCtxState = 'unknown';
@@ -392,9 +424,12 @@ window.__observers = [];
 // Each card may follow a foreign [sound:] card that took the AVAudioSession.
 // Downgrade to 'unknown' and kick recovery now (after the teardown above
 // settles), so by the time autoplay's setTimeout(0) fires the probe is
-// running against a settled context.
-window.__audioCtxState = 'unknown';
-if (window.__audioCtxRecover) window.__audioCtxRecover();
+// running against a settled context. Skipped on Android (no Web Audio there),
+// where this per-card probe/recreate churn is pure waste.
+if (!window.__isAndroid()) {
+    window.__audioCtxState = 'unknown';
+    if (window.__audioCtxRecover) window.__audioCtxRecover();
+}
 
 // Shared audio utilities (available on back via {{FrontSide}})
 window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
@@ -798,6 +833,11 @@ window.__playMobile = function(src, btn, scope, opts) {
         });
     }
 
+    // AnkiDroid: never use Web Audio for playback — autoplay and tap both go through
+    // the native <audio> element, which AnkiDroid plays without a gesture. Covers front
+    // autoplay, front tap, and back tap uniformly.
+    if (window.__isAndroid && window.__isAndroid()) return viaFresh();
+
     if (!ios || window.__audioCtxState === 'healthy') {
         if (ctx && ctx.state === 'running')
             return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
@@ -880,21 +920,6 @@ window.__autoplayItems = function(selector, filterFn, onDone) {
         var type = item.getAttribute('data-audio');
         if (filterFn(type, item)) matched.push(item);
     });
-    // Ensure primary def audio plays before secondary (stable among def items only)
-    var defStart = -1;
-    for (var di = 0; di < matched.length; di++) {
-        if (matched[di].getAttribute('data-audio') === 'def') { defStart = di; break; }
-    }
-    if (defStart >= 0) {
-        var defs = matched.splice(defStart);
-        defs.sort(function(a, b) {
-            var ra = a.getAttribute('data-def-role'), rb = b.getAttribute('data-def-role');
-            if (ra === 'primary' && rb !== 'primary') return -1;
-            if (rb === 'primary' && ra !== 'primary') return 1;
-            return 0;
-        });
-        matched = matched.concat(defs);
-    }
     var queue = [];
     matched.forEach(function(item) {
         var btns = item.querySelectorAll('.replay-button');
@@ -1172,7 +1197,40 @@ function clearLastMargin(el) {
                     cls = (prev && prev.cls === 'jp' && (prev.text === ':' || /[A-Za-z]/.test(prev.text)))
                         ? 'jp' : 'other';
                 }
-            } else if (/[:0-9*^~;|,\-.\/\\]/.test(ch)) {
+            } else if (ch === '*' || ch === '^' || ch === '\\') {
+                // Pitch prefix markers (devoiced/high/literal) attach to the
+                // kana that FOLLOWS, so look ahead past any further markers.
+                var pk = i + 1;
+                while (pk < raw.length && (raw.charAt(pk) === '*' || raw.charAt(pk) === '^' || raw.charAt(pk) === '\\')) pk++;
+                cls = (pk < raw.length && isJpChar(raw.charAt(pk))) ? 'jp'
+                    : (lookbackCls(units) === 'jp') ? 'jp' : 'other';
+            } else if (/[0-9]/.test(ch)) {
+                if (lookbackCls(units) === 'jp') {
+                    cls = 'jp';
+                } else {
+                    // No JP context behind a digit (e.g. a number at the very
+                    // start of a field). Look forward past the digit run: a
+                    // following JP char, or a furigana *reading* bracket,
+                    // means this number is part of a Japanese word and its
+                    // [reading] must render as ruby. The reading test mirrors
+                    // textToRuby (forced [!..], split [..|..] either side, or
+                    // kana/Latin body) but excludes digit-only pitch [0].
+                    var dj = i;
+                    while (dj < raw.length && /[0-9]/.test(raw.charAt(dj))) dj++;
+                    var rb = false;
+                    if (raw.charAt(dj) === '[') {
+                        var be = raw.indexOf(']', dj);
+                        if (be !== -1) {
+                            var b = raw.substring(dj + 1, be);
+                            rb = !!b && !/^[0-9]+$/.test(b) && (
+                                b.charAt(0) === '!' ? b.length > 1
+                              : b.indexOf('|') !== -1 ? b.split('|').join('') !== ''
+                              : /[぀-ゟ゠-ヿa-zA-Z]/.test(b));
+                        }
+                    }
+                    cls = ((dj < raw.length && isJpChar(raw.charAt(dj))) || rb) ? 'jp' : 'other';
+                }
+            } else if (/[:~;|\-.\/]/.test(ch)) {
                 cls = (lookbackCls(units) === 'jp') ? 'jp' : 'other';
             } else {
                 cls = 'other';

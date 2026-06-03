@@ -564,6 +564,13 @@ html {
 .answer {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    flex: 0 0 auto;
+}
+
+.answer > .def,
+.answer > .jp-def-section {
+    flex: 0 0 auto;
 }
 
 /* Target word — Chinese serif with vertical bopomofo */
@@ -720,6 +727,10 @@ rt {
     text-align: var(--toggle-align);
 }
 
+#notes-section {
+    margin-top: 16px;
+}
+
 .jp-def-input {
     position: absolute;
     width: 0;
@@ -832,13 +843,13 @@ rt {
 
 /* Definition layout: hide sections based on data-def-layout */
 .answer[data-def-layout="none"] .def,
-.answer[data-def-layout="none"] .jp-def-section,
+.answer[data-def-layout="none"] .jp-def-section:not(#notes-section),
 .answer[data-def-layout="none"] .divider {
     display: none;
 }
 
-.answer[data-def-layout="bi-only"] .jp-def-section,
-.answer[data-def-layout="mono-only"] .jp-def-section {
+.answer[data-def-layout="bi-only"] .jp-def-section:not(#notes-section),
+.answer[data-def-layout="mono-only"] .jp-def-section:not(#notes-section) {
     display: none;
 }
 

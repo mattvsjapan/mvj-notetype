@@ -18,7 +18,11 @@ from aqt.editor import Editor
 from aqt.utils import showWarning, tooltip
 
 from .notetype import NOTE_TYPE_NAME
-from .pitch_converter import convert_word_field
+from .pitch_migration import (
+    convert_comment_syntax as _convert_comment_syntax,
+    mark_front_visible as _mark_front_visible,
+    splice_word_kanji as _splice_word_kanji,
+)
 
 _LOG_DIR = os.path.join(os.path.dirname(__file__), "user_files")
 _LOG_FILE = os.path.join(_LOG_DIR, "migration_log.txt")
@@ -28,84 +32,15 @@ _SYNTAX_COMMENT_RE = re.compile(
 )
 _AUDIO_RE = re.compile(r'\[audio:([^\]]+)\]')
 
-# Matches [reading]okurigana;pitch — okurigana may be empty
-_PITCH_OUTSIDE_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);(\S+)')
-_EMPTY_PITCH_RE = re.compile(r'\[([^\]]+)\]([^;\s]*);')
-# d = devoiced → * prefix on reading (d can be after bracket or before reading)
-_DEVOICED_AFTER_RE = re.compile(r'\[([^\]]+)\]d')
-_DEVOICED_BEFORE_RE = re.compile(r'\[d([^\]]+)\]')
-
 # Matches <li>DICT_NAME: PITCH_VALUES</li> in the context field
 _CONTEXT_DICT_RE = re.compile(r'<li>([^<:]+):\s*(.*?)</li>')
 
-
-def _reformat_token(text):
-    """Reformat a single token from comment syntax to converter input."""
-    # d modifier → * prefix inside bracket
-    text = _DEVOICED_AFTER_RE.sub(r'[*\1]', text)
-    text = _DEVOICED_BEFORE_RE.sub(r'[*\1]', text)
-    # Move ;pitch inside brackets
-    text = _PITCH_OUTSIDE_RE.sub(r'[\1;\3]\2', text)
-    # Empty pitch (trailing ";") defaults to 0
-    text = _EMPTY_PITCH_RE.sub(r'[\1;0]\2', text)
-    # Bare token with ;pitch but no brackets → wrap in brackets
-    # (empty pitch defaults to 0, matching the bracketed _EMPTY_PITCH_RE rule)
-    if '[' not in text and ';' in text:
-        m = re.match(r'^([^;]+);(\S*)$', text)
-        if m:
-            word, pitch = m.group(1), m.group(2) or '0'
-            is_all_kana = word and all(
-                '぀' <= ch <= 'ゟ' or '゠' <= ch <= 'ヿ'
-                for ch in word
-            )
-            # Pure-kana word: use kana[pitch] form so the converter treats
-            # the kana as the word, not as a "reading" needing brackets.
-            text = f'{word}[{pitch}]' if is_all_kana else f'[{word};{pitch}]'
-    return text
-
-
-def _convert_comment_syntax(raw):
-    """Convert full comment syntax string to new notation."""
-    # Strip trailing " -" ghost particle — convert_word_field adds its own
-    raw = re.sub(r'\s+-\s*$', '', raw)
-    # Split on standalone ; between word groups
-    groups = re.split(r'\s+;\s+', raw)
-    all_warnings = []
-    converted_groups = []
-
-    multi = len(groups) > 1
-
-    for group in groups:
-        group = re.sub(r'\s+-\s*$', '', group)
-        tokens = group.split()
-        pitched = []
-        for token in tokens:
-            reformatted = _reformat_token(token)
-            result, warnings = convert_word_field(reformatted)
-            # In multi-group expressions, strip the auto-added ghost particle
-            if multi:
-                result = re.sub(r'-$', '', result)
-            all_warnings.extend(warnings)
-            pitched.append(result)
-
-        converted_groups.append(' '.join(pitched))
-
-    # Join word groups with /
-    result = ' / '.join(converted_groups)
-
-    # Add : to bare particles between accented tokens
-    parts = result.split(' ')
-    for i in range(len(parts)):
-        if ':' in parts[i] or parts[i] == '/':
-            continue
-        # Check if there's an accented token before and after
-        has_before = any(':' in parts[j] for j in range(i))
-        has_after = any(':' in parts[j] for j in range(i + 1, len(parts)))
-        if has_before and has_after:
-            parts[i] = parts[i] + ':'
-    result = ' '.join(parts)
-
-    return result, all_warnings
+# Space immediately before a furigana bracket: real whitespace (\s also covers
+# NBSP \xa0 and full-width 　) or the literal &nbsp; / numeric entity that
+# Anki's editor writes into field HTML instead of a plain space.
+_SPACE_BEFORE_BRACKET_RE = re.compile(
+    r'(?:\s|&nbsp;|&#x0*a0;|&#0*160;)+\[', re.IGNORECASE
+)
 
 
 def _log(note_id, word_before, image_before, word_after):
@@ -118,7 +53,7 @@ def _log(note_id, word_before, image_before, word_after):
         f.write("\n")
 
 
-_DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '三省堂', '新選', '例解')
+_DICT_NAMES = ('大辞泉', 'ＮＨＫ', '新明解', '大辞林', '新選', '三省堂', '例解')
 
 # Inline styles so the table renders in the editor field view too — Anki's
 # editor (desktop and mobile) doesn't apply the note type's card CSS to
@@ -128,7 +63,13 @@ _CELL_STYLE = 'border:1px solid #ccc;padding:2px 8px'
 
 
 def _format_dict_value(values):
-    return re.sub(r'</?b>', '', values.strip())
+    cleaned = re.sub(r'</?b>', '', values.strip())
+    # Collapse whitespace immediately before furigana brackets — Anki's
+    # convention puts the inter-word space after the previous segment, not
+    # before `[`, so `単語 [たんご]:0` should be `単語[たんご]:0`. The editor
+    # stores that space as a literal &nbsp; entity, which \s does not match.
+    cleaned = _SPACE_BEFORE_BRACKET_RE.sub('[', cleaned)
+    return cleaned
 
 
 def _row(name, value):
@@ -196,9 +137,23 @@ def _migrate_note_core(note) -> bool:
     warnings = []
     moved_audio = []
 
-    m = _SYNTAX_COMMENT_RE.search(image_content) if image_content.strip() else None
-    if m:
-        new_syntax, warnings = _convert_comment_syntax(m.group(1))
+    syntax_matches = _SYNTAX_COMMENT_RE.findall(image_content) if image_content.strip() else []
+    if syntax_matches:
+        word_before = note.fields[word_idx]
+
+        # Each syntax comment becomes its own line in the new Word field
+        # (one graph per line on the MvJ back; see commit 217cab6).
+        converted_lines = []
+        for raw in syntax_matches:
+            converted, conv_warnings = _convert_comment_syntax(raw)
+            warnings.extend(conv_warnings)
+            # Preserve kanji form from the existing Word field when the
+            # comment syntax was kana-only.
+            converted, splice_warnings = _splice_word_kanji(converted, word_before)
+            warnings.extend(splice_warnings)
+            converted_lines.append(converted)
+        new_syntax = '<br>'.join(converted_lines)
+        new_syntax = _mark_front_visible(new_syntax, word_before)
 
         # Move sentence audio from Word Audio to Sentence Audio:
         # - filenames containing "reibun"
@@ -222,7 +177,6 @@ def _migrate_note_core(note) -> bool:
             note.fields[word_audio_idx] = word_audio.strip()
             note.fields[sent_audio_idx] = (note.fields[sent_audio_idx] + ''.join(moved_audio)).strip()
 
-        word_before = note.fields[word_idx]
         _log(note.id, word_before, image_content, new_syntax)
 
         note.fields[word_idx] = new_syntax
@@ -337,5 +291,11 @@ def _add_reviewer_menu(reviewer, menu):
     action.triggered.connect(_migrate_note_from_reviewer)
 
 
+def _add_reviewer_shortcut(state, shortcuts):
+    if state == "review":
+        shortcuts.append(("Alt+M", _migrate_note_from_reviewer))
+
+
 gui_hooks.editor_did_init_buttons.append(_add_migrate_button)
 gui_hooks.reviewer_will_show_context_menu.append(_add_reviewer_menu)
+gui_hooks.state_shortcuts_will_change.append(_add_reviewer_shortcut)
