@@ -164,14 +164,32 @@
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
+// AnkiDroid gate. AnkiDroid's WebView allows <audio> autoplay
+// (setMediaPlaybackRequiresUserGesture(false)) but does NOT lift the separate
+// AudioContext autoplay policy, so Web Audio needs a user gesture to start and the
+// recovery machinery wedges on card transition. Web Audio exists solely for the iOS
+// WebKit stall — Android must stay on the native <audio> path (the known-good behavior
+// prior to the Feb-2026 Web Audio port). UA check backstops the class in case AnkiDroid
+// omits it. Defined before the AudioContext lifecycle below so Android can skip it.
+window.__isAndroid = function() {
+    return document.documentElement.classList.contains('android')
+        || (document.body && document.body.classList.contains('android'))
+        || (navigator.userAgentData && navigator.userAgentData.platform === 'Android')
+        || /Android/i.test(navigator.userAgent);
+};
+
 // Create AudioContext eagerly — Anki's WKWebView sets
 // mediaTypesRequiringUserActionForPlayback=[] which allows
-// AudioContext to reach 'running' without a gesture.
-if (!window.__audioCtx) {
-    window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-if (window.__audioCtx.state === 'suspended') {
-    window.__audioCtx.resume()['catch'](function() {});
+// AudioContext to reach 'running' without a gesture. Skipped on Android,
+// which never plays through Web Audio (see __playMobile), so the whole
+// AudioContext lifecycle (create/resume/recover/probe) is dead weight there.
+if (!window.__isAndroid()) {
+    if (!window.__audioCtx) {
+        window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.__audioCtx.state === 'suspended') {
+        window.__audioCtx.resume()['catch'](function() {});
+    }
 }
 
 // iOS WebKit gate: capability + touch + explicit not-Android. The
@@ -181,20 +199,6 @@ window.__isIosWebKit = function() {
     return !!navigator.audioSession
         && window.matchMedia('(hover: none)').matches
         && !document.documentElement.classList.contains('android');
-};
-
-// AnkiDroid gate. AnkiDroid's WebView allows <audio> autoplay
-// (setMediaPlaybackRequiresUserGesture(false)) but does NOT lift the separate
-// AudioContext autoplay policy, so Web Audio needs a user gesture to start and the
-// recovery machinery wedges on card transition. Web Audio exists solely for the iOS
-// WebKit stall — Android must stay on the native <audio> path (the known-good behavior
-// prior to the Feb-2026 Web Audio port). UA check backstops the class in case AnkiDroid
-// omits it.
-window.__isAndroid = function() {
-    return document.documentElement.classList.contains('android')
-        || (document.body && document.body.classList.contains('android'))
-        || (navigator.userAgentData && navigator.userAgentData.platform === 'Android')
-        || /Android/i.test(navigator.userAgent);
 };
 
 // Pure read: samples currentTime, waits, resolves whether the clock
@@ -306,8 +310,8 @@ window.__audioCtxRecover = function() {
 };
 
 // Safety net: if AudioContext is still suspended after page load,
-// resume it on the next user gesture.
-if (!window.__audioCtxTouchHandler) {
+// resume it on the next user gesture. (Android has no AudioContext to resume.)
+if (!window.__isAndroid() && !window.__audioCtxTouchHandler) {
     window.__audioCtxTouchHandler = function() {
         if (window.__audioCtx && window.__audioCtx.state !== 'running') {
             window.__audioCtx.resume()['catch'](function() {});
@@ -322,7 +326,7 @@ if (!window.__audioCtxTouchHandler) {
 // does not auto-resume. Also: a card already marked 'healthy' before
 // backgrounding must be re-probed, otherwise a fast tap-after-foreground
 // would take the dead Web Audio path before recovery completes.
-if (!window.__audioCtxVisHandler) {
+if (!window.__isAndroid() && !window.__audioCtxVisHandler) {
     window.__audioCtxVisHandler = function() {
         if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
         window.__audioCtxState = 'unknown';
@@ -420,9 +424,12 @@ window.__observers = [];
 // Each card may follow a foreign [sound:] card that took the AVAudioSession.
 // Downgrade to 'unknown' and kick recovery now (after the teardown above
 // settles), so by the time autoplay's setTimeout(0) fires the probe is
-// running against a settled context.
-window.__audioCtxState = 'unknown';
-if (window.__audioCtxRecover) window.__audioCtxRecover();
+// running against a settled context. Skipped on Android (no Web Audio there),
+// where this per-card probe/recreate churn is pure waste.
+if (!window.__isAndroid()) {
+    window.__audioCtxState = 'unknown';
+    if (window.__audioCtxRecover) window.__audioCtxRecover();
+}
 
 // Shared audio utilities (available on back via {{FrontSide}})
 window.__audioSVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="black" stroke-width="1"/><path d="M56.6,32l-36.5,21.1V10.9L56.6,32z"/></svg>';
