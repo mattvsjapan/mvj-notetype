@@ -55,6 +55,11 @@ CONVERT_CASES = [
         '今[いま]まで;n0 以上[いじょう];1 に',
         '今[いま]まで:n0 以上[いじょう]:1 に',
     ),
+    (
+        'group-separator ghost particle as its own group',
+        '透[dす]かさず; ; -',
+        '透[*す]かさず:0 / -',
+    ),
 ]
 
 # (label, converter output, Word-field-before, expected spliced output)
@@ -78,10 +83,46 @@ SPLICE_CASES = [
         '岸[*きし]:o-',
     ),
     (
-        'no splice for multi-group output',
+        'multi-group: no splice when converter already produced kanji',
         '豊田[とよた]:1 / 船長[せんちょう]:1',
         '<span class="atamadaka">豊田[とよた]</span><span class="atamadaka">船長[せんちょう]</span>',
         '豊田[とよた]:1 / 船長[せんちょう]:1',
+    ),
+    (
+        'multi-group: splice kanji into each group from per-span surfaces',
+        'おやすい:0 / ごよう:2',
+        '<span class="heiban">御[お]安[やす]い</span><span class="nakadaka">御[ご]用[よう]</span>',
+        '御[お]安[やす]い:0 / 御[ご]用[よう]:2',
+    ),
+    (
+        'multi-group: ghost-particle group has no span and passes through',
+        'すかさず:0 / -',
+        '<span class="heiban">透[す]かさず</span>',
+        '透[す]かさず:0 / -',
+    ),
+    (
+        'multi-group: re-inject * marker per group during splice',
+        'まっ*ぷたつ:3 / ごよう:2',
+        '<span class="nakadaka">真[ま]っ 二[ぷた]つ</span><span class="nakadaka">御[ご]用[よう]</span>',
+        '真[ま]っ 二[*ぷた]つ:3 / 御[ご]用[よう]:2',
+    ),
+    (
+        'multi-group: span count != real-group count → keep kana (no half-splice)',
+        'おやすい:0 / ごよう:2',
+        '<span class="heiban">御[お]安[やす]い</span>',
+        'おやすい:0 / ごよう:2',
+    ),
+    (
+        'multi-group: one group mismatches → whole field stays kana',
+        'おやすい:0 / ちがう:2',
+        '<span class="heiban">御[お]安[やす]い</span><span class="nakadaka">御[ご]用[よう]</span>',
+        'おやすい:0 / ちがう:2',
+    ),
+    (
+        'multi-group: no spans + no kanji → unchanged, no warning',
+        'おやすい:0 / ごよう:2',
+        'おやすい ごよう',
+        'おやすい:0 / ごよう:2',
     ),
     (
         'splice re-injects * marker into the matching bracket',
@@ -94,6 +135,28 @@ SPLICE_CASES = [
         'い*きたい:2-',
         '<span class="atamadaka">行[い]きたい</span>',
         '行[い]*きたい:2-',
+    ),
+]
+
+# (label, converted, Word-field-before, expected warning token)
+SPLICE_WARNING_CASES = [
+    (
+        'span/group count mismatch warns when kanji present',
+        'おやすい:0 / ごよう:2',
+        '<span class="heiban">御[お]安[やす]い</span>',
+        'multigroup_span_mismatch',
+    ),
+    (
+        'per-group kana mismatch is reported with the group index',
+        'おやすい:0 / ちがう:2',
+        '<span class="heiban">御[お]安[やす]い</span><span class="nakadaka">御[ご]用[よう]</span>',
+        'word_kana_mismatch[group1]',
+    ),
+    (
+        'no spans + no kanji → no warning (nothing was lost)',
+        'おやすい:0 / ごよう:2',
+        'おやすい ごよう',
+        None,
     ),
 ]
 
@@ -152,10 +215,20 @@ def main() -> int:
     for label, converted, word_field, expected in SPLICE_CASES:
         actual, _ = splice_word_kanji(converted, word_field)
         failed += _check(label, actual, expected)
+    for label, converted, word_field, expected_token in SPLICE_WARNING_CASES:
+        _, warnings = splice_word_kanji(converted, word_field)
+        if expected_token is None:
+            failed += _check(label, warnings, [])
+        else:
+            actual = expected_token if expected_token in warnings else warnings
+            failed += _check(label, actual, expected_token)
     for label, converted, word_field, expected in FRONT_VISIBLE_CASES:
         actual = mark_front_visible(converted, word_field)
         failed += _check(label, actual, expected)
-    total = len(CONVERT_CASES) + len(SPLICE_CASES) + len(FRONT_VISIBLE_CASES)
+    total = (
+        len(CONVERT_CASES) + len(SPLICE_CASES)
+        + len(SPLICE_WARNING_CASES) + len(FRONT_VISIBLE_CASES)
+    )
     print()
     print(f'{total - failed}/{total} passed')
     return 1 if failed else 0

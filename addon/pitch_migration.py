@@ -140,16 +140,34 @@ def mark_front_visible(converted, word_field):
     return _FURIGANA_BRACKET_RE.sub(r'[!\1]', converted)
 
 
-def splice_word_kanji(converted, word_field):
-    """If converter output is kana-only but Word field has the kanji form,
-    substitute the Word-field surface in (keeping the pitch suffix).
+_SPAN_RE = re.compile(r'<span\b[^>]*>(.*?)</span>', re.DOTALL)
 
-    Returns (spliced_or_unchanged, warnings).
+
+def _extract_span_surfaces(word_field):
+    """Per-<span> bare surfaces for a legacy multi-group Word field.
+
+    Returns one surface per top-level <span>, or None if the field can't be
+    cleanly segmented — no spans at all, or non-tag content sitting outside
+    the spans (in which case positional splicing would be a guess).
+    """
+    spans = _SPAN_RE.findall(word_field)
+    if not spans:
+        return None
+    if _word_field_surface(_SPAN_RE.sub('', word_field)):
+        return None  # stray content outside spans — don't guess
+    return [_word_field_surface(s) for s in spans]
+
+
+def _splice_one(converted, word_surface):
+    """Splice one kana-only group's kanji in from its Word-field surface.
+
+    Returns (result, warnings); returns `converted` unchanged when the splice
+    doesn't apply (kana-only Word surface, converter already produced kanji,
+    no pitch suffix). Emits 'word_kana_mismatch' when the kana don't line up.
     """
     warnings = []
-    if not converted or '/' in converted:
-        return converted, warnings  # skip multi-group / split compounds
-    word_surface = _word_field_surface(word_field)
+    if not converted:
+        return converted, warnings
     if not word_surface or not _has_kanji(word_surface):
         return converted, warnings
     if _has_kanji(converted):
@@ -168,14 +186,63 @@ def splice_word_kanji(converted, word_field):
     return _inject_inline_markers(word_surface, surface_part) + pitch_part, warnings
 
 
+def splice_word_kanji(converted, word_field):
+    """If converter output is kana-only but the Word field has the kanji form,
+    substitute the Word-field surface in (keeping the pitch suffix).
+
+    Single-group output is spliced directly. Multi-group output (joined with
+    ' / ') is aligned to the legacy Word field's per-<span> segments — one
+    span per non-ghost group, in order — and each group is spliced
+    independently. Alignment is conservative: if the span count doesn't match
+    the real-group count, or any group's kana don't line up, nothing is
+    spliced (the kana-only form is kept rather than risk a wrong kanji).
+
+    Returns (spliced_or_unchanged, warnings).
+    """
+    if not converted:
+        return converted, []
+    if '/' not in converted:
+        return _splice_one(converted, _word_field_surface(word_field))
+
+    groups = converted.split(' / ')
+    # Ghost-particle groups (legacy " ; -") have no <span>; only the rest
+    # ("real" groups) align positionally with the Word field's spans.
+    real_slots = [i for i, g in enumerate(groups) if g.strip() != '-']
+    surfaces = _extract_span_surfaces(word_field)
+    if surfaces is None or len(surfaces) != len(real_slots):
+        # Can't safely segment/align — leave kana-only. Warn only if there
+        # was kanji to recover (otherwise nothing was lost).
+        warnings = ['multigroup_span_mismatch'] if _has_kanji(word_field) else []
+        return converted, warnings
+
+    spliced = list(groups)
+    warnings = []
+    mismatch = False
+    for slot, surface in zip(real_slots, surfaces):
+        result, group_warnings = _splice_one(groups[slot], surface)
+        for w in group_warnings:
+            if w == 'word_kana_mismatch':
+                mismatch = True
+                warnings.append(f'word_kana_mismatch[group{slot}]')
+            else:
+                warnings.append(w)
+        spliced[slot] = result
+    if mismatch:
+        # One group didn't line up — don't half-splice; keep all kana so the
+        # field stays uniform and the mismatch is easy to spot.
+        return converted, warnings
+    return ' / '.join(spliced), warnings
+
+
 def convert_comment_syntax(raw):
     """Convert full comment syntax string to new notation.
 
     Returns (converted, warnings).
     """
-    # Strip trailing " -" ghost particle — convert_word_field adds its own
-    raw = re.sub(r'\s+-\s*$', '', raw)
-    # Split on standalone ; between word groups
+    # Split on standalone ; between word groups. The trailing " -" ghost
+    # particle is intentionally NOT stripped here: it's the whitespace the
+    # final " ; " group-separator needs, and a "-"-only group is handled
+    # below. Per-group ghost-dash stripping still happens inside the loop.
     groups = re.split(r'\s+;\s+', raw)
     all_warnings = []
     converted_groups = []
@@ -183,6 +250,12 @@ def convert_comment_syntax(raw):
     multi = len(groups) > 1
 
     for group in groups:
+        # A group that is purely a ghost particle (legacy " ; -") passes
+        # through verbatim — skip convert_word_field and the multi-group
+        # "-$" strip below, which would otherwise annihilate it.
+        if group.strip() == '-':
+            converted_groups.append('-')
+            continue
         group = re.sub(r'\s+-\s*$', '', group)
         tokens = group.split()
         # Convert the group as a whole so convert_word_field's "ghost dash
