@@ -39,6 +39,20 @@ window.__isIosWebKit = function() {
         && !document.documentElement.classList.contains('android');
 };
 
+// AnkiDroid gate. AnkiDroid's WebView allows <audio> autoplay
+// (setMediaPlaybackRequiresUserGesture(false)) but does NOT lift the separate
+// AudioContext autoplay policy, so Web Audio needs a user gesture to start and the
+// recovery machinery wedges on card transition. Web Audio exists solely for the iOS
+// WebKit stall — Android must stay on the native <audio> path (the known-good behavior
+// prior to the Feb-2026 Web Audio port). UA check backstops the class in case AnkiDroid
+// omits it.
+window.__isAndroid = function() {
+    return document.documentElement.classList.contains('android')
+        || (document.body && document.body.classList.contains('android'))
+        || (navigator.userAgentData && navigator.userAgentData.platform === 'Android')
+        || /Android/i.test(navigator.userAgent);
+};
+
 // Pure read: samples currentTime, waits, resolves whether the clock
 // advanced. Required because WebKit can report state==='running' on
 // a stalled context (AVAudioSession contention from a prior native
@@ -581,6 +595,11 @@ window.__playMobile = function(src, btn, scope, opts) {
             fa.addEventListener('error', finish, { once: true });
         });
     }
+
+    // AnkiDroid: never use Web Audio for playback — autoplay and tap both go through
+    // the native <audio> element, which AnkiDroid plays without a gesture. Covers front
+    // autoplay, front tap, and back tap uniformly.
+    if (window.__isAndroid && window.__isAndroid()) return viaFresh();
 
     if (!ios || window.__audioCtxState === 'healthy') {
         if (ctx && ctx.state === 'running')
