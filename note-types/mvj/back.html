@@ -47,6 +47,9 @@
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
               item.setAttribute('data-def-lang', 'bi');
+              // Legacy untagged definition audio is not language-specific: tagged 'bi' only
+              // so autoplay/text-play/fallback resolve, but exempt from slot-based hiding below.
+              item.setAttribute('data-def-generic', '1');
 
               for (var i = 0; i < filenames.length; i++) {
                   var audio = document.createElement('audio');
@@ -154,6 +157,9 @@
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
               item.setAttribute('data-def-lang', 'bi');
+              // Legacy untagged definition audio is not language-specific: tagged 'bi' only
+              // so autoplay/text-play/fallback resolve, but exempt from slot-based hiding below.
+              item.setAttribute('data-def-generic', '1');
               item._jsAudios = buttons.filter(function(b) { return b._audioSrc; })
                   .map(function(b) { return {src: b._audioSrc}; });
               for (var i = 0; i < buttons.length; i++) {
@@ -1569,8 +1575,14 @@
       detailsSection.style.display = 'none';
     }
 
+    // Note: invoked exactly once below, before bottom-row mirroring and details
+    // audio movement. The unconditional removeAttribute for generic items is safe
+    // only under that ordering — do not re-invoke after those steps.
     window.__syncDefAudioSides = function() {
       document.querySelectorAll('.audio-item[data-audio="def"][data-def-lang]').forEach(function(item) {
+        // Legacy untagged audio is not tied to a single definition language; never
+        // hide it based on a per-language slot's visibility (only data-btn-off applies).
+        if (item.hasAttribute('data-def-generic')) { item.removeAttribute('data-side'); return; }
         var lang = item.getAttribute('data-def-lang');
         var slot = document.querySelector('.def[data-def-lang="' + lang + '"]');
         var show = slot && slot.getAttribute('data-def-show');
