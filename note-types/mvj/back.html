@@ -46,10 +46,9 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
-              item.setAttribute('data-def-lang', 'bi');
-              // Legacy untagged definition audio is not language-specific: tagged 'bi' only
-              // so autoplay/text-play/fallback resolve, but exempt from slot-based hiding below.
-              item.setAttribute('data-def-generic', '1');
+              // No def-type= markers, so the language is unknown at parse time. Mark it
+              // untagged; _renderBack binds data-def-lang to whichever definition is shown.
+              item.setAttribute('data-def-untagged', '1');
 
               for (var i = 0; i < filenames.length; i++) {
                   var audio = document.createElement('audio');
@@ -127,24 +126,8 @@
                   })(j);
               }
   
-              window.__playLockedDefAudio = function() {
-                  var defItem = document.querySelector('.audio-item[data-audio="def"][data-def-lang="bi"]:not([data-side="off"])');
-                  if (defItem && defItem._playAllDef) defItem._playAllDef();
-              };
-              window.__autoPlayDefAudio = playAll;
-              window.__autoPlayDefAudioType = 'bilingual';
-
-              setTimeout(function() {
-                  var toggle = document.getElementById('def-toggle');
-                  if (toggle && !toggle._defRevealListenerAttached) {
-                      toggle.addEventListener('change', function() {
-                          var s = window.__autoplayEnabled.definitionBi;
-                          var slot = document.querySelector('.def[data-def-lang="bi"][data-def-show="toggle"]');
-                          if (toggle.checked && slot && (s === 'on when mono locked or on reveal' || s === 'on when mono locked or on reveal, otherwise off' || s === 'on when mono is locked or on reveal')) playAll();
-                      });
-                      toggle._defRevealListenerAttached = true;
-                  }
-              }, 0);
+              // Playback (hotkey, reveal autoplay, locked-def) is wired uniformly in
+              // _renderBack once data-def-lang is assigned — no per-branch hooks here.
           } else {
               // [sound:] — adopt native elements
               var nativeEls = Array.from(container.querySelectorAll('.replay-button, audio'));
@@ -156,39 +139,30 @@
               var item = document.createElement('div');
               item.className = 'audio-item bi';
               item.setAttribute('data-audio', 'def');
-              item.setAttribute('data-def-lang', 'bi');
-              // Legacy untagged definition audio is not language-specific: tagged 'bi' only
-              // so autoplay/text-play/fallback resolve, but exempt from slot-based hiding below.
-              item.setAttribute('data-def-generic', '1');
+              // No def-type= markers, so the language is unknown at parse time. Mark it
+              // untagged; _renderBack binds data-def-lang to whichever definition is shown.
+              item.setAttribute('data-def-untagged', '1');
               item._jsAudios = buttons.filter(function(b) { return b._audioSrc; })
                   .map(function(b) { return {src: b._audioSrc}; });
               for (var i = 0; i < buttons.length; i++) {
                   item.appendChild(buttons[i]);
               }
+              // Adopted native [sound:] buttons may carry no readable src (Anki renders a
+              // replay-button, not <audio>), so the src-queue players can't drive them.
+              // Give the item a _playAllDef that clicks the button — used by the unified
+              // hotkey and toggle-reveal paths so playback works regardless of button shape.
+              item._playAllDef = function() {
+                  var b = item.querySelector('.replay-button');
+                  if (b) { if (b._tapHandler) b._tapHandler(); else b.click(); }
+              };
               var label = document.createElement('span');
               label.className = 'audio-label';
               label.textContent = 'Definition';
               item.appendChild(label);
               if (audioRow) audioRow.appendChild(item);
-  
-              window.__playLockedDefAudio = function() {
-                  buttons[0].click();
-                  window.__animateBtn(buttons[0]);
-              };
-              window.__autoPlayDefAudio = window.__playLockedDefAudio;
-              window.__autoPlayDefAudioType = 'bilingual';
 
-              setTimeout(function() {
-                  var toggle = document.getElementById('def-toggle');
-                  if (toggle && !toggle._defRevealListenerAttached) {
-                      toggle.addEventListener('change', function() {
-                          var s = window.__autoplayEnabled.definitionBi;
-                          var slot = document.querySelector('.def[data-def-lang="bi"][data-def-show="toggle"]');
-                          if (toggle.checked && slot && (s === 'on when mono locked or on reveal' || s === 'on when mono locked or on reveal, otherwise off' || s === 'on when mono is locked or on reveal')) buttons[0].click();
-                      });
-                      toggle._defRevealListenerAttached = true;
-                  }
-              }, 0);
+              // Playback (hotkey, reveal autoplay, locked-def) is wired uniformly in
+              // _renderBack once data-def-lang is assigned — no per-branch hooks here.
           }
       })();
       </script>
@@ -1222,9 +1196,13 @@
       return pitchNums(colored.join('<br>'));
     }
     var defs = parseDefinitions(defHtml);
+    // Canonical untagged-definition default, shared by text (below) and audio (re-tag
+    // further down). Normalized to a valid key; fallback matches the shipped CSS default
+    // so text and audio agree and a stray value can't create a junk defs[] entry.
+    var defDefault = _rootStyle.getPropertyValue('--definition-default').trim();
+    defDefault = defDefault === 'monolingual' ? 'monolingual' : 'bilingual';
     // Plain definition without comment markers → use --definition-default
     if (!Object.keys(defs).length && defHtml.trim()) {
-      var defDefault = _rootStyle.getPropertyValue('--definition-default').trim() || 'monolingual';
       defs[defDefault] = defHtml.trim();
     }
     var defStates = computeDefStates(defs, {
@@ -1249,6 +1227,22 @@
       monoDefInner.innerHTML = monoHtml ? (colorizeText(monoHtml, monoDefEl) || monoHtml) : '';
       monoDefEl.setAttribute('data-def-lang', 'mono');
       monoDefEl.setAttribute('data-def-show', defStates.monoShow);
+    }
+
+    // Untagged definition audio carries no language of its own. Bind it to the definition
+    // that is actually shown (unambiguous when only one is), falling back to the
+    // --definition-default when both or neither are shown — mirroring how untagged
+    // definition TEXT is classified above, so audio and text agree. Everything downstream
+    // (sync, text-play, fallback buttons, autoplay, toggle reveal, hotkey) then treats it
+    // exactly like tagged per-language audio.
+    // Scope to the original row item, not a future bottom-row/details clone.
+    var _genericDef = document.querySelector('.audio-row > .audio-item[data-audio="def"][data-def-untagged]');
+    if (_genericDef) {
+      var _order = defDefault === 'monolingual' ? ['mono', 'bi'] : ['bi', 'mono'];
+      var _shown = { mono: defStates.monoShow !== 'hidden', bi: defStates.biShow !== 'hidden' };
+      var _lang = _order.filter(function(l) { return _shown[l]; })[0]
+                || (defDefault === 'monolingual' ? 'mono' : 'bi');
+      _genericDef.setAttribute('data-def-lang', _lang);
     }
 
     var defToggle = document.getElementById('def-toggle');
@@ -1580,9 +1574,11 @@
     // only under that ordering — do not re-invoke after those steps.
     window.__syncDefAudioSides = function() {
       document.querySelectorAll('.audio-item[data-audio="def"][data-def-lang]').forEach(function(item) {
-        // Legacy untagged audio is not tied to a single definition language; never
-        // hide it based on a per-language slot's visibility (only data-btn-off applies).
-        if (item.hasAttribute('data-def-generic')) { item.removeAttribute('data-side'); return; }
+        // Untagged audio is bound to whichever definition is shown, so in the normal
+        // (a-slot-is-shown) cases regular slot-hiding would already keep it visible. This
+        // exemption only matters when NO slot is shown (audio but no def text, or both text
+        // languages turned off) — keep it reachable rather than hide it.
+        if (item.hasAttribute('data-def-untagged')) { item.removeAttribute('data-side'); return; }
         var lang = item.getAttribute('data-def-lang');
         var slot = document.querySelector('.def[data-def-lang="' + lang + '"]');
         var show = slot && slot.getAttribute('data-def-show');
@@ -1754,6 +1750,16 @@
         }
         if (origItem._jsAudios) {
           clone._jsAudios = origItem._jsAudios;
+        }
+        // Carry the click-fallback onto the clone, but only when there's no playable
+        // src queue (src-less native [sound:] buttons). The clone's button tap already
+        // delegates to the original, so this lets the unified reveal/hotkey paths drive
+        // it. Clones with real _jsAudios keep playing every source via the src queue.
+        if (origItem._playAllDef && !(clone._jsAudios && clone._jsAudios.length)) {
+          clone._playAllDef = function() {
+            var b = clone.querySelector('.replay-button');
+            if (b) { if (b._tapHandler) b._tapHandler(); else b.click(); }
+          };
         }
         if (origBtns.length > 0 && targetRow) targetRow.appendChild(clone);
         return origBtns.length > 0 ? clone : null;
