@@ -40,6 +40,10 @@ _FIELDS = [
     ("Context", "For LLMs to better understand the sentence", None, None),
 ]
 
+# Created on initial install, but never re-created on update: if the user has
+# deleted it from an existing note type, leave it gone.
+_CREATE_ONLY_FIELDS = {"Context"}
+
 
 # Matches the entire SETTINGS + MODES region: from the ⚙ SETTINGS banner
 # through the standalone ═══ closing banner.  The closing banner is the
@@ -144,9 +148,13 @@ def _update_notetype(
         new_name = _FIELD_RENAMES.get(fld["name"])
         if new_name and new_name not in existing_names:
             mm.rename_field(model, fld, new_name)
-    # Add any missing fields before updating templates that reference them
+    # Add any missing fields before updating templates that reference them.
+    # Create-only fields (e.g. Context) are never re-added on update: if the
+    # user removed one from an existing note type, respect that.
     existing_names = {f["name"] for f in model["flds"]}
     for field_name, description, font, font_size in _FIELDS:
+        if field_name in _CREATE_ONLY_FIELDS:
+            continue
         if field_name not in existing_names:
             field = mm.new_field(field_name)
             field["description"] = description
