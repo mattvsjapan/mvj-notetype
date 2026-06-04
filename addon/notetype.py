@@ -2,6 +2,7 @@
 
 import os
 import re
+import sys
 import urllib.request
 from urllib.error import HTTPError, URLError
 
@@ -50,6 +51,26 @@ _SETTINGS_RE = re.compile(
     r"(/\*\s*═+\s*\n\s*⚙\s+SETTINGS\b.*?\n[ \t]*/\*\s*═+\s*\*/)",
     re.DOTALL,
 )
+
+# MvJ Japanese add-on integration: when it has no note type selected,
+# auto-select 🇯🇵 MvJ and map its logical fields onto our field names.
+# Folder/package name of the MvJ Japanese add-on (matches media_service usage).
+_MVJ_JAPANESE_MODULE = "MvJ Japanese"
+_MVJ_JP_FIELD_MAP = {
+    "word": "Word",
+    "fallback_word": "am-study-morphs",
+    "sentence": "Sentence",
+    "sentence_audio": "Sentence Audio",
+    "word_audio": "Word Audio",
+    "definition": "Definition",
+    "definition_audio": "Definition Audio",
+    "translation": "Notes",
+    "image": "Image",
+    # monolingual_definition: no corresponding field — left untouched
+}
+
+# Single-shot guard so a "manager not ready yet" retry never loops.
+_mvj_retry_scheduled = False
 
 
 def _merge_css_settings(old_css: str, new_css: str) -> str:
@@ -157,6 +178,140 @@ def _fonts_exist() -> bool:
     return all(os.path.exists(os.path.join(media_dir, f)) for f in _FONT_FILES)
 
 
+def _get_mvj_japanese_manager():
+    """Return MvJ Japanese's live MvjConfigManager, or None if unavailable.
+
+    Uses the already-imported module from ``sys.modules`` (the add-on bootstrap
+    imports ``<pkg>.mvj.actions``) rather than re-importing, so we never trigger
+    a fresh load with side effects.
+    """
+    actions = sys.modules.get(f"{_MVJ_JAPANESE_MODULE}.mvj.actions")
+    if actions is None:
+        return None
+    try:
+        return actions.get_config_manager()
+    except Exception:
+        return None
+
+
+def _mvj_settings_dialog_open() -> bool:
+    """True if a visible MvJ Japanese settings dialog is currently open.
+
+    We skip auto-config while it is open: clicking OK rebuilds the field config
+    from the (stale) UI and would overwrite a selection we wrote underneath it.
+    """
+    try:
+        from aqt.qt import QApplication
+
+        settings_mod = sys.modules.get(f"{_MVJ_JAPANESE_MODULE}.mvj.settings")
+        dialog_cls = getattr(settings_mod, "SettingsDialog", None) if settings_mod else None
+        if dialog_cls is None:
+            return False
+        return any(
+            isinstance(w, dialog_cls) and w.isVisible()
+            for w in QApplication.topLevelWidgets()
+        )
+    except Exception:
+        return False
+
+
+def _mvj_field_assignments(selected_notetype_id, model_id, profile):
+    """Pure: attr→value map to apply, or None if a selection already exists.
+
+    Only acts when no note type is selected; any existing selection (our note
+    type or another, however its fields are mapped) is left untouched.
+    """
+    if selected_notetype_id is not None:
+        return None
+    assignments = {
+        "selected_notetype_id": model_id,
+        "selected_notetype_profile": profile,
+    }
+    assignments.update(_MVJ_JP_FIELD_MAP)
+    return assignments
+
+
+def _configure_mvj_japanese(start_profile=None) -> None:
+    """Point the MvJ Japanese add-on at 🇯🇵 MvJ if nothing is selected.
+
+    Mutates MvJ Japanese's *live* config manager and calls its ``save()`` so
+    the in-memory object, meta.json, the per-profile settings file, and Anki's
+    config cache all stay consistent. No-op when MvJ Japanese is not installed,
+    already has a note type selected, or is mid edit in its settings dialog.
+
+    Always prepares ``japanese_fields`` (the Chinese block is never touched). In
+    Japanese mode that block is also the active import mirror; in Chinese mode
+    it only takes effect once the user switches back to Japanese.
+    """
+    global _mvj_retry_scheduled
+    if not mw or not mw.col or not mw.pm:
+        return
+    # Profile may have switched during the background download (note type ids
+    # are per-collection), so bail if we are no longer in the initiating profile.
+    if start_profile is not None and mw.pm.name != start_profile:
+        return
+
+    manager = _get_mvj_japanese_manager()
+    if manager is None:
+        if not _mvj_retry_scheduled:
+            # MvJ Japanese may not have finished init yet — retry once, later.
+            _mvj_retry_scheduled = True
+            try:
+                from aqt.qt import QTimer
+
+                QTimer.singleShot(3000, lambda: _configure_mvj_japanese(start_profile))
+            except Exception:
+                pass
+        return
+
+    if _mvj_settings_dialog_open():
+        return  # don't race a dialog the user is actively editing
+
+    try:
+        data = manager.data
+        jp = data.japanese_fields
+    except Exception:
+        return
+
+    model = mw.col.models.by_name(NOTE_TYPE_NAME)
+    if not model:
+        return
+
+    assignments = _mvj_field_assignments(
+        getattr(jp, "selected_notetype_id", None),
+        model["id"],
+        mw.pm.name,
+    )
+    if not assignments:
+        return  # already selected — leave it entirely alone
+
+    snapshot = {attr: getattr(jp, attr, None) for attr in assignments}
+    for attr, value in assignments.items():
+        setattr(jp, attr, value)
+
+    try:
+        manager.save()
+    except Exception as e:
+        # Restore the in-memory object so MvJ doesn't show an unpersisted
+        # selection, then resync from disk for good measure.
+        for attr, value in snapshot.items():
+            setattr(jp, attr, value)
+        try:
+            manager.reload()
+        except Exception:
+            pass
+        print(f"[MvJ] Failed to save MvJ Japanese config: {e}")
+        return
+
+    if getattr(data, "target_language", "japanese") == "japanese":
+        print(f"[MvJ] Selected {NOTE_TYPE_NAME} as MvJ Japanese note type")
+    else:
+        print(
+            f"[MvJ] Prepared Japanese field mapping for {NOTE_TYPE_NAME} "
+            "(MvJ Japanese is in Chinese mode; takes effect on switch)"
+        )
+
+
 def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
     """Main entry point — download files then create or update note type.
 
@@ -168,6 +323,9 @@ def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
     """
     skip_fonts = _fonts_exist()
     total_files = len(_TEMPLATE_FILES) + (0 if skip_fonts else len(_FONT_FILES))
+    # Remember which profile started this; the download is async and the user
+    # could switch profiles before it finishes. Note type ids are per-collection.
+    start_profile = mw.pm.name if mw.pm else None
     mw.progress.start(max=total_files, label="Starting download...", parent=mw)
 
     def task():
@@ -175,6 +333,10 @@ def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
 
     def on_done(future):
         mw.progress.finish()
+        if not mw.col or (mw.pm and mw.pm.name != start_profile):
+            # Profile switched (or closed) mid-download — abort to avoid
+            # writing the note type / config into the wrong collection.
+            return
         try:
             files = future.result()
         except HTTPError as e:
@@ -209,6 +371,12 @@ def install_notetype(on_success=None, *, reset_css: bool = False) -> None:
             return
 
         _remove_cardgen_guard()
+
+        try:
+            _configure_mvj_japanese(start_profile)
+        except Exception as e:
+            # Never let MvJ Japanese integration break note type install
+            print(f"[MvJ] MvJ Japanese auto-config failed: {e}")
 
         if on_success:
             on_success()
