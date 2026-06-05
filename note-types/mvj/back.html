@@ -813,7 +813,7 @@
         var stripped = seg.text.replace(/<[^>]+>/g, ' ');
         var seqs = makeSequences(stripped);
         allSequences = allSequences.concat(seqs);
-        htmlParts.push(seqs.map(makeColoredSentence).join(''));
+        htmlParts.push(seqs.length > 0 ? makeColoredSentence(seqs[0]) : '');
       } else {
         htmlParts.push(seg.text);
       }

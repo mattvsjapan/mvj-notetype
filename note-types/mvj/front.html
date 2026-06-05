@@ -1160,6 +1160,28 @@ function clearLastMargin(el) {
             }
             return null;
         }
+        function isPitchAlt(text) {
+            return !!text && /^(?:p?[a-zA-Z]?~?\d?~?|[a-zA-Z]{1,2}:[hlHL]+)$/.test(text);
+        }
+        function isPitchSuffix(text) {
+            if (text === '') return true;
+            var parts = text.split(',');
+            for (var i = 0; i < parts.length; i++) {
+                if (!isPitchAlt(parts[i])) return false;
+            }
+            return true;
+        }
+        function pitchSuffixEnd(raw, pos) {
+            var end = pos + 1;
+            var token = '';
+            for (var j = pos + 1; j < raw.length; j++) {
+                var ch = raw.charAt(j);
+                if (/[\s\t\u3000;|\/／「」、､]/.test(ch)) break;
+                token += ch;
+                if (isPitchSuffix(token)) end = j + 1;
+            }
+            return end;
+        }
 
         var units = [];
         var i = 0;
@@ -1183,6 +1205,12 @@ function clearLastMargin(el) {
                     i = endBr + 1;
                     continue;
                 }
+            }
+            if (ch === ':' && lookbackCls(units) === 'jp') {
+                var suffixEnd = pitchSuffixEnd(raw, i);
+                units.push({ cls: 'jp', text: raw.substring(i, suffixEnd) });
+                i = suffixEnd;
+                continue;
             }
             var cls;
             if (/\s/.test(ch)) {
