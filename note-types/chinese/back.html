@@ -89,15 +89,15 @@
                 var mob = window.matchMedia('(hover: none)').matches;
                 if (mob) {
                     window.__stopAllAudio();
-                    var gen = window.__webAudioGen;
+                    var genRef = { gen: window.__webAudioGen };
                     var idx = 0;
                     (function next() {
-                        if (idx >= audios.length || gen !== window.__webAudioGen) return;
+                        if (idx >= audios.length || genRef.gen !== window.__webAudioGen) return;
                         var cur = idx++;
                         animateBtn(btns[cur]);
-                        window.__playMobile(audios[cur].src, btns[cur])
-                            .then(function() { if (gen === window.__webAudioGen) next(); })
-                            ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+                        window.__playMobile(audios[cur].src, btns[cur], undefined, { genRef: genRef })
+                            .then(function() { if (genRef.gen === window.__webAudioGen) next(); })
+                            ['catch'](function() { if (genRef.gen === window.__webAudioGen) next(); });
                     })();
                 } else {
                     window.__stopAllAudio(audios[0]);

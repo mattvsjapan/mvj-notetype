@@ -94,15 +94,15 @@
                   var mob = window.matchMedia('(hover: none)').matches;
                   if (mob) {
                       window.__stopAllAudio();
-                      var gen = window.__webAudioGen;
+                      var genRef = { gen: window.__webAudioGen };
                       var idx = 0;
                       (function next() {
-                          if (idx >= audios.length || gen !== window.__webAudioGen) return;
+                          if (idx >= audios.length || genRef.gen !== window.__webAudioGen) return;
                           var cur = idx++;
                           animateBtn(btns[cur]);
-                          window.__playMobile(audios[cur].src, btns[cur])
-                              .then(function() { if (gen === window.__webAudioGen) next(); })
-                              ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+                          window.__playMobile(audios[cur].src, btns[cur], undefined, { genRef: genRef })
+                              .then(function() { if (genRef.gen === window.__webAudioGen) next(); })
+                              ['catch'](function() { if (genRef.gen === window.__webAudioGen) next(); });
                       })();
                   } else {
                       window.__stopAllAudio(audios[0]);
@@ -1392,14 +1392,14 @@
         var mob = window.matchMedia('(hover: none)').matches;
         if (mob) {
           window.__stopAllAudio();
-          var gen = window.__webAudioGen;
+          var genRef = { gen: window.__webAudioGen };
           var idx = 0;
           (function next() {
-            if (idx >= audioEls.length || gen !== window.__webAudioGen) return;
+            if (idx >= audioEls.length || genRef.gen !== window.__webAudioGen) return;
             var cur = idx++;
-            window.__playMobile(audioEls[cur].src, btn)
-                .then(function() { if (gen === window.__webAudioGen) next(); })
-                ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+            window.__playMobile(audioEls[cur].src, btn, undefined, { genRef: genRef })
+                .then(function() { if (genRef.gen === window.__webAudioGen) next(); })
+                ['catch'](function() { if (genRef.gen === window.__webAudioGen) next(); });
           })();
         } else {
           window.__stopAllAudio(audioEls[0]);
@@ -2216,15 +2216,15 @@
       if (!queue.length) return false;
       window.__stopAllAudio();
       var scope = window.__currentCardScope;
-      var gen = window.__webAudioGen;
+      var genRef = { gen: window.__webAudioGen };
       var k = 0;
       function next() {
-        if (k >= queue.length || gen !== window.__webAudioGen || !window.__isCardScopeActive(scope)) return;
+        if (k >= queue.length || genRef.gen !== window.__webAudioGen || !window.__isCardScopeActive(scope)) return;
         var entry = queue[k++];
         if (entry.btn) animateBtn(entry.btn);
-        window.__playMobile(entry.src, entry.btn, scope)
-          .then(function() { if (gen === window.__webAudioGen) next(); })
-          ['catch'](function() { if (gen === window.__webAudioGen) next(); });
+        window.__playMobile(entry.src, entry.btn, scope, { genRef: genRef })
+          .then(function() { if (genRef.gen === window.__webAudioGen) next(); })
+          ['catch'](function() { if (genRef.gen === window.__webAudioGen) next(); });
       }
       next();
       return true;

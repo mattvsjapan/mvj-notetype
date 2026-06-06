@@ -34,19 +34,15 @@ window.__isAndroid = function() {
         || /Android/i.test(navigator.userAgent);
 };
 
-// Create AudioContext eagerly — Anki's WKWebView sets
-// mediaTypesRequiringUserActionForPlayback=[] which allows
-// AudioContext to reach 'running' without a gesture. Skipped on Android,
-// which never plays through Web Audio (see __playMobile), so the whole
-// AudioContext lifecycle (create/resume/recover/probe) is dead weight there.
+// Create AudioContext eagerly, but do not resume/recover during card setup.
+// iOS WebKit audio lifecycle work is deliberately limited to playback time
+// so it cannot overlap AnkiMobile reviewer transitions.
 if (!window.__isAndroid()) {
     if (!window.__audioCtx) {
         window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    if (window.__audioCtx.state === 'suspended') {
-        window.__audioCtx.resume()['catch'](function() {});
-    }
 }
+window.__webAudioGen = window.__webAudioGen || 0;
 
 // iOS WebKit gate: capability + touch + explicit not-Android. The
 // AudioContext recovery path below targets a WebKit-specific stall
@@ -75,118 +71,97 @@ window.__audioCtxProbe = function(ms) {
     });
 };
 
-// Intentionally duplicated in each note type. Takes a factory so recovery
-// can skip branches without starting Web Audio operations.
-if (!window.__audioOpWithTimeout) {
-    window.__audioOpWithTimeout = function(label, promiseFactory, timeoutMs) {
-        timeoutMs = timeoutMs || 400;
-        var opLabel = label || 'audio-op';
-        return new Promise(function(resolve) {
-            var settled = false;
-            var timer = setTimeout(function() {
-                window.__audioCtxLastTimeout = opLabel;
-                if (document.documentElement.getAttribute('data-debug') === 'on'
-                    && window.console && window.console.warn) {
-                    window.console.warn('AudioContext recovery timed out:', opLabel);
-                }
-                done(false);
-            }, timeoutMs);
-            function done(ok) {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                resolve(!!ok);
-            }
-            try {
-                var p = promiseFactory();
-                if (!p || !p.then) { done(true); return; }
-                p.then(function() { done(true); }, function() { done(false); });
-            } catch(e) {
-                done(false);
-            }
-        });
-    };
-}
-
-// Single-flight escalation: probe → resume-or-suspend/resume → recreate,
-// re-probing after each step. Coalesced via __audioCtxRecoverPromise so
-// concurrent callers (scope-activation + first autoplay) share one chain.
-window.__audioCtxRecover = function() {
-    if (window.__audioCtxRecoverPromise) return window.__audioCtxRecoverPromise;
-    if (window.__audioCtxLastFailedAt && Date.now() - window.__audioCtxLastFailedAt < 5000) {
-        window.__audioCtxState = 'failed';
-        return Promise.resolve(false);
+// Playback-time refresh only. It never suspends/closes the old context and
+// cannot complete side effects for a stale card scope.
+window.__audioCtxRecover = function(scope, expectedGen) {
+    if (scope === undefined) scope = window.__currentCardScope;
+    if (!window.__isCardScopeActive(scope)) return Promise.resolve(false);
+    if (expectedGen === undefined) expectedGen = window.__webAudioGen;
+    if (expectedGen !== window.__webAudioGen) return Promise.resolve(false);
+    if (window.__audioCtxRecoverPromise
+        && window.__audioCtxRecoverScope === scope
+        && window.__audioCtxRecoverGen === expectedGen
+        && window.__isCardScopeActive(window.__audioCtxRecoverScope)) {
+        return window.__audioCtxRecoverPromise;
     }
-    var p = window.__audioCtxProbe(80).then(function(ok) {
-        if (ok) return true;
-        var ctx = window.__audioCtx;
-        if (!ctx) return false;
-        var op = window.__audioOpWithTimeout;
-        var step2 = (ctx.state === 'running')
-            ? op('suspend', function(){ return ctx.suspend(); })
-                .then(function(ok){ return ok ? op('resume', function(){ return ctx.resume(); }) : false; })
-            : op('resume', function(){ return ctx.resume(); });
-        return step2
-            .then(function(ok){ return ok ? window.__audioCtxProbe(80) : false; })
-            .then(function(ok2) {
-                if (ok2) return true;
-                // Narrow cleanup before discarding: dying contexts may not
-                // fire `onended` on close, leaving __webAudioSource and the
-                // .playing class pointing at a dead source. Do NOT call
-                // __stopAllAudio() here — it would pause <audio> fallback
-                // playback already in progress and bump __webAudioGen,
-                // re-stranding any autoplay queue that synced its genRef.
-                if (window.__webAudioSource) {
-                    try { window.__webAudioSource.stop(); } catch(e) {}
-                    window.__webAudioSource = null;
-                }
-                return op('close', function(){ return ctx.close(); })
-                    .then(function() {
-                        try {
-                            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        } catch(e) {
-                            return false;
-                        }
-                        return op('resume-new', function(){ return window.__audioCtx.resume(); });
-                    })
-                    .then(function(){ return window.__audioCtxProbe(80); });
+
+    var token = {};
+    window.__audioCtxRecoverToken = token;
+    window.__audioCtxRecoverScope = scope;
+    window.__audioCtxRecoverGen = expectedGen;
+
+    function active() {
+        return token === window.__audioCtxRecoverToken
+            && window.__isCardScopeActive(scope)
+            && expectedGen === window.__webAudioGen;
+    }
+
+    var p = new Promise(function(resolve) {
+        if (!active()) { resolve(false); return; }
+        if (window.__webAudioSource) {
+            try { window.__webAudioSource.stop(); } catch(e) {}
+            window.__webAudioSource = null;
+        }
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) { resolve(false); return; }
+        var ctx;
+        try {
+            ctx = new Ctor();
+        } catch(e) {
+            resolve(false);
+            return;
+        }
+        if (!active()) { resolve(false); return; }
+        window.__audioCtx = ctx;
+        if (ctx.state === 'suspended' && ctx.resume) {
+            if (!active()) { resolve(false); return; }
+            try {
+                var rp = ctx.resume();
+                if (rp && rp['catch']) rp['catch'](function() {});
+            } catch(e) {}
+        }
+        setTimeout(function() {
+            if (!active() || window.__audioCtx !== ctx) { resolve(false); return; }
+            window.__audioCtxProbe(80).then(function(ok) {
+                resolve(active() && window.__audioCtx === ctx && !!ok);
+            }, function() {
+                resolve(false);
             });
+        }, 40);
     }).then(function(ok) {
+        if (token === window.__audioCtxRecoverToken) {
+            if (active()) {
+                window.__audioCtxState = ok ? 'healthy' : 'failed';
+            }
+            window.__audioCtxRecoverPromise = null;
+            window.__audioCtxRecoverScope = null;
+            window.__audioCtxRecoverToken = null;
+            window.__audioCtxRecoverGen = null;
+        }
         return !!ok;
-    }, function() {
-        return false;
-    }).then(function(ok) {
-        window.__audioCtxState = ok ? 'healthy' : 'failed';
-        window.__audioCtxLastFailedAt = ok ? 0 : Date.now();
-        window.__audioCtxRecoverPromise = null;
-        return ok;
     });
+
     window.__audioCtxRecoverPromise = p;
     return p;
 };
 
-// Safety net: if AudioContext is still suspended after page load,
-// resume it on the next user gesture. (Android has no AudioContext to resume.)
-if (!window.__isAndroid() && !window.__audioCtxTouchHandler) {
-    window.__audioCtxTouchHandler = function() {
-        if (window.__audioCtx && window.__audioCtx.state !== 'running') {
-            window.__audioCtx.resume()['catch'](function() {});
-        }
-    };
-    document.addEventListener('touchend', window.__audioCtxTouchHandler, { capture: true });
+if (window.__audioCtxTouchHandler) {
+    document.removeEventListener('touchend', window.__audioCtxTouchHandler, true);
+    window.__audioCtxTouchHandler = null;
 }
 
-// Resume AudioContext after iOS app background/foreground switch.
+// Mark AudioContext health unknown after iOS app background/foreground switch.
 // iOS suspends the WebView's audio session when backgrounded; the
-// context moves to 'suspended' or the non-standard 'interrupted' and
-// does not auto-resume. Also: a card already marked 'healthy' before
-// backgrounding must be re-probed, otherwise a fast tap-after-foreground
-// would take the dead Web Audio path before recovery completes.
-if (!window.__isAndroid() && !window.__audioCtxVisHandler) {
+// context may be stale even if it still claims to be running.
+if (window.__audioCtxVisHandler) {
+    document.removeEventListener('visibilitychange', window.__audioCtxVisHandler);
+    window.__audioCtxVisHandler = null;
+}
+if (!window.__isAndroid()) {
     window.__audioCtxVisHandler = function() {
-        if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
-        window.__audioCtxState = 'unknown';
-        window.__audioCtxRecover();
+        if (document.visibilityState === 'visible' && window.__audioCtx) {
+            window.__audioCtxState = 'unknown';
+        }
     };
     document.addEventListener('visibilitychange', window.__audioCtxVisHandler);
 }
@@ -270,13 +245,10 @@ if (window.__observers) {
 window.__observers = [];
 
 // Each card may follow a foreign [sound:] card that took the AVAudioSession.
-// Downgrade to 'unknown' and kick recovery now (after the teardown above
-// settles), so by the time autoplay's setTimeout(0) fires the probe is
-// running against a settled context. Skipped on Android (no Web Audio there),
-// where this per-card probe/recreate churn is pure waste.
+// Mark unknown, but defer probing/replacement until playback so audio work
+// cannot overlap AnkiMobile's reviewer transition.
 if (!window.__isAndroid()) {
     window.__audioCtxState = 'unknown';
-    if (window.__audioCtxRecover) window.__audioCtxRecover();
 }
 
 // Shared audio utilities (available on back via {{FrontSide}})
@@ -608,28 +580,40 @@ window.__playMobile = function(src, btn, scope, opts) {
     // autoplay, front tap, and back tap uniformly.
     if (window.__isAndroid && window.__isAndroid()) return viaFresh();
 
-    if (!ios || window.__audioCtxState === 'healthy') {
+    function viaRecoveredWebAudio(expectedGen) {
+        if (expectedGen === undefined) expectedGen = window.__webAudioGen;
+        if (expectedGen !== window.__webAudioGen) return Promise.resolve();
+        return window.__audioCtxRecover(scope, expectedGen).then(function(ok) {
+            if (!window.__isCardScopeActive(scope)) return;
+            if (expectedGen !== window.__webAudioGen) return;
+            var nextCtx = window.__audioCtx;
+            if (ok && nextCtx && nextCtx.state === 'running') {
+                return window.__webAudioPlay(src, btn, expectedGen, scope);
+            }
+            if (window.__isCardScopeActive(scope)) return viaFresh();
+        });
+    }
+
+    if (!ios) {
         if (ctx && ctx.state === 'running')
             return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
         return viaFresh();
     }
+
+    if (window.__audioCtxState === 'healthy') {
+        if (ctx && ctx.state === 'running')
+            return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
+        return viaRecoveredWebAudio(window.__webAudioGen);
+    }
     if (window.__audioCtxState === 'failed') return viaFresh();
 
-    if (!opts.autoplay) {
-        // Tap on iOS-unknown: synchronous fresh playback inside the gesture.
-        if (!window.__audioCtxRecoverPromise) window.__audioCtxRecover();
-        return viaFresh();
-    }
+    if (!ctx || ctx.state !== 'running') return viaRecoveredWebAudio(window.__webAudioGen);
 
-    if (!ctx || ctx.state !== 'running') {
-        if (!window.__audioCtxRecoverPromise) window.__audioCtxRecover();
-        return viaFresh();
-    }
     var gen = window.__webAudioGen;
     var optimistic = window.__webAudioPlay(src, btn, gen, scope);
     // Sink the optimistic promise eagerly: if the unhealthy branch abandons
     // it and __webAudioPlay's chain later rejects (fetch/decode error or
-    // close-race during recovery), it would otherwise become unhandled.
+    // refresh-race during recovery), it would otherwise become unhandled.
     if (optimistic && optimistic['catch']) optimistic['catch'](function(){});
     return window.__audioCtxProbe(80).then(function(healthy) {
         if (!window.__isCardScopeActive(scope)) return;
@@ -637,11 +621,10 @@ window.__playMobile = function(src, btn, scope, opts) {
         // Cancel the silent optimistic. __stopAllAudio() bumps __webAudioGen
         // so the queue's halt token must be re-synced via opts.genRef to keep
         // the autoplay queue advancing past this internal cancellation.
-        if (gen === window.__webAudioGen) window.__stopAllAudio();
-        if (opts.genRef) opts.genRef.gen = window.__webAudioGen;
-        return window.__audioCtxRecover().then(function() {
-            if (window.__isCardScopeActive(scope)) return viaFresh();
-        });
+        var internalCancel = gen === window.__webAudioGen;
+        if (internalCancel) window.__stopAllAudio();
+        if (internalCancel && opts.genRef) opts.genRef.gen = window.__webAudioGen;
+        return viaRecoveredWebAudio(internalCancel ? window.__webAudioGen : gen);
     });
 };
 </script>
