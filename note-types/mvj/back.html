@@ -787,23 +787,36 @@
   }
   
   // ── makeSequences glue ──
-  function makeSequences(expr) {
+  function makeSequenceGroups(expr) {
     expr = normalizeForParsing(expr);
     let sentences = splitToSentences(expr);
     sentences = sentences.map(detachGhostParticle);
     let bySection = sentences.map(splitToSections);
     bySection = bySection.map(mergeFragments);
-    bySection = splitMultiplePitchNotations(bySection);
-    let sequences = bySection.map(parseSections);
-    sequences = sequences.map(buildHighLow);
-    return sequences;
+    return bySection.map(function(sections) {
+      let alternatives = splitMultiplePitchNotations([sections]);
+      let sequences = alternatives.map(parseSections);
+      sequences = sequences.map(buildHighLow);
+      return sequences;
+    });
+  }
+
+  function flattenSequenceGroups(groups) {
+    return groups.reduce(function(out, group) {
+      return out.concat(group);
+    }, []);
+  }
+
+  function makeSequences(expr) {
+    return flattenSequenceGroups(makeSequenceGroups(expr));
   }
 
   // Back-side renderer: routes JP segments through makeSequences +
   // makeColoredSentence, collects sequences for the caller. Segmentation is
   // shared via window.segmentMixed (defined in front.html, runs first).
-  function renderMixed(raw) {
+  function renderMixed(raw, opts) {
     if (!raw) return { html: '', sequences: [] };
+    opts = opts || {};
     var segs = window.segmentMixed(raw);
     var htmlParts = [];
     var allSequences = [];
@@ -811,9 +824,17 @@
       var seg = segs[s];
       if (seg.cls === 'jp') {
         var stripped = seg.text.replace(/<[^>]+>/g, ' ');
-        var seqs = makeSequences(stripped);
-        allSequences = allSequences.concat(seqs);
-        htmlParts.push(seqs.length > 0 ? makeColoredSentence(seqs[0]) : '');
+        if (opts.renderAllSentences) {
+          var groups = makeSequenceGroups(stripped);
+          allSequences = allSequences.concat(flattenSequenceGroups(groups));
+          htmlParts.push(groups.map(function(group) {
+            return group.length > 0 ? makeColoredSentence(group[0]) : '';
+          }).join(''));
+        } else {
+          var seqs = makeSequences(stripped);
+          allSequences = allSequences.concat(seqs);
+          htmlParts.push(seqs.length > 0 ? makeColoredSentence(seqs[0]) : '');
+        }
       } else {
         htmlParts.push(seg.text);
       }
@@ -1092,7 +1113,7 @@
         _d.innerHTML = part.replace(/<[^>]+>/g, ' ');
         var lineText = _d.textContent.trim();
         if (!lineText) return '';
-        var rendered = renderMixed(lineText);
+        var rendered = renderMixed(lineText, { renderAllSentences: true });
         allSeqs = allSeqs.concat(rendered.sequences);
         return rendered.html;
       }).filter(Boolean);

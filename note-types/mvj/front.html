@@ -1069,13 +1069,20 @@ function clearLastMargin(el) {
     if (wordAI && _btnOff(_wab)) wordAI.setAttribute('data-btn-off', '');
     if (sentAI && _btnOff(_sab)) sentAI.setAttribute('data-btn-off', '');
 
-    function rawFieldText(el) {
-        if (!el) return '';
+    function rawFieldLines(el) {
+        if (!el) return [];
         var d = document.createElement('span');
         var html = el.innerHTML.replace(/<br\s*\/?>/gi, '\n');
         html = html.replace(/<[^>]+>/g, ' ');
         d.innerHTML = html;
-        return (d.textContent.trim().split('\n')[0] || '').trim();
+        return d.textContent.trim().split('\n').map(function(line) {
+            return line.trim();
+        }).filter(Boolean);
+    }
+
+    function rawFieldText(el) {
+        var lines = rawFieldLines(el);
+        return (lines[0] || '').trim();
     }
 
     // ── Shared: available on both front and back (via window) ──
@@ -1282,16 +1289,25 @@ function clearLastMargin(el) {
     if (document.querySelector('.back')) return;
 
     // ── plainRuby: bracket notation → <ruby>, no accent colors ──
-    function plainRuby(raw) {
-        if (!raw) return '';
+    var FRONT_SEPS = [',', '\u3001', '\u300C', '\u300D', '\u3002', '!', '?', '\uFF01', '\uFF1F'];
+    function normalizeFrontRuby(raw) {
         raw = raw.replace(/<[^>]+>/g, ' ');
         raw = escapeBrackets(raw);
+        raw = raw.replace(/([\u3002!?\uFF01\uFF1F])(?!:)/g, ' $1 ');
+        raw = raw.replace(/([\u300C\u300D|、､])/g, ' $1 ');
+        raw = raw.replace(/([^ ]), /g, ' $1 , ');
+        return raw;
+    }
+
+    function plainRuby(raw) {
+        if (!raw) return '';
+        raw = normalizeFrontRuby(raw);
         var tokens = raw.split(/[\s\t\u3000]+/).filter(Boolean);
         var out = [];
         for (var i = 0; i < tokens.length; i++) {
             var t = tokens[i];
             if (/^[;|\.\/／\-]+$/.test(t)) continue;
-            if (t === ',' || t === '\u3001' || t === '\u300C' || t === '\u300D') { out.push(t); continue; }
+            if (FRONT_SEPS.indexOf(t) !== -1) { out.push(t); continue; }
             t = t.replace(/:[a-zA-Z0-9~,\-]*$/, '');
             t = t.replace(/[\*\\\^]/g, '');
             out.push(textToRuby(t));
@@ -1302,8 +1318,7 @@ function clearLastMargin(el) {
     // ── coloredRuby: bracket notation → <ruby> with accent-color spans ──
     function coloredRuby(raw) {
         if (!raw) return '';
-        raw = raw.replace(/<[^>]+>/g, ' ');
-        raw = escapeBrackets(raw);
+        raw = normalizeFrontRuby(raw);
         var tokens = raw.split(/[\s\t\u3000]+/).filter(Boolean);
         var roleMap = {
             h: 'heiban', a: 'atamadaka', n: 'nakadaka', o: 'odaka', k: 'kifuku',
@@ -1332,12 +1347,11 @@ function clearLastMargin(el) {
             }
             return '';
         }
-        var SEPS = [',', '\u3001', '\u300C', '\u300D'];
         var out = [], pending = [];
         for (var i = 0; i < tokens.length; i++) {
             var t = tokens[i];
             if (/^[;|\.\/／\-]+$/.test(t)) continue;
-            if (SEPS.indexOf(t) !== -1) {
+            if (FRONT_SEPS.indexOf(t) !== -1) {
                 if (pending.length) { out.push(pending.join('')); pending = []; }
                 out.push(t);
                 continue;
@@ -1395,7 +1409,9 @@ function clearLastMargin(el) {
 
     if (sentSide === 'front & back') {
         var rs = document.getElementById('raw-sentence');
-        var html = rs ? renderMixed(rawFieldText(rs), { colored: sentPC === 'front & back' }) : '';
+        var html = rs ? rawFieldLines(rs).map(function(line) {
+            return renderMixed(line, { colored: sentPC === 'front & back' });
+        }).filter(Boolean).join('<br>') : '';
         if (html) {
             frontSent.innerHTML = html;
             if (sentPC === 'front & back') frontSent.classList.add('pitch-color-front');
