@@ -71,8 +71,31 @@ window.__audioCtxProbe = function(ms) {
     });
 };
 
-// Playback-time refresh only. It never suspends/closes the old context and
-// cannot complete side effects for a stale card scope.
+// Release an AudioContext's system resources exactly once. iOS/WebKit caps the
+// number of live contexts; close() is the only way to free one. The close is
+// cached on the context object so a concurrent recovery on the same context
+// reuses the in-flight close instead of calling close() twice — a second close
+// rejects InvalidStateError, which must NOT be misread as "released". Resolves
+// true when close() settles (resolve or reject both mean the close attempt
+// completed); never rejects. No internal timeout: the recovery owns the timeout.
+window.__releaseContext = function(c) {
+    if (!c) return Promise.resolve(true);
+    if (c.__releasePromise) return c.__releasePromise;
+    if (!c.close) return (c.__releasePromise = Promise.resolve(true));
+    c.__releasePromise = new Promise(function(res) {
+        var done = false, fin = function() { if (!done) { done = true; res(true); } };
+        try {
+            var cp = c.close();
+            if (cp && cp.then) cp.then(fin, fin);
+            else fin();
+        } catch(e) { fin(); }
+    });
+    return c.__releasePromise;
+};
+
+// Playback-time refresh only. Closes the old/sick context before constructing a
+// replacement (one context live at a time), and cannot complete side effects for
+// a stale card scope.
 window.__audioCtxRecover = function(scope, expectedGen) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve(false);
@@ -104,30 +127,60 @@ window.__audioCtxRecover = function(scope, expectedGen) {
         }
         var Ctor = window.AudioContext || window.webkitAudioContext;
         if (!Ctor) { resolve(false); return; }
-        var ctx;
-        try {
-            ctx = new Ctor();
-        } catch(e) {
-            resolve(false);
-            return;
-        }
-        if (!active()) { resolve(false); return; }
-        window.__audioCtx = ctx;
-        if (ctx.state === 'suspended' && ctx.resume) {
+
+        var old = window.__audioCtx;
+
+        function createReplacement() {
             if (!active()) { resolve(false); return; }
+            var ctx;
             try {
-                var rp = ctx.resume();
-                if (rp && rp['catch']) rp['catch'](function() {});
-            } catch(e) {}
-        }
-        setTimeout(function() {
-            if (!active() || window.__audioCtx !== ctx) { resolve(false); return; }
-            window.__audioCtxProbe(80).then(function(ok) {
-                resolve(active() && window.__audioCtx === ctx && !!ok);
-            }, function() {
+                ctx = new Ctor();
+            } catch(e) {
                 resolve(false);
-            });
-        }, 40);
+                return;
+            }
+            // Assign immediately so the last-constructed context is always
+            // reachable as window.__audioCtx; the next recovery's release gate
+            // (__releaseContext(old)) then covers it — no untracked orphan. (No
+            // active() re-check here: nothing yields between the entry check and
+            // this point, so it cannot have changed. The setTimeout guard below
+            // is the reachable supersession check.)
+            window.__audioCtx = ctx;
+            if (ctx.state === 'suspended' && ctx.resume) {
+                try {
+                    var rp = ctx.resume();
+                    if (rp && rp['catch']) rp['catch'](function() {});
+                } catch(e) {}
+            }
+            setTimeout(function() {
+                if (!active() || window.__audioCtx !== ctx) { resolve(false); return; }
+                window.__audioCtxProbe(80).then(function(ok) {
+                    resolve(active() && window.__audioCtx === ctx && !!ok);
+                }, function() {
+                    resolve(false);
+                });
+            }, 40);
+        }
+
+        // Release the old/sick context before constructing a replacement, so at
+        // most one context is ever live. Bounded by a 400ms timeout: if release
+        // does not confirm in time, abort (the outer .then marks state 'failed',
+        // routing playback to HTMLAudio) rather than pile on a second context.
+        // old.__releasePromise stays pending and is reused by the next card's
+        // recovery, which self-heals once the close finally settles.
+        if (!old) { createReplacement(); return; }
+        var decided = false;
+        var timer = setTimeout(function() {
+            if (decided) return;
+            decided = true;
+            resolve(false);
+        }, 400);
+        window.__releaseContext(old).then(function() {
+            if (decided) return;
+            decided = true;
+            clearTimeout(timer);
+            createReplacement();
+        });
     }).then(function(ok) {
         if (token === window.__audioCtxRecoverToken) {
             if (active()) {
@@ -531,16 +584,22 @@ window.__linkBtnHoverToText = function(btn, audioKey) {
 window.__webAudioPlay = function(src, btn, gen, scope) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
+    // Capture the context once: decode and source must use the same context, and
+    // recovery may swap/close window.__audioCtx during the fetch/decode gap.
+    var actx = window.__audioCtx;
+    if (!actx || actx.state !== 'running') return Promise.resolve();
     return fetch(src)
         .then(function(r) { return r.arrayBuffer(); })
-        .then(function(buf) { return window.__audioCtx.decodeAudioData(buf); })
+        .then(function(buf) { return actx.decodeAudioData(buf); })
         .then(function(audioBuf) {
             if ((gen !== undefined && gen !== window.__webAudioGen)
-                || !window.__isCardScopeActive(scope)) return;
+                || !window.__isCardScopeActive(scope)
+                || window.__audioCtx !== actx
+                || actx.state !== 'running') return;
             return new Promise(function(resolve) {
-                var source = window.__audioCtx.createBufferSource();
+                var source = actx.createBufferSource();
                 source.buffer = audioBuf;
-                source.connect(window.__audioCtx.destination);
+                source.connect(actx.destination);
                 source.start();
                 window.__webAudioSource = source;
                 if (btn) { btn.classList.add('playing'); btn._currentAudio = source; }
@@ -568,10 +627,18 @@ window.__playMobile = function(src, btn, scope, opts) {
         var fa = window.__freshPlay(src, btn, scope);
         if (!fa) return Promise.resolve();
         window.__startPlaying(fa, btn);
+        var startGen = window.__webAudioGen;
         return new Promise(function(resolve) {
             var done = false, finish = function(){ if (!done) { done = true; resolve(); } };
             fa.addEventListener('ended', finish, { once: true });
             fa.addEventListener('error', finish, { once: true });
+            // __stopAllAudio() pauses fallback audio AND bumps __webAudioGen without
+            // firing ended/error; settle only when a pause coincides with that bump so
+            // a stopped queue doesn't strand this promise. An external/OS-interruption
+            // pause (gen unchanged) is NOT completion, so the queue does not skip.
+            fa.addEventListener('pause', function() {
+                if (window.__webAudioGen !== startGen) finish();
+            });
         });
     }
 
