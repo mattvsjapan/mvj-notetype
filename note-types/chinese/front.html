@@ -36,10 +36,16 @@ window.__isAndroid = function() {
 
 // Create AudioContext eagerly, but do not resume/recover during card setup.
 // iOS WebKit audio lifecycle work is deliberately limited to playback time
-// so it cannot overlap AnkiMobile reviewer transitions.
+// so it cannot overlap AnkiMobile reviewer transitions. __audioCtxCreates
+// counts every construction over the document lifetime; recovery refuses to
+// construct past a small budget (see __audioCtxRecover).
+window.__audioCtxCreates = window.__audioCtxCreates || 0;
 if (!window.__isAndroid()) {
     if (!window.__audioCtx) {
-        window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            window.__audioCtxCreates++;
+        } catch (e) {}
     }
 }
 window.__webAudioGen = window.__webAudioGen || 0;
@@ -71,31 +77,17 @@ window.__audioCtxProbe = function(ms) {
     });
 };
 
-// Release an AudioContext's system resources exactly once. iOS/WebKit caps the
-// number of live contexts; close() is the only way to free one. The close is
-// cached on the context object so a concurrent recovery on the same context
-// reuses the in-flight close instead of calling close() twice — a second close
-// rejects InvalidStateError, which must NOT be misread as "released". Resolves
-// true when close() settles (resolve or reject both mean the close attempt
-// completed); never rejects. No internal timeout: the recovery owns the timeout.
-window.__releaseContext = function(c) {
-    if (!c) return Promise.resolve(true);
-    if (c.__releasePromise) return c.__releasePromise;
-    if (!c.close) return (c.__releasePromise = Promise.resolve(true));
-    c.__releasePromise = new Promise(function(res) {
-        var done = false, fin = function() { if (!done) { done = true; res(true); } };
-        try {
-            var cp = c.close();
-            if (cp && cp.then) cp.then(fin, fin);
-            else fin();
-        } catch(e) { fin(); }
-    });
-    return c.__releasePromise;
-};
-
-// Playback-time refresh only. Closes the old/sick context before constructing a
-// replacement (one context live at a time), and cannot complete side effects for
-// a stale card scope.
+// Playback-time refresh only, and it NEVER calls AudioContext.close(). Every
+// template version that closed contexts froze the AnkiMobile reviewer ~3x per
+// session in the field, no matter when recovery ran (transition-time or
+// playback-time); the one close()-free version froze only when leaked contexts
+// hit WebKit's live-context cap late in long sessions. The close() teardown
+// wedges WebKit's audio machinery (most likely the synchronous
+// `new AudioContext()` that follows it). So: abandoned contexts are never
+// closed, constructions are budgeted per document lifetime (__audioCtxCreates,
+// kept far below the cap the leak used to hit), and a suspended/interrupted
+// context is resumed in place rather than replaced. Cannot complete side
+// effects for a stale card scope.
 window.__audioCtxRecover = function(scope, expectedGen) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve(false);
@@ -130,28 +122,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
 
         var old = window.__audioCtx;
 
-        function createReplacement() {
-            if (!active()) { resolve(false); return; }
-            var ctx;
-            try {
-                ctx = new Ctor();
-            } catch(e) {
-                resolve(false);
-                return;
-            }
-            // Assign immediately so the last-constructed context is always
-            // reachable as window.__audioCtx; the next recovery's release gate
-            // (__releaseContext(old)) then covers it — no untracked orphan. (No
-            // active() re-check here: nothing yields between the entry check and
-            // this point, so it cannot have changed. The setTimeout guard below
-            // is the reachable supersession check.)
-            window.__audioCtx = ctx;
-            if (ctx.state === 'suspended' && ctx.resume) {
-                try {
-                    var rp = ctx.resume();
-                    if (rp && rp['catch']) rp['catch'](function() {});
-                } catch(e) {}
-            }
+        function probeCtx(ctx) {
             setTimeout(function() {
                 if (!active() || window.__audioCtx !== ctx) { resolve(false); return; }
                 window.__audioCtxProbe(80).then(function(ok) {
@@ -162,25 +133,70 @@ window.__audioCtxRecover = function(scope, expectedGen) {
             }, 40);
         }
 
-        // Release the old/sick context before constructing a replacement, so at
-        // most one context is ever live. Bounded by a 400ms timeout: if release
-        // does not confirm in time, abort (the outer .then marks state 'failed',
-        // routing playback to HTMLAudio) rather than pile on a second context.
-        // old.__releasePromise stays pending and is reused by the next card's
-        // recovery, which self-heals once the close finally settles.
-        if (!old) { createReplacement(); return; }
-        var decided = false;
-        var timer = setTimeout(function() {
-            if (decided) return;
-            decided = true;
-            resolve(false);
-        }, 400);
-        window.__releaseContext(old).then(function() {
-            if (decided) return;
-            decided = true;
-            clearTimeout(timer);
-            createReplacement();
-        });
+        function createReplacement() {
+            if (!active()) { resolve(false); return; }
+            // Construction budget — the only context-cap protection now that
+            // nothing is ever closed. Past it, the sick context stays in place
+            // and playback stays on the <audio> fallback; the per-card
+            // optimistic probe still notices if the old clock comes back.
+            if ((window.__audioCtxCreates || 0) >= 3) { resolve(false); return; }
+            var ctx;
+            try {
+                ctx = new Ctor();
+            } catch(e) {
+                resolve(false);
+                return;
+            }
+            window.__audioCtxCreates = (window.__audioCtxCreates || 0) + 1;
+            // The old context is abandoned without close() (see above); the
+            // budget keeps the abandoned pile bounded.
+            window.__audioCtx = ctx;
+            if (ctx.state === 'suspended' && ctx.resume) {
+                try {
+                    var rp = ctx.resume();
+                    if (rp && rp['catch']) rp['catch'](function() {});
+                } catch(e) {}
+            }
+            probeCtx(ctx);
+        }
+
+        // A suspended/interrupted context (app backgrounding, OS audio-session
+        // interruption) is resumed in place: a replacement would start in the
+        // same gesture-gated state, so recreating buys nothing and burns budget.
+        // Bounded: if resume() neither settles nor yields a running context in
+        // time, fail to the <audio> fallback for this playback and let a later
+        // card retry. If resume() succeeds but the clock is still frozen, the
+        // probe below fails, this playback falls back, and the next card's
+        // recovery sees a running-but-stalled context and replaces it within
+        // budget.
+        if (old && (old.state === 'suspended' || old.state === 'interrupted') && old.resume) {
+            var settled = false;
+            var timer = setTimeout(function() {
+                if (settled) return;
+                settled = true;
+                resolve(false);
+            }, 300);
+            var afterResume = function() {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                if (!active() || window.__audioCtx !== old || old.state !== 'running') {
+                    resolve(false);
+                    return;
+                }
+                probeCtx(old);
+            };
+            try {
+                var pr = old.resume();
+                if (pr && pr.then) pr.then(afterResume, afterResume);
+                else afterResume();
+            } catch(e) { afterResume(); }
+            return;
+        }
+
+        // Missing, or running with a frozen clock (resume() is a no-op on a
+        // 'running' context) — replace within budget.
+        createReplacement();
     }).then(function(ok) {
         if (token === window.__audioCtxRecoverToken) {
             if (active()) {
