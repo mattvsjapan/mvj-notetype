@@ -34,18 +34,41 @@ window.__isAndroid = function() {
         || /Android/i.test(navigator.userAgent);
 };
 
+// Single choke point for AudioContext construction. Counts every construction
+// and refuses past the budget, so no call site can construct without counting
+// — the same drift class (a refactor dropping one lifecycle call) caused the
+// original context leak. The budget is the only context-cap protection now
+// that nothing is ever close()d. The cooldown stops one stall episode from
+// burning several budget slots back-to-back: a context constructed while the
+// AVAudioSession is still contended is usually born stalled, so without it
+// the next card would immediately construct again. Returns null (caller falls
+// back to <audio> for that playback) when over budget, cooling down, or
+// construction fails.
+window.__audioCtxBudget = 3;
+window.__audioCtxCreates = window.__audioCtxCreates || 0;
+window.__newAudioCtx = function() {
+    if (window.__audioCtxCreates >= window.__audioCtxBudget) return null;
+    if (window.__audioCtxCreatedAt
+        && Date.now() - window.__audioCtxCreatedAt < 10000) return null;
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    var c;
+    try {
+        c = new Ctor();
+    } catch (e) {
+        return null;
+    }
+    window.__audioCtxCreates++;
+    window.__audioCtxCreatedAt = Date.now();
+    return c;
+};
+
 // Create AudioContext eagerly, but do not resume/recover during card setup.
 // iOS WebKit audio lifecycle work is deliberately limited to playback time
-// so it cannot overlap AnkiMobile reviewer transitions. __audioCtxCreates
-// counts every construction over the document lifetime; recovery refuses to
-// construct past a small budget (see __audioCtxRecover).
-window.__audioCtxCreates = window.__audioCtxCreates || 0;
+// so it cannot overlap AnkiMobile reviewer transitions.
 if (!window.__isAndroid()) {
     if (!window.__audioCtx) {
-        try {
-            window.__audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            window.__audioCtxCreates++;
-        } catch (e) {}
+        window.__audioCtx = window.__newAudioCtx() || undefined;
     }
 }
 window.__webAudioGen = window.__webAudioGen || 0;
@@ -117,9 +140,6 @@ window.__audioCtxRecover = function(scope, expectedGen) {
             try { window.__webAudioSource.stop(); } catch(e) {}
             window.__webAudioSource = null;
         }
-        var Ctor = window.AudioContext || window.webkitAudioContext;
-        if (!Ctor) { resolve(false); return; }
-
         var old = window.__audioCtx;
 
         function probeCtx(ctx) {
@@ -135,19 +155,13 @@ window.__audioCtxRecover = function(scope, expectedGen) {
 
         function createReplacement() {
             if (!active()) { resolve(false); return; }
-            // Construction budget — the only context-cap protection now that
-            // nothing is ever closed. Past it, the sick context stays in place
-            // and playback stays on the <audio> fallback; the per-card
-            // optimistic probe still notices if the old clock comes back.
-            if ((window.__audioCtxCreates || 0) >= 3) { resolve(false); return; }
-            var ctx;
-            try {
-                ctx = new Ctor();
-            } catch(e) {
-                resolve(false);
-                return;
-            }
-            window.__audioCtxCreates = (window.__audioCtxCreates || 0) + 1;
+            // __newAudioCtx enforces the construction budget and cooldown.
+            // null => over budget, cooling down, or construction failed: the
+            // sick context stays in place and this playback uses the <audio>
+            // fallback; the per-card optimistic probe still notices if the
+            // old clock comes back, and a later card's recovery may construct.
+            var ctx = window.__newAudioCtx();
+            if (!ctx) { resolve(false); return; }
             // The old context is abandoned without close() (see above); the
             // budget keeps the abandoned pile bounded.
             window.__audioCtx = ctx;
@@ -600,8 +614,10 @@ window.__linkBtnHoverToText = function(btn, audioKey) {
 window.__webAudioPlay = function(src, btn, gen, scope) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
-    // Capture the context once: decode and source must use the same context, and
-    // recovery may swap/close window.__audioCtx during the fetch/decode gap.
+    // Capture the context once: decode and source must use the same context,
+    // and recovery may swap window.__audioCtx for a replacement during the
+    // fetch/decode gap (the old context is abandoned, never close()d — see
+    // __audioCtxRecover).
     var actx = window.__audioCtx;
     if (!actx || actx.state !== 'running') return Promise.resolve();
     return fetch(src)
