@@ -53,6 +53,7 @@ _SOUND_RE = re.compile(r"\[sound:")
 _FURIGANA_RE = re.compile(r"\[[^\]]*\]")
 # Strip all HTML tags except <b>, </b>, and <b ...attributes>
 _NON_BOLD_HTML_RE = re.compile(r"<(?!/?b[ >/])[^>]*>")
+_KEY_ALIAS_SEPARATOR = "|||"
 
 _DECK_DESCRIPTION = (
     'The <a href="https://github.com/donkuri/Kaishi">Kaishi 1.5k deck</a>'
@@ -136,11 +137,16 @@ def _build_key_index(rows: list[dict]) -> dict[str, dict]:
     index = {}
     for row in rows:
         for col in ("sentence_key_furigana", "sentence_key_plain", "sentence_key_legacy"):
-            if not row.get(col):
+            cell = row.get(col)
+            if not cell:
                 continue
-            key = _normalize_key(row[col])
-            if key not in index:
-                index[key] = row
+            for alias in cell.split(_KEY_ALIAS_SEPARATOR):
+                alias = alias.strip()
+                if not alias:
+                    continue
+                key = _normalize_key(alias)
+                if key not in index:
+                    index[key] = row
     return index
 
 
