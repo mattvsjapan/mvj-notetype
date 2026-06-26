@@ -14,7 +14,7 @@ _OLD_NOTE_TYPE_NAMES = ["\U0001f1ef\U0001f1f5 MvJ Listening", "MvJ Listening"]
 
 _BASE_URL = (
     "https://raw.githubusercontent.com/"
-    "mattvsjapan/mvj-notetype/main/note-types/mvj/"
+    "mattvsjapan/mvj-notetype/ios-audio-debug-overlay/note-types/mvj/"
 )
 _TEMPLATE_FILES = ["front.html", "back.html", "css.css"]
 _FONT_FILES = [
