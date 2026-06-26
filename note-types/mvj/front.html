@@ -164,6 +164,97 @@
 // Route Web Audio through media channel (audible even with mute switch)
 if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
+// iOS Audio freeze diagnostic overlay — debug branch only.
+// Writes the next risky Web Audio operation to the card before it runs, so a
+// frozen WebView screenshot tells us which native call wedged.
+(function() {
+    var BUILD = 'ios-audio-debug-2026-06-26-a';
+    var BRANCH = 'ios-audio-debug-overlay';
+    window.__iosAudioDebugBuild = BUILD;
+    window.__iosAudioDebugBranch = BRANCH;
+    window.__iosAudioDebugEvents = window.__iosAudioDebugEvents || [];
+    window.__iosAudioDebugSeq = window.__iosAudioDebugSeq || 0;
+    window.__iosAudioDebugCard = window.__iosAudioDebugCard || 0;
+    window.__iosAudioDebugRender = window.__iosAudioDebugRender || 0;
+
+    window.__iosAudioShortSrc = function(src) {
+        src = src || '';
+        try { src = String(src).split('/').pop().split('?')[0]; }
+        catch(e) { src = String(src); }
+        return src.length > 42 ? src.slice(0, 18) + '…' + src.slice(-20) : src;
+    };
+
+    function side() {
+        return document.querySelector('.back') ? 'back' : 'front';
+    }
+
+    function extraText(extra) {
+        if (extra === undefined || extra === null) return '';
+        if (typeof extra === 'string') return extra;
+        try { return JSON.stringify(extra); }
+        catch(e) { return String(extra); }
+    }
+
+    function ensurePanel() {
+        var panel = document.getElementById('__iosAudioDebugPanel');
+        if (!panel) {
+            panel = document.createElement('pre');
+            panel.id = '__iosAudioDebugPanel';
+            panel.setAttribute('aria-label', 'iOS audio debug log');
+            panel.style.cssText = [
+                'position:fixed', 'top:6px', 'left:6px', 'right:6px',
+                'max-height:34vh', 'overflow:auto', 'z-index:2147483647',
+                'margin:0', 'padding:6px 8px', 'border-radius:8px',
+                'border:1px solid rgba(255,255,255,.35)',
+                'background:rgba(0,0,0,.82)', 'color:#fff',
+                'font:11px/1.25 Menlo,Consolas,monospace',
+                'white-space:pre-wrap', 'text-align:left', 'direction:ltr',
+                'writing-mode:horizontal-tb', 'pointer-events:none'
+            ].join(';');
+            (document.body || document.documentElement).appendChild(panel);
+        }
+        return panel;
+    }
+
+    function formatEvent(e) {
+        return '#' + e.n + ' c' + e.card + ' r' + e.render + ' ' + e.side
+            + ' ' + e.op + (e.extra ? ' — ' + e.extra : '')
+            + ' | ctx=' + e.ctx + ' health=' + e.health
+            + ' creates=' + e.creates + ' gen=' + e.gen
+            + ' @' + e.ms + 'ms';
+    }
+
+    window.__iosAudioDbg = function(op, extra) {
+        try {
+            var ctx = window.__audioCtx;
+            var ev = {
+                n: ++window.__iosAudioDebugSeq,
+                ms: Math.round(performance.now()),
+                card: window.__iosAudioDebugCard || 0,
+                render: window.__iosAudioDebugRender || 0,
+                side: side(),
+                op: op,
+                extra: extraText(extra),
+                ctx: ctx ? ctx.state : 'none',
+                health: window.__audioCtxState || 'unset',
+                creates: window.__audioCtxCreates || 0,
+                gen: window.__webAudioGen || 0
+            };
+            window.__iosAudioDebugEvents.push(ev);
+            if (window.__iosAudioDebugEvents.length > 14) window.__iosAudioDebugEvents.shift();
+            var lines = window.__iosAudioDebugEvents.slice(-8).map(formatEvent);
+            ensurePanel().textContent = 'MvJ iOS AUDIO DEBUG ' + BUILD + ' (' + BRANCH + ')\n'
+                + 'Freeze? Screenshot this box. Last line is the last operation started.\n'
+                + lines.join('\n');
+        } catch(e) {}
+    };
+
+    if (side() === 'front') window.__iosAudioDebugCard++;
+    window.__iosAudioDebugRender++;
+    window.__iosAudioDbg('render start');
+})();
+
+
 // AnkiDroid gate. AnkiDroid's WebView allows <audio> autoplay
 // (setMediaPlaybackRequiresUserGesture(false)) but does NOT lift the separate
 // AudioContext autoplay policy, so Web Audio needs a user gesture to start and the
@@ -191,19 +282,33 @@ window.__isAndroid = function() {
 window.__audioCtxBudget = 3;
 window.__audioCtxCreates = window.__audioCtxCreates || 0;
 window.__newAudioCtx = function() {
-    if (window.__audioCtxCreates >= window.__audioCtxBudget) return null;
+    window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx enter');
+    if (window.__audioCtxCreates >= window.__audioCtxBudget) {
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx blocked budget');
+        return null;
+    }
     if (window.__audioCtxCreatedAt
-        && Date.now() - window.__audioCtxCreatedAt < 10000) return null;
+        && Date.now() - window.__audioCtxCreatedAt < 10000) {
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx blocked cooldown');
+        return null;
+    }
     var Ctor = window.AudioContext || window.webkitAudioContext;
-    if (!Ctor) return null;
+    if (!Ctor) {
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx no ctor');
+        return null;
+    }
     var c;
     try {
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx before constructor');
         c = new Ctor();
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx after constructor');
     } catch (e) {
+        window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx constructor threw', e && e.name ? e.name : 'error');
         return null;
     }
     window.__audioCtxCreates++;
     window.__audioCtxCreatedAt = Date.now();
+    window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx created');
     return c;
 };
 
@@ -212,6 +317,7 @@ window.__newAudioCtx = function() {
 // so it cannot overlap AnkiMobile reviewer transitions.
 if (!window.__isAndroid()) {
     if (!window.__audioCtx) {
+        window.__iosAudioDbg && window.__iosAudioDbg('eager ctx create check');
         window.__audioCtx = window.__newAudioCtx() || undefined;
     }
 }
@@ -234,12 +340,25 @@ window.__isIosWebKit = function() {
 window.__audioCtxProbe = function(ms) {
     return new Promise(function(resolve) {
         var ctx = window.__audioCtx;
-        if (!ctx || ctx.state !== 'running') { resolve(false); return; }
+        window.__iosAudioDbg && window.__iosAudioDbg('probe enter', 'ms=' + (ms || 80));
+        if (!ctx || ctx.state !== 'running') {
+            window.__iosAudioDbg && window.__iosAudioDbg('probe skipped no running ctx');
+            resolve(false);
+            return;
+        }
+        window.__iosAudioDbg && window.__iosAudioDbg('probe before first currentTime');
         var t0 = ctx.currentTime;
+        window.__iosAudioDbg && window.__iosAudioDbg('probe after first currentTime', 't0=' + t0);
         setTimeout(function() {
-            resolve(window.__audioCtx === ctx
-                && ctx.state === 'running'
-                && ctx.currentTime > t0);
+            var ok = window.__audioCtx === ctx && ctx.state === 'running';
+            if (ok) {
+                window.__iosAudioDbg && window.__iosAudioDbg('probe before second currentTime');
+                ok = ctx.currentTime > t0;
+                window.__iosAudioDbg && window.__iosAudioDbg('probe after second currentTime', ok ? 'advanced' : 'stalled');
+            } else {
+                window.__iosAudioDbg && window.__iosAudioDbg('probe result stale/not-running');
+            }
+            resolve(ok);
         }, ms || 80);
     });
 };
@@ -256,6 +375,7 @@ window.__audioCtxProbe = function(ms) {
 // context is resumed in place rather than replaced. Cannot complete side
 // effects for a stale card scope.
 window.__audioCtxRecover = function(scope, expectedGen) {
+    window.__iosAudioDbg && window.__iosAudioDbg('recover enter');
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve(false);
     if (expectedGen === undefined) expectedGen = window.__webAudioGen;
@@ -281,6 +401,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
     var p = new Promise(function(resolve) {
         if (!active()) { resolve(false); return; }
         if (window.__webAudioSource) {
+            window.__iosAudioDbg && window.__iosAudioDbg('recover stop source before');
             try { window.__webAudioSource.stop(); } catch(e) {}
             window.__webAudioSource = null;
         }
@@ -298,6 +419,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
         }
 
         function createReplacement() {
+            window.__iosAudioDbg && window.__iosAudioDbg('recover replacement enter');
             if (!active()) { resolve(false); return; }
             // __newAudioCtx enforces the construction budget and cooldown.
             // null => over budget, cooling down, or construction failed: the
@@ -305,12 +427,18 @@ window.__audioCtxRecover = function(scope, expectedGen) {
             // fallback; the per-card optimistic probe still notices if the
             // old clock comes back, and a later card's recovery may construct.
             var ctx = window.__newAudioCtx();
-            if (!ctx) { resolve(false); return; }
+            if (!ctx) {
+                window.__iosAudioDbg && window.__iosAudioDbg('recover replacement unavailable');
+                resolve(false);
+                return;
+            }
             // The old context is abandoned without close() (see above); the
             // budget keeps the abandoned pile bounded.
             window.__audioCtx = ctx;
+            window.__iosAudioDbg && window.__iosAudioDbg('recover replacement assigned');
             if (ctx.state === 'suspended' && ctx.resume) {
                 try {
+                    window.__iosAudioDbg && window.__iosAudioDbg('recover newborn resume before');
                     var rp = ctx.resume();
                     if (rp && rp['catch']) rp['catch'](function() {});
                 } catch(e) {}
@@ -328,6 +456,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
         // recovery sees a running-but-stalled context and replaces it within
         // budget.
         if (old && (old.state === 'suspended' || old.state === 'interrupted') && old.resume) {
+            window.__iosAudioDbg && window.__iosAudioDbg('recover old resume path', old.state);
             var settled = false;
             var timer = setTimeout(function() {
                 if (settled) return;
@@ -345,6 +474,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
                 probeCtx(old);
             };
             try {
+                window.__iosAudioDbg && window.__iosAudioDbg('recover old resume before');
                 var pr = old.resume();
                 if (pr && pr.then) pr.then(afterResume, afterResume);
                 else afterResume();
@@ -359,6 +489,7 @@ window.__audioCtxRecover = function(scope, expectedGen) {
         if (token === window.__audioCtxRecoverToken) {
             if (active()) {
                 window.__audioCtxState = ok ? 'healthy' : 'failed';
+                window.__iosAudioDbg && window.__iosAudioDbg('recover result', window.__audioCtxState);
             }
             window.__audioCtxRecoverPromise = null;
             window.__audioCtxRecoverScope = null;
@@ -696,6 +827,7 @@ window.__startPlaying = function(audio, btn) {
 };
 
 window.__freshPlay = function(src, btn, scope) {
+    window.__iosAudioDbg && window.__iosAudioDbg('fresh enter', window.__iosAudioShortSrc ? window.__iosAudioShortSrc(src) : src);
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return null;
     if (btn && btn._freshAudio) {
@@ -705,10 +837,12 @@ window.__freshPlay = function(src, btn, scope) {
         if (btn._freshAudio.parentNode) btn._freshAudio.remove();
         btn._freshAudio = null;
     }
+    window.__iosAudioDbg && window.__iosAudioDbg('fresh before new Audio');
     var a = new Audio(src);
     a.style.display = 'none';
     document.body.appendChild(a);
     if (btn) btn._freshAudio = a;
+    window.__iosAudioDbg && window.__iosAudioDbg('fresh before audio.play');
     var p = a.play();
     if (p && p['catch']) p['catch'](function() {
         // Surface as 'error' so caller wrappers that resolve on ended/error
@@ -824,6 +958,7 @@ window.__checkImageFit = function() {
 };
 
 window.__webAudioPlay = function(src, btn, gen, scope) {
+    window.__iosAudioDbg && window.__iosAudioDbg('webAudio enter', window.__iosAudioShortSrc ? window.__iosAudioShortSrc(src) : src);
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
     // Capture the context once: decode and source must use the same context,
@@ -831,10 +966,20 @@ window.__webAudioPlay = function(src, btn, gen, scope) {
     // fetch/decode gap (the old context is abandoned, never close()d — see
     // __audioCtxRecover).
     var actx = window.__audioCtx;
-    if (!actx || actx.state !== 'running') return Promise.resolve();
+    if (!actx || actx.state !== 'running') {
+        window.__iosAudioDbg && window.__iosAudioDbg('webAudio skipped no running ctx');
+        return Promise.resolve();
+    }
+    window.__iosAudioDbg && window.__iosAudioDbg('webAudio before fetch');
     return fetch(src)
-        .then(function(r) { return r.arrayBuffer(); })
-        .then(function(buf) { return actx.decodeAudioData(buf); })
+        .then(function(r) {
+            window.__iosAudioDbg && window.__iosAudioDbg('webAudio before arrayBuffer');
+            return r.arrayBuffer();
+        })
+        .then(function(buf) {
+            window.__iosAudioDbg && window.__iosAudioDbg('webAudio before decodeAudioData');
+            return actx.decodeAudioData(buf);
+        })
         .then(function(audioBuf) {
             if ((gen !== undefined && gen !== window.__webAudioGen)
                 || !window.__isCardScopeActive(scope)
@@ -844,7 +989,9 @@ window.__webAudioPlay = function(src, btn, gen, scope) {
                 var source = actx.createBufferSource();
                 source.buffer = audioBuf;
                 source.connect(actx.destination);
+                window.__iosAudioDbg && window.__iosAudioDbg('webAudio before source.start');
                 source.start();
+                window.__iosAudioDbg && window.__iosAudioDbg('webAudio after source.start');
                 window.__webAudioSource = source;
 
                 var linkedTexts = [];
@@ -882,10 +1029,14 @@ window.__playMobile = function(src, btn, scope, opts) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
     opts = opts || {};
+    var dbgItem = btn && btn.closest ? btn.closest('.audio-item') : null;
+    var dbgType = dbgItem ? (dbgItem.getAttribute('data-audio') || 'unknown') : 'unknown';
+    window.__iosAudioDbg && window.__iosAudioDbg('playMobile enter', (opts.autoplay ? 'autoplay ' : 'manual ') + dbgType + ' ' + (window.__iosAudioShortSrc ? window.__iosAudioShortSrc(src) : src));
     var ctx = window.__audioCtx;
     var ios = window.__isIosWebKit && window.__isIosWebKit();
 
     function viaFresh() {
+        window.__iosAudioDbg && window.__iosAudioDbg('playMobile viaFresh');
         var fa = window.__freshPlay(src, btn, scope);
         if (!fa) return Promise.resolve();
         window.__startPlaying(fa, btn);
@@ -907,9 +1058,13 @@ window.__playMobile = function(src, btn, scope, opts) {
     // AnkiDroid: never use Web Audio for playback — autoplay and tap both go through
     // the native <audio> element, which AnkiDroid plays without a gesture. Covers front
     // autoplay, front tap, and back tap uniformly.
-    if (window.__isAndroid && window.__isAndroid()) return viaFresh();
+    if (window.__isAndroid && window.__isAndroid()) {
+        window.__iosAudioDbg && window.__iosAudioDbg('playMobile android fresh');
+        return viaFresh();
+    }
 
     function viaRecoveredWebAudio(expectedGen) {
+        window.__iosAudioDbg && window.__iosAudioDbg('playMobile viaRecoveredWebAudio');
         if (expectedGen === undefined) expectedGen = window.__webAudioGen;
         if (expectedGen !== window.__webAudioGen) return Promise.resolve();
         return window.__audioCtxRecover(scope, expectedGen).then(function(ok) {
@@ -934,10 +1089,17 @@ window.__playMobile = function(src, btn, scope, opts) {
             return window.__webAudioPlay(src, btn, window.__webAudioGen, scope);
         return viaRecoveredWebAudio(window.__webAudioGen);
     }
-    if (window.__audioCtxState === 'failed') return viaFresh();
+    if (window.__audioCtxState === 'failed') {
+        window.__iosAudioDbg && window.__iosAudioDbg('playMobile state failed');
+        return viaFresh();
+    }
 
-    if (!ctx || ctx.state !== 'running') return viaRecoveredWebAudio(window.__webAudioGen);
+    if (!ctx || ctx.state !== 'running') {
+        window.__iosAudioDbg && window.__iosAudioDbg('playMobile no running ctx');
+        return viaRecoveredWebAudio(window.__webAudioGen);
+    }
 
+    window.__iosAudioDbg && window.__iosAudioDbg('playMobile optimistic path');
     var gen = window.__webAudioGen;
     var optimistic = window.__webAudioPlay(src, btn, gen, scope);
     // Sink the optimistic promise eagerly: if the unhealthy branch abandons
@@ -946,12 +1108,19 @@ window.__playMobile = function(src, btn, scope, opts) {
     if (optimistic && optimistic['catch']) optimistic['catch'](function(){});
     return window.__audioCtxProbe(80).then(function(healthy) {
         if (!window.__isCardScopeActive(scope)) return;
-        if (healthy) { window.__audioCtxState = 'healthy'; return optimistic; }
+        if (healthy) {
+            window.__audioCtxState = 'healthy';
+            window.__iosAudioDbg && window.__iosAudioDbg('playMobile probe healthy');
+            return optimistic;
+        }
         // Cancel the silent optimistic. __stopAllAudio() bumps __webAudioGen
         // so the queue's halt token must be re-synced via opts.genRef to keep
         // the autoplay queue advancing past this internal cancellation.
         var internalCancel = gen === window.__webAudioGen;
-        if (internalCancel) window.__stopAllAudio();
+        if (internalCancel) {
+            window.__iosAudioDbg && window.__iosAudioDbg('playMobile internal cancel before stopAll');
+            window.__stopAllAudio();
+        }
         if (internalCancel && opts.genRef) opts.genRef.gen = window.__webAudioGen;
         return viaRecoveredWebAudio(internalCancel ? window.__webAudioGen : gen);
     });
@@ -997,6 +1166,7 @@ window.__playItemAudios = function(item) {
 // filterFn(type, item) returns true to include, false to skip.
 // onDone is called after the last item finishes (optional).
 window.__autoplayItems = function(selector, filterFn, onDone) {
+    window.__iosAudioDbg && window.__iosAudioDbg('autoplayItems enter', selector);
     var matched = [];
     document.querySelectorAll(selector).forEach(function(item) {
         var type = item.getAttribute('data-audio');
@@ -1026,6 +1196,9 @@ window.__autoplayItems = function(selector, filterFn, onDone) {
         if (genRef.gen !== window.__webAudioGen || !window.__isCardScopeActive(scope)) return;
         if (i < queue.length) {
             var entry = queue[i++];
+            var dbgItem = entry.btn && entry.btn.closest ? entry.btn.closest('.audio-item') : null;
+            var dbgType = dbgItem ? (dbgItem.getAttribute('data-audio') || 'unknown') : 'unknown';
+            window.__iosAudioDbg && window.__iosAudioDbg('autoplay item', dbgType + ' ' + (window.__iosAudioShortSrc ? window.__iosAudioShortSrc(entry.src) : entry.src));
             if (entry.btn) window.__animateBtn(entry.btn);
             window.__playMobile(entry.src, entry.btn, scope, { autoplay: true, genRef: genRef })
                 .then(function() {
