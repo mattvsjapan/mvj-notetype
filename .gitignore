@@ -8,3 +8,5 @@ addon/meta.json
 *.ankiaddon
 addon/user_files/
 addon/dictionary/
+.omp/
+System/
