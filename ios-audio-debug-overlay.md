@@ -1,6 +1,6 @@
 # iOS Audio Debug Overlay Handoff
 
-Status as of 2026-06-26: **debug build delivered; waiting for user field report.**
+Status as of 2026-07-01: **first field report received — freeze reproduced and captured.** Overlay screenshots (build id confirmed) end at `newAudioCtx before constructor`: the replacement path's synchronous constructor is the wedge. New symptom: self-recovery without app kill (Edit → black screen → back → new card, fresh document). User stays on the debug build to capture a possible second sample while a v5 fix is designed. See `ios-freeze-known-facts.md` Root Cause mechanism 3.
 
 ## Why this exists
 
