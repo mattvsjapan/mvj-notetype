@@ -168,7 +168,7 @@ if (navigator.audioSession) navigator.audioSession.type = 'playback';
 // Writes the next risky Web Audio operation to the card before it runs, so a
 // frozen WebView screenshot tells us which native call wedged.
 (function() {
-    var BUILD = 'ios-audio-debug-2026-06-26-a';
+    var BUILD = 'ios-audio-debug-2026-07-01-a';
     var BRANCH = 'ios-audio-debug-overlay';
     window.__iosAudioDebugBuild = BUILD;
     window.__iosAudioDebugBranch = BRANCH;
@@ -290,7 +290,6 @@ window.__newAudioCtx = function() {
         window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx constructor threw', e && e.name ? e.name : 'error');
         return null;
     }
-
 };
 
 // Create AudioContext eagerly, but do not resume/recover during card setup.
@@ -562,8 +561,8 @@ if (window.__observers) {
 window.__observers = [];
 
 // Each card may follow a foreign [sound:] card that took the AVAudioSession.
-// Mark unknown, but defer probing/replacement until playback so audio work
-// cannot overlap AnkiMobile's reviewer transition.
+// Mark unknown, but defer recovery until playback so audio work cannot overlap
+// AnkiMobile's reviewer transition.
 if (!window.__isAndroid()) {
     window.__audioCtxState = 'unknown';
 }

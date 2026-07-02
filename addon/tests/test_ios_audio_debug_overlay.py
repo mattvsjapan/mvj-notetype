@@ -58,7 +58,7 @@ def _debug_helper_body() -> str:
 
 
 def test_debug_identity_and_updater() -> None:
-    _assert_contains(FRONT, "ios-audio-debug-2026-06-26-a", "visible debug build id")
+    _assert_contains(FRONT, "ios-audio-debug-2026-07-01-a", "visible debug build id")
     _assert_contains(FRONT, "__iosAudioDebugPanel", "overlay panel id")
     _assert_contains(
         NOTETYPE,
@@ -82,8 +82,9 @@ def test_debug_helper_does_not_read_current_time() -> None:
 
 
 def test_risky_call_counts() -> None:
-    _assert_count(FRONT, "c = new Ctor();", 1, "AudioContext constructor")
-    _assert_count(FRONT, "var rp = ctx.resume();", 1, "newborn resume")
+    _assert_count(FRONT, "return new Ctor();", 1, "AudioContext constructor")
+    _assert_count(FRONT, "function createReplacement()", 0, "deleted replacement helper")
+    _assert_count(FRONT, "recover newborn resume before", 0, "deleted newborn resume breadcrumb")
     _assert_count(FRONT, "var pr = old.resume();", 1, "old-context resume")
     _assert_count(FRONT, "ctx.currentTime", 2, "probe currentTime reads")
     _assert_count(FRONT, "return actx.decodeAudioData(buf);", 1, "decodeAudioData")
@@ -94,13 +95,8 @@ def test_risky_call_counts() -> None:
 def test_immediate_breadcrumbs_before_risky_calls() -> None:
     _assert_local_snippet(
         "window.__iosAudioDbg && window.__iosAudioDbg('newAudioCtx before constructor');\n"
-        "        c = new Ctor();",
+        "        return new Ctor();",
         "new AudioContext constructor",
-    )
-    _assert_local_snippet(
-        "window.__iosAudioDbg && window.__iosAudioDbg('recover newborn resume before');\n"
-        "                    var rp = ctx.resume();",
-        "newborn ctx.resume",
     )
     _assert_local_snippet(
         "window.__iosAudioDbg && window.__iosAudioDbg('recover old resume before');\n"
@@ -178,16 +174,11 @@ def test_recovery_and_web_audio_sequences_unchanged() -> None:
             "if (window.__webAudioSource) {",
             "try { window.__webAudioSource.stop(); } catch(e) {}",
             "var old = window.__audioCtx;",
-            "function createReplacement() {",
-            "var ctx = window.__newAudioCtx();",
-            "window.__audioCtx = ctx;",
-            "if (ctx.state === 'suspended' && ctx.resume) {",
-            "var rp = ctx.resume();",
-            "probeCtx(ctx);",
+            "function probeCtx(ctx) {",
             "if (old && (old.state === 'suspended' || old.state === 'interrupted') && old.resume) {",
             "var pr = old.resume();",
             "return;",
-            "createReplacement();",
+            "resolve(false);",
             "window.__audioCtxState = ok ? 'healthy' : 'failed';",
         ],
         "__audioCtxRecover recovery sequence",

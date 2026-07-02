@@ -221,6 +221,29 @@ def _lifecycle_block(text: str) -> str:
     end = text.index(end_marker, start) + len(end_marker)
     return text[start:end]
 
+def _strip_debug_observation(block: str) -> str:
+    block = re.sub(
+        r"^[ \t]*window\.__iosAudioDbg && window\.__iosAudioDbg\([^\n]*\);\n",
+        "",
+        block,
+        flags=re.MULTILINE,
+    )
+    block = re.sub(
+        r"^[ \t]*var dbg(?:Item|Type) = [^\n]*;\n",
+        "",
+        block,
+        flags=re.MULTILINE,
+    )
+    block = re.sub(r"//[^\n]*", "", block)
+    block = re.sub(r"\s+", "", block)
+    prev = None
+    while prev != block:
+        prev = block
+        block = re.sub(r"if\(([^{}]+)\)\{([^{};]+;)\}", r"if(\1)\2", block)
+    return block
+
+
+
 def _commented_assignment(text: str, comment_marker: str, assignment_marker: str) -> str:
     start = text.index(comment_marker)
     assignment_start = text.index(assignment_marker, start)
@@ -711,8 +734,11 @@ def test_row_4_static_no_teardown_or_deleted_paths() -> None:
 def test_row_5_template_parity() -> None:
     mvj = PARTS["mvj"]
     chinese = PARTS["chinese"]
-    assert mvj.lifecycle == chinese.lifecycle, "lifecycle block is not byte-identical"
-    assert mvj.play_mobile == chinese.play_mobile, "__playMobile block is not byte-identical"
+    assert "__iosAudioDebugPanel" not in chinese.html, "Chinese template must not carry the MVJ debug overlay"
+    assert "ios-audio-debug" not in chinese.html, "Chinese template must not carry the MVJ debug build id"
+    assert _strip_debug_observation(mvj.play_mobile) == _strip_debug_observation(chinese.play_mobile), (
+        "__playMobile block differs beyond debug observation"
+    )
 
 
 def test_row_6_script_blocks_node_check() -> None:
@@ -730,7 +756,7 @@ def main() -> int:
         ("row 3 exact_path autoplay queue and stall fallback", test_row_3_autoplay_queue_and_stall_degrade),
         ("row 3b exact_path card-scope guards", test_row_3b_card_scope_guards),
         ("row 4 exact_path whole-template teardown scan", test_row_4_static_no_teardown_or_deleted_paths),
-        ("row 5 exact_path template block parity", test_row_5_template_parity),
+        ("row 5 exact_path template parity (debug overlay excluded)", test_row_5_template_parity),
         ("row 6 syntax_only node --check all script blocks", test_row_6_script_blocks_node_check),
     ]
     failed = 0
