@@ -178,33 +178,25 @@ window.__isAndroid = function() {
         || /Android/i.test(navigator.userAgent);
 };
 
-// Single choke point for AudioContext construction. Counts every construction
-// and refuses past the budget, so no call site can construct without counting
-// — the same drift class (a refactor dropping one lifecycle call) caused the
-// original context leak. The budget is the only context-cap protection now
-// that nothing is ever close()d. The cooldown stops one stall episode from
-// burning several budget slots back-to-back: a context constructed while the
-// AVAudioSession is still contended is usually born stalled, so without it
-// the next card would immediately construct again. Returns null (caller falls
-// back to <audio> for that playback) when over budget, cooling down, or
-// construction fails.
-window.__audioCtxBudget = 3;
+// Single choke point for AudioContext construction. The budget is one
+// construction attempt per document lifetime: the eager setup attempt below.
+// It is a mechanical guard against any future post-setup call site. The
+// 2026-07-01 debug overlay captured the evidenced freeze trigger as
+// construction during audio-stack contention (`newAudioCtx before constructor`),
+// so a later call must fail closed to <audio> fallback instead of constructing.
+// Returns null when over budget, unsupported, or construction fails.
+window.__audioCtxBudget = 1;
 window.__audioCtxCreates = window.__audioCtxCreates || 0;
 window.__newAudioCtx = function() {
     if (window.__audioCtxCreates >= window.__audioCtxBudget) return null;
-    if (window.__audioCtxCreatedAt
-        && Date.now() - window.__audioCtxCreatedAt < 10000) return null;
     var Ctor = window.AudioContext || window.webkitAudioContext;
     if (!Ctor) return null;
-    var c;
     try {
-        c = new Ctor();
+        window.__audioCtxCreates++;
+        return new Ctor();
     } catch (e) {
         return null;
     }
-    window.__audioCtxCreates++;
-    window.__audioCtxCreatedAt = Date.now();
-    return c;
 };
 
 // Create AudioContext eagerly, but do not resume/recover during card setup.
@@ -230,7 +222,7 @@ window.__isIosWebKit = function() {
 // advanced. Required because WebKit can report state==='running' on
 // a stalled context (AVAudioSession contention from a prior native
 // [sound:]). Instance-stable: a probe started against ctx-A must not
-// report healthy if recovery has swapped in ctx-B mid-wait.
+// report healthy if the active context changes before the wait ends.
 window.__audioCtxProbe = function(ms) {
     return new Promise(function(resolve) {
         var ctx = window.__audioCtx;
@@ -244,17 +236,14 @@ window.__audioCtxProbe = function(ms) {
     });
 };
 
-// Playback-time refresh only, and it NEVER calls AudioContext.close(). Every
-// template version that closed contexts froze the AnkiMobile reviewer ~3x per
-// session in the field, no matter when recovery ran (transition-time or
-// playback-time); the one close()-free version froze only when leaked contexts
-// hit WebKit's live-context cap late in long sessions. The close() teardown
-// wedges WebKit's audio machinery (most likely the synchronous
-// `new AudioContext()` that follows it). So: abandoned contexts are never
-// closed, constructions are budgeted per document lifetime (__audioCtxCreates,
-// kept far below the cap the leak used to hit), and a suspended/interrupted
-// context is resumed in place rather than replaced. Cannot complete side
-// effects for a stale card scope.
+// Playback-time refresh only, and it NEVER calls AudioContext.close() or
+// constructs a replacement after setup. The 2026-07-01 debug overlay captured
+// the remaining freeze trigger at `newAudioCtx before constructor` inside the
+// old replacement path, during an already-sick audio-stack episode. So the v5
+// rule is: keep the setup context for the document lifetime, resume that same
+// context in place when suspended/interrupted, and otherwise degrade to <audio>
+// fallback instead of constructing. Cannot complete side effects for a stale
+// card scope.
 window.__audioCtxRecover = function(scope, expectedGen) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve(false);
@@ -297,36 +286,13 @@ window.__audioCtxRecover = function(scope, expectedGen) {
             }, 40);
         }
 
-        function createReplacement() {
-            if (!active()) { resolve(false); return; }
-            // __newAudioCtx enforces the construction budget and cooldown.
-            // null => over budget, cooling down, or construction failed: the
-            // sick context stays in place and this playback uses the <audio>
-            // fallback; the per-card optimistic probe still notices if the
-            // old clock comes back, and a later card's recovery may construct.
-            var ctx = window.__newAudioCtx();
-            if (!ctx) { resolve(false); return; }
-            // The old context is abandoned without close() (see above); the
-            // budget keeps the abandoned pile bounded.
-            window.__audioCtx = ctx;
-            if (ctx.state === 'suspended' && ctx.resume) {
-                try {
-                    var rp = ctx.resume();
-                    if (rp && rp['catch']) rp['catch'](function() {});
-                } catch(e) {}
-            }
-            probeCtx(ctx);
-        }
-
         // A suspended/interrupted context (app backgrounding, OS audio-session
-        // interruption) is resumed in place: a replacement would start in the
-        // same gesture-gated state, so recreating buys nothing and burns budget.
-        // Bounded: if resume() neither settles nor yields a running context in
-        // time, fail to the <audio> fallback for this playback and let a later
-        // card retry. If resume() succeeds but the clock is still frozen, the
-        // probe below fails, this playback falls back, and the next card's
-        // recovery sees a running-but-stalled context and replaces it within
-        // budget.
+        // interruption) is resumed in place: v5 never constructs a replacement
+        // after setup. Bounded: if resume() neither settles nor yields a
+        // running context in time, fail to the <audio> fallback for this
+        // playback and let a later card retry in-place recovery. If resume()
+        // succeeds but the clock is still frozen, the probe below fails and
+        // this playback falls back without constructing.
         if (old && (old.state === 'suspended' || old.state === 'interrupted') && old.resume) {
             var settled = false;
             var timer = setTimeout(function() {
@@ -352,9 +318,11 @@ window.__audioCtxRecover = function(scope, expectedGen) {
             return;
         }
 
-        // Missing, or running with a frozen clock (resume() is a no-op on a
-        // 'running' context) — replace within budget.
-        createReplacement();
+        // Missing context, or running with a frozen clock (resume() is a no-op
+        // on a 'running' context): v5 forbids post-setup construction because
+        // the 2026-07-01 overlay froze in this replacement arm before the
+        // constructor returned. Degrade to <audio> instead.
+        resolve(false);
     }).then(function(ok) {
         if (token === window.__audioCtxRecoverToken) {
             if (active()) {
@@ -826,10 +794,9 @@ window.__checkImageFit = function() {
 window.__webAudioPlay = function(src, btn, gen, scope) {
     if (scope === undefined) scope = window.__currentCardScope;
     if (!window.__isCardScopeActive(scope)) return Promise.resolve();
-    // Capture the context once: decode and source must use the same context,
-    // and recovery may swap window.__audioCtx for a replacement during the
-    // fetch/decode gap (the old context is abandoned, never close()d — see
-    // __audioCtxRecover).
+    // Capture the context once: decode and source must use the same context.
+    // v5 keeps window.__audioCtx stable after setup; the identity/state guard
+    // below remains defense-in-depth against stale async playback.
     var actx = window.__audioCtx;
     if (!actx || actx.state !== 'running') return Promise.resolve();
     return fetch(src)

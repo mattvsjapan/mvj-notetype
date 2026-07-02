@@ -1,66 +1,72 @@
-# iOS AudioContext not resuming after app background/foreground
+# iOS AudioContext after background / foreground
 
 ## Problem
 
-On iOS AnkiMobile, when a user switches away from the app while reviewing a card and returns, audio no longer plays. Tapping audio buttons produces silence.
+On iOS AnkiMobile, the WebView's `AudioContext` can become unusable after app backgrounding, OS audio-session interruption, or nearby native audio playback. Tapping audio buttons or autoplay may then produce silence even though the card is still visible.
 
-## Root cause
+## Current Root Cause Model
 
-iOS suspends the WebView's `AudioContext` when the app is backgrounded. The context transitions to `"suspended"` or the non-standard `"interrupted"` state and does not automatically resume when the app returns to foreground.
+There are two iOS Web Audio states the templates must handle:
 
-Additionally, **WebKit bug #263627** means the context can report `state === "running"` while `currentTime` is actually frozen — so a naive `if (state !== 'running') resume()` check is insufficient.
+1. The context can report `state === 'suspended'` or the Apple-specific `state === 'interrupted'` after backgrounding or interruption.
+2. WebKit can report `state === 'running'` while `currentTime` is frozen, so a state check alone is not a health check.
 
-## Why existing code didn't handle it
+The second case is why the template still probes `currentTime`: sample, wait briefly, and require the clock to advance.
 
-- The existing `touchend` safety net only fires on user interaction, so the first tap after returning may work (if the user taps an audio button), but autoplay fails silently.
-- There was no `visibilitychange` listener to detect the foreground transition and proactively resume the context.
+## Current Design
 
-## What we tried
+The canonical implementation is the AudioContext lifecycle block in:
 
-### Fix: `visibilitychange` listener (2026-02-25, branch `flexible-settings`)
+- `note-types/mvj/front.html`
+- `note-types/chinese/front.html`
 
-Added a `visibilitychange` handler in all three front templates (chinese, japanese, mvj) immediately after the existing `__audioCtxTouchHandler` setup:
+The v5 rule is:
 
-```javascript
-if (!window.__audioCtxVisHandler) {
-    window.__audioCtxVisHandler = function() {
-        if (document.visibilityState !== 'visible' || !window.__audioCtx) return;
-        if (window.__audioCtx.state !== 'running') {
-            window.__audioCtx.resume()['catch'](function() {});
-        } else {
-            // Context may claim 'running' while stalled (WebKit bug #263627).
-            var t = window.__audioCtx.currentTime;
-            setTimeout(function() {
-                if (window.__audioCtx && window.__audioCtx.state === 'running'
-                    && window.__audioCtx.currentTime === t) {
-                    window.__audioCtx.suspend().then(function() {
-                        return window.__audioCtx.resume();
-                    })['catch'](function() {});
-                }
-            }, 200);
-        }
-    };
-    document.addEventListener('visibilitychange', window.__audioCtxVisHandler);
-}
-```
+- create the `AudioContext` eagerly at card setup,
+- count the setup construction attempt before calling the constructor,
+- never construct a replacement after setup,
+- never call `close()` as recovery,
+- never call `suspend()` as an unstick tactic,
+- resume `suspended` / `interrupted` contexts in place, and
+- if the context is missing or running-stalled, resolve recovery `false` and let `__playMobile()` use `<audio>` fallback for that degraded episode.
 
-**Logic:**
-1. On `visibilitychange` to `visible`, check the AudioContext state.
-2. If `state !== 'running'` (suspended/interrupted), call `resume()`.
-3. If `state === 'running'`, snapshot `currentTime`, wait 200ms, and check if it advanced. If frozen (WebKit bug), do a `suspend()` then `resume()` cycle to unstick it.
+The root history and field evidence live in `ios-freeze-known-facts.md`. The short version: the 2026-07-01 debug overlay captured a freeze at `newAudioCtx before constructor` in a template with no executable `close()`. That constructor was issued during a sick audio-stack episode. So post-setup construction is now treated as the evidenced freeze trigger.
 
-**Guard:** `if (!window.__audioCtxVisHandler)` follows the same pattern as the touch handler — prevents duplicate listeners when Anki re-evaluates the front template on card flip.
+## Recovery Flow
 
-## Things to investigate if this doesn't work
+`__audioCtxRecover(scope, expectedGen)` runs only at playback time and only for the active card scope.
 
-- **`visibilitychange` may not fire on AnkiMobile:** If AnkiMobile's WKWebView doesn't dispatch `visibilitychange` when backgrounding/foregrounding, the handler will never run. Alternative: try `pageshow`/`pagehide` events, or poll `document.hidden` on a timer.
-- **`resume()` may require a user gesture on iOS:** If the AudioContext was suspended by the OS (not by script), `resume()` without a gesture might be silently ignored. In that case, we'd need to set a flag and resume on the next `touchend` instead.
-- **The 200ms delay for the frozen-time check may be too short or too long:** If the context takes longer than 200ms to actually resume after `visibilitychange`, we might false-positive on the frozen check. Could increase to 500ms or add a retry.
-- **`suspend().then(resume)` may not unstick a truly frozen context:** The suspend/resume cycle is a known workaround but isn't guaranteed. Alternative: destroy and recreate the AudioContext entirely (`window.__audioCtx.close()` then `new AudioContext()`).
-- **`onstatechange` as an alternative trigger:** Instead of (or in addition to) `visibilitychange`, listen for `audioCtx.onstatechange` to detect when iOS changes the state to `interrupted`/`suspended` and queue a resume for when the app returns.
+1. If scope or generation is stale, return `false` without side effects.
+2. Stop any current `BufferSourceNode` to prevent double audio.
+3. If the existing context is `suspended` or `interrupted`, call `resume()` on that same context.
+4. Bound the resume wait. If it does not settle in time, return `false`.
+5. After a settled resume, wait briefly and probe `currentTime`.
+6. If the probe passes, mark healthy and continue Web Audio.
+7. If the probe fails, return `false`; `__playMobile()` falls back to `<audio>`.
+8. If there is no context, or a `running` context has a frozen clock, return `false` directly. Do not construct.
+
+The recovery token, scope, and generation checks are load-bearing because AnkiMobile keeps one WebView document across card transitions. A stale card must not mark the shared context healthy/failed after the reviewer has moved on.
+
+## What We No Longer Do
+
+Do not reintroduce these older recipes:
+
+- **No `suspend().then(resume)` unstick cycle.** It was a speculative workaround for a running-but-frozen clock. It touches the sick audio stack and is now on the wrong side of the freeze boundary.
+- **No `close()`-then-construct recovery.** Every `close()` era froze repeatedly in the field. `close()` is an evidenced crash/freeze class for this card runtime.
+- **No post-setup `new AudioContext()` recovery.** The debug overlay showed the constructor itself wedging when issued during contention.
+- **No visibilitychange recovery work.** Visibility changes only mark health `unknown`; actual audio lifecycle work waits until playback.
+- **No touchend construction safety net.** User interaction does not make post-setup construction safe under the v5 evidence model.
+
+## Operational Notes
+
+- A full AnkiMobile kill/relaunch is required before judging an iOS template change. A surviving WebView keeps old globals.
+- Android is gated to `<audio>` and does not use this recovery machinery.
+- `<audio>` fallback has higher latency on iOS and is not the normal path. It is the degraded-episode path when the setup context cannot be trusted.
+- If a future debug overlay identifies `resume()`, `decodeAudioData()`, `source.start()`, or the `currentTime` probe as the last breadcrumb, update `ios-freeze-known-facts.md` first and then change the lifecycle block.
 
 ## References
 
-- WebKit bug #263627: AudioContext reports `running` but `currentTime` is frozen
-- iOS `AudioContext.state` can be `"interrupted"` (non-standard, WebKit-specific)
-- `navigator.audioSession.type = 'playback'` routes Web Audio through media channel (already in our templates)
+- `ios-freeze-known-facts.md` — field timeline, root cause model, deployment facts.
+- `ios-freeze-fix-plan.md` — current v5 fix and verification matrix.
+- WebKit bug #263627 — `AudioContext` can report running while `currentTime` is frozen.
+- MDN / WebKit notes for Apple `AudioContext.state === 'interrupted'` behavior.
